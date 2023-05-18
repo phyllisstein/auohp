@@ -1,0 +1,46 @@
+{
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": [
+    "source.organizeImports",
+    "source.fixAll.eslint",
+    "source.fixAll."
+  ],
+  "stylelint.validate": [
+    "css",
+    "less",
+    "postcss",
+    "svelte",
+    "stylus"
+  ],
+  "eslint.format.enable": true,
+  "eslint.validate": [
+    "svelte",
+    "typescript",
+    "javascript"
+  ],
+  "editor.formatOnSave": false,
+  "[svelte]": {
+    "editor.codeActionsOnSave": [
+      "source.fixAll.stylelint",
+      "source.fixAll.eslint"
+    ]
+  },
+  "[typescript]": {
+    "editor.codeActionsOnSave": [
+      "source.fixAll.stylelint",
+      "source.fix"
+    ]
+  },
+  "[javascript]": {
+    "editor.codeActionsOnSave": [
+      "source.fixAll.stylelint",
+      "source.fix"
+    ]
+  },
+  "[stylus]": {
+    "editor.codeActionsOnSave": [
+      "source.fixAll.stylelint",
+      "source.fix"
+    ]
+  }
+}

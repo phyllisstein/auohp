@@ -1,0 +1,23 @@
+{
+  "name": "auohp",
+  "version": "0.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/phyllisstein/auohp.git",
+  "author": {
+    "name": "ACT UP Oral History Project",
+    "email": "contact@auohp.org",
+    "url": "https://auohp.org"
+  },
+  "license": "GPL-3.0-or-later",
+  "packageManager": "yarn@3.5.1",
+  "workspaces": [
+    "packages/*"
+  ],
+  "private": true,
+  "dependencies": {
+    "gsap": "npm:@gsap/member@latest"
+  },
+  "devDependencies": {
+    "typescript": "next"
+  }
+}
