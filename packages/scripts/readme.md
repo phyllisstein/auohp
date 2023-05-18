@@ -1,0 +1,2 @@
+# `@auohp/scripts`
+![](mascot.gif)
