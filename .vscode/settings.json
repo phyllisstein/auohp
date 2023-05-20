@@ -1,25 +1,5 @@
 {
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "editor.codeActionsOnSave": [
-    "source.organizeImports",
-    "source.fixAll.eslint",
-    "source.fixAll."
-  ],
-  "stylelint.validate": [
-    "css",
-    "less",
-    "postcss",
-    "svelte",
-    "stylus"
-  ],
-  "eslint.format.enable": true,
-  "eslint.validate": [
-    "svelte",
-    "typescript",
-    "javascript"
-  ],
-  "editor.formatOnSave": false,
-  "[svelte]": {
+  "[javascript]": {
     "editor.codeActionsOnSave": [
       "source.fixAll.stylelint",
       "source.fixAll.eslint"
@@ -28,19 +8,28 @@
   "[typescript]": {
     "editor.codeActionsOnSave": [
       "source.fixAll.stylelint",
-      "source.fix"
+      "source.fixAll.eslint"
     ]
   },
-  "[javascript]": {
-    "editor.codeActionsOnSave": [
-      "source.fixAll.stylelint",
-      "source.fix"
-    ]
-  },
-  "[stylus]": {
-    "editor.codeActionsOnSave": [
-      "source.fixAll.stylelint",
-      "source.fix"
-    ]
-  }
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": false,
+  "eslint.format.enable": true,
+  "eslint.lintTask.enable": true,
+  "eslint.validate": [
+    "typescript",
+    "javascript"
+  ],
+  "monorepoWorkspace.folders.prefix.unknown": "💾 ",
+  "monorepoWorkspace.folders.regex.apps": "(app|web|api|frontend|client|server|backend|service)s?$",
+  "monorepoWorkspace.folders.regex.libs": "(common|package|lib|private|ui)s?$",
+  "monorepoWorkspace.folders.regex.tools": "(tool|script|util|config)s?$",
+  "stylelint.enable": true,
+  "stylelint.validate": [
+    "css",
+    "less",
+    "postcss",
+    "typescript",
+    "typescriptreact"
+  ],
+  "typescript.tsdk": "node_modules/typescript/lib"
 }
