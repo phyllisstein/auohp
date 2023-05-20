@@ -11,7 +11,7 @@ For example, broken into four files, Larry Kramer's 1hr 43min interview keeps a
 respectable sample rate, without any one segment cracking 100MB.
 
 ```bash
-ffmpeg -i '035_larry_kramer.mp4' -vn -f segment -segment_time 1551 -ar 32000 -ac 1 -acodec pcm_s16le -y 035-%03d.wav
+ffmpeg -i '035_larry_kramer.mp4' -vn -f segment -segment_time 1551 -ar 4800 -ac 1 -acodec pcm_s16le -y 035-%03d.wav
 # => 035-000.wav -- 035-003.wav
 ```
 
