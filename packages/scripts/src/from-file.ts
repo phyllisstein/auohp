@@ -11,10 +11,11 @@ const client = new TranscribeClient({
 const BUCKET = 'act-up-oral-history-resilient-reserve-4710'
 
 const FILES = [
-  '035-000',
-  '035-001',
-  '035-002',
-  '035-003',
+  '026-000',
+  '026-001',
+  '026-002',
+  '026-003',
+  '026-004',
 ]
 
 const BASE_PARAMS: StartTranscriptionJobCommandInput = {
@@ -50,9 +51,9 @@ async function main (fn = '') {
       ...BASE_PARAMS,
       TranscriptionJobName: `${ start }-${ file }`,
       Media: {
-        MediaFileUri: `s3://${ BUCKET }/035/${ file }.wav`,
+        MediaFileUri: `s3://${ BUCKET }/026/${ file }.wav`,
       },
-      OutputKey: `035/${ file }.json`,
+      OutputKey: `026/${ file }.json`,
     }
 
     console.log('Starting transcription job for', file)
