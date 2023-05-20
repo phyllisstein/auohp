@@ -7,5 +7,9 @@
   },
   "license": "GPL-3.0-or-later",
   "name": "@auohp/scripts",
-  "packageManager": "yarn@3.5.1"
+  "packageManager": "yarn@3.5.1",
+  "type": "module",
+  "dependencies": {
+    "@aws-sdk/client-transcribe": "^3.335.0"
+  }
 }
