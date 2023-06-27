@@ -1,2 +1,4 @@
 assets/*
-!assets/.gitkeep
+!assets/.keep
+secrets/*
+!secrets/.keep
