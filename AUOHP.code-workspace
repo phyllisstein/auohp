@@ -10,7 +10,7 @@
 		}
 	],
 	"settings": {
-		"[javascript][typescript][svelte]": {
+		"[javascript][typescript][javascriptreact][typescriptreact]": {
 			"editor.codeActionsOnSave": [
 				"source.fixAll.format",
 				"source.fixAll.stylelint",
@@ -25,8 +25,7 @@
 			"typescript",
 			"typescriptreact",
 			"javascript",
-			"javascriptreact",
-			"svelte"
+			"javascriptreact"
 		],
 		"monorepoWorkspace.folders.prefix.unknown": "💾 ",
 		"monorepoWorkspace.folders.regex.apps": "(app|web|api|frontend|client|server|backend|service)s?$",
@@ -39,8 +38,7 @@
 			"postcss",
 			"stylus",
 			"typescript",
-			"typescriptreact",
-			"svelte"
+			"typescriptreact"
 		]
 	}
 }

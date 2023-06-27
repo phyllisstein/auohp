@@ -9,8 +9,13 @@ const moduleDirectories = dirEntries
   .join('|')
 
 module.exports = {
+  env: {
+    'browser': true,
+    'shared-node-browser': true,
+  },
   extends: [
-    '../../.eslintrc.common.cjs',
+    './.eslintrc.common.cjs',
+    './.eslintrc.react.cjs',
   ],
   settings: {
     'import/internal-regex': `^(${ moduleDirectories })\b`,

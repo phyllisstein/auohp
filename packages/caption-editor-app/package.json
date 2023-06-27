@@ -1,0 +1,51 @@
+{
+  "version": "0.0.0",
+  "author": {
+    "email": "contact@auohp.org",
+    "name": "ACT UP Oral History Project",
+    "url": "https://auohp.org"
+  },
+  "license": "GPL-3.0-or-later",
+  "name": "@auohp/caption-editor-app",
+  "packageManager": "yarn@3.5.1",
+  "devDependencies": {
+    "@fortawesome/fontawesome-common-types": "^6.4.0",
+    "@types/eslint": "^8",
+    "@types/node": "20.x",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "@typescript-eslint/eslint-plugin": "^5.60.1",
+    "@typescript-eslint/parser": "^5.60.1",
+    "eslint": "^8.43.0",
+    "eslint-import-resolver-typescript": "^3.5.5",
+    "eslint-plugin-import": "^2.27.5",
+    "eslint-plugin-ramda": "^2.5.1",
+    "postcss": "^8.4.24",
+    "postcss-html": "^1.5.0",
+    "postcss-jsx": "^0.36.4",
+    "postcss-styl": "^0.12.3",
+    "postcss-syntax": "^0.36.2",
+    "stylelint": "^15.9.0",
+    "stylelint-config-rational-order": "https://github.com/phyllisstein/stylelint-config-rational-order.git#empty-line-threshold",
+    "stylelint-config-recommended": "^12.0.0",
+    "stylelint-order": "^6.0.3",
+    "stylelint-stylus": "^0.18.0",
+    "sugarss": "^4.0.1",
+    "tslib": "^2.6.0",
+    "typescript": "^5.1.5",
+    "vite": "^4.3.9"
+  },
+  "dependencies": {
+    "@lexical/react": "^0.11.1",
+    "@spectrum-css/page": "^5.0.31",
+    "@spectrum-css/vars": "^9.0.8",
+    "lexical": "^0.11.1",
+    "next": "^13.4.7",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "styled-components": "^6.0.0",
+    "styled-preflight": "^8.0.1",
+    "typescript-styled-plugin": "^0.18.3"
+  },
+  "type": "module"
+}

@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+    depends_on: [neo4j]
+    init: true
+    ports:
+      - '5173:5173'
+    volumes:
+      - type: bind
+        source: .
+        target: /app
+      - type: volume
+        source: node_modules
+        target: /app/node_modules
+  neo4j:
+    image: neo4j:5.1.0
+    environment:
+      - 'NEO4J_PLUGINS=["apoc", "n10s"]'
+      - 'NEO4J_dbms_default__listen__address=0.0.0.0'
+      - 'NEO4J_dbms_jvm_additional=-Dapoc.ttl.enabled=true'
+      - 'NEO4J_dbms_jvm_additional=-Dapoc.uuid.enabled=true'
+      - 'NEO4J_dbms_security_auth__enabled=false'
+      - 'NEO4J_dbms_security_procedures_unrestricted=apoc.*'
+    ports:
+      - '7474:7474'
+      - '7687:7687'
+    volumes:
+      - type: volume
+        source: graph_data
+        target: /data
+
+volumes:
+  node_modules:
+  graph_data:

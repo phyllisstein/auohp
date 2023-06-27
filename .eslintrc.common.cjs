@@ -1,20 +1,34 @@
 module.exports = {
-  extends: ['eslint:recommended', 'plugin:import/recommended'],
-  ignorePatterns: ['**/node_modules'],
+  extends: [
+    'eslint:recommended',
+    'plugin:import/recommended',
+    'plugin:import/typescript',
+    'plugin:@next/next/recommended',
+    'plugin:react-hooks/recommended',
+    'plugin:react/recommended',
+    'plugin:ramda/recommended',
+  ],
+  ignorePatterns: [
+    '**/.chorus',
+    '**/node_modules',
+    '**/__generated__',
+    '**/dist/**',
+  ],
   overrides: [
     {
       extends: [
-        'plugin:import/typescript',
         'plugin:@typescript-eslint/recommended',
         'plugin:@typescript-eslint/recommended-requiring-type-checking',
       ],
-      files: ['**/*.ts', '**/*.tsx', '**/.mts', '**/.cts'],
+      files: ['**/*.ts', '**/*.tsx'],
       parser: '@typescript-eslint/parser',
       parserOptions: {
         project: './tsconfig.json',
         tsconfigRootDir: __dirname,
       },
-      plugins: ['@typescript-eslint'],
+      plugins: [
+        '@typescript-eslint',
+      ],
       rules: {
         '@typescript-eslint/indent': [
           'warn',
@@ -56,7 +70,10 @@ module.exports = {
             varsIgnorePattern: '^_',
           },
         ],
-        '@typescript-eslint/object-curly-spacing': ['warn', 'always'],
+        '@typescript-eslint/object-curly-spacing': [
+          'warn',
+          'always',
+        ],
         '@typescript-eslint/quotes': [
           'warn',
           'single',
@@ -85,10 +102,17 @@ module.exports = {
     ecmaVersion: 2022,
     sourceType: 'module',
   },
-  plugins: ['import'],
+  plugins: [
+    'import',
+    '@next/eslint-plugin-next',
+    'ramda',
+  ],
   root: true,
   rules: {
-    'arrow-parens': ['warn', 'as-needed'],
+    'arrow-parens': [
+      'warn',
+      'as-needed',
+    ],
     'comma-dangle': ['warn', 'always-multiline'],
     'eqeqeq': ['error', 'smart'],
     'import/default': 'off',
@@ -114,7 +138,10 @@ module.exports = {
       },
     ],
     'indent': 'off',
-    'jsx-quotes': ['warn', 'prefer-single'],
+    'jsx-quotes': [
+      'warn',
+      'prefer-single',
+    ],
     'no-inner-declarations': 'off',
     'no-multiple-empty-lines': [
       'warn',
@@ -125,7 +152,10 @@ module.exports = {
       },
     ],
     'no-unused-vars': 'off',
-    'object-curly-spacing': ['warn', 'always'],
+    'object-curly-spacing': [
+      'warn',
+      'always',
+    ],
     'quote-props': ['warn', 'consistent-as-needed'],
     'quotes': [
       'warn',
@@ -143,7 +173,10 @@ module.exports = {
       },
     ],
     'sort-imports': 'off',
-    'space-before-function-paren': ['warn', 'always'],
+    'space-before-function-paren': [
+      'warn',
+      'always',
+    ],
     'template-curly-spacing': ['warn', 'always'],
   },
   settings: {
@@ -158,12 +191,8 @@ module.exports = {
       lifetime: '∞',
     },
     'import/parsers': {
-      '@typescript-eslint/parser': [
-        '**/*.ts',
-        '**/*.tsx',
-        '**/.mts',
-        '**/.cts',
-      ],
+      '@babel/parser': ['.js', '.jsx', '.cjs', '.mjs'],
+      '@typescript-eslint/parser': ['.ts', '.tsx'],
     },
     'import/resolver': {
       node: true,

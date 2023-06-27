@@ -1,7 +1,7 @@
 const fs = require('fs')
 const path = require('path')
 
-const sourceRoot = path.resolve(__dirname, './src')
+const sourceRoot = path.resolve('./src')
 const dirEntries = fs.readdirSync(sourceRoot, { withFileTypes: true })
 const moduleDirectories = dirEntries
   .filter(dirent => dirent.isDirectory())
@@ -11,8 +11,18 @@ const moduleDirectories = dirEntries
 module.exports = {
   extends: [
     '../../.eslintrc.common.cjs',
+    '../../.eslintrc.react.cjs',
+  ],
+  overrides: [
+    {
+      files: ['**/*.ts', '**/*.tsx'],
+      parserOptions: {
+        project: './tsconfig.json',
+        tsconfigRootDir: __dirname,
+      },
+    },
   ],
   settings: {
-    'import/internal-regex': `^(${ moduleDirectories })\b`,
+    'import/internal-regex': `^(${ moduleDirectories })`,
   },
 }
