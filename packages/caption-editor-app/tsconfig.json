@@ -24,7 +24,7 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "module": "NodeNext",
+    "module": "es2020",
     "declaration": true,
     "removeComments": true,
     "emitDecoratorMetadata": true,
@@ -33,7 +33,7 @@
     "target": "es2020",
     "incremental": true,
     "skipLibCheck": true,
-    "moduleResolution": "NodeNext"
+    "moduleResolution": "node"
   },
   "include": [
     "./lib/**/*.ts",
