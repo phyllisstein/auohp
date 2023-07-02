@@ -1,9 +1,10 @@
-customSyntax: 'postcss-html'
-extends:
-  - stylelint-stylus/standard
+customSyntax: '@stylelint/postcss-css-in-js'
 plugins:
   - stylelint-config-rational-order/plugin
   - stylelint-order
+extends:
+  - stylelint-config-recommended
+  - stylelint-config-styled-components
 ignoreFiles:
   - 'node_modules/**/*'
   - 'dist/**/*'

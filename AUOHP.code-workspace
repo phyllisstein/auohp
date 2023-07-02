@@ -4,6 +4,10 @@
 			"name": "✨ auohp",
 			"path": "."
 		},
+    {
+      "name": "🚀 @auohp/caption-editor-app",
+      "path": "packages/caption-editor-app"
+    },
 		{
 			"name": "⚙️ @auohp/scripts",
 			"path": "packages/scripts"

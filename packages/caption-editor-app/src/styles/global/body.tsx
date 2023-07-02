@@ -16,7 +16,7 @@ export const Body = createGlobalStyle`
     padding: 0;
 
     font-size: 16px;
-    hyphens: manual;
+    font-family: 'Adobe Clean', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 
     font-kerning: normal;
     font-variant-ligatures: common-ligatures;

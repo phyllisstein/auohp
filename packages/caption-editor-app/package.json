@@ -10,6 +10,7 @@
   "packageManager": "yarn@3.5.1",
   "devDependencies": {
     "@fortawesome/fontawesome-common-types": "^6.4.0",
+    "@stylelint/postcss-css-in-js": "^0.38.0",
     "@types/eslint": "^8",
     "@types/node": "20.x",
     "@types/react": "^18",
@@ -28,6 +29,7 @@
     "stylelint": "^15.9.0",
     "stylelint-config-rational-order": "https://github.com/phyllisstein/stylelint-config-rational-order.git#empty-line-threshold",
     "stylelint-config-recommended": "^12.0.0",
+    "stylelint-config-styled-components": "^0.1.1",
     "stylelint-order": "^6.0.3",
     "stylelint-stylus": "^0.18.0",
     "sugarss": "^4.0.1",
