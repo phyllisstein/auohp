@@ -8,9 +8,18 @@ import { PlainTextPlugin } from '@lexical/react/LexicalPlainTextPlugin'
 import type { NextPage } from 'next'
 import { useEffect } from 'react'
 
+import { TranscriptSpeakerNode } from 'plugins/transcript-speaker-node'
+
 const Home: NextPage = () => {
+  const initialConfig = {
+    namespace: 'auohp',
+    plugins: [
+      TranscriptSpeakerNode,
+    ],
+  }
+
   return (
-    <LexicalComposer initialConfig={{ namespace: 'auohp' }}>
+    <LexicalComposer initialConfig={ initialConfig }>
       <div>
         <PlainTextPlugin
           contentEditable={ <ContentEditable /> }
