@@ -14,8 +14,8 @@ const Home: NextPage = () => {
       <div>
         <PlainTextPlugin
           contentEditable={ <ContentEditable /> }
-          errorBoundary={ <LexicalErrorBoundary /> }
-          placeholder='Type something...' />
+          ErrorBoundary={ LexicalErrorBoundary }
+          placeholder={ () => <span>Type something...</span> } />
         <HistoryPlugin />
       </div>
     </LexicalComposer>
