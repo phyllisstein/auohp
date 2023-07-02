@@ -1,13 +1,18 @@
+import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
 import {
   DecoratorNode,
   type EditorConfig,
-  ElementNode,
   type LexicalEditor,
   type NodeKey,
+  LexicalCommand,
+  createCommand,
+  $insertNodes,
 } from 'lexical'
-import { ReactNode } from 'react'
+import { ReactNode, useEffect } from 'react'
 
-export class TranscriptSpeakerNode extends ElementNode {
+export const CREATE_SPEAKER_COMMAND: LexicalCommand<string> = createCommand('CREATE_SPEAKER_COMMAND')
+
+export class TranscriptSpeakerNode extends DecoratorNode<unknown> {
   static getType () {
     return 'transcript-speaker'
   }
@@ -16,12 +21,12 @@ export class TranscriptSpeakerNode extends ElementNode {
     return new TranscriptSpeakerNode(node.__key)
   }
 
-  constructor (key: NodeKey) {
+  constructor (key?: NodeKey) {
     super(key)
   }
 
   createDOM (config: EditorConfig, editor: LexicalEditor) {
-    const element = super.createDOM(config, editor)
+    const element = document.createElement('div')
     element.classList.add('transcript-speaker-node')
     return element
   }
@@ -37,4 +42,21 @@ export class TranscriptSpeakerNode extends ElementNode {
 
 export function TranscriptSpeakerPlugin () {
   const [editor] = useLexicalComposerContext()
+  useEffect(() => {
+    const removeListener = editor.registerCommand(
+      CREATE_SPEAKER_COMMAND,
+      () => {
+        editor.update(() => {
+          const speakerNode = new TranscriptSpeakerNode()
+          $insertNodes([speakerNode])
+        })
+        return true
+      },
+      0,
+    )
+
+    return () => removeListener()
+  })
+
+  return null
 }

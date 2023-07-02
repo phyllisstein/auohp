@@ -8,14 +8,15 @@ import { PlainTextPlugin } from '@lexical/react/LexicalPlainTextPlugin'
 import type { NextPage } from 'next'
 import { useEffect } from 'react'
 
-import { TranscriptSpeakerNode } from 'plugins/transcript-speaker-node'
+import { CREATE_SPEAKER_COMMAND, TranscriptSpeakerNode, TranscriptSpeakerPlugin } from '../plugins/transcript-speaker-node'
 
 const Home: NextPage = () => {
   const initialConfig = {
     namespace: 'auohp',
-    plugins: [
+    nodes: [
       TranscriptSpeakerNode,
     ],
+    onError: console.error,
   }
 
   return (
@@ -26,6 +27,7 @@ const Home: NextPage = () => {
           ErrorBoundary={ LexicalErrorBoundary }
           placeholder={ () => <span>Type something...</span> } />
         <HistoryPlugin />
+        <TranscriptSpeakerPlugin />
       </div>
     </LexicalComposer>
   )
