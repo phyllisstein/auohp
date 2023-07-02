@@ -1,0 +1,46 @@
+{
+	"folders": [
+		{
+			"name": "✨ auohp",
+			"path": "."
+		},
+		{
+			"name": "⚙️ @auohp/scripts",
+			"path": "packages/scripts"
+		}
+	],
+	"settings": {
+		"[javascript][typescript][svelte]": {
+			"editor.codeActionsOnSave": [
+				"source.fixAll.format",
+				"source.fixAll.stylelint",
+				"source.fixAll.eslint"
+			]
+		},
+		"editor.defaultFormatter": "esbenp.prettier-vscode",
+		"editor.formatOnSave": false,
+		"eslint.format.enable": true,
+		"eslint.lintTask.enable": true,
+		"eslint.validate": [
+			"typescript",
+			"typescriptreact",
+			"javascript",
+			"javascriptreact",
+			"svelte"
+		],
+		"monorepoWorkspace.folders.prefix.unknown": "💾 ",
+		"monorepoWorkspace.folders.regex.apps": "(app|web|api|frontend|client|server|backend|service)s?$",
+		"monorepoWorkspace.folders.regex.libs": "(common|package|lib|private|ui)s?$",
+		"monorepoWorkspace.folders.regex.tools": "(tool|script|util|config)s?$",
+		"stylelint.enable": true,
+		"stylelint.validate": [
+			"css",
+			"less",
+			"postcss",
+			"stylus",
+			"typescript",
+			"typescriptreact",
+			"svelte"
+		]
+	}
+}

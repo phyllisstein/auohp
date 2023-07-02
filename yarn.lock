@@ -5,12 +5,6 @@ __metadata:
   version: 6
   cacheKey: 8
 
-"@auohp/caption-editor@workspace:packages/caption-editor":
-  version: 0.0.0-use.local
-  resolution: "@auohp/caption-editor@workspace:packages/caption-editor"
-  languageName: unknown
-  linkType: soft
-
 "@auohp/scripts@workspace:packages/scripts":
   version: 0.0.0-use.local
   resolution: "@auohp/scripts@workspace:packages/scripts"
@@ -1017,7 +1011,6 @@ __metadata:
     eslint-import-resolver-typescript: ^3.5.5
     eslint-plugin-import: ^2.27.5
     tsx: ^3.12.7
-    typescript: next
   languageName: unknown
   linkType: soft
 
@@ -4300,26 +4293,6 @@ __metadata:
     for-each: ^0.3.3
     is-typed-array: ^1.1.9
   checksum: 2228febc93c7feff142b8c96a58d4a0d7623ecde6c7a24b2b98eb3170e99f7c7eff8c114f9b283085cd59dcd2bd43aadf20e25bba4b034a53c5bb292f71f8956
-  languageName: node
-  linkType: hard
-
-"typescript@npm:next":
-  version: 5.2.0-dev.20230518
-  resolution: "typescript@npm:5.2.0-dev.20230518"
-  bin:
-    tsc: bin/tsc
-    tsserver: bin/tsserver
-  checksum: a176728effa6965b93a8dd9a9e13473770701374183050b541314d35ce2807ea9fbf38e489618db4290b1193dabc14b5fca9d40c85b83245371f7f702ae54a8f
-  languageName: node
-  linkType: hard
-
-"typescript@patch:typescript@next#~builtin<compat/typescript>":
-  version: 5.2.0-dev.20230518
-  resolution: "typescript@patch:typescript@npm%3A5.2.0-dev.20230518#~builtin<compat/typescript>::version=5.2.0-dev.20230518&hash=77c9e2"
-  bin:
-    tsc: bin/tsc
-    tsserver: bin/tsserver
-  checksum: 399853760646387a8fab3531fb211b679566f86fb16f6c9d259567061610f038da061c5831305d13f40babdc62c6cfd515dd74dcc4ffc253b2693c3a45da4ec2
   languageName: node
   linkType: hard
 
