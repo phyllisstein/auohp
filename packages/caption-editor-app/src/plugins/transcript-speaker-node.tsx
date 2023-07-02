@@ -58,5 +58,9 @@ export function TranscriptSpeakerPlugin () {
     return () => removeListener()
   })
 
+  useEffect(() => {
+    editor.dispatchCommand(CREATE_SPEAKER_COMMAND, 'test')
+  })
+
   return null
 }
