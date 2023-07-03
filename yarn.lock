@@ -22,11 +22,14 @@ __metadata:
     "@fortawesome/fontawesome-common-types": ^6.4.0
     "@lexical/react": ^0.11.1
     "@spectrum-css/button": ^10.1.7
+    "@spectrum-css/card": ^6.0.1
+    "@spectrum-css/inlinealert": ^7.0.30
     "@spectrum-css/page": ^5.0.31
     "@spectrum-css/textfield": ^6.0.4
     "@spectrum-css/tokens": ^10.2.1
     "@spectrum-css/typography": ^5.0.25
     "@spectrum-css/vars": ^9.0.8
+    "@spectrum-css/well": ^3.0.46
     "@stylelint/postcss-css-in-js": ^0.38.0
     "@types/eslint": ^8
     "@types/node": 20.x
@@ -2565,6 +2568,31 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@spectrum-css/card@npm:^6.0.1":
+  version: 6.0.1
+  resolution: "@spectrum-css/card@npm:6.0.1"
+  peerDependencies:
+    "@spectrum-css/actionbutton": ">=4.0.0"
+    "@spectrum-css/asset": ">=3"
+    "@spectrum-css/checkbox": ">=3 <=6"
+    "@spectrum-css/icon": ">=3"
+    "@spectrum-css/quickaction": ">=3"
+    "@spectrum-css/tokens": ">=8 <=10"
+    "@spectrum-css/typography": ">=4 <=5"
+  checksum: 259b1c631b466a9a5742c2d1621edf67ea92cd654ebc7b561a94cdf45e5cd47aa35e6ac61bbab6426155748c47abd43f4da0402f4f116818e8c28e8927e8bdf1
+  languageName: node
+  linkType: hard
+
+"@spectrum-css/inlinealert@npm:^7.0.30":
+  version: 7.0.30
+  resolution: "@spectrum-css/inlinealert@npm:7.0.30"
+  peerDependencies:
+    "@spectrum-css/icon": ">=3"
+    "@spectrum-css/tokens": ">=10.0.0"
+  checksum: dfe0b3d9850a91589cf94c6286feda0446af87b994ea1292591e6c3a763426aef8bbf764099a5177a92f4ef330c9fefc5e8b28700a456ef084adbf01603e5c58
+  languageName: node
+  linkType: hard
+
 "@spectrum-css/page@npm:^5.0.31":
   version: 5.0.31
   resolution: "@spectrum-css/page@npm:5.0.31"
@@ -2603,6 +2631,15 @@ __metadata:
   version: 9.0.8
   resolution: "@spectrum-css/vars@npm:9.0.8"
   checksum: cdc38cea193dcb59a9e2909760fa850cde17a864941df3fce5df56bd97ce5f4a5bc196b4b0808d792592918b9dc87c6f936a99e71d92f2e0b4a16298176f2209
+  languageName: node
+  linkType: hard
+
+"@spectrum-css/well@npm:^3.0.46":
+  version: 3.0.46
+  resolution: "@spectrum-css/well@npm:3.0.46"
+  peerDependencies:
+    "@spectrum-css/vars": ">=9"
+  checksum: 06a688b34a99e3e7f609c7aa7f399ff7252c2fb8b230d079e12be7c8a0048918585267e098535162341f288048d605768a1bbe415f82eab0fe6a43f4b2a5ffc7
   languageName: node
   linkType: hard
 

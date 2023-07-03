@@ -20,6 +20,6 @@ export const Body = createGlobalStyle`
 
     font-kerning: normal;
     font-variant-ligatures: common-ligatures;
-    font-variant-numeric: oldstyle-nums proportional-nums;
+    font-variant-numeric: lining-nums proportional-nums;
   }
 `
