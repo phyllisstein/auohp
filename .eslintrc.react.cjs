@@ -54,6 +54,12 @@ module.exports = {
     ],
     'react/react-in-jsx-scope': 'off',
     'react/self-closing-comp': 'warn',
+    'react-hooks/exhaustive-deps': [
+      'warn',
+      {
+        additionalHooks: '(useRecoilCallback|useRecoilTransaction_UNSTABLE)',
+      }
+    ],
   },
   settings: {
     react: {
