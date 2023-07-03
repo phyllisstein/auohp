@@ -39,7 +39,11 @@
   },
   "dependencies": {
     "@lexical/react": "^0.11.1",
+    "@spectrum-css/button": "^10.1.7",
     "@spectrum-css/page": "^5.0.31",
+    "@spectrum-css/textfield": "^6.0.4",
+    "@spectrum-css/tokens": "^10.2.1",
+    "@spectrum-css/typography": "^5.0.25",
     "@spectrum-css/vars": "^9.0.8",
     "lexical": "^0.11.1",
     "next": "^13.4.7",

@@ -1,35 +1,34 @@
-import { LexicalComposer } from '@lexical/react/LexicalComposer'
-import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
-import { ContentEditable } from '@lexical/react/LexicalContentEditable'
-import LexicalErrorBoundary from '@lexical/react/LexicalErrorBoundary'
-import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin'
-import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin'
-import { PlainTextPlugin } from '@lexical/react/LexicalPlainTextPlugin'
 import type { NextPage } from 'next'
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
+import { createEditor } from 'slate'
+import { Editable, Slate, withReact } from 'slate-react'
 
-import { CREATE_SPEAKER_COMMAND, TranscriptSpeakerNode, TranscriptSpeakerPlugin } from '../plugins/transcript-speaker-node'
+import { Element } from 'editor/element'
+import { insertCaptionLine, withCaptionLine } from 'src/editor/caption-line'
+
+const initialValue = [
+  {
+    type: 'paragraph',
+    children: [{ text: 'A line of text in a paragraph.' }],
+  },
+]
 
 const Home: NextPage = () => {
-  const initialConfig = {
-    namespace: 'auohp',
-    nodes: [
-      TranscriptSpeakerNode,
-    ],
-    onError: console.error,
-  }
+  const editor = useMemo(() => withCaptionLine(withReact(createEditor())), [])
+
+  useEffect(() => {
+    insertCaptionLine(editor)
+  }, [editor])
 
   return (
-    <LexicalComposer initialConfig={ initialConfig }>
-      <div>
-        <PlainTextPlugin
-          contentEditable={ <ContentEditable /> }
-          ErrorBoundary={ LexicalErrorBoundary }
-          placeholder={ () => <span>Type something...</span> } />
-        <HistoryPlugin />
-        <TranscriptSpeakerPlugin />
-      </div>
-    </LexicalComposer>
+    <>
+      <button className='spectrum-Button spectrum-Button--fill spectrum-Button--accent spectrum-Button--sizeL'>
+        <span className='spectrum-Button-label'>Button</span>
+      </button>
+      <Slate editor={ editor } initialValue={ initialValue }>
+        <Editable renderElement={ props => <Element { ...props } /> } />
+      </Slate>
+    </>
   )
 }
 
