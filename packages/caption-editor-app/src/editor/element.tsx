@@ -1,4 +1,4 @@
-import { CaptionLine } from './caption-line'
+import { CaptionLine } from './captions'
 
 export function Element (props) {
   switch (props.element.type) {

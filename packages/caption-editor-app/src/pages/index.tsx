@@ -3,8 +3,8 @@ import { useEffect, useMemo } from 'react'
 import { createEditor } from 'slate'
 import { Editable, Slate, withReact } from 'slate-react'
 
+import { insertCaptionLine, withCaptionLine } from 'editor/captions'
 import { Element } from 'editor/element'
-import { insertCaptionLine, withCaptionLine } from 'src/editor/caption-line'
 
 const initialValue = [
   {
