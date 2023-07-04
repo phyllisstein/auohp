@@ -3,6 +3,7 @@ import { useEffect, useMemo } from 'react'
 import { createEditor } from 'slate'
 import { Editable, Slate, withReact } from 'slate-react'
 
+import { Video } from 'components/player'
 import { insertCaptionLine, withCaptionLine } from 'editor/captions'
 import { Element } from 'editor/element'
 
@@ -22,9 +23,7 @@ const Home: NextPage = () => {
 
   return (
     <>
-      <button className='spectrum-Button spectrum-Button--fill spectrum-Button--accent spectrum-Button--sizeL'>
-        <span className='spectrum-Button-label'>Button</span>
-      </button>
+      <Video />
       <Slate editor={ editor } initialValue={ initialValue }>
         <Editable renderElement={ props => <Element { ...props } /> } />
       </Slate>
