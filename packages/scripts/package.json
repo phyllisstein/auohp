@@ -10,10 +10,7 @@
   "packageManager": "yarn@3.5.1",
   "type": "module",
   "dependencies": {
-    "@google-cloud/speech": "^5.5.0",
-    "@google-cloud/storage": "^6.11.0",
-    "google-auth-library": "^8.8.0",
-    "neo4j-driver": "^5.9.0"
+    "neo4j-driver": "^5.9.2"
   },
   "devDependencies": {
     "@types/node": "^20.2.5"
