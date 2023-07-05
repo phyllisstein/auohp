@@ -14,6 +14,9 @@ export default {
   typescript: {
     ignoreBuildErrors: true,
   },
+  compiler: {
+    styledComponents: true,
+  },
   webpack (config, { dev }) {
     config.resolve.enforceExtension = false
     config.resolve.modules = [
