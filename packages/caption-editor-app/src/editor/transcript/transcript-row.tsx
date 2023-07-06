@@ -1,3 +1,5 @@
+import { Descendant } from 'slate'
+import { Editable, Slate, useSlateWithV } from 'slate-react'
 import styled from 'styled-components'
 
 interface TranscriptRowProps {
@@ -29,14 +31,35 @@ const Transcription = styled.div`
   grid-area: transcription;
 `
 
-export function TranscriptRow ({ children, speaker, fromTime, toTime }: TranscriptRowProps) {
+const initialValue: Descendant[] = [
+  {
+    type: 'paragraph',
+    children: [
+      {
+        text: `
+          Still it was a steady pulse of pain midway down his spine. They were dropping,
+          losing altitude in a canyon of rainbow foliage, a lurid communal mural that
+          completely covered the hull of the Sprawl’s towers and ragged Fuller domes, dim
+          figures moving toward him in the dark.
+        `,
+      },
+    ],
+  },
+]
+
+export function TranscriptRow ({ attributes, children, element }) {
+  console.log({ attributes, children, element })
+  const { speaker, fromTime, toTime } = element ?? {}
+
   return (
-    <Row>
-      <Speaker>{ speaker }</Speaker>
-      <Timestamp>{ fromTime }&ndash;{ toTime }</Timestamp>
-      <Transcription>
-        { children }
-      </Transcription>
-    </Row>
+    <div { ...attributes }>
+      <Row>
+        <Speaker>{ speaker }</Speaker>
+        <Timestamp>{ fromTime }&ndash;{ toTime }</Timestamp>
+        <Transcription>
+          { children }
+        </Transcription>
+      </Row>
+    </div>
   )
 }

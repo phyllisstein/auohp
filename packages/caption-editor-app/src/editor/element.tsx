@@ -1,12 +1,24 @@
 import { CaptionLine } from './captions'
+import { Transcript, TranscriptRow } from './transcript'
 
 export function Element (props) {
-  switch (props.element.type) {
+  const { attributes, children, element } = props
+  console.log({ attributes, children, element })
+
+  switch (element.type) {
   case 'caption-line':
     return (
       <CaptionLine { ...props } />
     )
+  case 'transcript':
+    return (
+      <Transcript { ...props } />
+    )
+  case 'transcript-row':
+    return (
+      <TranscriptRow { ...props } />
+    )
   default:
-    return <p { ...props } />
+    return <p { ...attributes }>{ children }</p>
   }
 }
