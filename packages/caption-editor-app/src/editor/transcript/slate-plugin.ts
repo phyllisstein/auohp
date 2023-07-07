@@ -23,7 +23,7 @@ export function withTranscriptRow (editor) {
   const { isVoid } = editor
 
   editor.isVoid = element => {
-    return element.type === 'transcript-row' ? true : isVoid(element)
+    return element.type === 'transcript-row' ? false : isVoid(element)
   }
 
   return editor

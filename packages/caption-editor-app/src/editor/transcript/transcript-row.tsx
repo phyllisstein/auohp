@@ -1,5 +1,6 @@
-import { Descendant } from 'slate'
-import { Editable, Slate, useSlateStatic, useSlateWithV } from 'slate-react'
+import { oneLine } from 'common-tags'
+import { Descendant, createEditor } from 'slate'
+import { Editable, Slate, useSlateStatic, useSlateWithV, withReact } from 'slate-react'
 import styled from 'styled-components'
 
 interface TranscriptRowProps {
@@ -36,7 +37,7 @@ const initialValue: Descendant[] = [
     type: 'paragraph',
     children: [
       {
-        text: `
+        text: oneLine`
           Still it was a steady pulse of pain midway down his spine. They were dropping,
           losing altitude in a canyon of rainbow foliage, a lurid communal mural that
           completely covered the hull of the Sprawl’s towers and ragged Fuller domes, dim
@@ -50,20 +51,18 @@ const initialValue: Descendant[] = [
 export function TranscriptRow ({ attributes, children, element }) {
   console.log('<TranscriptRow />', { attributes, children, element })
   const { speaker, fromTime, toTime } = element ?? {}
-  const editor = useSlateStatic()
 
   return (
     <div { ...attributes }>
       <Row>
-        <Speaker>{ speaker }</Speaker>
-        <Timestamp>{ fromTime }&ndash;{ toTime }</Timestamp>
+        <div contentEditable={ false } style={{ display: 'contents' }}>
+          <Speaker>{ speaker }</Speaker>
+          <Timestamp>{ fromTime }&ndash;{ toTime }</Timestamp>
+        </div>
         <Transcription>
-          <Slate editor={ editor } initialValue={ initialValue }>
-            <Editable />
-          </Slate>
+          { children }
         </Transcription>
       </Row>
-      { children }
     </div>
   )
 }

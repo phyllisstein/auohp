@@ -9,29 +9,30 @@ import { Element } from 'editor/element'
 import { insertTranscript, Transcript, TranscriptRow } from 'editor/transcript'
 import { withTranscript, withTranscriptRow } from 'editor/transcript/slate-plugin'
 
-const initialValue = [{ text: '' }]
+const initialValue = [
+  {
+    type: 'transcript',
+    children: [
+      {
+        type: 'transcript-row',
+        children: [{ text: '' }],
+        fromTime: '00:00:00.000',
+        toTime: '00:00:10.000',
+        speaker: 'Speaker 1',
+      },
+      {
+        type: 'transcript-row',
+        children: [{ text: '' }],
+        fromTime: '00:00:12.000',
+        toTime: '00:00:22.000',
+        speaker: 'Speaker 2',
+      },
+    ],
+  },
+]
 
 const Home: NextPage = () => {
   const editor = useMemo(() => withTranscriptRow(withTranscript(withCaptionLine(withReact(createEditor())))), [])
-
-  useEffect(() => {
-    Transforms.insertNodes(
-      editor,
-      {
-        type: 'transcript',
-        children: [
-          {
-            type: 'transcript-row',
-            children: [{ text: '' }],
-          },
-          {
-            type: 'transcript-row',
-            children: [{ text: '' }],
-          },
-        ],
-      },
-    )
-  }, [editor])
 
   return (
     <>

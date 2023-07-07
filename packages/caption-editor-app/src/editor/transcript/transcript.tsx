@@ -14,7 +14,7 @@ const Container = styled.div`
 export function Transcript ({ attributes, children, element }: TranscriptProps) {
   console.log('<Transcript />', { attributes, children, element })
   return (
-    <div { ...attributes } contentEditable={ false }>
+    <div { ...attributes }>
       <Container>
         { children }
       </Container>
