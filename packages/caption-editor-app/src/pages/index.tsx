@@ -19,10 +19,16 @@ const Home: NextPage = () => {
       editor,
       {
         type: 'transcript',
-        children: [{ text: '' }],
-      },
-      {
-        at: [editor.children.length],
+        children: [
+          {
+            type: 'transcript-row',
+            children: [{ text: '' }],
+          },
+          {
+            type: 'transcript-row',
+            children: [{ text: '' }],
+          },
+        ],
       },
     )
   }, [editor])

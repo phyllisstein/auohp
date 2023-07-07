@@ -1,5 +1,5 @@
 import { Descendant } from 'slate'
-import { Editable, Slate, useSlateWithV } from 'slate-react'
+import { Editable, Slate, useSlateStatic, useSlateWithV } from 'slate-react'
 import styled from 'styled-components'
 
 interface TranscriptRowProps {
@@ -48,8 +48,9 @@ const initialValue: Descendant[] = [
 ]
 
 export function TranscriptRow ({ attributes, children, element }) {
-  console.log({ attributes, children, element })
+  console.log('<TranscriptRow />', { attributes, children, element })
   const { speaker, fromTime, toTime } = element ?? {}
+  const editor = useSlateStatic()
 
   return (
     <div { ...attributes }>
@@ -57,9 +58,12 @@ export function TranscriptRow ({ attributes, children, element }) {
         <Speaker>{ speaker }</Speaker>
         <Timestamp>{ fromTime }&ndash;{ toTime }</Timestamp>
         <Transcription>
-          { children }
+          <Slate editor={ editor } initialValue={ initialValue }>
+            <Editable />
+          </Slate>
         </Transcription>
       </Row>
+      { children }
     </div>
   )
 }
