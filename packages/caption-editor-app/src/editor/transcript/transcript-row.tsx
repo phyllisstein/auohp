@@ -49,8 +49,7 @@ const initialValue: Descendant[] = [
 ]
 
 export function TranscriptRow ({ attributes, children, element }) {
-  console.log('<TranscriptRow />', { attributes, children, element })
-  const { speaker, fromTime, toTime } = element ?? {}
+  const { speaker, fromTime, toTime } = element
 
   return (
     <div { ...attributes }>

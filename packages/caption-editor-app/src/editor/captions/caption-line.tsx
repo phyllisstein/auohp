@@ -9,8 +9,6 @@ const CaptionWrapper = styled.div`
 `
 
 export function CaptionLine ({ attributes, children, element }) {
-  console.log('<CaptionLine />', { attributes, children, element })
-
   return (
     <div { ...attributes }>
       <CaptionWrapper className='spectrum-InLineAlert'>

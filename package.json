@@ -15,6 +15,7 @@
   ],
   "private": true,
   "devDependencies": {
+    "@stylelint/postcss-css-in-js": "^0.38.0",
     "@types/eslint": "^8",
     "@typescript-eslint/eslint-plugin": "^5.60.1",
     "@typescript-eslint/parser": "^5.60.1",
@@ -25,10 +26,20 @@
     "eslint-plugin-ramda": "^2.5.1",
     "eslint-plugin-react": "^7.32.2",
     "eslint-plugin-react-hooks": "^4.6.0",
+    "postcss": "^8.4.25",
+    "postcss-html": "^1.5.0",
+    "postcss-jsx": "^0.36.4",
+    "postcss-styled-components": "^0.2.1",
+    "postcss-styled-syntax": "^0.4.0",
+    "postcss-syntax": "^0.36.2",
+    "stylelint-config-styled-components": "^0.1.1",
     "tsx": "^3.12.7"
   },
   "dependencies": {
     "slate": "^0.94.1",
     "slate-react": "^0.97.1"
+  },
+  "resolutions": {
+    "postcss": "8.4.5"
   }
 }

@@ -3,7 +3,6 @@ import { Transcript, TranscriptRow } from './transcript'
 
 export function Element (props) {
   const { attributes, children, element } = props
-  console.log('<Element />', { attributes, children, element })
 
   switch (element.type) {
   case 'caption-line':

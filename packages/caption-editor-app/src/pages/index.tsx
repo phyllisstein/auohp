@@ -33,18 +33,14 @@ const initialValue = [
 
 const Home: NextPage = () => {
   const editor = useMemo(() => withTranscriptRow(withTranscript(withCaptionLine(withReact(createEditor())))), [])
+  const renderElement = useCallback(props => <Element { ...props } />, [])
+  const renderLeaf = useCallback(props => <span { ...props.attributes }>{ props.children }</span>, [])
 
   return (
     <>
       <Video />
       <Slate editor={ editor } initialValue={ initialValue }>
-        <Editable renderElement={ props => {
-          console.log({ editableElement: { props } })
-          return <Element { ...props } />
-        } } renderLeaf={ props => {
-          console.log({ editableLeaf: { props } })
-          return <span { ...props.attributes } data-custom-prop='leaf'>{ props.children }</span>
-        } } />
+        <Editable renderElement={ renderElement } renderLeaf={ renderLeaf } />
       </Slate>
     </>
   )
