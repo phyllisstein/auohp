@@ -4,7 +4,7 @@ export function withTranscript (editor) {
   const { isVoid } = editor
 
   editor.isVoid = element => {
-    return element.type === 'transcript' ? false : isVoid(element)
+    return (element.type === 'transcript' || element.type === 'transcript-row') ? false : isVoid(element)
   }
 
   return editor
@@ -13,20 +13,15 @@ export function withTranscript (editor) {
 export function insertTranscript (editor) {
   const transcript = {
     type: 'transcript',
-    children: [{ text: '' }],
+    children: [
+      {
+        type: 'transcript-row',
+        children: [{ text: '' }],
+      },
+    ],
   }
 
   Transforms.insertNodes(editor, transcript)
-}
-
-export function withTranscriptRow (editor) {
-  const { isVoid } = editor
-
-  editor.isVoid = element => {
-    return element.type === 'transcript-row' ? false : isVoid(element)
-  }
-
-  return editor
 }
 
 export function insertTranscriptRow (editor) {

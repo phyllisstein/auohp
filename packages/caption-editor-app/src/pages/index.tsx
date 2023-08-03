@@ -7,7 +7,7 @@ import { Video } from 'components/player'
 import { insertCaptionLine, withCaptionLine } from 'editor/captions'
 import { Element } from 'editor/element'
 import { insertTranscript, Transcript, TranscriptRow } from 'editor/transcript'
-import { withTranscript, withTranscriptRow } from 'editor/transcript/slate-plugin'
+import { withTranscript } from 'editor/transcript/slate-plugin'
 
 const initialValue = [
   {
@@ -32,9 +32,15 @@ const initialValue = [
 ]
 
 const Home: NextPage = () => {
-  const editor = useMemo(() => withTranscriptRow(withTranscript(withCaptionLine(withReact(createEditor())))), [])
+  const editor = useMemo(
+    () => withTranscript(withCaptionLine(withReact(createEditor()))),
+    [],
+  )
   const renderElement = useCallback(props => <Element { ...props } />, [])
-  const renderLeaf = useCallback(props => <span { ...props.attributes }>{ props.children }</span>, [])
+  const renderLeaf = useCallback(
+    props => <span { ...props.attributes }>{ props.children }</span>,
+    [],
+  )
 
   return (
     <>
