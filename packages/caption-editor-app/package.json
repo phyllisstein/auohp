@@ -8,6 +8,9 @@
   "license": "GPL-3.0-or-later",
   "name": "@auohp/caption-editor-app",
   "packageManager": "yarn@3.5.1",
+  "scripts": {
+    "dev": "next dev"
+  },
   "devDependencies": {
     "@fortawesome/fontawesome-common-types": "^6.4.0",
     "@stylelint/postcss-css-in-js": "^0.38.0",
@@ -62,6 +65,8 @@
     "react-dom": "^18.2.0",
     "recoil": "^0.7.7",
     "remeda": "^1.23.0",
+    "slate": "^0.94.1",
+    "slate-react": "^0.98.1",
     "styled-components": "^6.0.0",
     "styled-preflight": "^8.0.1",
     "typescript-styled-plugin": "^0.18.3"

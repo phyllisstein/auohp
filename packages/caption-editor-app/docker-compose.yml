@@ -6,8 +6,13 @@ services:
       context: .
     depends_on: [neo4j]
     init: true
-    ports:
-      - '5173:5173'
+    environment:
+      - VIRTUAL_HOST=editor.auohp.here
+    expose:
+      - '3000'
+    networks:
+      - default
+      - nginx-proxy
     volumes:
       - type: bind
         source: .
@@ -15,13 +20,15 @@ services:
       - type: volume
         source: node_modules
         target: /app/node_modules
+    secrets:
+      - environment
   neo4j:
-    image: neo4j:5.1.0
+    image: neo4j:latest
     environment:
       - 'NEO4J_PLUGINS=["apoc", "n10s"]'
-      - 'NEO4J_dbms_default__listen__address=0.0.0.0'
-      - 'NEO4J_dbms_jvm_additional=-Dapoc.ttl.enabled=true'
-      - 'NEO4J_dbms_jvm_additional=-Dapoc.uuid.enabled=true'
+      - 'NEO4J_server_default__listen__address=0.0.0.0'
+      - 'NEO4J_server_jvm_additional=-Dapoc.ttl.enabled=true'
+      - 'NEO4J_server_jvm_additional=-Dapoc.uuid.enabled=true'
       - 'NEO4J_dbms_security_auth__enabled=false'
       - 'NEO4J_dbms_security_procedures_unrestricted=apoc.*'
     ports:
@@ -35,3 +42,13 @@ services:
 volumes:
   node_modules:
   graph_data:
+
+secrets:
+  environment:
+    file: ./.env
+
+networks:
+  default:
+  nginx-proxy:
+    external: true
+    name: nginx-proxy
