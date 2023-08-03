@@ -9,6 +9,7 @@
   "name": "@auohp/scripts",
   "packageManager": "yarn@3.5.1",
   "type": "module",
+  "private": true,
   "dependencies": {
     "@google-cloud/speech": "^5.5.0",
     "@google-cloud/storage": "^6.11.0",

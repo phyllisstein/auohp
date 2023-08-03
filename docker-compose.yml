@@ -6,10 +6,10 @@ services:
       context: .
     depends_on: [neo4j]
     init: true
-    expose:
-      - '3000'
     environment:
       - VIRTUAL_HOST=editor.auohp.here
+    expose:
+      - '3030'
     networks:
       - default
       - nginx-proxy
@@ -20,15 +20,23 @@ services:
       - type: volume
         source: node_modules
         target: /app/node_modules
+      - type: volume
+        source: app_modules
+        target: /app/packages/caption-editor-app/node_modules
+      - type: volume
+        source: script_modules
+        target: /app/packages/scripts/node_modules
     secrets:
       - environment
   neo4j:
-    image: neo4j:5.1.0
+    image: neo4j:5.7.0
     environment:
+      - 'NEO4J_AUTH=none'
       - 'NEO4J_PLUGINS=["apoc", "n10s", "graph-data-science"]'
-      - 'NEO4J_dbms_default__listen__address=0.0.0.0'
-      - 'NEO4J_dbms_jvm_additional=-Dapoc.ttl.enabled=true'
-      - 'NEO4J_dbms_jvm_additional=-Dapoc.uuid.enabled=true'
+      - 'NEO4J_server_default__listen__address=0.0.0.0'
+      - 'NEO4J_server_jvm_additional=-Dapoc.ttl.enabled=true'
+      - 'NEO4J_server_jvm_additional=-Dapoc.uuid.enabled=true'
+      - 'NEO4J_dbms_security_auth__enabled=false'
       - 'NEO4J_dbms_security_procedures_unrestricted=apoc.*'
     ports:
       - '7474:7474'
@@ -40,6 +48,8 @@ services:
 
 volumes:
   node_modules:
+  app_modules:
+  script_modules:
   graph_data:
 
 secrets:
