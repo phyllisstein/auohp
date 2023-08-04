@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRecoilState } from 'recoil'
 
 import * as videoState from 'state/player'
@@ -8,11 +8,12 @@ interface VideoProps {
 }
 
 export function Video ({ children }: VideoProps) {
-  const videoRef = useRef<HTMLVideoElement>(null)
+  const [videoRef, setVideo] = useState<HTMLVideoElement>()
   const [playhead, setPlayhead] = useRecoilState(videoState.playhead)
 
   useEffect(() => {
-    const vr = videoRef.current
+    console.log('useEffect')
+    const vr = videoRef
 
     if (!vr) {
       return
@@ -25,7 +26,7 @@ export function Video ({ children }: VideoProps) {
       event => {
         setPlayhead(playhead => ({
           ...playhead,
-          currentTime: event.currentTarget.currentTime,
+          currentTime: event.target.currentTime,
         }))
       },
       { signal: controller.signal },
@@ -80,7 +81,7 @@ export function Video ({ children }: VideoProps) {
       event => {
         setPlayhead(playhead => ({
           ...playhead,
-          duration: event.currentTarget.duration,
+          duration: event.target.duration,
         }))
       },
       { signal: controller.signal },
@@ -91,12 +92,12 @@ export function Video ({ children }: VideoProps) {
         controller.abort()
       }
     }
-  })
+  }, [videoRef, setPlayhead])
 
   console.log({ playhead })
 
   return (
-    <video ref={ videoRef } controls>
+    <video ref={ el => setVideo(el) } controls>
       <source src='https://archive.org/download/BigBuckBunny_124/Content/big_buck_bunny_720p_surround.mp4' />
     </video>
   )
