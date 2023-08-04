@@ -31,13 +31,11 @@ services:
   neo4j:
     image: neo4j:5.7.0
     environment:
-      - 'NEO4J_AUTH=none'
+      - 'NEO4J_AUTH=neo4j/auohp-phoua'
       - 'NEO4J_PLUGINS=["apoc", "n10s", "graph-data-science"]'
       - 'NEO4J_server_default__listen__address=0.0.0.0'
       - 'NEO4J_server_jvm_additional=-Dapoc.ttl.enabled=true'
       - 'NEO4J_server_jvm_additional=-Dapoc.uuid.enabled=true'
-      - 'NEO4J_dbms_security_auth__enabled=false'
-      - 'NEO4J_dbms_security_procedures_unrestricted=apoc.*'
     ports:
       - '7474:7474'
       - '7687:7687'
