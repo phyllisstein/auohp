@@ -1,6 +1,6 @@
 import type { NextPage } from 'next'
 import { useCallback, useEffect, useMemo } from 'react'
-import { createEditor, Transforms } from 'slate'
+import { createEditor, Text, Transforms } from 'slate'
 import { Editable, Slate, withReact } from 'slate-react'
 
 import { Video } from 'components/player'

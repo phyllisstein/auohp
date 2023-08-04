@@ -13,7 +13,9 @@
     "@google-cloud/speech": "^5.5.0",
     "@google-cloud/storage": "^6.11.0",
     "google-auth-library": "^8.8.0",
-    "neo4j-driver": "^5.9.2"
+    "neo4j-driver": "^5.9.2",
+    "slate": "^0.94.1",
+    "slate-react": "^0.98.1"
   },
   "devDependencies": {
     "@types/node": "^20.3.2"
