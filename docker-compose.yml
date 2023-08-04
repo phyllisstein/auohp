@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+    depends_on: [neo4j]
+    init: true
+    environment:
+      - VIRTUAL_HOST=editor.auohp.here
+    expose:
+      - '3030'
+    networks:
+      - default
+      - nginx-proxy
+    volumes:
+      - type: bind
+        source: .
+        target: /app
+      - type: volume
+        source: node_modules
+        target: /app/node_modules
+      - type: volume
+        source: app_modules
+        target: /app/packages/caption-editor-app/node_modules
+      - type: volume
+        source: script_modules
+        target: /app/packages/scripts/node_modules
+    secrets:
+      - environment
+  neo4j:
+    image: neo4j:5.7.0
+    environment:
+      - 'NEO4J_AUTH=neo4j/auohp-phoua'
+      - 'NEO4J_PLUGINS=["apoc", "n10s", "graph-data-science"]'
+      - 'NEO4J_server_default__listen__address=0.0.0.0'
+      - 'NEO4J_server_jvm_additional=-Dapoc.ttl.enabled=true'
+      - 'NEO4J_server_jvm_additional=-Dapoc.uuid.enabled=true'
+    ports:
+      - '7474:7474'
+      - '7687:7687'
+    volumes:
+      - type: volume
+        source: graph_data
+        target: /data
+
+volumes:
+  node_modules:
+  app_modules:
+  script_modules:
+  graph_data:
+
+secrets:
+  environment:
+    file: ./.env
+
+networks:
+  default:
+  nginx-proxy:
+    external: true
+    name: nginx-proxy
