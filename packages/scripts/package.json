@@ -11,6 +11,7 @@
   "type": "module",
   "private": true,
   "dependencies": {
+    "@aws-sdk/client-transcribe": "^3.382.0",
     "@google-cloud/speech": "^5.5.0",
     "@google-cloud/storage": "^6.11.0",
     "google-auth-library": "^8.8.0",
