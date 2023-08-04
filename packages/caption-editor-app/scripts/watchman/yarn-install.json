@@ -1,0 +1,16 @@
+[
+  "trigger",
+  "/app",
+  {
+    "name": "yarn-install",
+    "expression": [
+      "name",
+      "yarn.lock"
+    ],
+    "command": [
+      "./scripts/develop.sh",
+      "yarn"
+    ],
+    "append_files": false
+  }
+]

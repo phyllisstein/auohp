@@ -10,7 +10,7 @@ const moduleDirectories = dirEntries
 
 module.exports = {
   extends: [
-    '../../.eslintrc.baseline.cjs',
+    '../../.eslintrc.common.cjs',
   ],
   settings: {
     'import/internal-regex': `^(${ moduleDirectories })\b`,

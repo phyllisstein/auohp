@@ -9,10 +9,17 @@
   "name": "@auohp/scripts",
   "packageManager": "yarn@3.5.1",
   "type": "module",
+  "private": true,
   "dependencies": {
-    "neo4j-driver": "^5.9.2"
+    "@aws-sdk/client-transcribe": "^3.382.0",
+    "@google-cloud/speech": "^5.5.0",
+    "@google-cloud/storage": "^6.11.0",
+    "google-auth-library": "^8.8.0",
+    "neo4j-driver": "^5.9.2",
+    "slate": "^0.94.1",
+    "slate-react": "^0.98.1"
   },
   "devDependencies": {
-    "@types/node": "^20.2.5"
+    "@types/node": "^20.3.2"
   }
 }

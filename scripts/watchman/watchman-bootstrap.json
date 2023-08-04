@@ -1,0 +1,16 @@
+[
+  "trigger",
+  "/app",
+  {
+    "name": "watchman-bootstrap",
+    "expression": [
+      "dirname",
+      "watchman"
+    ],
+    "command": [
+      "./scripts/develop.sh",
+      "watches"
+    ],
+    "append_files": false
+  }
+]
