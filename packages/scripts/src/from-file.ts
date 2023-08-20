@@ -11,25 +11,18 @@ const client = new TranscribeClient({
 const BUCKET = 'act-up-oral-history-resilient-reserve-4710'
 
 const FILES = [
-  '035-000',
-  '035-001',
-  '035-002',
-  '026-000',
-  '026-001',
-  '026-002',
-  '026-003',
-  '074-000',
-  '074-001',
-  '074-002',
-  '074-003',
-  '074-004',
+  '004_gregg_bordowitz',
+  '012_mark_harrington',
+  '035_larry_kramer',
+  '074_douglas_crimp',
+  '138_joan_gibbs',
 ]
 
 const BASE_PARAMS: StartTranscriptionJobCommandInput = {
   TranscriptionJobName: '',
   LanguageCode: 'en-US',
   Settings: {
-    MaxSpeakerLabels: 5,
+    MaxSpeakerLabels: 3,
     ShowSpeakerLabels: true,
   },
   JobExecutionSettings: {
@@ -37,12 +30,14 @@ const BASE_PARAMS: StartTranscriptionJobCommandInput = {
     // AllowDeferredExecution: true,
   },
   OutputBucketName: BUCKET,
+  ModelSettings: {
+    LanguageModelName: 'auohp-1688512598',
+  },
 
-  MediaFormat: 'wav',
+  MediaFormat: 'flac',
   Media: {
     MediaFileUri: '',
   },
-  MediaSampleRateHertz: 22050,
 
   Subtitles: {
     Formats: ['vtt', 'srt'],
@@ -58,7 +53,7 @@ async function main (fn = '') {
       ...BASE_PARAMS,
       TranscriptionJobName: `${ start }-${ file }`,
       Media: {
-        MediaFileUri: `s3://${ BUCKET }/${ file }.wav`,
+        MediaFileUri: `s3://${ BUCKET }/${ file }.flac`,
       },
       OutputKey: `${ file }.json`,
     }
@@ -75,4 +70,4 @@ async function main (fn = '') {
   }
 }
 
-void await main()
+void (await main())
