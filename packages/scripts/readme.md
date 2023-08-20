@@ -2,26 +2,17 @@
 ![](mascot.gif)
 
 ## Preparing audio
-Extract the audio from each interview video with ffmpeg. Though the uncompressed
-WAV audio files can be massive, ffmpeg's `-segment` flag can create nice little
-chunks instead. The audio can remain relatively clear when uploads are split,
-and the service can transcribe them in parallel.
-
-For example, broken into four files, Larry Kramer's 1hr 43min interview keeps a
-respectable sample rate, without any one segment cracking 100MB.
+Using the least-compressed video format available, extract an audio track as
+FLAC and upload it to S3. Since this is an internal API, it's not useful to
+optimize asset size; given that crisp speech in well-separated voices help the
+transcriber, it's better to optimize for quality.
 
 ```bash
-ffmpeg -i '035_larry_kramer.mp4' -vn -f segment -segment_time 1551 -ar 22050 -ac 1 -acodec pcm_s16le -y 035-%03d.wav
-# => 035-000.wav -- 035-003.wav
+ffmpeg -i '035_larry_kramer.mp4' -vn -c:a flac -y 035_larry_kramer.flac
 ```
 
-Each file will kick off a parallel transcription job, returning results in a
-quarter of the time. Don't be afraid to fiddle with the "segment length" and
-"sample rate" dials---prefer more segments of good quality to fewer segments of
-poor quality.
-
-## Jupyter Notebook
-To use the [scratch notebook](./src/Seed%20Neo4j.ipynb) for working with AWS
-transcripts and Neo4j, add the [tslab](https://github.com/yunabe/tslab) kernel
-to Jupyter, optionally [integrating with
-VSCode](https://code.visualstudio.com/docs/datascience/jupyter-kernel-management).
+## Custom language model
+The project includes a custom language model in Amazon Transcribe. [Trained
+on](./src/train-custom-model.fish) unstructured but human-verified
+transcriptions of the interviews, it more reliably catches acronyms, proper
+nouns, and terms of art.
