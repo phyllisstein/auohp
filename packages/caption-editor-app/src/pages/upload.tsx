@@ -1,12 +1,15 @@
 import {
-  PutObjectCommand,
-  S3Client,
-  S3,
+  CompleteMultipartUploadCommand,
   CreateMultipartUploadCommand,
+  S3Client,
+  UploadPartCommand,
 } from '@aws-sdk/client-s3'
-import { Upload } from '@aws-sdk/lib-storage'
 import { useCallback, useEffect, useRef } from 'react'
 
+/**
+ * TK: Split the file up and upload in chunks.
+ *    @see {https://gist.github.com/Arp-G/e808d47f80e49458548bd7b37ebdeeb7}
+ */
 export default function UploadPage () {
   const s3Ref = useRef(
     new S3Client({
@@ -25,14 +28,58 @@ export default function UploadPage () {
       const video = await fetch('/big_buck_bunny_720p_surround.mp4')
       const blob = await video.blob()
 
-      const command = new PutObjectCommand({
+      const createCommand = new CreateMultipartUploadCommand({
         Bucket: 'act-up-oral-history-resilient-reserve-4710',
         Key: 'test.mp4',
-        Body: blob,
       })
 
-      const response = await s3.send(command)
-      console.log(response)
+      const createResponse = await s3.send(createCommand)
+      console.log(`Created upload:`, createResponse)
+
+      const uploadPartCommand = new UploadPartCommand({
+        Bucket: 'act-up-oral-history-resilient-reserve-4710',
+        Key: 'test.mp4',
+        UploadId: createResponse.UploadId,
+        PartNumber: 1,
+        Body: blob,
+      })
+      const uploadPartResponse = await s3.send(uploadPartCommand)
+      console.log(`Uploaded part:`, uploadPartResponse)
+
+      const completeCommand = new CompleteMultipartUploadCommand({
+        Bucket: 'act-up-oral-history-resilient-reserve-4710',
+        Key: 'test.mp4',
+        MultipartUpload: {
+          Parts: [
+            {
+              ETag: uploadPartResponse.ETag,
+              PartNumber: 1,
+            },
+          ],
+        },
+        UploadId: createResponse.UploadId,
+      })
+
+      console.log(`Complete command:`, completeCommand)
+      // const completeCommand = new CompleteMultipartUploadCommand({
+      //   Bucket: 'act-up-oral-history-resilient-reserve-4710',
+      //   Key: 'test.mp4',
+      //   UploadId: createResponse.UploadId,
+      //   MultipartUpload: {
+      //     Parts: [
+      //       {
+      //         ETag: uploadPartResponse.ETag,
+      //         PartNumber: 1,
+      //       },
+      //     ],
+      //   },
+      // })
+      const completeResponse = await s3.send(completeCommand)
+      if (completeResponse.$metadata.httpStatusCode !== 200) {
+        throw new Error('Failed to complete upload')
+      } else {
+        console.log(`Uploaded file:`, completeResponse)
+      }
     }
 
     void upload()
