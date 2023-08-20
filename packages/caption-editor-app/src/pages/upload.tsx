@@ -1,10 +1,15 @@
-import { S3Client, S3 } from '@aws-sdk/client-s3'
+import {
+  PutObjectCommand,
+  S3Client,
+  S3,
+  CreateMultipartUploadCommand,
+} from '@aws-sdk/client-s3'
 import { Upload } from '@aws-sdk/lib-storage'
 import { useCallback, useEffect, useRef } from 'react'
 
 export default function UploadPage () {
   const s3Ref = useRef(
-    new S3({
+    new S3Client({
       region: 'us-east-1',
       credentials: {
         accessKeyId: '***REMOVED***',
@@ -15,49 +20,19 @@ export default function UploadPage () {
 
   useEffect(() => {
     async function upload () {
-      const s3 = new S3({
-        region: 'us-east-1',
-        credentials: {
-          accessKeyId: '***REMOVED***',
-          secretAccessKey: '***REMOVED***',
-        },
+      const s3 = s3Ref.current
+
+      const video = await fetch('/big_buck_bunny_720p_surround.mp4')
+      const blob = await video.blob()
+
+      const command = new PutObjectCommand({
+        Bucket: 'act-up-oral-history-resilient-reserve-4710',
+        Key: 'test.mp4',
+        Body: blob,
       })
 
-      const multipartParams = {
-        Bucket: 'act-up-oral-history-resilient-reserve-4710',
-        Key: 'test.mp4',
-      }
-
-      const videoFetcher = await fetch('/big_buck_bunny_720p_surround.mp4')
-      const video = await videoFetcher.blob()
-
-      const upload = await s3.createMultipartUpload(multipartParams)
-      const partNumber = 1143
-      const partParams = {
-        Bucket: 'act-up-oral-history-resilient-reserve-4710',
-        Key: 'test.mp4',
-        PartNumber: partNumber,
-        UploadId: upload.UploadId,
-        Body: video,
-      }
-
-      const part = await s3.uploadPart(partParams)
-      console.log(part)
-      const completeParams = {
-        Bucket: 'act-up-oral-history-resilient-reserve-4710',
-        Key: 'test.mp4',
-        MultipartUpload: {
-          Parts: [
-            {
-              ETag: part.ETag,
-              PartNumber: partNumber,
-            },
-          ],
-        },
-        UploadId: upload.UploadId,
-      }
-
-      await s3.completeMultipartUpload(completeParams)
+      const response = await s3.send(command)
+      console.log(response)
     }
 
     void upload()
