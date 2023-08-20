@@ -13,10 +13,10 @@ import { useCallback, useEffect, useRef } from 'react'
 export default function UploadPage () {
   const s3Ref = useRef(
     new S3Client({
-      region: 'us-east-1',
+      region: process.env.NEXT_PUBLIC_AWS_REGION,
       credentials: {
-        accessKeyId: '***REMOVED***',
-        secretAccessKey: '***REMOVED***',
+        accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY,
       },
     }),
   )
