@@ -41,7 +41,6 @@
 			"less",
 			"postcss",
 			"stylus",
-			"typescript",
 			"typescriptreact"
 		]
 	}
