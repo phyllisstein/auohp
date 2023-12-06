@@ -5,63 +5,61 @@ set -Eeuxo pipefail
 args="$*"
 
 restart_server() {
-  echo "Starting development server..."
-  pkill -if "start:dev" || true
+    echo "Terminate existing server..."
+    pkill -f "yarn.js packages:dev" || true
 
-  [[ -e "/run/secrets/environment" ]] || { echo "Missing environment secrets." && exit 1; }
-  source /run/secrets/environment && export GSAP_NPM_TOKEN FONTAWESOME_NPM_TOKEN GITHUB_TOKEN
-  yarn packages:dev &
-  disown
+    echo "Starting development server..."
+    [[ -e "/run/secrets/environment" ]] || { echo "Missing environment secrets." && exit 1; }
+    source /run/secrets/environment && export GSAP_NPM_TOKEN GITHUB_TOKEN FONT_AWESOME_NPM_TOKEN
+    yarn packages:dev
+    disown
 }
 
 configure_watches() {
-  echo "Configuring watches..."
+    echo "Configuring watches..."
 
-  watchman watch-del-all || true
-  watchman watch-project "$PWD"
-  for j in scripts/watchman/*.json; do
-    echo "Setting watch $j"
-    watchman -j <"$j"
-  done
+    watchman watch-project /app
+    for j in scripts/watchman/*.json; do
+        echo "Setting watch $j"
+        watchman -j <"$j"
+    done
 }
 
 watch_watchman() {
-  pkill -if watchman || true
-  watchman --logfile=- --log-level=debug --foreground watch-project "/app"
+    echo "Logging watchman..."
+    configure_watches
+    tail -f /usr/local/var/run/watchman/root-state/log
 }
 
 yarn_install() {
-  echo "Running yarn install..."
-  [[ -e "/run/secrets/environment" ]] || { echo "Missing environment secrets." && exit 1; }
-  source /run/secrets/environment && export GSAP_NPM_TOKEN FONTAWESOME_NPM_TOKEN GITHUB_TOKEN
-  yarn install
+    [[ -e "/run/yarn.lock" ]] && exit 0
+    [[ -e "/run/secrets/environment" ]] || { echo "Missing environment secrets." && exit 1; }
+    echo "Running yarn install..."
+    touch /run/yarn.lock
+    source /run/secrets/environment && export FONT_AWESOME_NPM_TOKEN GITHUB_TOKEN GSAP_NPM_TOKEN
+    yarn install
+    rm /run/yarn.lock
 }
 
 case $args in
 serve)
-  # restart_server
-  yarn_install
-  configure_watches
-  watch_watchman
-  ;;
+    restart_server
+    ;;
 
 watch)
-  yarn_install
-  # restart_server
-  configure_watches
-  watch_watchman
-  ;;
+    watch_watchman
+    ;;
 
 watches)
-  configure_watches
-  ;;
+    configure_watches
+    ;;
 
 yarn)
-  yarn_install
-  restart_server
-  ;;
+    yarn_install
+    restart_server
+    ;;
 
 *)
-  echo "Unknown command: $args"
-  ;;
+    echo "Unknown command: $args"
+    ;;
 esac

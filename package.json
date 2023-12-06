@@ -15,7 +15,7 @@
   ],
   "private": true,
   "scripts": {
-    "packages:dev": "yarn workspaces foreach --parallel --interlaced --no-private run start:dev"
+    "packages:dev": "yarn workspaces foreach --all --parallel --interlaced --no-private run start:dev"
   },
   "devDependencies": {
     "@stylelint/postcss-css-in-js": "^0.38.0",

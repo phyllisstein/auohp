@@ -1,37 +1,22 @@
 [
-  "trigger",
-  "/app",
-  {
-    "name": "server-restart",
-    "expression": [
-      "anyof",
-      [
-        "name",
-        "next.config.js",
-        "wholename"
-      ],
-      [
-        "name",
-        "tsconfig.json",
-        "wholename"
-      ],
-      [
-        "name",
-        "_app.tsx"
-      ],
-      [
-        "name",
-        "_document.tsx"
-      ],
-      [
-        "name",
-        "develop.sh"
-      ]
-    ],
-    "command": [
-      "./scripts/develop.sh",
-      "serve"
-    ],
-    "append_files": false
-  }
+    "trigger",
+    "/app",
+    {
+        "name": "server-restart",
+        "expression": [
+            "name",
+            [
+                "vite.config.mjs",
+                "src/app.html",
+                "svelte.config.js",
+                "tsconfig.json"
+            ],
+            "wholename"
+        ],
+        "command": [
+            "/app/scripts/develop.sh",
+            "serve"
+        ],
+        "append_files": false
+    }
 ]
