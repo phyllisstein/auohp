@@ -47,6 +47,52 @@ async function main () {
     path.join(__dirname, '../assets/035_larry_kramer_segments.json'),
     JSON.stringify(segments, null, 2),
   )
+
+  const driver = neo4j.driver(
+    'bolt://localhost:7687',
+    neo4j.auth.basic('neo4j', 'auohpauohp'),
+  )
+
+  await driver.getServerInfo()
+
+  await driver.executeQuery(`
+    MATCH p=()--()
+    DETACH DELETE p
+  `)
+  await driver.executeQuery(`
+    CREATE (i:Interview {number: 35, date: date('2003-11-15')})
+    CREATE (larry:Person {name: 'Larry Kramer'})
+    CREATE (sarah:Person {name: 'Sarah Schulman'})
+    CREATE (jim:Person {name: 'Jim Hubbard'})
+    CREATE (jimSpeaker:Speaker {remoteID: "spk_0"})
+    CREATE (larrySpeaker:Speaker {remoteID: "spk_2"})
+    CREATE (sarahSpeaker:Speaker {remoteID: "spk_1"})
+    CREATE (larry)-[:INTERVIEWED_AS]->(larrySpeaker)
+    CREATE (sarah)-[:INTERVIEWED_AS]->(sarahSpeaker)
+    CREATE (jim)-[:INTERVIEWED_AS]->(jimSpeaker)
+    CREATE (i)-[:INTERVIEWED_WITH]->(larrySpeaker)
+    CREATE (i)-[:INTERVIEWED_WITH]->(sarahSpeaker)
+    CREATE (i)-[:INTERVIEWED_WITH]->(jimSpeaker)
+  `)
+
+  for await (const segment of segments) {
+    await driver.executeQuery(
+      `
+      CREATE (s:Statement {text: $text})
+      WITH s
+      MATCH (speaker:Speaker {remoteID: $speakerID})
+      MERGE (speaker)-[:SAYS {startTime: $startTime, endTime: $endTime}]->(s)
+    `,
+      {
+        text: segment.text,
+        speakerID: segment.speaker,
+        startTime: segment.startTime,
+        endTime: segment.endTime,
+      },
+    )
+  }
+
+  await driver.close()
 }
 
 void (await main())
