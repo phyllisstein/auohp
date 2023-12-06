@@ -5,7 +5,6 @@ services:
     build:
       context: .
     depends_on: [neo4j]
-    init: true
     environment:
       - VIRTUAL_HOST=editor.auohp.here
     expose:
@@ -29,10 +28,10 @@ services:
     secrets:
       - environment
   neo4j:
-    image: neo4j:5.7.0
+    image: neo4j:5
     environment:
       - 'NEO4J_AUTH=neo4j/auohp-phoua'
-      - 'NEO4J_PLUGINS=["apoc", "n10s", "graph-data-science"]'
+      - 'NEO4J_PLUGINS=["apoc"]'
       - 'NEO4J_server_default__listen__address=0.0.0.0'
       - 'NEO4J_server_jvm_additional=-Dapoc.ttl.enabled=true'
       - 'NEO4J_server_jvm_additional=-Dapoc.uuid.enabled=true'

@@ -2,17 +2,14 @@
     "trigger",
     "/app",
     {
-        "name": "yarn-install",
+        "name": "watchman-reboot",
         "expression": [
-            "name",
-            [
-                "yarn.lock",
-                ".yarnrc.yml"
-            ]
+            "dirname",
+            "scripts/watchman"
         ],
         "command": [
             "/app/scripts/develop.sh",
-            "yarn"
+            "watches"
         ],
         "append_files": false
     }
