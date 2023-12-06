@@ -8,7 +8,7 @@
     "url": "https://auohp.org"
   },
   "license": "GPL-3.0-or-later",
-  "packageManager": "yarn@3.6.0",
+  "packageManager": "yarn@4.0.2",
   "type": "module",
   "workspaces": [
     "packages/*"
