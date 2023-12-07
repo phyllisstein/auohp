@@ -1,49 +1,49 @@
 {
-  "name": "auohp",
-  "version": "0.0.0",
-  "repository": "https://github.com/phyllisstein/auohp.git",
-  "author": {
-    "name": "ACT UP Oral History Project",
-    "email": "contact@auohp.org",
-    "url": "https://auohp.org"
-  },
-  "license": "GPL-3.0-or-later",
-  "packageManager": "yarn@4.0.2",
-  "type": "module",
-  "workspaces": [
-    "packages/*"
-  ],
-  "private": true,
-  "scripts": {
-    "packages:dev": "yarn workspaces foreach --all --parallel --interlaced --no-private run start:dev"
-  },
-  "devDependencies": {
-    "@stylelint/postcss-css-in-js": "^0.38.0",
-    "@types/eslint": "^8",
-    "@typescript-eslint/eslint-plugin": "^6.13.2",
-    "@typescript-eslint/parser": "^6.13.2",
-    "eslint": "^8.55.0",
-    "eslint-config-next": "^14.0.3",
-    "eslint-import-resolver-typescript": "^3.6.1",
-    "eslint-plugin-import": "^2.29.0",
-    "eslint-plugin-ramda": "^2.5.1",
-    "eslint-plugin-react": "^7.33.2",
-    "eslint-plugin-react-hooks": "^4.6.0",
-    "postcss": "^8.4.32",
-    "postcss-html": "^1.5.0",
-    "postcss-jsx": "^0.36.4",
-    "postcss-styled-components": "^0.2.1",
-    "postcss-styled-syntax": "^0.5.0",
-    "postcss-syntax": "^0.36.2",
-    "stylelint-config-styled-components": "^0.1.1",
-    "tsx": "^4.6.2",
-    "typescript": "next"
-  },
-  "dependencies": {
-    "slate": "^0.101.1",
-    "slate-react": "^0.101.2"
-  },
-  "resolutions": {
-    "postcss": "8.4.5"
-  }
+    "name": "auohp",
+    "version": "0.0.0",
+    "repository": "https://github.com/phyllisstein/auohp.git",
+    "author": {
+        "name": "ACT UP Oral History Project",
+        "email": "contact@auohp.org",
+        "url": "https://auohp.org"
+    },
+    "license": "GPL-3.0-or-later",
+    "packageManager": "yarn@4.0.2",
+    "type": "module",
+    "workspaces": [
+        "packages/*"
+    ],
+    "private": true,
+    "scripts": {
+        "packages:dev": "yarn workspaces foreach --all --parallel --interlaced --no-private run start:dev"
+    },
+    "devDependencies": {
+        "@stylelint/postcss-css-in-js": "^0.38.0",
+        "@types/eslint": "^8",
+        "@typescript-eslint/eslint-plugin": "^6.13.2",
+        "@typescript-eslint/parser": "^6.13.2",
+        "eslint": "^8.55.0",
+        "eslint-config-next": "^14.0.3",
+        "eslint-import-resolver-typescript": "^3.6.1",
+        "eslint-plugin-import": "^2.29.0",
+        "eslint-plugin-ramda": "^2.5.1",
+        "eslint-plugin-react": "^7.33.2",
+        "eslint-plugin-react-hooks": "^4.6.0",
+        "postcss": "^8.4.32",
+        "postcss-html": "^1.5.0",
+        "postcss-jsx": "^0.36.4",
+        "postcss-styled-components": "^0.2.1",
+        "postcss-styled-syntax": "^0.5.0",
+        "postcss-syntax": "^0.36.2",
+        "stylelint-config-styled-components": "^0.1.1",
+        "tsx": "^4.6.2",
+        "typescript": "next"
+    },
+    "dependencies": {
+        "slate": "^0.101.1",
+        "slate-react": "^0.101.2"
+    },
+    "resolutions": {
+        "postcss": "8.4.5"
+    }
 }
