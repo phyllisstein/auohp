@@ -3,9 +3,6 @@ module.exports = {
     'eslint:recommended',
     'plugin:import/recommended',
     'plugin:import/typescript',
-    'plugin:@next/next/recommended',
-    'plugin:react-hooks/recommended',
-    'plugin:react/recommended',
     'plugin:ramda/recommended',
   ],
   ignorePatterns: [
@@ -104,7 +101,6 @@ module.exports = {
   },
   plugins: [
     'import',
-    '@next/eslint-plugin-next',
     'ramda',
   ],
   root: true,
