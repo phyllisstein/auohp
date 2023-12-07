@@ -1,17 +1,33 @@
 version: '3.8'
 
 services:
+  editor-proxy:
+    image: marcnuri/port-forward
+    environment:
+      - VIRTUAL_HOST=editor.auohp.here
+      - VIRTUAL_PORT=80
+      - REMOTE_HOST=app
+      - REMOTE_PORT=3030
+    networks:
+      - default
+      - nginx-proxy
+  search-proxy:
+    image: marcnuri/port-forward
+    environment:
+      - VIRTUAL_HOST=search.auohp.here
+      - VIRTUAL_PORT=80
+      - REMOTE_HOST=app
+      - REMOTE_PORT=4040
+    networks:
+      - default
+      - nginx-proxy
   app:
     build:
       context: .
     depends_on: [neo4j]
-    environment:
-      - VIRTUAL_HOST=editor.auohp.here
     expose:
       - '3030'
-    networks:
-      - default
-      - nginx-proxy
+      - '4040'
     volumes:
       - type: bind
         source: .
