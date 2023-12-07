@@ -1,6 +1,6 @@
 # File created using '.gitignore Generator' for Visual Studio Code: https://bit.ly/vscode-gig
-# Created by https://www.toptal.com/developers/gitignore/api/zsh,yarn,windows,web,visualstudiocode,vim,sublimetext,osx,nova,node,macos,jetbrains,git,dotenv,direnv,asdf
-# Edit at https://www.toptal.com/developers/gitignore?templates=zsh,yarn,windows,web,visualstudiocode,vim,sublimetext,osx,nova,node,macos,jetbrains,git,dotenv,direnv,asdf
+# Created by https://www.toptal.com/developers/gitignore/api/zsh,yarn,windows,visualstudiocode,vim,sublimetext,osx,nova,node,macos,jetbrains,git,dotenv,direnv,asdf
+# Edit at https://www.toptal.com/developers/gitignore?templates=zsh,yarn,windows,visualstudiocode,vim,sublimetext,osx,nova,node,macos,jetbrains,git,dotenv,direnv,asdf
 
 ### asdf ###
 /.tool-versions
@@ -399,21 +399,6 @@ tags
 .history
 .ionide
 
-### Web ###
-*.asp
-*.cer
-*.csr
-*.css
-*.htm
-*.html
-*.js
-*.jsp
-*.php
-*.rss
-*.wasm
-*.wat
-*.xhtml
-
 ### Windows ###
 # Windows thumbnail cache files
 Thumbs.db
@@ -439,6 +424,23 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+
+### yarn ###
+# https://yarnpkg.com/getting-started/qa#which-files-should-be-gitignored
+
+.yarn/*
+!.yarn/releases
+!.yarn/patches
+!.yarn/plugins
+!.yarn/sdks
+!.yarn/versions
+
+# if you are NOT using Zero-installs, then:
+# comment the following lines
+# !.yarn/cache
+
+# and uncomment the following lines
+# .pnp.*
 
 ### Zsh ###
 # Zsh compiled script + zrecompile backup
@@ -476,6 +478,6 @@ zsdoc/data
 /tests/_output/*
 !/tests/_output/.gitkeep
 
-# End of https://www.toptal.com/developers/gitignore/api/zsh,yarn,windows,web,visualstudiocode,vim,sublimetext,osx,nova,node,macos,jetbrains,git,dotenv,direnv,asdf
+# End of https://www.toptal.com/developers/gitignore/api/zsh,yarn,windows,visualstudiocode,vim,sublimetext,osx,nova,node,macos,jetbrains,git,dotenv,direnv,asdf
 
 # Custom rules (everything added below won't be overriden by 'Generate .gitignore File' if you use 'Update' option)
