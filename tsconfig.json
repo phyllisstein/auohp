@@ -1,17 +1,17 @@
 {
-  "compilerOptions": {
-    "module": "NodeNext",
-    "declaration": true,
-    "removeComments": true,
-    "emitDecoratorMetadata": true,
-    "experimentalDecorators": true,
-    "allowSyntheticDefaultImports": true,
-    "target": "es2020",
-    "incremental": true,
-    "skipLibCheck": true,
-    "moduleResolution": "NodeNext"
-  },
-  "typeAcquisition": {
-    "enable": true
-  }
+    "compilerOptions": {
+        "module": "NodeNext",
+        "declaration": true,
+        "removeComments": true,
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true,
+        "allowSyntheticDefaultImports": true,
+        "target": "es2020",
+        "incremental": true,
+        "skipLibCheck": true,
+        "moduleResolution": "NodeNext"
+    },
+    "typeAcquisition": {
+        "enable": true
+    }
 }

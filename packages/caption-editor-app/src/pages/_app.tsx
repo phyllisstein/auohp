@@ -17,24 +17,24 @@ import { Body } from 'styles/global'
 import { theme } from 'styles/theme'
 
 function CaptionEditorApp ({ Component, pageProps }: AppProps) {
-  return (
-    <>
-      <Head>
-        <title>AUOHP</title>
-        <meta content='initial-scale=1.0, width=device-width' name='viewport' />
-        <meta content='IE=edge' httpEquiv='X-UA-Compatible' />
-      </Head>
+    return (
+        <>
+            <Head>
+                <title>AUOHP</title>
+                <meta content='initial-scale=1.0, width=device-width' name='viewport' />
+                <meta content='IE=edge' httpEquiv='X-UA-Compatible' />
+            </Head>
 
-      <RecoilRoot>
-        <ThemeProvider theme={ theme }>
-          <Preflight />
-          <AdobeClean />
-          <Body />
-          <Component { ...pageProps } />
-        </ThemeProvider>
-      </RecoilRoot>
-    </>
-  )
+            <RecoilRoot>
+                <ThemeProvider theme={ theme }>
+                    <Preflight />
+                    <AdobeClean />
+                    <Body />
+                    <Component { ...pageProps } />
+                </ThemeProvider>
+            </RecoilRoot>
+        </>
+    )
 }
 
 export default CaptionEditorApp
