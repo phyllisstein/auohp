@@ -12,7 +12,9 @@ module.exports = {
   extends: [
     '../../.eslintrc.common.cjs',
     '../../.eslintrc.react.cjs',
+    'plugin:@next/next/recommended',
   ],
+  plugins: ['@next/eslint-plugin-next'],
   overrides: [
     {
       files: ['**/*.ts', '**/*.tsx'],

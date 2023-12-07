@@ -16,7 +16,6 @@
 	"settings": {
 		"[javascript][typescript][javascriptreact][typescriptreact]": {
 			"editor.codeActionsOnSave": [
-				"source.fixAll.format",
 				"source.fixAll.stylelint",
 				"source.fixAll.eslint"
 			]
