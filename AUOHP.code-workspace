@@ -4,13 +4,17 @@
 			"name": "✨ auohp",
 			"path": "."
 		},
-    {
-      "name": "🚀 @auohp/caption-editor-app",
-      "path": "packages/caption-editor-app"
-    },
+		{
+			"name": "🚀 @auohp/caption-editor-app",
+			"path": "packages/caption-editor-app"
+		},
 		{
 			"name": "⚙️ @auohp/scripts",
 			"path": "packages/scripts"
+		},
+		{
+			"name": "💾 @auohp/search-component",
+			"path": "packages/search-component"
 		}
 	],
 	"settings": {
