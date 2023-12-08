@@ -87,6 +87,7 @@ module.exports = {
                     },
                 ],
                 'object-curly-spacing': 'off',
+                'prefer-const': 'off',
                 'quotes': 'off',
                 'semi': 'off',
             },
