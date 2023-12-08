@@ -46,7 +46,7 @@ services:
   neo4j:
     image: neo4j:5
     environment:
-      - 'NEO4J_AUTH=neo4j/auohp-phoua'
+      - 'NEO4J_AUTH=neo4j/auohpauohp'
       - 'NEO4J_PLUGINS=["apoc"]'
       - 'NEO4J_server_default__listen__address=0.0.0.0'
       - 'NEO4J_server_jvm_additional=-Dapoc.ttl.enabled=true'
