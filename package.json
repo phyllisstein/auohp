@@ -37,7 +37,7 @@
         "postcss-syntax": "^0.36.2",
         "stylelint-config-styled-components": "^0.1.1",
         "tsx": "^4.6.2",
-        "typescript": "next"
+        "typescript": "^5.3.3"
     },
     "dependencies": {
         "slate": "^0.101.1",
