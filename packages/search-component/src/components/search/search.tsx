@@ -1,7 +1,7 @@
 import queryString from 'query-string'
 import { useState, useTransition } from 'react'
 
-import { SearchResult, useNeo4jSearch } from './use-neo4j-search'
+import { type SearchResult, useNeo4jSearch } from './use-neo4j-search'
 
 export function Search () {
     const [search, setSearch] = useState<string>('')
@@ -14,13 +14,6 @@ export function Search () {
     }
 
     const handleResultClick = (result: SearchResult) => {
-        // window.history.pushState(null, '', queryString.stringifyUrl({
-        //     url: window.location.href,
-        //     query: {
-        //         ...queryString.parse(location.search),
-        //         timestamp: result.startTime,
-        //     },
-        // }))
         const hash = queryString.stringify({
             ...queryString.parse(location.hash),
             timestamp: result.startTime,

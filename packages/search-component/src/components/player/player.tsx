@@ -7,7 +7,7 @@ export function Player () {
     useEffect(() => {
         const handler = async () => {
             const timestamp = queryString.parse(location.hash, { parseNumbers: true }).timestamp as number
-            if (player.current == null || window == null || timestamp == null) {
+            if (typeof window === 'undefined' || !player.current || !timestamp) {
                 return
             }
 
