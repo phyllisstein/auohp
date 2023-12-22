@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useNeo4j } from './use-neo4j'
 
 export interface SearchResult {
-    id: number
+    uuid: number
     startTime: number
     endTime: number
     speaker: string
@@ -19,6 +19,7 @@ export function useNeo4jSearch (query: string, index: string): SearchResult[] {
     useEffect(() => {
         if (driver == null || index == null || query == null) {
             setSearchResults([])
+            return
         }
 
         async function search () {
@@ -27,13 +28,12 @@ export function useNeo4jSearch (query: string, index: string): SearchResult[] {
                 MATCH (node)<-[sez:SAYS]-(speaker:Speaker)<-[:INTERVIEWED_AS]-(whom)
                 MATCH (speaker)<-[:INTERVIEWED_WITH]-(interview)
                 RETURN sez.startTime AS startTime, sez.endTime AS endTime,
-                        whom.name AS speaker,
-                        node.text AS statement,
-                        interview.url AS interviewURL,
-                        id(node) AS id,
-                        score
+                whom.name AS speaker,
+                node.text AS statement,
+                interview.url AS interviewURL,
+                node.uuid AS uuid,
+                score
             `, { index, query })
-            console.log(result)
 
             const searchResults = result.records.map(record => ({
                 startTime: record.get('startTime'),
@@ -42,7 +42,7 @@ export function useNeo4jSearch (query: string, index: string): SearchResult[] {
                 statement: record.get('statement'),
                 score: record.get('score'),
                 interviewURL: record.get('interviewURL'),
-                id: record.get('id'),
+                uuid: record.get('uuid'),
             }))
 
             setSearchResults(searchResults)
