@@ -40,6 +40,8 @@
         "typescript": "^5.3.3"
     },
     "dependencies": {
+        "query-string": "^8.1.0",
+        "react-player": "^2.14.1",
         "slate": "^0.101.1",
         "slate-react": "^0.101.2"
     },
