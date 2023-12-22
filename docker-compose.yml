@@ -28,6 +28,9 @@ services:
     expose:
       - '3030'
       - '4040'
+    ports:
+      - '3030:3030'
+      - '4040:4040'
     volumes:
       - type: bind
         source: .
@@ -51,6 +54,12 @@ services:
       - 'NEO4J_server_default__listen__address=0.0.0.0'
       - 'NEO4J_server_jvm_additional=-Dapoc.ttl.enabled=true'
       - 'NEO4J_server_jvm_additional=-Dapoc.uuid.enabled=true'
+      - 'NEO4J_dbms_ssl_policy_bolt_enabled=true'
+      - 'NEO4J_dbms_ssl_policy_bolt_base__directory=/ssl'
+      - 'NEO4J_dbms_ssl_policy_bolt_private__key__algorithm=EC'
+      - 'NEO4J_dbms_ssl_policy_bolt_private__key__signature__algorithm=SHA256withECDSA'
+      - 'NEO4J_dbms_ssl_policy_bolt_private__key=auohp.here.key'
+      - 'NEO4J_dbms_ssl_policy_bolt_public__certificate=auohp.here.crt'
     ports:
       - '7474:7474'
       - '7687:7687'
@@ -58,6 +67,9 @@ services:
       - type: volume
         source: graph_data
         target: /data
+      - type: bind
+        source: ./scripts/neo4j
+        target: /ssl
 
 volumes:
   node_modules:
