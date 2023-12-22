@@ -42,7 +42,7 @@ async function seed ({ data, date, interviewee, interviewNumber }: any) {
     })
 
     await driver.executeQuery(`
-        CREATE (i:Interview {number: $interviewNumber, date: date($date)})
+        CREATE (i:Interview {number: $interviewNumber, date: date($date), url: $url})
         MERGE (interviewee:Person {name: $interviewee})
         MERGE (jim:Person {name: 'Jim Hubbard'})
         MERGE (sarah:Person {name: 'Sarah Schulman'})
@@ -59,6 +59,7 @@ async function seed ({ data, date, interviewee, interviewNumber }: any) {
         date,
         interviewee,
         interviewNumber,
+        url: 'http://localhost:4000/index.html',
     })
 
     for await (let segment of segments) {
