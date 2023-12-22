@@ -119,6 +119,8 @@ __metadata:
     eslint-import-resolver-typescript: "npm:^3.6.1"
     eslint-plugin-import: "npm:^2.29.0"
     eslint-plugin-ramda: "npm:^2.5.1"
+    fuzzbunny: "npm:^1.0.1"
+    neo4j-driver: "npm:^5.15.0"
     postcss: "npm:^8.4.32"
     postcss-html: "npm:^1.5.0"
     postcss-jsx: "npm:^0.36.4"
@@ -8158,6 +8160,13 @@ __metadata:
   version: 1.2.3
   resolution: "functions-have-names@npm:1.2.3"
   checksum: 0ddfd3ed1066a55984aaecebf5419fbd9344a5c38dd120ffb0739fac4496758dcf371297440528b115e4367fc46e3abc86a2cc0ff44612181b175ae967a11a05
+  languageName: node
+  linkType: hard
+
+"fuzzbunny@npm:^1.0.1":
+  version: 1.0.1
+  resolution: "fuzzbunny@npm:1.0.1"
+  checksum: 49c88dbb347dfd5668c8e89bca8b0b507254594d2b1039a7ceb3ba7314e2be8ba6568a44b697d3410ff6c228f911d3e643844e8f1813aadc6fdf5428e48cfedd
   languageName: node
   linkType: hard
 
