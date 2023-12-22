@@ -2,13 +2,14 @@ import queryString from 'query-string'
 import { useState, useTransition } from 'react'
 
 import { type SearchResult, useNeo4jSearch } from './use-neo4j-search'
+import './search.scss'
 
 export function Search () {
     const [search, setSearch] = useState<string>('')
-    const [_, startTransition] = useTransition()
+    const [searchTransitioning, searchTransition] = useTransition()
 
     const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-        startTransition(() => {
+        searchTransition(() => {
             setSearch(e.target.value)
         })
     }
@@ -25,11 +26,11 @@ export function Search () {
     const searchResults = useNeo4jSearch(search, 'transcriptSearch')
 
     return (
-        <>
+        <div className='search-container'>
             <input type='search' onChange={ handleSearch } />
             <div>
                 {
-                    searchResults.map(result => (
+                    !searchTransitioning && searchResults.map(result => (
                         <div key={ result.uuid } onClick={ () => handleResultClick(result) }>
                             <h3>{ result.statement }</h3>
                             <p>{ result.speaker }</p>
@@ -38,6 +39,6 @@ export function Search () {
                     ))
                 }
             </div>
-        </>
+        </div>
     )
 }
