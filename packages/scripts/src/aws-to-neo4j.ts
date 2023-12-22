@@ -9,6 +9,13 @@ import { fileURLToPath } from 'url'
 
 import neo4j from 'neo4j-driver'
 
+const NEO4J_LABELS = [
+    'Interview',
+    'Person',
+    'Speaker',
+    'Statement',
+]
+
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
@@ -77,13 +84,42 @@ async function seed ({ data, date, interviewee, interviewNumber }: any) {
     }
 }
 
-async function main () {
+async function bootstrap () {
     await driver.getServerInfo()
 
     await driver.executeQuery(`
-        MATCH p=()--()
-        DETACH DELETE p
+            MATCH p=()--()
+            DETACH DELETE p
+        `)
+
+    for await (let label of NEO4J_LABELS) {
+        await driver.executeQuery(
+            `
+                CALL apoc.uuid.setup($label, 'neo4j')
+            `,
+            { label },
+            { database: 'system' })
+
+        await driver.executeQuery(`
+            CREATE CONSTRAINT ${ label }ID IF NOT EXISTS
+            FOR (n:${ label }) REQUIRE n.uuid IS UNIQUE
+        `, { label })
+    }
+
+    await driver.executeQuery(`
+        CREATE FULLTEXT INDEX transcriptSearch IF NOT EXISTS
+        FOR (n:Statement) ON EACH [n.text]
+        OPTIONS {
+            indexConfig: {
+                \`fulltext.analyzer\`: 'english',
+                \`fulltext.eventually_consistent\`: true
+            }
+        }
     `)
+}
+
+async function main () {
+    await bootstrap()
 
     let data
 
