@@ -17,7 +17,7 @@ export function useNeo4jSearch (query: string, index: string): SearchResult[] {
     const [searchResults, setSearchResults] = useState<SearchResult[]>([])
 
     useEffect(() => {
-        if (driver == null || index == null || query == null) {
+        if (!driver || !index || !query) {
             setSearchResults([])
             return
         }
