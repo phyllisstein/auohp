@@ -10,7 +10,13 @@ export function useNeo4j (url: string, username: string, password: string): Driv
         }
 
         async function connect () {
-            const driver = neo4j.driver(url, neo4j.auth.basic(username, password))
+            const driver = neo4j.driver(
+                url,
+                neo4j.auth.basic(username, password),
+                {
+                    disableLosslessIntegers: true,
+                },
+            )
             setDriver(driver)
             await driver.getServerInfo()
         }

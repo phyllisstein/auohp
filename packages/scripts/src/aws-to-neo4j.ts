@@ -121,6 +121,14 @@ async function bootstrap () {
             DETACH DELETE p
         `)
 
+    await neo4jDriver.executeQuery(`
+        DROP INDEX transcript_search IF EXISTS
+    `)
+
+    await neo4jDriver.executeQuery(`
+        DROP INDEX name_search IF EXISTS
+    `)
+
     for await (let label of NEO4J_LABELS) {
         await neo4jDriver.executeQuery(
             `

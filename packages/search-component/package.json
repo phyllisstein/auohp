@@ -39,10 +39,12 @@
         "stylelint-config-recommended": "^13.0.0",
         "stylelint-order": "^6.0.3",
         "stylelint-stylus": "^0.18.0",
+        "tslib": "^2.6.2",
         "typescript-styled-plugin": "^0.18.3",
         "vite": "^5.0.6"
     },
     "dependencies": {
+        "@elastic/elasticsearch": "^8.11.0",
         "chroma-js": "^2.4.2",
         "common-tags": "^1.8.2",
         "fuzzbunny": "^1.0.1",
@@ -52,6 +54,7 @@
         "recoil": "^0.7.7",
         "remeda": "^1.29.0",
         "styled-components": "^6.1.1",
-        "styled-preflight": "^8.0.1"
+        "styled-preflight": "^8.0.1",
+        "zod": "^3.22.4"
     }
 }
