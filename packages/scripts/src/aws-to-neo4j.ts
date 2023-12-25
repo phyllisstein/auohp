@@ -7,7 +7,6 @@ import * as fs from 'fs/promises'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
-import { Client } from '@elastic/elasticsearch'
 import neo4j from 'neo4j-driver'
 
 const NEO4J_LABELS = [
@@ -24,10 +23,6 @@ const neo4jDriver = neo4j.driver(
     'bolt://localhost:7687',
     neo4j.auth.basic('neo4j', 'auohpauohp'),
 )
-
-const esClient = new Client({
-    node: 'https://elastic.auohp.here',
-})
 
 async function seed ({ data, date, interviewee, interviewNumber }: any) {
     if (
@@ -90,26 +85,13 @@ async function seed ({ data, date, interviewee, interviewNumber }: any) {
             interviewNumber,
         })
 
-        if (records.length === 0) continue
-
-        const statementID = records[0].get('statementID')
-        const personID = records[0].get('personID')
-        const interviewID = records[0].get('interviewID')
-
-        await esClient.index({
-            index: 'transcripts',
-            id: statementID,
-            document: {
-                interview: interviewID,
-                person: personID,
-                statement: statementID,
-                text: segment.text,
-                timestamp: {
-                    gte: segment.startTime,
-                    lte: segment.endTime,
-                },
-            },
-        })
+        if (records.length === 0) {
+            console.error(`
+                No records returned for segment:Could not create node for
+                segment starting ${ segment.startTime } in interview
+                ${ interviewNumber } for speaker ${ segment.speaker }.
+            `)
+        }
     }
 }
 
@@ -152,27 +134,6 @@ async function bootstrap () {
             }
         }
     `)
-
-    try {
-        await esClient.indices.delete({ index: 'transcripts' })
-    } catch (_) {}
-
-    await esClient.indices.create({
-        index: 'transcripts',
-        body: {
-            mappings: {
-                properties: {
-                    interview: { type: 'keyword' },
-                    person: { type: 'keyword' },
-                    statement: { type: 'keyword' },
-                    text: { type: 'text' },
-                    timestamp: {
-                        type: 'float_range',
-                    },
-                },
-            },
-        },
-    })
 }
 
 async function main () {

@@ -11,16 +11,6 @@ services:
     networks:
       - default
       - nginx-proxy
-  search-proxy:
-    image: marcnuri/port-forward
-    environment:
-      - VIRTUAL_HOST=search.auohp.here
-      - VIRTUAL_PORT=80
-      - REMOTE_HOST=app
-      - REMOTE_PORT=4040
-    networks:
-      - default
-      - nginx-proxy
   app:
     build:
       context: .
@@ -28,9 +18,6 @@ services:
     expose:
       - '3030'
       - '4040'
-    ports:
-      - '3030:3030'
-      - '4040:4040'
     volumes:
       - type: bind
         source: .
