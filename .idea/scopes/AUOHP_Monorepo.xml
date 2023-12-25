@@ -1,3 +1,0 @@
-<component name="DependencyValidationManager">
-  <scope name="AUOHP Monorepo" pattern="!file:.yarn//*&amp;&amp;!file:packages//*" />
-</component>
