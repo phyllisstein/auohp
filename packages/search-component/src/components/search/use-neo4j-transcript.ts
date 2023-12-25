@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 
 import { useNeo4j } from './use-neo4j'
 
-export interface SearchResult {
+export interface Neo4jResult {
     uuid: number
     startTime: number
     endTime: number
@@ -12,9 +12,10 @@ export interface SearchResult {
     interviewURL: string
 }
 
-export function useNeo4jSearch (query: string, index: string): SearchResult[] {
-    const driver = useNeo4j('bolt://localhost:7687', 'neo4j', 'auohpauohp')
-    const [searchResults, setSearchResults] = useState<SearchResult[]>([])
+export function useNeo4jTranscript (query: string, index: string = 'transcriptSearch'): Neo4jResult[] {
+    // const driver = useNeo4j('bolt://localhost:7687', 'neo4j', 'auohpauohp')
+    const driver = useNeo4j('bolt://bolt.auohp.here:7687', 'neo4j', 'auohpauohp')
+    const [searchResults, setSearchResults] = useState<Neo4jResult[]>([])
 
     useEffect(() => {
         if (!driver || !index || !query) {

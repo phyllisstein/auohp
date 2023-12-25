@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="Monorepo" pattern="!file:.yarn//*&amp;&amp;!file:packages//*" />
+</component>

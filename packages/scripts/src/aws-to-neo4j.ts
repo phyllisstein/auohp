@@ -7,6 +7,7 @@ import * as fs from 'fs/promises'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
+import { Client } from '@elastic/elasticsearch'
 import neo4j from 'neo4j-driver'
 
 const NEO4J_LABELS = [
@@ -19,10 +20,14 @@ const NEO4J_LABELS = [
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-const driver = neo4j.driver(
+const neo4jDriver = neo4j.driver(
     'bolt://localhost:7687',
     neo4j.auth.basic('neo4j', 'auohpauohp'),
 )
+
+const esClient = new Client({
+    node: 'https://elastic.auohp.here',
+})
 
 async function seed ({ data, date, interviewee, interviewNumber }: any) {
     if (
@@ -41,14 +46,14 @@ async function seed ({ data, date, interviewee, interviewNumber }: any) {
         }, '')
 
         return {
-            startTime: segment.start_time,
-            endTime: segment.end_time,
+            startTime: Number.parseFloat(segment.start_time),
+            endTime: Number.parseFloat(segment.end_time),
             speaker: segment.speaker_label,
             text: text.trim(),
         }
     })
 
-    await driver.executeQuery(`
+    await neo4jDriver.executeQuery(`
         CREATE (i:Interview {number: $interviewNumber, date: date($date), url: $url})
         MERGE (interviewee:Person {name: $interviewee})
         MERGE (jim:Person {name: 'Jim Hubbard'})
@@ -70,10 +75,13 @@ async function seed ({ data, date, interviewee, interviewNumber }: any) {
     })
 
     for await (let segment of segments) {
-        await driver.executeQuery(`
+        const { records } = await neo4jDriver.executeQuery(`
             MATCH (speaker:Speaker {remoteID: $speakerID}) <-[:INTERVIEWED_WITH]- (interview:Interview {number: $interviewNumber})
-            CREATE (s:Statement {text: $text})
-            MERGE (speaker)-[:SAYS {startTime: $startTime, endTime: $endTime}]->(s)
+            MATCH (speaker) <-[:INTERVIEWED_AS]- (person:Person)
+            CREATE (statement:Statement {text: $text})
+            SET statement.uuid = randomUUID()
+            MERGE (speaker)-[:SAYS {startTime: $startTime, endTime: $endTime}]->(statement)
+            RETURN statement.uuid AS statementID, person.uuid AS personID, interview.uuid AS interviewID
         `, {
             text: segment.text,
             speakerID: segment.speaker,
@@ -81,41 +89,90 @@ async function seed ({ data, date, interviewee, interviewNumber }: any) {
             endTime: segment.endTime,
             interviewNumber,
         })
+
+        if (records.length === 0) continue
+
+        const statementID = records[0].get('statementID')
+        const personID = records[0].get('personID')
+        const interviewID = records[0].get('interviewID')
+
+        await esClient.index({
+            index: 'transcripts',
+            id: statementID,
+            document: {
+                interview: interviewID,
+                person: personID,
+                statement: statementID,
+                text: segment.text,
+                timestamp: {
+                    gte: segment.startTime,
+                    lte: segment.endTime,
+                },
+            },
+        })
     }
 }
 
 async function bootstrap () {
-    await driver.getServerInfo()
+    await neo4jDriver.getServerInfo()
 
-    await driver.executeQuery(`
-            MATCH p=()--()
-            DETACH DELETE p
-        `)
+    await neo4jDriver.executeQuery(`
+        MATCH p=()--()
+        DETACH DELETE p
+    `)
+
+    await neo4jDriver.executeQuery(`
+        DROP INDEX transcript_search IF EXISTS
+    `)
+
+    await neo4jDriver.executeQuery(`
+        DROP INDEX name_search IF EXISTS
+    `)
 
     for await (let label of NEO4J_LABELS) {
-        await driver.executeQuery(
+        await neo4jDriver.executeQuery(
             `
                 CALL apoc.uuid.setup($label, 'neo4j')
             `,
             { label },
             { database: 'system' })
 
-        await driver.executeQuery(`
+        await neo4jDriver.executeQuery(`
             CREATE CONSTRAINT ${ label }ID IF NOT EXISTS
             FOR (n:${ label }) REQUIRE n.uuid IS UNIQUE
         `, { label })
     }
 
-    await driver.executeQuery(`
-        CREATE FULLTEXT INDEX transcriptSearch IF NOT EXISTS
+    await neo4jDriver.executeQuery(`
+        CREATE FULLTEXT INDEX transcript_search IF NOT EXISTS
         FOR (n:Statement) ON EACH [n.text]
         OPTIONS {
             indexConfig: {
-                \`fulltext.analyzer\`: 'english',
                 \`fulltext.eventually_consistent\`: true
             }
         }
     `)
+
+    try {
+        await esClient.indices.delete({ index: 'transcripts' })
+    } catch (_) {}
+
+    await esClient.indices.create({
+        index: 'transcripts',
+        body: {
+            mappings: {
+                properties: {
+                    interview: { type: 'keyword' },
+                    person: { type: 'keyword' },
+                    statement: { type: 'keyword' },
+                    text: { type: 'text' },
+                    timestamp: {
+                        type: 'float_range',
+                    },
+                },
+            },
+        },
+    })
 }
 
 async function main () {
@@ -198,7 +255,7 @@ async function main () {
     })
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
 
-    await driver.close()
+    await neo4jDriver.close()
 }
 
 void (await main())
