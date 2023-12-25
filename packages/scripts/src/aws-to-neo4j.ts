@@ -144,11 +144,10 @@ async function bootstrap () {
     }
 
     await neo4jDriver.executeQuery(`
-        CREATE FULLTEXT INDEX transcriptSearch IF NOT EXISTS
+        CREATE FULLTEXT INDEX transcript_search IF NOT EXISTS
         FOR (n:Statement) ON EACH [n.text]
         OPTIONS {
             indexConfig: {
-                \`fulltext.analyzer\`: 'english',
                 \`fulltext.eventually_consistent\`: true
             }
         }
