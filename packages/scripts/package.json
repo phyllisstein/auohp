@@ -16,7 +16,6 @@
         "neo4j-driver": "^5.15.0"
     },
     "dependencies": {
-        "@aws-sdk/client-transcribe": "^3.465.0",
-        "@elastic/elasticsearch": "^8.11.0"
+        "@aws-sdk/client-transcribe": "^3.465.0"
     }
 }
