@@ -2,7 +2,6 @@ import queryString from 'query-string'
 import { useState, useTransition } from 'react'
 
 import './search.scss'
-import { useElasticTranscript } from './use-elastic-transcript'
 import { type Neo4jResult, useNeo4jTranscript } from './use-neo4j-transcript'
 
 export function Search () {
@@ -25,8 +24,6 @@ export function Search () {
     }
 
     const neo4jResults = useNeo4jTranscript(search)
-    const elasticResults = useElasticTranscript(search)
-    console.log(elasticResults)
 
     return (
         <div className='search-container'>
