@@ -117,9 +117,9 @@ async function bootstrap () {
     await neo4jDriver.getServerInfo()
 
     await neo4jDriver.executeQuery(`
-            MATCH p=()--()
-            DETACH DELETE p
-        `)
+        MATCH p=()--()
+        DETACH DELETE p
+    `)
 
     await neo4jDriver.executeQuery(`
         DROP INDEX transcript_search IF EXISTS
