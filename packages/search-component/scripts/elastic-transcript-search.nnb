@@ -1,0 +1,49 @@
+{
+    "cells": [
+        {
+            "language": "typescript",
+            "source": [
+                "import { Client } from '@elastic/elasticsearch'\n\nconst esClient = new Client({\n    node: 'https://elastic.auohp.here',\n    tls: {\n        rejectUnauthorized: false\n    },\n})\n\nawait esClient.ping()\n\nconst result = await esClient.search(\n    {\n        index: 'transcripts',\n        highlight: {\n            fields: {\n                text: {},\n            },\n            pre_tags: '{{',\n            post_tags: '}}',\n        },\n        query: {\n            match: {\n                text: \"church o'connor\",\n            },\n        },\n    }\n)\n\nresult.hits.hits[0]"
+            ],
+            "outputs": [
+                {
+                    "items": [
+                        {
+                            "mime": "text/plain",
+                            "value": [
+                                "{",
+                                "  _index: \u001b[32m'transcripts'\u001b[39m,",
+                                "  _id: \u001b[32m'30804edb-b36b-4597-b017-e519adbba5e8'\u001b[39m,",
+                                "  _score: \u001b[33m7.6599817\u001b[39m,",
+                                "  _source: {",
+                                "    interview: \u001b[32m'12984c0b-1b67-4dc3-b518-c58a68dfeac3'\u001b[39m,",
+                                "    person: \u001b[32m'5fd651c7-2360-4613-b900-f163cd06498b'\u001b[39m,",
+                                "    statement: \u001b[32m'30804edb-b36b-4597-b017-e519adbba5e8'\u001b[39m,",
+                                "    text: \u001b[32m\"I loved that That was a great demonstration I did with another group We did that years later It didn't turn out so well But but I thought that was a very important demonstration because I think uh the Catholic church didn't I guess it was Cardinal o'connor at the time\"\u001b[39m,",
+                                "    timestamp: {",
+                                "      gte: \u001b[33m3106.58\u001b[39m,",
+                                "      lte: \u001b[33m3122.88\u001b[39m",
+                                "    }",
+                                "  },",
+                                "  highlight: {",
+                                "    text: [",
+                                "      \u001b[32m'so well But but I thought that was a very important demonstration because I think uh the Catholic {{church}}'\u001b[39m,",
+                                "      \u001b[32m\"didn't I guess it was Cardinal {{o'connor}} at the time\"\u001b[39m",
+                                "    ]",
+                                "  }",
+                                "}"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "language": "typescript",
+            "source": [
+                "import neo4j from 'neo4j-driver'\n\nconst driver = neo4j.driver(\n    'bolt://neo4j.auohp.here:7687',\n    neo4j.auth.basic('neo4j', 'auohpauohp')\n)\n\nconst result = await driver.executeQuery(`\n`)"
+            ],
+            "outputs": []
+        }
+    ]
+}
