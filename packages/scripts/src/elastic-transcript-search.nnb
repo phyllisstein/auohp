@@ -1,0 +1,185 @@
+{
+    "cells": [
+        {
+            "language": "typescript",
+            "source": [
+                "import { Client } from '@elastic/elasticsearch'\n\nconst esClient = new Client({\n    node: 'https://elastic.auohp.here',\n    tls: {\n        rejectUnauthorized: false\n    },\n})\n\nawait esClient.ping()\n\nconst result = await esClient.search(\n    {\n        index: 'transcripts',\n        highlight: {\n            fields: {\n                text: {},\n            },\n            pre_tags: '{{',\n            post_tags: '}}',\n        },\n        query: {\n            match: {\n                text: \"gmhc\",\n            },\n        },\n    }\n)\n\nconst hitsAndScores = result.hits.hits.map((hit) => ({\n    score: hit._score,\n    text: hit.highlight?.text?.join(''),\n}))\n\nhitsAndScores.sort((a, b) => b.score - a.score)"
+            ],
+            "outputs": [
+                {
+                    "items": [
+                        {
+                            "mime": "text/plain",
+                            "value": [
+                                "[",
+                                "  {",
+                                "    score: \u001b[33m7.3093204\u001b[39m,",
+                                "    text: \u001b[32m'{{GMHC}} was extraordinarily'\u001b[39m",
+                                "  },",
+                                "  {",
+                                "    score: \u001b[33m6.6004148\u001b[39m,",
+                                "    text: \u001b[32m\"That's how she got in {{GMHC}}\"\u001b[39m",
+                                "  },",
+                                "  {",
+                                "    score: \u001b[33m5.7421713\u001b[39m,",
+                                "    text: \u001b[32m'act up Yeah a lot So it was the same with {{GMHC}} There was tons of flak against {{GMHC}} early on that we were'\u001b[39m",
+                                "  },",
+                                "  {",
+                                "    score: \u001b[33m5.382373\u001b[39m,",
+                                "    text: \u001b[32m\"when I was active in {{GMHC}} I'd come home and they would be\"\u001b[39m",
+                                "  },",
+                                "  {",
+                                "    score: \u001b[33m5.244123\u001b[39m,",
+                                "    text: \u001b[32m'So before {{GMHC}} had you ever been involved in any kind of political organizing'\u001b[39m",
+                                "  },",
+                                "  {",
+                                "    score: \u001b[33m5.1127973\u001b[39m,",
+                                "    text: \u001b[32m\"preconceived notions No I didn't come to {{GMHC}} with any preconceived notions either So how\"\u001b[39m",
+                                "  },",
+                                "  {",
+                                "    score: \u001b[33m4.7555265\u001b[39m,",
+                                "    text: \u001b[32m'Were the guy did you have guidelines from {{GMHC}} or were you allowed to do whatever you wanted'\u001b[39m",
+                                "  },",
+                                "  {",
+                                "    score: \u001b[33m4.7555265\u001b[39m,",
+                                "    text: \u001b[32m\"I would still like to work with {{GMHC}} And she's made it possible for me to do that\"\u001b[39m",
+                                "  },",
+                                "  {",
+                                "    score: \u001b[33m4.1724095\u001b[39m,",
+                                "    text: \u001b[32m\"um structured because that's what {{GMHC}} had become Everything had to have a job description and approval\"\u001b[39m",
+                                "  },",
+                                "  {",
+                                "    score: \u001b[33m4.0085673\u001b[39m,",
+                                "    text: \u001b[32m'you started with {{GMHC}} to now do those two factors do they have they changed in terms of your ability'\u001b[39m",
+                                "  }",
+                                "]"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "language": "typescript",
+            "source": [
+                "import neo4j from 'neo4j-driver'\n\nconst driver = neo4j.driver(\n    'bolt://localhost:7687',\n    neo4j.auth.basic('neo4j', 'auohpauohp'),\n    {\n        disableLosslessIntegers: true,\n    }\n)\n\nconst result = await driver.executeQuery(`\n    CALL db.index.fulltext.queryNodes('transcript_search', 'gmhc') YIELD node, score\n    RETURN node, score\n`)\n\nconst hitsAndScores = result.records.map((record) => ({\n    score: record.get('score'),\n    text: record.get('node').properties.text,\n}))\n\nhitsAndScores.sort((a, b) => b.score - a.score)"
+            ],
+            "outputs": [
+                {
+                    "items": [
+                        {
+                            "mime": "text/plain",
+                            "value": [
+                                "[",
+                                "  {",
+                                "    score: \u001b[33m3.48221492767334\u001b[39m,",
+                                "    text: \u001b[32m'GMHC was extraordinarily'\u001b[39m",
+                                "  },",
+                                "  {",
+                                "    score: \u001b[33m3.1491236686706543\u001b[39m,",
+                                "    text: \u001b[32m\"That's how she got in GMHC\"\u001b[39m",
+                                "  },",
+                                "  {",
+                                "    score: \u001b[33m3.1491236686706543\u001b[39m,",
+                                "    text: \u001b[32m\"That's how she got in GMHC\"\u001b[39m",
+                                "  },",
+                                "  {",
+                                "    score: \u001b[33m2.7483413219451904\u001b[39m,",
+                                "    text: \u001b[32m'act up Yeah a lot So it was the same with GMHC There was tons of flak against GMHC early on that we were all white boys'\u001b[39m",
+                                "  },",
+                                "  {",
+                                "    score: \u001b[33m2.574506998062134\u001b[39m,",
+                                "    text: \u001b[32m\"when I was active in GMHC I'd come home and they would be\"\u001b[39m",
+                                "  },",
+                                "  {",
+                                "    score: \u001b[33m2.5091021060943604\u001b[39m,",
+                                "    text: \u001b[32m'So before GMHC had you ever been involved in any kind of political organizing'\u001b[39m",
+                                "  },",
+                                "  {",
+                                "    score: \u001b[33m2.5091021060943604\u001b[39m,",
+                                "    text: \u001b[32m'So before GMHC had you ever been involved in any kind of political organizing'\u001b[39m",
+                                "  },",
+                                "  {",
+                                "    score: \u001b[33m2.4469380378723145\u001b[39m,",
+                                "    text: \u001b[32m\"preconceived notions No I didn't come to GMHC with any preconceived notions either So how\"\u001b[39m",
+                                "  },",
+                                "  {",
+                                "    score: \u001b[33m2.2776496410369873\u001b[39m,",
+                                "    text: \u001b[32m'Were the guy did you have guidelines from GMHC or were you allowed to do whatever you wanted'\u001b[39m",
+                                "  },",
+                                "  {",
+                                "    score: \u001b[33m2.2776496410369873\u001b[39m,",
+                                "    text: \u001b[32m\"I would still like to work with GMHC And she's made it possible for me to do that\"\u001b[39m",
+                                "  },",
+                                "  {",
+                                "    score: \u001b[33m2.2776496410369873\u001b[39m,",
+                                "    text: \u001b[32m'Were the guy did you have guidelines from GMHC or were you allowed to do whatever you wanted'\u001b[39m",
+                                "  },",
+                                "  {",
+                                "    score: \u001b[33m2.000802993774414\u001b[39m,",
+                                "    text: \u001b[32m\"um structured because that's what GMHC had become Everything had to have a job description and approval by this and approval by that And\"\u001b[39m",
+                                "  },",
+                                "  {",
+                                "    score: \u001b[33m1.92289400100708\u001b[39m,",
+                                "    text: \u001b[32m'you started with GMHC to now do those two factors do they have they changed in terms of your ability to be seen by other people'\u001b[39m",
+                                "  },",
+                                "  {",
+                                "    score: \u001b[33m1.92289400100708\u001b[39m,",
+                                "    text: \u001b[32m'you started with GMHC to now do those two factors do they have they changed in terms of your ability to be seen by other people'\u001b[39m",
+                                "  },",
+                                "  {",
+                                "    score: \u001b[33m1.850825548171997\u001b[39m,",
+                                "    text: \u001b[32m\"uh I was surrounded with a board that I of my friends that I had put on that board because my brother's law firm who still represents GMHC\"\u001b[39m",
+                                "  },",
+                                "  {",
+                                "    score: \u001b[33m1.6637558937072754\u001b[39m,",
+                                "    text: \u001b[32m\"you know I knew somebody who was Paul Poppins lover Um so I went to the First AIDS GMHC fund raisers I didn't go to the rodeo but I went to the circus Um\"\u001b[39m",
+                                "  },",
+                                "  {",
+                                "    score: \u001b[33m1.6637558937072754\u001b[39m,",
+                                "    text: \u001b[32m\"you know I knew somebody who was Paul Poppins lover Um so I went to the First AIDS GMHC fund raisers I didn't go to the rodeo but I went to the circus Um\"\u001b[39m",
+                                "  },",
+                                "  {",
+                                "    score: \u001b[33m1.346256971359253\u001b[39m,",
+                                "    text: \u001b[32m\"it's hard We as I said we were making it up as we went along There were no rules there were no rules with GMHC until we got all these job descriptions And then hey it became the Red Cross and I had my Red Cross in my lifetime\"\u001b[39m",
+                                "  },",
+                                "  {",
+                                "    score: \u001b[33m1.2766497135162354\u001b[39m,",
+                                "    text: \u001b[32m\"you you and correct me if I'm wrong But the historic the history as I understand it is that you felt that GMHC was ineffective you wanted to create another kind of response So you must have had an idea of another way of acting And I'm wondering where that came from\"\u001b[39m",
+                                "  },",
+                                "  {",
+                                "    score: \u001b[33m1.2766497135162354\u001b[39m,",
+                                "    text: \u001b[32m\"you you and correct me if I'm wrong But the historic the history as I understand it is that you felt that GMHC was ineffective you wanted to create another kind of response So you must have had an idea of another way of acting And I'm wondering where that came from\"\u001b[39m",
+                                "  },",
+                                "  {",
+                                "    score: \u001b[33m1.213886022567749\u001b[39m,",
+                                "    text: \u001b[32m\"And I tried to do that at GMHC in the beginning But then when I came up against my first job description what is the job description I didn't know what the job description Why do we have to have a job description Why can't we go get the best person and then became all this business about\"\u001b[39m",
+                                "  },",
+                                "  {",
+                                "    score: \u001b[33m1.1570048332214355\u001b[39m,",
+                                "    text: \u001b[32m\"you had to take people whether they were good or not because they represented certain genders or certain or certain colors You know we didn't have many women in the beginning The first employee of the first paid employee of GMHC was a black person Phil Patrick Uh we couldn't get black people there So somehow to have to have to\"\u001b[39m",
+                                "  },",
+                                "  {",
+                                "    score: \u001b[33m0.9743728637695312\u001b[39m,",
+                                "    text: \u001b[32m\"ever of success And you have to have to pull back every once in awhile just because you get burned out You get tired I don't think I ever you couldn't disassociate yourself from act up It isn't like the GMHC where they throw you off the board or whatever you mind you we wish we sometimes had a mechanism for getting rid of people We had a number of people who we should have gotten rid of\"\u001b[39m",
+                                "  },",
+                                "  {",
+                                "    score: \u001b[33m0.9373817443847656\u001b[39m,",
+                                "    text: \u001b[32m'and when people came and said we want to start this or we want to start that fine because I remember GMHC when I tried to get different groups started different people who came and said I can do epidemiology I can do it was forever until we could get a lawyer in there and do legal services People came to act up and said we want to start you know there was there was we were allowed to do it'\u001b[39m",
+                                "  }",
+                                "]"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "language": "typescript",
+            "source": [
+                ""
+            ],
+            "outputs": []
+        }
+    ]
+}
