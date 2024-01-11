@@ -1,6 +1,6 @@
 import { Transforms } from 'slate'
 
-export function withCaptionLine (editor) {
+export function withCaptionLine(editor) {
     const { isVoid } = editor
 
     editor.isVoid = element => {
@@ -10,7 +10,7 @@ export function withCaptionLine (editor) {
     return editor
 }
 
-export function insertCaptionLine (editor) {
+export function insertCaptionLine(editor) {
     const captionLine = {
         type: 'caption-line',
         children: [{ text: '' }],

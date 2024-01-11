@@ -24,10 +24,10 @@ const neo4jDriver = neo4j.driver(
     neo4j.auth.basic('neo4j', 'auohpauohp'),
 )
 
-async function seed ({ data, date, interviewee, interviewNumber }: any) {
+async function seed({ data, date, interviewee, interviewNumber }: any) {
     if (
         !Array.isArray(data?.results?.speaker_labels?.segments) ||
-        data.results.speaker_labels.segments.length === 0
+    data.results.speaker_labels.segments.length === 0
     ) {
         throw new Error('No speaker labels found')
     }
@@ -49,25 +49,27 @@ async function seed ({ data, date, interviewee, interviewNumber }: any) {
     })
 
     await neo4jDriver.executeQuery(`
-        CREATE (i:Interview {number: $interviewNumber, date: date($date), url: $url})
-        MERGE (interviewee:Person {name: $interviewee})
-        MERGE (jim:Person {name: 'Jim Hubbard'})
-        MERGE (sarah:Person {name: 'Sarah Schulman'})
-        CREATE (sarahSpeaker:Speaker {remoteID: 'spk_2'})
-        CREATE (jimSpeaker:Speaker {remoteID: 'spk_1'})
-        CREATE (intervieweeSpeaker:Speaker {remoteID: 'spk_1'})
-        MERGE (interviewee)-[:INTERVIEWED_AS]->(intervieweeSpeaker)
-        MERGE (jim)-[:INTERVIEWED_AS]->(jimSpeaker)
-        MERGE (sarah)-[:INTERVIEWED_AS]->(sarahSpeaker)
-        CREATE (i)-[:INTERVIEWED_WITH]->(intervieweeSpeaker)
-        CREATE (i)-[:INTERVIEWED_WITH]->(jimSpeaker)
-        CREATE (i)-[:INTERVIEWED_WITH]->(sarahSpeaker)
-    `, {
+          CREATE (i:Interview {number: $interviewNumber, date: date($date), url: $url})
+          MERGE (interviewee:Person {name: $interviewee})
+          MERGE (jim:Person {name: 'Jim Hubbard'})
+          MERGE (sarah:Person {name: 'Sarah Schulman'})
+          CREATE (sarahSpeaker:Speaker {remoteID: 'spk_2'})
+          CREATE (jimSpeaker:Speaker {remoteID: 'spk_1'})
+          CREATE (intervieweeSpeaker:Speaker {remoteID: 'spk_1'})
+          MERGE (interviewee)-[:INTERVIEWED_AS]->(intervieweeSpeaker)
+          MERGE (jim)-[:INTERVIEWED_AS]->(jimSpeaker)
+          MERGE (sarah)-[:INTERVIEWED_AS]->(sarahSpeaker)
+          CREATE (i)-[:INTERVIEWED_WITH]->(intervieweeSpeaker)
+          CREATE (i)-[:INTERVIEWED_WITH]->(jimSpeaker)
+          CREATE (i)-[:INTERVIEWED_WITH]->(sarahSpeaker)
+        `,
+    {
         date,
         interviewee,
         interviewNumber,
         url: 'http://localhost:4000/index.html',
-    })
+    },
+    )
 
     for await (let segment of segments) {
         const { records } = await neo4jDriver.executeQuery(`
@@ -83,9 +85,10 @@ async function seed ({ data, date, interviewee, interviewNumber }: any) {
             startTime: segment.startTime,
             endTime: segment.endTime,
             interviewNumber,
-        })
+        },
+        )
 
-        if (records.length === 0) {
+        if (!result?.records?.length) {
             console.error(`
                 No records returned for segment:Could not create node for
                 segment starting ${ segment.startTime } in interview
@@ -95,34 +98,47 @@ async function seed ({ data, date, interviewee, interviewNumber }: any) {
     }
 }
 
-async function bootstrap () {
+async function bootstrap() {
     await neo4jDriver.getServerInfo()
 
-    await neo4jDriver.executeQuery(`
-        MATCH p=()--()
-        DETACH DELETE p
-    `)
+    await neo4jDriver.executeQuery(
+    // language=Cypher
+        `
+          MATCH p = ()--()
+          DETACH DELETE p
+        `,
+    )
 
-    await neo4jDriver.executeQuery(`
-        DROP INDEX transcript_search IF EXISTS
-    `)
+    await neo4jDriver.executeQuery(
+    // language=Cypher
+        `
+          DROP INDEX transcript_search IF EXISTS
+        `,
+    )
 
-    await neo4jDriver.executeQuery(`
-        DROP INDEX name_search IF EXISTS
-    `)
+    await neo4jDriver.executeQuery(
+    // language=Cypher
+        `
+          DROP INDEX name_search IF EXISTS
+        `,
+    )
 
     for await (let label of NEO4J_LABELS) {
         await neo4jDriver.executeQuery(
+            // language=Cypher
             `
-                CALL apoc.uuid.setup($label, 'neo4j')
+              CALL apoc.uuid.setup($label, 'neo4j')
             `,
             { label },
-            { database: 'system' })
+            { database: 'system' },
+        )
 
         await neo4jDriver.executeQuery(`
             CREATE CONSTRAINT ${ label }ID IF NOT EXISTS
             FOR (n:${ label }) REQUIRE n.uuid IS UNIQUE
-        `, { label })
+            `,
+        { label },
+        )
     }
 
     await neo4jDriver.executeQuery(`
@@ -136,10 +152,10 @@ async function bootstrap () {
     `)
 }
 
-async function main () {
+async function main() {
     await bootstrap()
 
-    let data
+    let data: AWSTranscribeResult
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~ 004 - Gregg Bordowitz ~~~~~~~~~~~~~~~~~~~~~~~~~ //
     data = JSON.parse(

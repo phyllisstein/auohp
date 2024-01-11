@@ -48,7 +48,7 @@ const initialValue: Descendant[] = [
     },
 ]
 
-export function TranscriptRow ({ attributes, children, element }) {
+export function TranscriptRow({ attributes, children, element }) {
     const { speaker, fromTime, toTime } = element
 
     return (

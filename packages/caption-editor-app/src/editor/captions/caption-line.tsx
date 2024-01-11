@@ -8,7 +8,7 @@ const CaptionWrapper = styled.div`
     min-inline-size: min-content;
 `
 
-export function CaptionLine ({ attributes, children, element }) {
+export function CaptionLine({ attributes, children, element }) {
     return (
         <div { ...attributes }>
             <CaptionWrapper className='spectrum-InLineAlert'>
