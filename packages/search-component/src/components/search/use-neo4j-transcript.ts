@@ -12,9 +12,9 @@ export interface Neo4jResult {
     interviewURL: string
 }
 
-export function useNeo4jTranscript (query: string, index: string = 'transcriptSearch'): Neo4jResult[] {
-    // const driver = useNeo4j('bolt://localhost:7687', 'neo4j', 'auohpauohp')
-    const driver = useNeo4j('bolt://bolt.auohp.here:7687', 'neo4j', 'auohpauohp')
+export function useNeo4jTranscript(query: string, index: string): Neo4jResult[] {
+    const driver = useNeo4j('bolt://localhost:7687', 'neo4j', 'auohpauohp')
+    // const driver = useNeo4j('bolt://bolt.auohp.here:7687', 'neo4j', 'auohpauohp')
     const [searchResults, setSearchResults] = useState<Neo4jResult[]>([])
 
     useEffect(() => {
@@ -23,7 +23,7 @@ export function useNeo4jTranscript (query: string, index: string = 'transcriptSe
             return
         }
 
-        async function search () {
+        async function search() {
             const result = await driver.executeQuery(`
                 CALL db.index.fulltext.queryNodes($index, $query) YIELD node, score
                 MATCH (node)<-[sez:SAYS]-(speaker:Speaker)<-[:INTERVIEWED_AS]-(whom)

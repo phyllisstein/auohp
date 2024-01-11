@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react'
 import './search.scss'
 import { type Neo4jResult, useNeo4jTranscript } from './use-neo4j-transcript'
 
-export function Search () {
+export function Search() {
     const [search, setSearch] = useState<string>('')
     const [searchTransitioning, searchTransition] = useTransition()
 
@@ -23,7 +23,7 @@ export function Search () {
         window.location.hash = hash
     }
 
-    const neo4jResults = useNeo4jTranscript(search)
+    const neo4jResults = useNeo4jTranscript(search, 'transcript_search')
 
     return (
         <div className='search-container'>

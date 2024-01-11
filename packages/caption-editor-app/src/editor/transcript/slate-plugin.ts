@@ -1,6 +1,6 @@
 import { Transforms } from 'slate'
 
-export function withTranscript (editor) {
+export function withTranscript(editor) {
     const { isVoid } = editor
 
     editor.isVoid = element => {
@@ -10,7 +10,7 @@ export function withTranscript (editor) {
     return editor
 }
 
-export function insertTranscript (editor) {
+export function insertTranscript(editor) {
     const transcript = {
         type: 'transcript',
         children: [
@@ -24,7 +24,7 @@ export function insertTranscript (editor) {
     Transforms.insertNodes(editor, transcript)
 }
 
-export function insertTranscriptRow (editor) {
+export function insertTranscriptRow(editor) {
     const transcriptRow = {
         type: 'transcript-row',
         children: [{ text: '' }],

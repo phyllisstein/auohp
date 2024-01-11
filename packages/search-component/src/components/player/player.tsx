@@ -3,11 +3,11 @@ import { useEffect, useRef } from 'react'
 
 import './player.scss'
 
-export function Player () {
+export function Player() {
     const player = useRef<HTMLVideoElement>(null)
 
     useEffect(() => {
-        const handler = async () => {
+        const handler = async() => {
             const timestamp = queryString.parse(location.hash, { parseNumbers: true }).timestamp as number
             if (typeof window === 'undefined' || !player.current || !timestamp) {
                 return

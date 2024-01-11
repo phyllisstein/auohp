@@ -44,7 +44,7 @@ const BASE_PARAMS: StartTranscriptionJobCommandInput = {
     },
 }
 
-async function main (fn = '') {
+async function main(fn = '') {
     const start = Date.now()
     console.log('Starting transcription jobs at', fn)
 

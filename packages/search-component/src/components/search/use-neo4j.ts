@@ -1,7 +1,7 @@
 import neo4j, { type Driver } from 'neo4j-driver'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
-export function useNeo4j (url: string, username: string, password: string): Driver | null {
+export function useNeo4j(url: string, username: string, password: string): Driver | null {
     const [driver, setDriver] = useState<Driver | null>(null)
 
     useEffect(() => {
@@ -9,7 +9,7 @@ export function useNeo4j (url: string, username: string, password: string): Driv
             return
         }
 
-        async function connect () {
+        async function connect() {
             const driver = neo4j.driver(
                 url,
                 neo4j.auth.basic(username, password),

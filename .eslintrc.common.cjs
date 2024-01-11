@@ -173,7 +173,7 @@ module.exports = {
         'sort-imports': 'off',
         'space-before-function-paren': [
             'warn',
-            'always',
+            'never',
         ],
         'template-curly-spacing': ['warn', 'always'],
     },
