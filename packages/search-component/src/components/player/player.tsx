@@ -1,6 +1,8 @@
 import queryString from 'query-string'
 import { useEffect, useRef } from 'react'
 
+import bordowitz from 'assets/004_gregg_bordowitz_mq.mp4'
+
 import './player.scss'
 
 export function Player() {
@@ -18,17 +20,20 @@ export function Player() {
         }
 
         void handler()
-        window.addEventListener('hashchange', handler)
+        const hashAbortController = new AbortController()
+        window.addEventListener('hashchange', handler, {
+            signal: hashAbortController.signal,
+        })
 
         return () => {
-            window.removeEventListener('hashchange', handler)
+            hashAbortController.abort()
         }
     })
 
     return (
         <div className='player-container'>
             <video ref={ player } controls muted playsInline>
-                <source src='https://s3.amazonaws.com/act-up-oral-history-resilient-reserve-4710/004_gregg_bordowitz_mq.mp4' type='video/mp4' />
+                <source src={ bordowitz } type='video/mp4' />
             </video>
         </div>
     )
