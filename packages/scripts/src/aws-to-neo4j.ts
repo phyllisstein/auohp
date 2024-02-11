@@ -8,7 +8,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 
 import { nanoid } from 'nanoid'
-import neo4j, { EagerResult } from 'neo4j-driver'
+import neo4j, { type EagerResult, int } from 'neo4j-driver'
 
 const NEO4J_LABELS = [
     'Interview',
@@ -36,6 +36,8 @@ async function seed({ data, date, interviewee, interviewNumber }: any) {
         throw new Error('No speaker labels found')
     }
 
+    const integerInterviewNumber = int(interviewNumber)
+
     const segments = data.results.speaker_labels.segments.map(segment => {
         const text = segment.items.reduce((acc, item) => {
             const word = data.results.items.find(
@@ -44,14 +46,14 @@ async function seed({ data, date, interviewee, interviewNumber }: any) {
             return `${ acc } ${ word }`
         }, '')
 
-        const startTime = Number.parseInt(segment.start_time, 10)
+        const startTime =  Number.parseInt(segment.start_time, 10)
         const endTime = Number.parseInt(segment.end_time, 10)
         const duration = endTime - startTime
 
         return {
-            startTime,
-            endTime,
-            duration,
+            startTime: int(startTime),
+            endTime: int(endTime),
+            duration: int(duration),
             speaker: segment.speaker_label,
             text: text.trim(),
             statementUID: nanoid(),
@@ -78,7 +80,7 @@ async function seed({ data, date, interviewee, interviewNumber }: any) {
         interviewee,
         intervieweeUID: nanoid(),
         interviewUID: nanoid(),
-        interviewNumber,
+        interviewNumber: integerInterviewNumber,
         url: 'http://localhost:4000/index.html',
     },
     )
@@ -86,7 +88,7 @@ async function seed({ data, date, interviewee, interviewNumber }: any) {
     for await (let segment of segments) {
         const params = {
             ...segment,
-            interviewNumber,
+            interviewNumber: integerInterviewNumber,
         }
 
         const result: EagerResult = await neo4jDriver.executeQuery(`
@@ -145,11 +147,6 @@ async function bootstrap() {
     await neo4jDriver.executeQuery(`
         CREATE FULLTEXT INDEX transcript_search IF NOT EXISTS
         FOR (n:Statement) ON EACH [n.text]
-        OPTIONS {
-            indexConfig: {
-                \`fulltext.eventually_consistent\`: true
-            }
-        }
     `)
 
     await neo4jDriver.executeQuery(`
