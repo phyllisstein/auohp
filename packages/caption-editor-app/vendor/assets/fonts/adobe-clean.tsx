@@ -1,3 +1,5 @@
+'use client'
+
 import { createGlobalStyle, css } from 'styled-components'
 
 const fontFaces = css`
