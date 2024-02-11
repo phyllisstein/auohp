@@ -32,13 +32,10 @@ watch_watchman() {
 }
 
 yarn_install() {
-    [[ -e "/run/yarn.lock" ]] && exit 0
     [[ -e "/run/secrets/environment" ]] || { echo "Missing environment secrets." && exit 1; }
     echo "Running yarn install..."
-    touch /run/yarn.lock
     source /run/secrets/environment && export FONT_AWESOME_NPM_TOKEN GITHUB_TOKEN GSAP_NPM_TOKEN
     yarn install
-    rm /run/yarn.lock
 }
 
 case $args in

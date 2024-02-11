@@ -7,19 +7,28 @@ import * as fs from 'fs/promises'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
-import neo4j from 'neo4j-driver'
+import { nanoid } from 'nanoid'
+import neo4j, { EagerResult } from 'neo4j-driver'
+
+const NEO4J_LABELS = [
+    'Interview',
+    'Person',
+    'Speaker',
+    'Statement',
+]
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-async function main () {
-    const data = JSON.parse(
-        await fs.readFile(
-            path.join(__dirname, '../assets/035_larry_kramer.json'),
-            'utf8',
-        ),
-    )
+const neo4jDriver = neo4j.driver(
+    'bolt://localhost:7687',
+    neo4j.auth.basic('neo4j', 'auohpauohp'),
+    {
+        disableLosslessIntegers: true,
+    },
+)
 
+async function seed({ data, date, interviewee, interviewNumber }: any) {
     if (
         !Array.isArray(data?.results?.speaker_labels?.segments) ||
     data.results.speaker_labels.segments.length === 0
@@ -35,64 +44,201 @@ async function main () {
             return `${ acc } ${ word }`
         }, '')
 
+        const startTime = Number.parseFloat(segment.start_time)
+        const endTime = Number.parseFloat(segment.end_time)
+        const duration = endTime - startTime
+
         return {
-            startTime: segment.start_time,
-            endTime: segment.end_time,
+            startTime,
+            endTime,
+            duration,
             speaker: segment.speaker_label,
             text: text.trim(),
+            statementUID: nanoid(),
         }
     })
 
-    await fs.writeFile(
-        path.join(__dirname, '../assets/035_larry_kramer_segments.json'),
-        JSON.stringify(segments, null, 2),
+    await neo4jDriver.executeQuery(`
+        MATCH (jim:Person {name: 'Jim Hubbard'})
+        MATCH (sarah:Person {name: 'Sarah Schulman'})
+        WITH jim, sarah
+        CREATE (i:Interview {number: $interviewNumber, date: date($date), url: $url, uid: $interviewUID})
+        CREATE (interviewee:Person {name: $interviewee, uid: $intervieweeUID})
+        CREATE (sarahSpeaker:Speaker {remoteID: 'spk_2'})
+        CREATE (jimSpeaker:Speaker {remoteID: 'spk_1'})
+        CREATE (intervieweeSpeaker:Speaker {remoteID: 'spk_0'})
+        MERGE (interviewee)-[:INTERVIEWED_AS]->(intervieweeSpeaker)
+        MERGE (jim)-[:INTERVIEWED_AS]->(jimSpeaker)
+        MERGE (sarah)-[:INTERVIEWED_AS]->(sarahSpeaker)
+        CREATE (i)-[:INTERVIEWED_WITH]->(intervieweeSpeaker)
+        CREATE (i)-[:INTERVIEWED_WITH]->(jimSpeaker)
+        CREATE (i)-[:INTERVIEWED_WITH]->(sarahSpeaker)`,
+    {
+        date,
+        interviewee,
+        intervieweeUID: nanoid(),
+        interviewUID: nanoid(),
+        interviewNumber,
+        url: 'http://localhost:4000/index.html',
+    },
     )
 
-    const driver = neo4j.driver(
-        'bolt://localhost:7687',
-        neo4j.auth.basic('neo4j', 'auohpauohp'),
+    for await (let segment of segments) {
+        const params = {
+            ...segment,
+            interviewNumber,
+        }
+
+        const result: EagerResult = await neo4jDriver.executeQuery(`
+            MATCH (speaker:Speaker {remoteID: $speaker}) <-[:INTERVIEWED_WITH]- (interview:Interview {number: $interviewNumber})
+            MATCH (speaker) <-[:INTERVIEWED_AS]- (person:Person)
+            CREATE (statement:Statement {text: $text, uid: $statementUID})
+            MERGE (speaker)-[:SAYS {startTime: $startTime, endTime: $endTime, duration: $duration}]->(statement)
+            RETURN statement, person, interview
+        `, params)
+
+        if (!result?.records?.length) {
+            console.error(`
+                No records returned for segment:Could not create node for
+                segment starting ${ segment.startTime } in interview
+                ${ interviewNumber } for speaker ${ segment.speaker }.\n\n\n
+                ${ JSON.stringify(result, null, 2) }
+            `)
+        }
+    }
+}
+
+async function bootstrap() {
+    await neo4jDriver.getServerInfo()
+
+    await neo4jDriver.executeQuery(
+        // language=Cypher
+        `
+          MATCH p = ()--()
+          DETACH DELETE p
+        `,
     )
 
-    await driver.getServerInfo()
+    await neo4jDriver.executeQuery(
+    // language=Cypher
+        `
+          DROP INDEX transcript_search IF EXISTS
+        `,
+    )
 
-    await driver.executeQuery(`
-    MATCH p=()--()
-    DETACH DELETE p
-  `)
-    await driver.executeQuery(`
-    CREATE (i:Interview {number: 35, date: date('2003-11-15')})
-    CREATE (larry:Person {name: 'Larry Kramer'})
-    CREATE (sarah:Person {name: 'Sarah Schulman'})
-    CREATE (jim:Person {name: 'Jim Hubbard'})
-    CREATE (jimSpeaker:Speaker {remoteID: "spk_0"})
-    CREATE (larrySpeaker:Speaker {remoteID: "spk_2"})
-    CREATE (sarahSpeaker:Speaker {remoteID: "spk_1"})
-    CREATE (larry)-[:INTERVIEWED_AS]->(larrySpeaker)
-    CREATE (sarah)-[:INTERVIEWED_AS]->(sarahSpeaker)
-    CREATE (jim)-[:INTERVIEWED_AS]->(jimSpeaker)
-    CREATE (i)-[:INTERVIEWED_WITH]->(larrySpeaker)
-    CREATE (i)-[:INTERVIEWED_WITH]->(sarahSpeaker)
-    CREATE (i)-[:INTERVIEWED_WITH]->(jimSpeaker)
-  `)
+    await neo4jDriver.executeQuery(
+    // language=Cypher
+        `
+          DROP INDEX name_search IF EXISTS
+        `,
+    )
 
-    for await (const segment of segments) {
-        await driver.executeQuery(
-            `
-      CREATE (s:Statement {text: $text})
-      WITH s
-      MATCH (speaker:Speaker {remoteID: $speakerID})
-      MERGE (speaker)-[:SAYS {startTime: $startTime, endTime: $endTime}]->(s)
-    `,
-            {
-                text: segment.text,
-                speakerID: segment.speaker,
-                startTime: segment.startTime,
-                endTime: segment.endTime,
-            },
+    for await (let label of NEO4J_LABELS) {
+        await neo4jDriver.executeQuery(`
+            CREATE CONSTRAINT ${ label }UID IF NOT EXISTS
+            FOR (n:${ label }) REQUIRE n.uid IS UNIQUE
+            `,
+        { label },
         )
     }
 
-    await driver.close()
+    await neo4jDriver.executeQuery(`
+        CREATE FULLTEXT INDEX transcript_search IF NOT EXISTS
+        FOR (n:Statement) ON EACH [n.text]
+        OPTIONS {
+            indexConfig: {
+                \`fulltext.eventually_consistent\`: true
+            }
+        }
+    `)
+
+    await neo4jDriver.executeQuery(`
+        CREATE (jim:Person {name: 'Jim Hubbard', uid: $jimUID})
+        CREATE (sarah:Person {name: 'Sarah Schulman', uid: $sarahUID})
+    `, { jimUID: nanoid(), sarahUID: nanoid() })
+}
+
+async function main() {
+    await bootstrap()
+
+    let data: AWSTranscribeResult
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~ 004 - Gregg Bordowitz ~~~~~~~~~~~~~~~~~~~~~~~~~ //
+    data = JSON.parse(
+        await fs.readFile(
+            path.join(__dirname, '../assets/004_gregg_bordowitz.json'),
+            'utf8',
+        ),
+    )
+    await seed({
+        data,
+        date: '2020-05-27',
+        interviewee: 'Gregg Bordowitz',
+        interviewNumber: 4,
+    })
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~ 012 - Mark Harrington ~~~~~~~~~~~~~~~~~~~~~~~~~ //
+    data = JSON.parse(
+        await fs.readFile(
+            path.join(__dirname, '../assets/012_mark_harrington.json'),
+            'utf8',
+        ),
+    )
+    await seed({
+        data,
+        date: '2020-05-27',
+        interviewee: 'Mark Harrington',
+        interviewNumber: 12,
+    })
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~ 035 - Larry Kramer ~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+    data = JSON.parse(
+        await fs.readFile(
+            path.join(__dirname, '../assets/035_larry_kramer.json'),
+            'utf8',
+        ),
+    )
+    await seed({
+        data,
+        date: '2020-05-27',
+        interviewee: 'Larry Kramer',
+        interviewNumber: 35,
+    })
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~ 074 - Douglas Crimp ~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+    data = JSON.parse(
+        await fs.readFile(
+            path.join(__dirname, '../assets/074_douglas_crimp.json'),
+            'utf8',
+        ),
+    )
+    await seed({
+        data,
+        date: '2020-05-27',
+        interviewee: 'Douglas Crimp',
+        interviewNumber: 74,
+    })
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 138 - Joan Gibbs ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+    data = JSON.parse(
+        await fs.readFile(
+            path.join(__dirname, '../assets/138_joan_gibbs.json'),
+            'utf8',
+        ),
+    )
+    await seed({
+        data,
+        date: '2020-05-27',
+        interviewee: 'Joan Gibbs',
+        interviewNumber: 138,
+    })
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+
+    await neo4jDriver.close()
 }
 
 void (await main())

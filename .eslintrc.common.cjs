@@ -87,6 +87,7 @@ module.exports = {
                     },
                 ],
                 'object-curly-spacing': 'off',
+                'prefer-const': 'off',
                 'quotes': 'off',
                 'semi': 'off',
             },
@@ -172,7 +173,7 @@ module.exports = {
         'sort-imports': 'off',
         'space-before-function-paren': [
             'warn',
-            'always',
+            'never',
         ],
         'template-curly-spacing': ['warn', 'always'],
     },

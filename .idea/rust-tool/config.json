@@ -1,0 +1,12 @@
+{
+  "url": "http://localhost:8080",
+  "apiBox": true,
+  "logicBox": true,
+  "modelBox": true,
+  "dtoBox": true,
+  "apiSuffix": "_api.rs",
+  "logicSuffix": "_logic.rs",
+  "webBox": "Actix",
+  "dtoSuffix": "Dto",
+  "viewSuffix": "Page.vue"
+}

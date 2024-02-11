@@ -1,7 +1,7 @@
 import { CaptionLine } from './captions'
 import { Transcript, TranscriptRow } from './transcript'
 
-export function Element (props) {
+export function Element(props) {
     const { attributes, children, element } = props
 
     switch (element.type) {

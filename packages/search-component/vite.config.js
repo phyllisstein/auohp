@@ -1,8 +1,11 @@
-var vite_config_default = {
-  root: './src',
-  server: {
-    host: true,
-    port: 4040,
-  },
+import tsconfigPaths from 'vite-tsconfig-paths'
+
+/** @type {import('vite').UserConfig} */
+export default {
+    root: './src',
+    server: {
+        host: '0.0.0.0',
+        port: 4040,
+    },
+    plugins: [tsconfigPaths()],
 }
-export { vite_config_default as default }

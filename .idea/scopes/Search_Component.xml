@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="Search Component" pattern="file:packages/search-component//*" />
+</component>
