@@ -44,8 +44,8 @@ async function seed({ data, date, interviewee, interviewNumber }: any) {
             return `${ acc } ${ word }`
         }, '')
 
-        const startTime = Number.parseFloat(segment.start_time)
-        const endTime = Number.parseFloat(segment.end_time)
+        const startTime = Number.parseInt(segment.start_time, 10)
+        const endTime = Number.parseInt(segment.end_time, 10)
         const duration = endTime - startTime
 
         return {
