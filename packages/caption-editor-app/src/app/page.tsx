@@ -1,7 +1,12 @@
-export default function Page() {
+import { Header } from './page-styles'
+
+export default async function Page() {
+    const res = await fetch('https://httpbin.org/base64/SGVsbG8gV29ybGQ=')
+    const js = await res.text()
+
     return (
-        <h1 className='spectrum-Body spectrum-Body--sizeXXXL'>
-            You did the thing!
-        </h1>
+        <Header>
+            You did the thing: { js }
+        </Header>
     )
 }
