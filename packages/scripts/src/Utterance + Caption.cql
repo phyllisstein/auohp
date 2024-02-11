@@ -30,7 +30,7 @@ MERGE (larrySpeaker)-[:SAYS {startTime: 481.08, endTime: 488.83}]->(st5:Statemen
 
 
 //------------------------------ Statement Index -----------------------------//
-CREATE FULLTEXT INDEX transcriptSearch IF NOT EXISTS
+CREATE FULLTEXT INDEX transcript_search IF NOT EXISTS
 FOR (n:Statement) ON EACH [n.text]
 OPTIONS {
     indexConfig: {
@@ -41,7 +41,7 @@ OPTIONS {
 
 
 //----------------------------- Search Statements ----------------------------//
-CALL db.index.fulltext.queryNodes('transcriptSearch', 'russia') YIELD node, score
+CALL db.index.fulltext.queryNodes('transcript_search', 'russia') YIELD node, score
 MATCH (node)<-[sez:SAYS]-()<-[:INTERVIEWED_AS]-(whom)
 RETURN sez.startTime AS startTime, sez.endTime AS endTime, whom.name AS speaker, node.text AS statement
 

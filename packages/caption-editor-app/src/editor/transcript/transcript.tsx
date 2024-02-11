@@ -11,7 +11,7 @@ const Container = styled.div`
     grid-template-columns: 1fr;
 `
 
-export function Transcript ({ attributes, children, element }: TranscriptProps) {
+export function Transcript({ attributes, children, element }: TranscriptProps) {
     return (
         <div { ...attributes }>
             <Container>

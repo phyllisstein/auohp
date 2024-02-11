@@ -4,10 +4,14 @@
 			"name": "✨ auohp",
 			"path": "."
 		},
-    {
-      "name": "🚀 @auohp/caption-editor-app",
-      "path": "packages/caption-editor-app"
-    },
+		{
+			"name": "🚀 @auohp/caption-editor-app",
+			"path": "packages/caption-editor-app"
+		},
+		{
+			"name": "💾 @auohp/search-component",
+			"path": "packages/search-component"
+		},
 		{
 			"name": "⚙️ @auohp/scripts",
 			"path": "packages/scripts"
@@ -20,7 +24,7 @@
 				"source.fixAll.eslint"
 			]
 		},
-		"editor.defaultFormatter": "esbenp.prettier-vscode",
+		"editor.defaultFormatter": "dbaeumer.vscode-eslint",
 		"editor.formatOnSave": false,
 		"eslint.format.enable": true,
 		"eslint.lintTask.enable": true,
@@ -41,6 +45,7 @@
 			"postcss",
 			"stylus",
 			"typescriptreact"
-		]
+		],
+		"editor.tabSize": 4
 	}
 }

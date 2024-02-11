@@ -16,7 +16,7 @@ import { AdobeClean } from 'assets/fonts'
 import { Body } from 'styles/global'
 import { theme } from 'styles/theme'
 
-function CaptionEditorApp ({ Component, pageProps }: AppProps) {
+function CaptionEditorApp({ Component, pageProps }: AppProps) {
     return (
         <>
             <Head>

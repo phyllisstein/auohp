@@ -7,7 +7,7 @@ interface VideoProps {
     children?: React.ReactNode
 }
 
-export function Video ({ children }: VideoProps) {
+export function Video({ children }: VideoProps) {
     const [videoRef, setVideo] = useState<HTMLVideoElement>()
     const [playhead, setPlayhead] = useRecoilState(videoState.playhead)
 

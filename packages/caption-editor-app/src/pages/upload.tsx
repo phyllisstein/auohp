@@ -10,7 +10,7 @@ import { useCallback, useEffect, useRef } from 'react'
  * TK: Split the file up and upload in chunks.
  *    @see {https://gist.github.com/Arp-G/e808d47f80e49458548bd7b37ebdeeb7}
  */
-export default function UploadPage () {
+export default function UploadPage() {
     const s3Ref = useRef(
         new S3Client({
             region: process.env.NEXT_PUBLIC_AWS_REGION,
@@ -22,7 +22,7 @@ export default function UploadPage () {
     )
 
     useEffect(() => {
-        async function upload () {
+        async function upload() {
             const s3 = s3Ref.current
 
             const video = await fetch('/big_buck_bunny_720p_surround.mp4')

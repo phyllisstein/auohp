@@ -16,7 +16,19 @@ export const Body = createGlobalStyle`
         padding: 0;
 
         font-size: 112.5%;
-        font-family: 'Adobe Clean', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji' !important;
+        font-family: 'Adobe Clean',
+            -apple-system,
+            BlinkMacSystemFont,
+            'Segoe UI',
+            'Roboto',
+            'Helvetica Neue',
+            'Arial',
+            'Noto Sans',
+            sans-serif,
+            'Apple Color Emoji',
+            'Segoe UI Emoji',
+            'Segoe UI Symbol',
+            'Noto Color Emoji' !important;
 
         background-color: ${ ({ theme }) => theme.palette.css.gray75 } !important;
 
