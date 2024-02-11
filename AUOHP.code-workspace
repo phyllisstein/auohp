@@ -24,7 +24,7 @@
 				"source.fixAll.eslint"
 			]
 		},
-		"editor.defaultFormatter": "esbenp.prettier-vscode",
+		"editor.defaultFormatter": "dbaeumer.vscode-eslint",
 		"editor.formatOnSave": false,
 		"eslint.format.enable": true,
 		"eslint.lintTask.enable": true,
@@ -45,6 +45,7 @@
 			"postcss",
 			"stylus",
 			"typescriptreact"
-		]
+		],
+		"editor.tabSize": 4
 	}
 }
