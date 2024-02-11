@@ -1,3 +1,5 @@
+'use client'
+
 import { createGlobalStyle } from 'styled-components'
 
 export const Body = createGlobalStyle`
@@ -29,8 +31,6 @@ export const Body = createGlobalStyle`
             'Segoe UI Emoji',
             'Segoe UI Symbol',
             'Noto Color Emoji' !important;
-
-        background-color: ${ ({ theme }) => theme.palette.css.gray75 } !important;
 
         font-kerning: normal;
         font-variant-ligatures: common-ligatures;
