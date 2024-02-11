@@ -7,7 +7,8 @@ import * as fs from 'fs/promises'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
-import neo4j from 'neo4j-driver'
+import { nanoid } from 'nanoid'
+import neo4j, { EagerResult } from 'neo4j-driver'
 
 const NEO4J_LABELS = [
     'Interview',
@@ -22,6 +23,9 @@ const __dirname = path.dirname(__filename)
 const neo4jDriver = neo4j.driver(
     'bolt://localhost:7687',
     neo4j.auth.basic('neo4j', 'auohpauohp'),
+    {
+        disableLosslessIntegers: true,
+    },
 )
 
 async function seed({ data, date, interviewee, interviewNumber }: any) {
@@ -45,48 +49,43 @@ async function seed({ data, date, interviewee, interviewNumber }: any) {
             endTime: Number.parseFloat(segment.end_time),
             speaker: segment.speaker_label,
             text: text.trim(),
+            statementUID: nanoid(),
         }
     })
 
     await neo4jDriver.executeQuery(`
-          CREATE (i:Interview {number: $interviewNumber, date: date($date), url: $url})
-          MERGE (interviewee:Person {name: $interviewee})
-          MERGE (jim:Person {name: 'Jim Hubbard'})
-          MERGE (sarah:Person {name: 'Sarah Schulman'})
+        MATCH (jim:Person {name: 'Jim Hubbard'})
+        MATCH (sarah:Person {name: 'Sarah Schulman'})
+        WITH jim, sarah
+        CREATE (i:Interview {number: $interviewNumber, date: date($date), url: $url, uid: $interviewUID})
+        CREATE (interviewee:Person {name: $interviewee, uid: $intervieweeUID})
           CREATE (sarahSpeaker:Speaker {remoteID: 'spk_2'})
           CREATE (jimSpeaker:Speaker {remoteID: 'spk_1'})
-          CREATE (intervieweeSpeaker:Speaker {remoteID: 'spk_1'})
+        CREATE (intervieweeSpeaker:Speaker {remoteID: 'spk_0'})
           MERGE (interviewee)-[:INTERVIEWED_AS]->(intervieweeSpeaker)
           MERGE (jim)-[:INTERVIEWED_AS]->(jimSpeaker)
           MERGE (sarah)-[:INTERVIEWED_AS]->(sarahSpeaker)
           CREATE (i)-[:INTERVIEWED_WITH]->(intervieweeSpeaker)
           CREATE (i)-[:INTERVIEWED_WITH]->(jimSpeaker)
-          CREATE (i)-[:INTERVIEWED_WITH]->(sarahSpeaker)
-        `,
+        CREATE (i)-[:INTERVIEWED_WITH]->(sarahSpeaker)`,
     {
         date,
         interviewee,
+        intervieweeUID: nanoid(),
+        interviewUID: nanoid(),
         interviewNumber,
         url: 'http://localhost:4000/index.html',
     },
     )
 
     for await (let segment of segments) {
-        const { records } = await neo4jDriver.executeQuery(`
-            MATCH (speaker:Speaker {remoteID: $speakerID}) <-[:INTERVIEWED_WITH]- (interview:Interview {number: $interviewNumber})
-            MATCH (speaker) <-[:INTERVIEWED_AS]- (person:Person)
-            CREATE (statement:Statement {text: $text})
-            SET statement.uuid = randomUUID()
-            MERGE (speaker)-[:SAYS {startTime: $startTime, endTime: $endTime}]->(statement)
-            RETURN statement.uuid AS statementID, person.uuid AS personID, interview.uuid AS interviewID
-        `, {
-            text: segment.text,
-            speakerID: segment.speaker,
-            startTime: segment.startTime,
-            endTime: segment.endTime,
+        const params = {
+            ...segment,
             interviewNumber,
-        },
-        )
+        }
+
+            MATCH (speaker) <-[:INTERVIEWED_AS]- (person:Person)
+            CREATE (statement:Statement {text: $text, uid: $statementUID})
 
         if (!result?.records?.length) {
             console.error(`
@@ -124,18 +123,9 @@ async function bootstrap() {
     )
 
     for await (let label of NEO4J_LABELS) {
-        await neo4jDriver.executeQuery(
-            // language=Cypher
-            `
-              CALL apoc.uuid.setup($label, 'neo4j')
-            `,
-            { label },
-            { database: 'system' },
-        )
-
         await neo4jDriver.executeQuery(`
-            CREATE CONSTRAINT ${ label }ID IF NOT EXISTS
-            FOR (n:${ label }) REQUIRE n.uuid IS UNIQUE
+            CREATE CONSTRAINT ${ label }UID IF NOT EXISTS
+            FOR (n:${ label }) REQUIRE n.uid IS UNIQUE
             `,
         { label },
         )
@@ -150,6 +140,11 @@ async function bootstrap() {
             }
         }
     `)
+
+    await neo4jDriver.executeQuery(`
+        CREATE (jim:Person {name: 'Jim Hubbard', uid: $jimUID})
+        CREATE (sarah:Person {name: 'Sarah Schulman', uid: $sarahUID})
+    `, { jimUID: nanoid(), sarahUID: nanoid() })
 }
 
 async function main() {
