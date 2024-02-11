@@ -64,14 +64,14 @@ async function seed({ data, date, interviewee, interviewNumber }: any) {
         WITH jim, sarah
         CREATE (i:Interview {number: $interviewNumber, date: date($date), url: $url, uid: $interviewUID})
         CREATE (interviewee:Person {name: $interviewee, uid: $intervieweeUID})
-          CREATE (sarahSpeaker:Speaker {remoteID: 'spk_2'})
-          CREATE (jimSpeaker:Speaker {remoteID: 'spk_1'})
+        CREATE (sarahSpeaker:Speaker {remoteID: 'spk_2'})
+        CREATE (jimSpeaker:Speaker {remoteID: 'spk_1'})
         CREATE (intervieweeSpeaker:Speaker {remoteID: 'spk_0'})
-          MERGE (interviewee)-[:INTERVIEWED_AS]->(intervieweeSpeaker)
-          MERGE (jim)-[:INTERVIEWED_AS]->(jimSpeaker)
-          MERGE (sarah)-[:INTERVIEWED_AS]->(sarahSpeaker)
-          CREATE (i)-[:INTERVIEWED_WITH]->(intervieweeSpeaker)
-          CREATE (i)-[:INTERVIEWED_WITH]->(jimSpeaker)
+        MERGE (interviewee)-[:INTERVIEWED_AS]->(intervieweeSpeaker)
+        MERGE (jim)-[:INTERVIEWED_AS]->(jimSpeaker)
+        MERGE (sarah)-[:INTERVIEWED_AS]->(sarahSpeaker)
+        CREATE (i)-[:INTERVIEWED_WITH]->(intervieweeSpeaker)
+        CREATE (i)-[:INTERVIEWED_WITH]->(jimSpeaker)
         CREATE (i)-[:INTERVIEWED_WITH]->(sarahSpeaker)`,
     {
         date,
@@ -112,7 +112,7 @@ async function bootstrap() {
     await neo4jDriver.getServerInfo()
 
     await neo4jDriver.executeQuery(
-    // language=Cypher
+        // language=Cypher
         `
           MATCH p = ()--()
           DETACH DELETE p
