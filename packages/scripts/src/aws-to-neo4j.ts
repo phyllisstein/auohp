@@ -44,9 +44,14 @@ async function seed({ data, date, interviewee, interviewNumber }: any) {
             return `${ acc } ${ word }`
         }, '')
 
+        const startTime = Number.parseFloat(segment.start_time)
+        const endTime = Number.parseFloat(segment.end_time)
+        const duration = endTime - startTime
+
         return {
-            startTime: Number.parseFloat(segment.start_time),
-            endTime: Number.parseFloat(segment.end_time),
+            startTime,
+            endTime,
+            duration,
             speaker: segment.speaker_label,
             text: text.trim(),
             statementUID: nanoid(),
@@ -84,14 +89,20 @@ async function seed({ data, date, interviewee, interviewNumber }: any) {
             interviewNumber,
         }
 
+        const result: EagerResult = await neo4jDriver.executeQuery(`
+            MATCH (speaker:Speaker {remoteID: $speaker}) <-[:INTERVIEWED_WITH]- (interview:Interview {number: $interviewNumber})
             MATCH (speaker) <-[:INTERVIEWED_AS]- (person:Person)
             CREATE (statement:Statement {text: $text, uid: $statementUID})
+            MERGE (speaker)-[:SAYS {startTime: $startTime, endTime: $endTime, duration: $duration}]->(statement)
+            RETURN statement, person, interview
+        `, params)
 
         if (!result?.records?.length) {
             console.error(`
                 No records returned for segment:Could not create node for
                 segment starting ${ segment.startTime } in interview
-                ${ interviewNumber } for speaker ${ segment.speaker }.
+                ${ interviewNumber } for speaker ${ segment.speaker }.\n\n\n
+                ${ JSON.stringify(result, null, 2) }
             `)
         }
     }
