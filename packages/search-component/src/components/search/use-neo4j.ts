@@ -1,5 +1,5 @@
 import neo4j, { type Driver } from 'neo4j-driver'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 export function useNeo4j(url: string, username: string, password: string): Driver | null {
     const [driver, setDriver] = useState<Driver | null>(null)
