@@ -17,6 +17,12 @@ module.exports = {
         'react-hooks',
     ],
     rules: {
+        'react-hooks/exhaustive-deps': [
+            'warn',
+            {
+                additionalHooks: '(useRecoilCallback|useRecoilTransaction_UNSTABLE)',
+            },
+        ],
         'react/jsx-closing-bracket-location': ['warn', 'after-props'],
         'react/jsx-curly-newline': ['warn', 'consistent'],
         'react/jsx-curly-spacing': [
@@ -41,8 +47,9 @@ module.exports = {
             {
                 callbacksLast: true,
                 ignoreCase: true,
-                noSortAlphabetically: true,
+                noSortAlphabetically: false,
                 reservedFirst: true,
+                shorthandFirst: true,
             },
         ],
         'react/jsx-tag-spacing': [
@@ -62,12 +69,6 @@ module.exports = {
         ],
         'react/react-in-jsx-scope': 'off',
         'react/self-closing-comp': 'warn',
-        'react-hooks/exhaustive-deps': [
-            'warn',
-            {
-                additionalHooks: '(useRecoilCallback|useRecoilTransaction_UNSTABLE)',
-            },
-        ],
     },
     settings: {
         react: {

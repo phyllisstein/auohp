@@ -3,13 +3,13 @@ import { useEffect, useState } from 'react'
 import { useNeo4j } from './use-neo4j'
 
 export interface Neo4jResult {
-    uid: string
-    startTime: number
     endTime: number
-    speaker: string
-    statement: string
-    score: number
     interviewURL: string
+    score: number
+    speaker: string
+    startTime: number
+    statement: string
+    uid: string
 }
 
 export function useNeo4jTranscript(query: string, index: string): Neo4jResult[] {
@@ -40,12 +40,12 @@ export function useNeo4jTranscript(query: string, index: string): Neo4jResult[] 
                 `, { index, query })
 
             const searchResults = result.records.map(record => ({
-                startTime: record.get('startTime'),
                 endTime: record.get('endTime'),
-                speaker: record.get('speaker'),
-                statement: record.get('statement'),
-                score: record.get('score'),
                 interviewURL: record.get('interviewURL'),
+                score: record.get('score'),
+                speaker: record.get('speaker'),
+                startTime: record.get('startTime'),
+                statement: record.get('statement'),
                 uid: record.get('uid'),
             }))
 

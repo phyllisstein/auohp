@@ -44,6 +44,7 @@
 			"less",
 			"postcss",
 			"stylus",
+			"typescript",
 			"typescriptreact"
 		],
 		"editor.tabSize": 4
