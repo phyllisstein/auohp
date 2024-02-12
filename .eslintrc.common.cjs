@@ -25,6 +25,7 @@ module.exports = {
             },
             plugins: [
                 '@typescript-eslint',
+                'typescript-sort-keys',
             ],
             rules: {
                 '@typescript-eslint/indent': [
@@ -52,8 +53,10 @@ module.exports = {
                     },
                 ],
                 // Getting lots of false positives for no-unsafe rules.
-                '@typescript-eslint/no-unsafe-argument': 'off',
-                '@typescript-eslint/no-unsafe-assignment': 'off',
+'@typescript-eslint/no-unsafe-argument': 'off',
+
+'@typescript-eslint/no-unsafe-assignment': 'off',
+
                 '@typescript-eslint/no-unsafe-call': 'off',
                 '@typescript-eslint/no-unsafe-member-access': 'off',
                 '@typescript-eslint/no-unsafe-return': 'off',
@@ -86,10 +89,13 @@ module.exports = {
                         beforeStatementContinuationChars: 'always',
                     },
                 ],
+                '@typescript-eslint/sort-type-constituents': 'warn',
                 'object-curly-spacing': 'off',
                 'prefer-const': 'off',
                 'quotes': 'off',
                 'semi': 'off',
+                'typescript-sort-keys/interface': 'warn',
+                'typescript-sort-keys/string-enum': 'warn',
             },
         },
     ],
@@ -103,6 +109,8 @@ module.exports = {
     plugins: [
         'import',
         'ramda',
+        'sort-destructure-keys',
+        'sort-keys-fix',
     ],
     root: true,
     rules: {
@@ -121,9 +129,11 @@ module.exports = {
                 'alphabetize': {
                     caseInsensitive: true,
                     order: 'asc',
+                    orderImportKind: 'asc',
                 },
                 'groups': [
                     'unknown',
+                    'index',
                     'builtin',
                     'external',
                     'internal',
@@ -170,7 +180,21 @@ module.exports = {
                 beforeStatementContinuationChars: 'always',
             },
         ],
+        'sort-destructure-keys/sort-destructure-keys': [
+            'warn',
+            {
+                caseSensitive: false,
+            },
+        ],
         'sort-imports': 'off',
+        'sort-keys-fix/sort-keys-fix': [
+            'warn',
+            'asc',
+            {
+                caseSensitive: false,
+                natural: true,
+            },
+        ],
         'space-before-function-paren': [
             'warn',
             'never',

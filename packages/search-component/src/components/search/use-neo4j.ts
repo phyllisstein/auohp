@@ -28,7 +28,7 @@ export function useNeo4j(url: string, username: string, password: string): Drive
                 void driver.close()
             }
         }
-    }, [url, username, password])
+    }, [ driver, password, url, username])
 
     return driver
 }

@@ -19,29 +19,29 @@ const FILES = [
 ]
 
 const BASE_PARAMS: StartTranscriptionJobCommandInput = {
-    TranscriptionJobName: '',
-    LanguageCode: 'en-US',
-    Settings: {
-        MaxSpeakerLabels: 3,
-        ShowSpeakerLabels: true,
-    },
     JobExecutionSettings: {
     // FIXME: "Please provide data access role for jobs that allow deferred execution."
     // AllowDeferredExecution: true,
     },
-    OutputBucketName: BUCKET,
-    ModelSettings: {
-        LanguageModelName: 'auohp-1688512598',
-    },
-
-    MediaFormat: 'flac',
+    LanguageCode: 'en-US',
     Media: {
         MediaFileUri: '',
     },
+    MediaFormat: 'flac',
+    ModelSettings: {
+        LanguageModelName: 'auohp-1688512598',
+    },
+    OutputBucketName: BUCKET,
 
+    Settings: {
+        MaxSpeakerLabels: 3,
+        ShowSpeakerLabels: true,
+    },
     Subtitles: {
         Formats: ['vtt', 'srt'],
     },
+
+    TranscriptionJobName: '',
 }
 
 async function main(fn = '') {
@@ -51,11 +51,11 @@ async function main(fn = '') {
     for await (const file of FILES) {
         const params = {
             ...BASE_PARAMS,
-            TranscriptionJobName: `${ start }-${ file }`,
             Media: {
                 MediaFileUri: `s3://${ BUCKET }/${ file }.flac`,
             },
             OutputKey: `${ file }.json`,
+            TranscriptionJobName: `${ start }-${ file }`,
         }
 
         console.log('Starting transcription job for', file)

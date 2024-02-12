@@ -21,18 +21,18 @@ export const between = (
 // prettier-ignore
     css`
     @media (min-width: ${ breakpoints[start] }) and (max-width: ${ breakpoints[end] }) {
-      ${ style }
+        ${ style }
     }
 `
 
 export const above = (breakpoint: Breakpoint, style: SimpleInterpolation) => css`
-  @media (min-width: ${ breakpoints[breakpoint] }) {
-    ${ style }
-  }
+    @media (min-width: ${ breakpoints[breakpoint] }) {
+        ${ style }
+    }
 `
 
 export const below = (breakpoint: Breakpoint, style: SimpleInterpolation) => css`
-  @media (max-width: ${ breakpoints[breakpoint] }) {
-    ${ style }
-  }
+    @media (max-width: ${ breakpoints[breakpoint] }) {
+        ${ style }
+    }
 `

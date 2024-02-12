@@ -51,12 +51,12 @@ async function seed({ data, date, interviewee, interviewNumber }: any) {
         const duration = endTime - startTime
 
         return {
-            startTime: int(startTime),
-            endTime: int(endTime),
             duration: int(duration),
+            endTime: int(endTime),
             speaker: segment.speaker_label,
-            text: text.trim(),
+            startTime: int(startTime),
             statementUID: nanoid(),
+            text: text.trim(),
         }
     })
 
@@ -79,8 +79,8 @@ async function seed({ data, date, interviewee, interviewNumber }: any) {
         date,
         interviewee,
         intervieweeUID: nanoid(),
-        interviewUID: nanoid(),
         interviewNumber: integerInterviewNumber,
+        interviewUID: nanoid(),
         url: 'http://localhost:4000/index.html',
     },
     )
