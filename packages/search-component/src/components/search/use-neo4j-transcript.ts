@@ -13,7 +13,7 @@ export interface Neo4jResult {
 }
 
 export function useNeo4jTranscript(query: string, index: string): Neo4jResult[] {
-    const driver = useNeo4j('bolt+s://bolt.auohp.here:443', 'neo4j', 'auohpauohp')
+    const driver = useNeo4j('bolt://localhost:7687', 'neo4j', 'auohpauohp')
     const [searchResults, setSearchResults] = useState<Neo4jResult[]>([])
 
     useEffect(() => {

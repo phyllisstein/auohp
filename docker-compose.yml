@@ -2,7 +2,8 @@ version: '3.8'
 
 services:
   editor-proxy:
-    image: marcnuri/port-forward
+    image: phyllisstein/port-forward
+    depends_on: [app]
     environment:
       - VIRTUAL_HOST=editor.auohp.here
       - VIRTUAL_PORT=80
@@ -12,7 +13,8 @@ services:
       - default
       - nginx-proxy
   search-component-proxy:
-    image: marcnuri/port-forward
+    image: phyllisstein/port-forward
+    depends_on: [app]
     environment:
       - VIRTUAL_HOST=search.auohp.here
       - VIRTUAL_PORT=80
@@ -22,7 +24,8 @@ services:
       - default
       - nginx-proxy
   neo4j-bolt-proxy:
-    image: marcnuri/port-forward
+    image: phyllisstein/port-forward
+    depends_on: [neo4j]
     environment:
       - VIRTUAL_HOST=bolt.auohp.here
       - VIRTUAL_PORT=80
@@ -32,7 +35,8 @@ services:
       - default
       - nginx-proxy
   neo4j-http-proxy:
-    image: marcnuri/port-forward
+    image: phyllisstein/port-forward
+    depends_on: [neo4j]
     environment:
       - VIRTUAL_HOST=neo4j.auohp.here
       - VIRTUAL_PORT=80
