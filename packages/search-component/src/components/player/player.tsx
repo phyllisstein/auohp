@@ -9,17 +9,24 @@ export function Player() {
     const player = useRef<HTMLVideoElement>(null)
 
     useEffect(() => {
+        const currentPlayer = player.current
+
         const handler = async() => {
-            const timestamp = queryString.parse(location.hash, { parseNumbers: true }).timestamp as number
-            if (typeof window === 'undefined' || !player.current || !timestamp) {
+            if (typeof window === 'undefined' || !currentPlayer) {
                 return
             }
 
-            player.current.currentTime = timestamp
-            await player.current.play()
+            const timestamp = queryString.parse(location.hash, { parseNumbers: true })?.timestamp as number
+            if (!timestamp) {
+                return
+            }
+
+            currentPlayer.currentTime = timestamp
+            window.history.pushState('', document.title, window.location.pathname + window.location.search)
         }
 
         void handler()
+
         const hashAbortController = new AbortController()
         window.addEventListener('hashchange', handler, {
             signal: hashAbortController.signal,
