@@ -28,7 +28,7 @@ const neo4jDriver = neo4j.driver(
     },
 )
 
-async function seed({ data, date, interviewee, interviewNumber }: any) {
+async function seed({ data, date, interviewee, interviewNumber, speakers }: any) {
     if (
         !Array.isArray(data?.results?.speaker_labels?.segments) ||
     data.results.speaker_labels.segments.length === 0
@@ -66,9 +66,9 @@ async function seed({ data, date, interviewee, interviewNumber }: any) {
         WITH jim, sarah
         CREATE (i:Interview {number: $interviewNumber, date: date($date), url: $url, uid: $interviewUID})
         CREATE (interviewee:Person {name: $interviewee, uid: $intervieweeUID})
-        CREATE (sarahSpeaker:Speaker {remoteID: 'spk_2'})
-        CREATE (jimSpeaker:Speaker {remoteID: 'spk_1'})
-        CREATE (intervieweeSpeaker:Speaker {remoteID: 'spk_0'})
+        CREATE (sarahSpeaker:Speaker {remoteID: $speakers.sarah})
+        CREATE (jimSpeaker:Speaker {remoteID: $speakers.jim})
+        CREATE (intervieweeSpeaker:Speaker {remoteID: $speakers.interviewee})
         MERGE (interviewee)-[:INTERVIEWED_AS]->(intervieweeSpeaker)
         MERGE (jim)-[:INTERVIEWED_AS]->(jimSpeaker)
         MERGE (sarah)-[:INTERVIEWED_AS]->(sarahSpeaker)
@@ -81,6 +81,7 @@ async function seed({ data, date, interviewee, interviewNumber }: any) {
         intervieweeUID: nanoid(),
         interviewNumber: integerInterviewNumber,
         interviewUID: nanoid(),
+        speakers,
         url: 'http://localhost:4000/index.html',
     },
     )
@@ -172,6 +173,11 @@ async function main() {
         date: '2020-05-27',
         interviewee: 'Gregg Bordowitz',
         interviewNumber: 4,
+        speakers: {
+            interviewee: 'spk_0',
+            jim: 'spk_1',
+            sarah: 'spk_2',
+        }
     })
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
 
@@ -187,6 +193,11 @@ async function main() {
         date: '2020-05-27',
         interviewee: 'Mark Harrington',
         interviewNumber: 12,
+        speakers: {
+            interviewee: 'spk_0',
+            jim: 'spk_1',
+            sarah: 'spk_2',
+        },
     })
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
 
@@ -202,6 +213,11 @@ async function main() {
         date: '2020-05-27',
         interviewee: 'Larry Kramer',
         interviewNumber: 35,
+        speakers: {
+            interviewee: 'spk_2',
+            jim: 'spk_1',
+            sarah: 'spk_0',
+        },
     })
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
 
@@ -217,6 +233,11 @@ async function main() {
         date: '2020-05-27',
         interviewee: 'Douglas Crimp',
         interviewNumber: 74,
+        speakers: {
+            interviewee: 'spk_1',
+            jim: 'spk_0',
+            sarah: 'spk_2',
+        },
     })
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
 
@@ -232,6 +253,11 @@ async function main() {
         date: '2020-05-27',
         interviewee: 'Joan Gibbs',
         interviewNumber: 138,
+        speakers: {
+            interviewee: 'spk_1',
+            jim: 'spk_2',
+            sarah: 'spk_0',
+        },
     })
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
 
