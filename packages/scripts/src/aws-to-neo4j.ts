@@ -8,7 +8,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 
 import { nanoid } from 'nanoid'
-import neo4j, { type EagerResult } from 'neo4j-driver'
+import neo4j, { type EagerResult, int } from 'neo4j-driver'
 
 const NEO4J_LABELS = [
     'Interview',
@@ -24,9 +24,6 @@ const __dirname = path.dirname(__filename)
 const neo4jDriver = neo4j.driver(
     'bolt://localhost:7687',
     neo4j.auth.basic('neo4j', 'auohpauohp'),
-    {
-        disableLosslessIntegers: true,
-    },
 )
 
 async function seed({ data, date, interviewee, interviewNumber, speakers, videoURL }: any) {
@@ -82,7 +79,7 @@ async function seed({ data, date, interviewee, interviewNumber, speakers, videoU
             date,
             interviewee,
             intervieweeUID: nanoid(),
-            interviewNumber,
+            interviewNumber: int(interviewNumber),
             interviewUID: nanoid(),
             speakers,
             videoUID: nanoid(),
@@ -93,7 +90,7 @@ async function seed({ data, date, interviewee, interviewNumber, speakers, videoU
     for await (let segment of segments) {
         const params = {
             ...segment,
-            interviewNumber,
+            interviewNumber: int(interviewNumber),
         }
 
         const result: EagerResult = await neo4jDriver.executeQuery(
@@ -183,12 +180,12 @@ async function main() {
     )
     await seed({
         data,
-        date: '2020-05-27',
+        date: '2002-12-17',
         interviewee: 'Gregg Bordowitz',
         interviewNumber: 4,
         speakers: {
-            interviewee: 'spk_0',
-            jim: 'spk_1',
+            interviewee: 'spk_1',
+            jim: 'spk_0',
             sarah: 'spk_2',
         },
         videoURL: '/interviews/004_gregg_bordowitz.mp4',
@@ -198,18 +195,18 @@ async function main() {
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 026 - Iris Long ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     data = JSON.parse(
         await fs.readFile(
-            path.join(__dirname, '../assets/012_mark_harrington.json'),
+            path.join(__dirname, '../assets/026_iris_long.json'),
             'utf8',
         ),
     )
     await seed({
         data,
-        date: '2020-05-27',
-        interviewee: 'Mark Harrington',
-        interviewNumber: 12,
+        date: '2003-05-16',
+        interviewee: 'Iris Long',
+        interviewNumber: 26,
         speakers: {
-            interviewee: 'spk_0',
-            jim: 'spk_1',
+            interviewee: 'spk_1',
+            jim: 'spk_0',
             sarah: 'spk_2',
         },
         videoURL: '/interviews/026_iris_long.mp4',
@@ -225,7 +222,7 @@ async function main() {
     )
     await seed({
         data,
-        date: '2020-05-27',
+        date: '2003-11-15',
         interviewee: 'Larry Kramer',
         interviewNumber: 35,
         speakers: {
