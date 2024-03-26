@@ -26,10 +26,10 @@ aws transcribe create-language-model \
 # Run a transcription job using the model. Produces JSON with structured
 # transcription and timing data, as well as a WebVTT file with subtitles.
 aws transcribe start-transcription-job \
-    --transcription-job-name crimp-(date +%s) \
+    --transcription-job-name kramer-(date +%s) \
     --language-code en-US \
-    --media MediaFileUri=s3://$AWS_BUCKET/074_douglas_crimp.flac \
+    --media MediaFileUri=s3://$AWS_BUCKET/035_larry_kramer.flac \
     --output-bucket-name $AWS_BUCKET \
     --settings ShowSpeakerLabels=true,MaxSpeakerLabels=4 \
-    --model-settings LanguageModelName=auohp-pdf-transcipts \
+    --model-settings LanguageModelName=auohp-pdf-transcripts \
     --subtitles Formats=vtt,srt,OutputStartIndex=1
