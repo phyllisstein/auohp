@@ -1,15 +1,16 @@
 import { useEffect, useState } from 'react'
 
-import { useNeo4j } from './use-neo4j'
+import { useNeo4j } from 'hooks/infrastructure'
 
 export interface Neo4jResult {
     endTime: number
-    interviewURL: string
+    interviewNumber: number
     score: number
-    speaker: string
+    speakerName: string
     startTime: number
     statement: string
-    uid: string
+    statementUID: string
+    videoURL: string
 }
 
 export function useNeo4jTranscript(query: string, index: string): Neo4jResult[] {
@@ -27,26 +28,29 @@ export function useNeo4jTranscript(query: string, index: string): Neo4jResult[] 
                 // language=Cypher
                 `
                     CALL db.index.fulltext.queryNodes($index, $query) YIELD node, score
-                    MATCH (node)<-[sez:SAYS]-(speaker:Speaker)<-[:INTERVIEWED_AS]-(whom)
-                    MATCH (speaker)<-[:INTERVIEWED_WITH]-(interview)
-                    RETURN sez.startTime AS startTime,
-                        sez.endTime AS endTime,
-                        sez.duration AS duration,
-                        whom.name AS speaker,
+                    MATCH (node)<-[speakerSays:SAYS]-(speaker:Speaker)<-[:INTERVIEWED_AS]-(person:Person)
+                    MATCH (speaker)<-[:INTERVIEWED_WITH]-(interview)-[:HAS_VIDEO]->(video)
+                    RETURN speakerSays.startTime AS startTime,
+                        speakerSays.endTime AS endTime,
+                        speakerSays.duration AS duration,
+                        person.name AS speakerName,
                         node.text AS statement,
-                        node.uid AS uid,
-                        interview.url AS interviewURL,
+                        node.uid AS statementUID,
+                        interview.number AS interviewNumber,
+                        video.url AS videoURL,
                         score
+                    ORDER BY score DESC
                 `, { index, query })
 
             const searchResults = result.records.map(record => ({
                 endTime: record.get('endTime'),
-                interviewURL: record.get('interviewURL'),
+                interviewNumber: record.get('interviewNumber'),
                 score: record.get('score'),
-                speaker: record.get('speaker'),
+                speakerName: record.get('speakerName'),
                 startTime: record.get('startTime'),
                 statement: record.get('statement'),
-                uid: record.get('uid'),
+                statementUID: record.get('statementUID'),
+                videoURL: record.get('videoURL'),
             }))
 
             setSearchResults(searchResults)

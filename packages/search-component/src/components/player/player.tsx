@@ -1,7 +1,7 @@
 import queryString from 'query-string'
 import { useEffect, useRef } from 'react'
 
-import bordowitz from 'assets/004_gregg_bordowitz_mq.mp4'
+import { useNeo4jVideo } from 'hooks/interviews'
 
 import './player.scss'
 
