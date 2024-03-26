@@ -6,9 +6,13 @@ import { Search } from 'components/search'
 export function renderSearch(element: HTMLElement) {
     const root = createRoot(element)
     root.render(
-        <>
-            <Player />
-            <Search />
-        </>,
+        <Search />,
+    )
+}
+
+export function renderPlayer(interviewNumber: number, element: HTMLElement) {
+    const root = createRoot(element)
+    root.render(
+        <Player interviewNumber={ interviewNumber } />,
     )
 }
