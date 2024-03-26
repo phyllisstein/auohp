@@ -8,7 +8,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 
 import { nanoid } from 'nanoid'
-import neo4j, { type EagerResult, int } from 'neo4j-driver'
+import neo4j, { type EagerResult } from 'neo4j-driver'
 
 const NEO4J_LABELS = [
     'Interview',
@@ -36,8 +36,6 @@ async function seed({ data, date, interviewee, interviewNumber, speakers }: any)
         throw new Error('No speaker labels found')
     }
 
-    const integerInterviewNumber = int(interviewNumber)
-
     const segments = data.results.speaker_labels.segments.map(segment => {
         const text = segment.items.reduce((acc, item) => {
             const word = data.results.items.find(
@@ -51,10 +49,10 @@ async function seed({ data, date, interviewee, interviewNumber, speakers }: any)
         const duration = endTime - startTime
 
         return {
-            duration: int(duration),
-            endTime: int(endTime),
+            duration,
+            endTime,
             speaker: segment.speaker_label,
-            startTime: int(startTime),
+            startTime,
             statementUID: nanoid(),
             text: text.trim(),
         }
@@ -89,7 +87,7 @@ async function seed({ data, date, interviewee, interviewNumber, speakers }: any)
     for await (let segment of segments) {
         const params = {
             ...segment,
-            interviewNumber: integerInterviewNumber,
+            interviewNumber,
         }
 
         const result: EagerResult = await neo4jDriver.executeQuery(`
