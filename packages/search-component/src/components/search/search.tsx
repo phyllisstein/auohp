@@ -1,8 +1,9 @@
 import queryString from 'query-string'
 import { type ChangeEvent, useState, useTransition } from 'react'
 
+import { type Neo4jResult, useNeo4jTranscript } from 'hooks/interviews'
+
 import './search.scss'
-import { type Neo4jResult, useNeo4jTranscript } from './use-neo4j-transcript'
 
 export function Search() {
     const [search, setSearch] = useState<string>('')
