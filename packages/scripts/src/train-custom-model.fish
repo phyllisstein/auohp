@@ -6,8 +6,10 @@
 
 # Extract text from PDFs and normalize to UTF-8. Anything but plain Unicode text
 # will throw an error. pdftotext is part of `poppler` or `poppler-utils`.
-for pdf in *.pdf                                                                                                                                         ─╯
-    pdftotext -enc UTF-8 "$pdf"
+for pdf in *.pdf
+    set basename (basename -s .pdf $pdf)
+    pdftotext -enc UTF-8 "$pdf" $basename".txt"
+    sed -i 's/�//g; s/[^[:print:]\t\n ]//g' $basename".txt"
 end
 
 # Upload the text files to S3.
