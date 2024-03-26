@@ -16,12 +16,14 @@ export function Search() {
     }
 
     const handleResultClick = (result: Neo4jResult) => {
-        const hash = queryString.stringify({
-            ...queryString.parse(location.hash),
-            timestamp: result.startTime,
+        const nextURL = queryString.stringifyUrl({
+            query: {
+                timestamp: result.startTime,
+            },
+            url: `/${ result.interviewNumber }`,
         })
 
-        window.location.hash = hash
+        window.location.href = nextURL
     }
 
     const neo4jResults = useNeo4jTranscript(search, 'transcript_search')
@@ -32,9 +34,9 @@ export function Search() {
             <div>
                 {
                     !searchTransitioning && neo4jResults.map(result => (
-                        <div key={ result.uid } onClick={ () => handleResultClick(result) }>
+                        <div key={ result.statementUID } onClick={ () => handleResultClick(result) }>
                             <h3>{ result.statement }</h3>
-                            <p>{ result.speaker }</p>
+                            <p>{ result.speakerName }</p>
                             <aside>{ result.startTime }</aside>
                         </div>
                     ))

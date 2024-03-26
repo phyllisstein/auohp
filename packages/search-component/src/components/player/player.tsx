@@ -5,24 +5,32 @@ import { useNeo4jVideo } from 'hooks/interviews'
 
 import './player.scss'
 
-export function Player() {
+interface PlayerProps {
+    interviewNumber: number
+}
+
+export function Player({ interviewNumber }: PlayerProps) {
     const player = useRef<HTMLVideoElement>(null)
+    const videoURL = useNeo4jVideo(interviewNumber)
 
     useEffect(() => {
         const currentPlayer = player.current
 
-        const handler = async() => {
+        const handler = () => {
             if (typeof window === 'undefined' || !currentPlayer) {
                 return
             }
 
-            const timestamp = queryString.parse(location.hash, { parseNumbers: true })?.timestamp as number
-            if (!timestamp) {
+            const parsedURL = queryString.parseUrl(window.location.href, { parseNumbers: true, sort: false })
+            if (typeof parsedURL.query.timestamp === 'undefined') {
                 return
             }
 
-            currentPlayer.currentTime = timestamp
-            window.history.pushState('', document.title, window.location.pathname + window.location.search)
+            currentPlayer.currentTime = parsedURL.query.timestamp as unknown as number
+
+            let strippedURL = queryString.stringifyUrl(parsedURL)
+            strippedURL = queryString.exclude(strippedURL, ['timestamp'])
+            window.history.pushState('', document.title, strippedURL)
         }
 
         void handler()
@@ -40,7 +48,7 @@ export function Player() {
     return (
         <div className='player-container'>
             <video ref={ player } controls muted playsInline>
-                <source src={ bordowitz } type='video/mp4' />
+                { videoURL && <source src={ videoURL } type='video/mp4' /> }
             </video>
         </div>
     )
