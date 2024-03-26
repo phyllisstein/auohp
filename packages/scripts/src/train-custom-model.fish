@@ -20,7 +20,7 @@ aws s3 sync . s3://$AWS_BUCKET/training/ --exclude "*" --include "*.txt"
 aws transcribe create-language-model \
     --language-code en-US \
     --base-model-name WideBand \
-    --model-name auohp \
+    --model-name auohp-pdf-transcripts \
     --input-data-config S3Uri=s3://$AWS_BUCKET/training/,DataAccessRoleArn=$AWS_TRANSCRIBE_ARN
 
 # Run a transcription job using the model. Produces JSON with structured
@@ -30,6 +30,6 @@ aws transcribe start-transcription-job \
     --language-code en-US \
     --media MediaFileUri=s3://$AWS_BUCKET/074_douglas_crimp.flac \
     --output-bucket-name $AWS_BUCKET \
-    --settings ShowSpeakerLabels=true,MaxSpeakerLabels=2 \
-    --model-settings LanguageModelName=auohp \
+    --settings ShowSpeakerLabels=true,MaxSpeakerLabels=4 \
+    --model-settings LanguageModelName=auohp-pdf-transcipts \
     --subtitles Formats=vtt,srt,OutputStartIndex=1
