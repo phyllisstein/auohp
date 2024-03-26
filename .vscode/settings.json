@@ -1,0 +1,14 @@
+{
+    "search.exclude": {
+        "**/node_modules": true,
+        "**/.yarn": true
+    },
+    "editor.indentSize": 4,
+    "editor.tabSize": 4,
+    "eslint.workingDirectories": [{ "mode": "auto"}],
+    "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": "always",
+        "source.fixAll.stylelint": "always"
+    },
+    "eslint.quiet": false
+}
