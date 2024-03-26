@@ -195,10 +195,7 @@ module.exports = {
                 natural: true,
             },
         ],
-        'space-before-function-paren': [
-            'warn',
-            'never',
-        ],
+        'space-before-function-paren': 'off',
         'template-curly-spacing': ['warn', 'always'],
     },
     settings: {
