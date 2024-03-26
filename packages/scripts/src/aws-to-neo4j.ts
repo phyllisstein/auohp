@@ -15,6 +15,7 @@ const NEO4J_LABELS = [
     'Person',
     'Speaker',
     'Statement',
+    'Video',
 ]
 
 const __filename = fileURLToPath(import.meta.url)
@@ -28,7 +29,7 @@ const neo4jDriver = neo4j.driver(
     },
 )
 
-async function seed({ data, date, interviewee, interviewNumber, speakers }: any) {
+async function seed({ data, date, interviewee, interviewNumber, speakers, videoURL }: any) {
     if (
         !Array.isArray(data?.results?.speaker_labels?.segments) ||
     data.results.speaker_labels.segments.length === 0
@@ -58,30 +59,35 @@ async function seed({ data, date, interviewee, interviewNumber, speakers }: any)
         }
     })
 
-    await neo4jDriver.executeQuery(`
-        MATCH (jim:Person {name: 'Jim Hubbard'})
-        MATCH (sarah:Person {name: 'Sarah Schulman'})
-        WITH jim, sarah
-        CREATE (i:Interview {number: $interviewNumber, date: date($date), url: $url, uid: $interviewUID})
-        CREATE (interviewee:Person {name: $interviewee, uid: $intervieweeUID})
-        CREATE (sarahSpeaker:Speaker {remoteID: $speakers.sarah})
-        CREATE (jimSpeaker:Speaker {remoteID: $speakers.jim})
-        CREATE (intervieweeSpeaker:Speaker {remoteID: $speakers.interviewee})
-        MERGE (interviewee)-[:INTERVIEWED_AS]->(intervieweeSpeaker)
-        MERGE (jim)-[:INTERVIEWED_AS]->(jimSpeaker)
-        MERGE (sarah)-[:INTERVIEWED_AS]->(sarahSpeaker)
-        CREATE (i)-[:INTERVIEWED_WITH]->(intervieweeSpeaker)
-        CREATE (i)-[:INTERVIEWED_WITH]->(jimSpeaker)
-        CREATE (i)-[:INTERVIEWED_WITH]->(sarahSpeaker)`,
-    {
-        date,
-        interviewee,
-        intervieweeUID: nanoid(),
-        interviewNumber: integerInterviewNumber,
-        interviewUID: nanoid(),
-        speakers,
-        url: 'http://localhost:4000/index.html',
-    },
+    await neo4jDriver.executeQuery(
+        // language=Cypher
+        `
+            MATCH (jim:Person {name: 'Jim Hubbard'})
+            MATCH (sarah:Person {name: 'Sarah Schulman'})
+            WITH jim, sarah
+            CREATE (i:Interview {number: $interviewNumber, date: date($date), uid: $interviewUID})
+            CREATE (video:Video {url: $videoURL, uid: $videoUID})
+            CREATE (interviewee:Person {name: $interviewee, uid: $intervieweeUID})
+            CREATE (sarahSpeaker:Speaker {remoteID: $speakers.sarah})
+            CREATE (jimSpeaker:Speaker {remoteID: $speakers.jim})
+            CREATE (intervieweeSpeaker:Speaker {remoteID: $speakers.interviewee})
+            MERGE (interviewee)-[:INTERVIEWED_AS]->(intervieweeSpeaker)
+            MERGE (jim)-[:INTERVIEWED_AS]->(jimSpeaker)
+            MERGE (sarah)-[:INTERVIEWED_AS]->(sarahSpeaker)
+            CREATE (i)-[:INTERVIEWED_WITH]->(intervieweeSpeaker)
+            CREATE (i)-[:INTERVIEWED_WITH]->(jimSpeaker)
+            CREATE (i)-[:INTERVIEWED_WITH]->(sarahSpeaker)
+            CREATE (i)-[:HAS_VIDEO]->(video)
+        `, {
+            date,
+            interviewee,
+            intervieweeUID: nanoid(),
+            interviewNumber,
+            interviewUID: nanoid(),
+            speakers,
+            videoUID: nanoid(),
+            videoURL,
+        },
     )
 
     for await (let segment of segments) {
@@ -90,13 +96,15 @@ async function seed({ data, date, interviewee, interviewNumber, speakers }: any)
             interviewNumber,
         }
 
-        const result: EagerResult = await neo4jDriver.executeQuery(`
-            MATCH (speaker:Speaker {remoteID: $speaker}) <-[:INTERVIEWED_WITH]- (interview:Interview {number: $interviewNumber})
-            MATCH (speaker) <-[:INTERVIEWED_AS]- (person:Person)
-            CREATE (statement:Statement {text: $text, uid: $statementUID})
-            MERGE (speaker)-[:SAYS {startTime: $startTime, endTime: $endTime, duration: $duration}]->(statement)
-            RETURN statement, person, interview
-        `, params)
+        const result: EagerResult = await neo4jDriver.executeQuery(
+            // language=Cypher
+            `
+                MATCH (speaker:Speaker {remoteID: $speaker}) <-[:INTERVIEWED_WITH]- (interview:Interview {number: $interviewNumber})
+                MATCH (speaker) <-[:INTERVIEWED_AS]- (person:Person)
+                CREATE (statement:Statement {text: $text, uid: $statementUID})
+                MERGE (speaker)-[:SAYS {startTime: $startTime, endTime: $endTime, duration: $duration}]->(statement)
+                RETURN statement, person, interview
+            `, params)
 
         if (!result?.records?.length) {
             console.error(`
@@ -135,23 +143,30 @@ async function bootstrap() {
     )
 
     for await (let label of NEO4J_LABELS) {
-        await neo4jDriver.executeQuery(`
-            CREATE CONSTRAINT ${ label }UID IF NOT EXISTS
-            FOR (n:${ label }) REQUIRE n.uid IS UNIQUE
+        await neo4jDriver.executeQuery(
+            // language=Cypher
+            `
+                CREATE CONSTRAINT ${ label }UID IF NOT EXISTS
+                FOR (n:${ label }) REQUIRE n.uid IS UNIQUE
             `,
-        { label },
+            { label },
         )
     }
 
-    await neo4jDriver.executeQuery(`
-        CREATE FULLTEXT INDEX transcript_search IF NOT EXISTS
-        FOR (n:Statement) ON EACH [n.text]
-    `)
+    await neo4jDriver.executeQuery(
+        // language=Cypher
+        `
+            CREATE FULLTEXT INDEX transcript_search IF NOT EXISTS
+            FOR (n:Statement) ON EACH [n.text]
+        `)
 
-    await neo4jDriver.executeQuery(`
-        CREATE (jim:Person {name: 'Jim Hubbard', uid: $jimUID})
-        CREATE (sarah:Person {name: 'Sarah Schulman', uid: $sarahUID})
-    `, { jimUID: nanoid(), sarahUID: nanoid() })
+    await neo4jDriver.executeQuery(
+        // language=Cypher
+        `
+            CREATE (jim:Person {name: 'Jim Hubbard', uid: $jimUID})
+            CREATE (sarah:Person {name: 'Sarah Schulman', uid: $sarahUID})
+        `, { jimUID: nanoid(), sarahUID: nanoid() },
+    )
 }
 
 async function main() {
@@ -175,11 +190,12 @@ async function main() {
             interviewee: 'spk_0',
             jim: 'spk_1',
             sarah: 'spk_2',
-        }
+        },
+        videoURL: '/interviews/004_gregg_bordowitz.mp4',
     })
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
 
-    // ~~~~~~~~~~~~~~~~~~~~~~~~~~ 012 - Mark Harrington ~~~~~~~~~~~~~~~~~~~~~~~~~ //
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 026 - Iris Long ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     data = JSON.parse(
         await fs.readFile(
             path.join(__dirname, '../assets/012_mark_harrington.json'),
@@ -196,6 +212,7 @@ async function main() {
             jim: 'spk_1',
             sarah: 'spk_2',
         },
+        videoURL: '/interviews/026_iris_long.mp4',
     })
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
 
@@ -216,46 +233,7 @@ async function main() {
             jim: 'spk_1',
             sarah: 'spk_0',
         },
-    })
-    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
-
-    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~ 074 - Douglas Crimp ~~~~~~~~~~~~~~~~~~~~~~~~~~ //
-    data = JSON.parse(
-        await fs.readFile(
-            path.join(__dirname, '../assets/074_douglas_crimp.json'),
-            'utf8',
-        ),
-    )
-    await seed({
-        data,
-        date: '2020-05-27',
-        interviewee: 'Douglas Crimp',
-        interviewNumber: 74,
-        speakers: {
-            interviewee: 'spk_1',
-            jim: 'spk_0',
-            sarah: 'spk_2',
-        },
-    })
-    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
-
-    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 138 - Joan Gibbs ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
-    data = JSON.parse(
-        await fs.readFile(
-            path.join(__dirname, '../assets/138_joan_gibbs.json'),
-            'utf8',
-        ),
-    )
-    await seed({
-        data,
-        date: '2020-05-27',
-        interviewee: 'Joan Gibbs',
-        interviewNumber: 138,
-        speakers: {
-            interviewee: 'spk_1',
-            jim: 'spk_2',
-            sarah: 'spk_0',
-        },
+        videoURL: '/interviews/035_larry_kramer.mp4',
     })
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
 
