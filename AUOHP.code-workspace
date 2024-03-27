@@ -1,52 +1,62 @@
 {
-	"folders": [
-		{
-			"name": "✨ auohp",
-			"path": "."
-		},
-		{
-			"name": "🚀 @auohp/caption-editor-app",
-			"path": "packages/caption-editor-app"
-		},
-		{
-			"name": "💾 @auohp/search-component",
-			"path": "packages/search-component"
-		},
-		{
-			"name": "⚙️ @auohp/scripts",
-			"path": "packages/scripts"
-		}
-	],
-	"settings": {
-		"[javascript][typescript][javascriptreact][typescriptreact]": {
-			"editor.codeActionsOnSave": [
-				"source.fixAll.stylelint",
-				"source.fixAll.eslint"
-			]
-		},
-		"editor.defaultFormatter": "dbaeumer.vscode-eslint",
-		"editor.formatOnSave": false,
-		"eslint.format.enable": true,
-		"eslint.lintTask.enable": true,
-		"eslint.validate": [
-			"typescript",
-			"typescriptreact",
-			"javascript",
-			"javascriptreact"
-		],
-		"monorepoWorkspace.folders.prefix.unknown": "💾 ",
-		"monorepoWorkspace.folders.regex.apps": "(app|web|api|frontend|client|server|backend|service)s?$",
-		"monorepoWorkspace.folders.regex.libs": "(common|package|lib|private|ui)s?$",
-		"monorepoWorkspace.folders.regex.tools": "(tool|script|util|config)s?$",
-		"stylelint.enable": true,
-		"stylelint.validate": [
-			"css",
-			"less",
-			"postcss",
-			"stylus",
-			"typescript",
-			"typescriptreact"
-		],
-		"editor.tabSize": 4
-	}
+    "folders": [
+        {
+            "name": "✨ auohp",
+            "path": "."
+        },
+        {
+            "name": "🚀 @auohp/caption-editor-app",
+            "path": "packages/caption-editor-app"
+        },
+        {
+            "name": "💾 @auohp/search-component",
+            "path": "packages/search-component"
+        },
+        {
+            "name": "⚙️ @auohp/scripts",
+            "path": "packages/scripts"
+        }
+    ],
+    "settings": {
+        "[javascript][typescript][javascriptreact][typescriptreact]": {
+            "editor.codeActionsOnSave": [
+                "source.fixAll.stylelint",
+                "source.fixAll.eslint"
+            ]
+        },
+        "editor.defaultFormatter": "dbaeumer.vscode-eslint",
+        "editor.formatOnSave": false,
+        "eslint.format.enable": true,
+        "eslint.lintTask.enable": true,
+        "eslint.validate": [
+            "typescript",
+            "typescriptreact",
+            "javascript",
+            "javascriptreact"
+        ],
+        "eslint.workingDirectories": [{ "mode": "auto"}],
+        "editor.codeActionsOnSave": {
+            "source.fixAll.eslint": "always",
+            "source.fixAll.stylelint": "always"
+        },
+        "eslint.quiet": true,
+        "monorepoWorkspace.folders.prefix.unknown": "💾 ",
+        "monorepoWorkspace.folders.regex.apps": "(app|web|api|frontend|client|server|backend|service)s?$",
+        "monorepoWorkspace.folders.regex.libs": "(common|package|lib|private|ui)s?$",
+        "monorepoWorkspace.folders.regex.tools": "(tool|script|util|config)s?$",
+        "stylelint.enable": true,
+        "stylelint.validate": [
+            "css",
+            "less",
+            "postcss",
+            "stylus",
+            "typescript",
+            "typescriptreact"
+        ],
+        "editor.tabSize": 4,
+        "search.exclude": {
+            "**/node_modules": true,
+            "**/.yarn": true
+        }
+    }
 }
