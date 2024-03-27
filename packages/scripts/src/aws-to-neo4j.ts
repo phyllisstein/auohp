@@ -65,9 +65,9 @@ async function seed({ data, date, interviewee, interviewNumber, speakers, videoU
             CREATE (i:Interview {number: $interviewNumber, date: date($date), uid: $interviewUID})
             CREATE (video:Video {url: $videoURL, uid: $videoUID})
             CREATE (interviewee:Person {name: $interviewee, uid: $intervieweeUID})
-            CREATE (sarahSpeaker:Speaker {remoteID: $speakers.sarah})
-            CREATE (jimSpeaker:Speaker {remoteID: $speakers.jim})
-            CREATE (intervieweeSpeaker:Speaker {remoteID: $speakers.interviewee})
+            CREATE (sarahSpeaker:Speaker {label: $speakers.sarah})
+            CREATE (jimSpeaker:Speaker {label: $speakers.jim})
+            CREATE (intervieweeSpeaker:Speaker {label: $speakers.interviewee})
             MERGE (interviewee)-[:INTERVIEWED_AS]->(intervieweeSpeaker)
             MERGE (jim)-[:INTERVIEWED_AS]->(jimSpeaker)
             MERGE (sarah)-[:INTERVIEWED_AS]->(sarahSpeaker)
@@ -96,7 +96,7 @@ async function seed({ data, date, interviewee, interviewNumber, speakers, videoU
         const result: EagerResult = await neo4jDriver.executeQuery(
             // language=Cypher
             `
-                MATCH (speaker:Speaker {remoteID: $speaker}) <-[:INTERVIEWED_WITH]- (interview:Interview {number: $interviewNumber})
+                MATCH (speaker:Speaker {label: $speaker}) <-[:INTERVIEWED_WITH]- (interview:Interview {number: $interviewNumber})
                 MATCH (speaker) <-[:INTERVIEWED_AS]- (person:Person)
                 CREATE (statement:Statement {text: $text, uid: $statementUID})
                 MERGE (speaker)-[:SAYS {startTime: $startTime, endTime: $endTime, duration: $duration}]->(statement)
