@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="Editor API" pattern="file:packages/caption-editor-api//*" />
+</component>
