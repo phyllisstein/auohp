@@ -20,6 +20,11 @@ export default {
             ...config.resolve.modules,
         ]
 
+        config.module.rules.push({
+            test: /\.(cql|cypher)$/,
+            type: 'asset/source',
+        })
+
         return config
     },
 }

@@ -37,6 +37,10 @@
     "plugins": [
       {
         "name": "next"
+      },
+      {
+        "name": "typescript-styled-plugin",
+        "validate": false
       }
     ],
     "strictNullChecks": true
@@ -52,15 +56,10 @@
     "./vendor/**/*.tsx",
     "./vendor/**/*.d.ts",
     "./next-env.d.ts",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
+    "./cql.d.ts"
   ],
   "exclude": [
     "node_modules"
-  ],
-  "plugins": [
-    {
-      "name": "typescript-styled-plugin",
-      "validate": false
-    }
   ]
 }
