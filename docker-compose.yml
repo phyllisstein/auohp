@@ -55,6 +55,9 @@ services:
     ports:
       - '3030:3030'
       - '4040:4040'
+    networks:
+      - default
+      - nginx-proxy
     volumes:
       - type: bind
         source: .
@@ -93,6 +96,9 @@ services:
     expose:
       - '7474'
       - '7687'
+    networks:
+      - default
+      - nginx-proxy
     volumes:
       - type: volume
         source: graph_data
