@@ -29,6 +29,57 @@ const neo4jDriver = neo4j.driver(
     },
 )
 
+/**
+ * Words into hunks (also borrowed from Premiere):
+ *
+ *    - Contiguous segments by the same speaker are merged.
+ *    - Merged segments are split into hunks of around 20 seconds each.
+ *    - Look for the end of a sentence or a pause in speech to split.
+ *
+ * Hunks are the smallest unit of storage, persisted directly into the
+ * database. Edits to a hunk are assumed to occupy the same time frame as
+ * the original hunk. (TK: Timestamp editing might be useful, but cumbersome
+ * to cascade across many hunks.) This means that once a hunk has been
+ * defined, it will not be split or merged. Captions will work along the
+ * same assumptions: they follow hunk timestamps and are not split or
+ * merged, even if their text becomes too long.
+ */
+function mergeContiguousSegments(segments: any[]) {
+    return segments.reduce((acc, segment) => {
+        const lastSegment = acc[acc.length - 1]
+        if (lastSegment && lastSegment.speaker_label === segment.speaker_label) {
+            lastSegment.end_time = segment.end_time
+            lastSegment.items.push(...segment.items)
+        } else {
+            acc.push(segment)
+        }
+        return acc
+    }, [])
+}
+
+function splitSegmentsIntoHunks(segments: any[]) {
+    const hunks = []
+    let hunk = { items: [], speaker_label: null, start_time: null, end_time: null }
+
+    for (let segment of segments) {
+        if (!hunk.speaker_label) {
+            hunk.speaker_label = segment.speaker_label
+            hunk.start_time = segment.start_time
+        }
+
+        hunk.items.push(...segment.items)
+
+        if (segment.end_time - hunk.start_time > 20) {
+            const lastItem = hunk.items[hunk.items.length - 1]
+            const lastWord = lastItem.alternatives[0].content
+            if (/\p{P}/u.test(lastWord)) {
+                hunk.end_time = lastItem.end_time
+                hunks.push(hunk)
+                hunk = { items: [], speaker_label: null, start_time: null, end_time: null }
+            }
+        }
+    }
+
 async function seed({ data, date, interviewee, interviewNumber, speakers, videoURL }: any) {
     if (
         !Array.isArray(data?.results?.speaker_labels?.segments) ||
