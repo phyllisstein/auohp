@@ -2,7 +2,7 @@
 
 import neo4j, { type Driver } from 'neo4j-driver'
 
-import searchSpeakerCaptions from './search-speaker-captions.cql'
+import searchSpeakerCaptions from './search-speaker-captions.cypher'
 
 export interface Neo4jResult {
     endTime: number
