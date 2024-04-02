@@ -1,3 +1,5 @@
+'use server'
+
 import { Header } from './page-styles'
 
 export default async function Page() {
