@@ -24,6 +24,9 @@ const __dirname = path.dirname(__filename)
 const neo4jDriver = neo4j.driver(
     'bolt://localhost:7687',
     neo4j.auth.basic('neo4j', 'auohpauohp'),
+    {
+        disableLosslessIntegers: true,
+    },
 )
 
 async function seed({ data, date, interviewee, interviewNumber, speakers, videoURL }: any) {
@@ -51,9 +54,9 @@ async function seed({ data, date, interviewee, interviewNumber, speakers, videoU
             return `${ acc } ${ word }`
         }, '')
 
-        const startTime =  Number.parseInt(segment.start_time, 10)
-        const endTime = Number.parseInt(segment.end_time, 10)
-        const duration = endTime - startTime
+        const startTime =  Number.parseFloat(segment.start_time)
+        const endTime = Number.parseFloat(segment.end_time)
+        const duration = (endTime - startTime).toPrecision(2)
 
         return {
             duration,
