@@ -88,21 +88,17 @@ async function seed({ data, date, interviewee, interviewNumber, speakers, videoU
         throw new Error('No speaker labels found')
     }
 
-    /**
-     * Premiere subtitle defaults:
-     *     - Each subtitle must be less than 42 characters per line
-     *     - Each subtitle must be no more than 2 lines
-     *     - Each subtitle must be on screen for at least 3 seconds
-     *
-     * TODO: BBC has comprehensive guide to best practices:
-     *     <https://www.bbc.co.uk/accessibility/forproducts/guides/subtitles/>
-     */
     const segments = data.results.speaker_labels.segments.map(segment => {
         const text = segment.items.reduce((acc, item) => {
             const word = data.results.items.find(
                 i => i.start_time === item.start_time,
-            )?.alternatives[0].content
-            return `${ acc } ${ word }`
+            )
+
+            if (word.type === 'punctuation') {
+                return acc + word.alternatives[0].content
+            }
+
+            return acc + ' ' + word.alternatives[0].content
         }, '')
 
         const startTime =  Number.parseFloat(segment.start_time)
