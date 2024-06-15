@@ -107,9 +107,6 @@ services:
     expose:
       - '7474'
       - '7687'
-    networks:
-      - default
-      - nginx-proxy
     volumes:
       - type: volume
         source: graph_data
