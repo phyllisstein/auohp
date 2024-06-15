@@ -67,33 +67,6 @@ async function seed({ data, date, interviewee, interviewNumber, speakers, videoU
         throw new Error('No speaker labels found')
     }
 
-    const segments = data.results.speaker_labels.segments.map((segment) => {
-        const text = segment.items.reduce((acc, item) => {
-            const word = data.results.items.find(
-                i => i.start_time === item.start_time,
-            )
-
-            if (word.type === 'punctuation') {
-                return acc + word.alternatives[0].content
-            }
-
-            return acc + ' ' + word.alternatives[0].content
-        }, '')
-
-        const startTime = round(Number.parseFloat(segment.start_time), 1)
-        const endTime = round(Number.parseFloat(segment.end_time), 1)
-        const duration = round(endTime - startTime, 1)
-
-        return {
-            duration,
-            endTime,
-            speaker: segment.speaker_label,
-            startTime,
-            statementUID: nanoid(),
-            text: text.trim(),
-        }
-    })
-
     await neo4jDriver.executeQuery(
         // language=Cypher
         `
@@ -125,21 +98,50 @@ async function seed({ data, date, interviewee, interviewNumber, speakers, videoU
         },
     )
 
-    for await (let segment of segments) {
-        const params = {
-            ...segment,
-            interviewNumber: int(interviewNumber),
-        }
+    const segments = data.results.speaker_labels.segments.map((segment) => {
+        const text = segment.items.reduce((acc, item) => {
+            const itemIndex = data.results.items.findIndex(
+                el => el.start_time === item.start_time,
+            )
+            const word = data.results.items[itemIndex]
+            acc += ' ' + word.alternatives[0].content
 
+            const nextWord = data.results.items[itemIndex + 1]
+            if (nextWord?.type === 'punctuation') {
+                acc += nextWord.alternatives[0].content
+            }
+
+            return acc
+        }, '')
+
+        const startTime = round(Number.parseFloat(segment.start_time), 2)
+        const endTime = round(Number.parseFloat(segment.end_time), 2)
+        const duration = round(endTime - startTime, 2)
+
+        return {
+            duration,
+            endTime,
+            speaker: segment.speaker_label,
+            startTime,
+            text: text.trim(),
+        }
+    })
+
+    // await fs.writeFile('segments.json', JSON.stringify(segments, null, 4))
+
+    for await (let segment of segments) {
         const result: EagerResult = await neo4jDriver.executeQuery(
             // language=Cypher
             `
                 MATCH (speaker:Speaker {label: $speaker}) <-[:INTERVIEWED_WITH]- (interview:Interview {number: $interviewNumber})
                 MATCH (speaker) <-[:INTERVIEWED_AS]- (person:Person)
-                CREATE (statement:Statement {text: $text, uid: $statementUID})
+                CREATE (statement:Statement {text: $text})
                 MERGE (speaker)-[:SAYS {startTime: $startTime, endTime: $endTime, duration: $duration}]->(statement)
                 RETURN statement, person, interview
-            `, params)
+            `, {
+                ...segment,
+                interviewNumber: int(interviewNumber),
+            })
 
         if (!result?.records?.length) {
             console.error(`
