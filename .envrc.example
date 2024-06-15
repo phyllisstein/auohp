@@ -1,5 +1,0 @@
-dotenv_if_exists .env
-layout node
-use node 20
-export FONTAWESOME_NPM_TOKEN=
-export GSAP_NPM_TOKEN=

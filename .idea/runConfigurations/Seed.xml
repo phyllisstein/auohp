@@ -1,0 +1,13 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Seed" type="js.build_tools.npm">
+    <package-json value="$PROJECT_DIR$/packages/scripts/package.json" />
+    <command value="run" />
+    <scripts>
+      <script value="seed" />
+    </scripts>
+    <node-interpreter value="project" />
+    <package-manager value="$PROJECT_DIR$/.yarn/releases/yarn-4.1.1.cjs" />
+    <envs />
+    <method v="2" />
+  </configuration>
+</component>

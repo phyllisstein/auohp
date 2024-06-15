@@ -1,39 +1,44 @@
-FROM phyllisstein/watchman:v2022.06.20 AS watchman
+FROM ubuntu:noble
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ App ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
-FROM ubuntu:20.04 AS app
-
-COPY --from=watchman /usr/local/bin/* /usr/local/bin/
-COPY --from=watchman /usr/local/lib/* /usr/local/lib/
+ENV NODE_MAJOR=20
 
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y -o Dpkg::Options::="--force-confold" -o Dpkg::Options::="--force-confdef" --allow-downgrades --allow-remove-essential --allow-change-held-packages --no-install-recommends \
         ca-certificates \
-        libboost-context1.71.0 \
-        libevent-2.1-7 \
-        libsnappy1v5 \
         curl \
         git \
         gnupg \
+        less \
+        lsof \
+        wget \
     && mkdir -p /etc/apt/keyrings \
-    && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
-        | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
-    && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list >/dev/null \
+    && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
+    && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list \
     && curl -sL https://dl.yarnpkg.com/debian/pubkey.gpg | gpg --dearmor | tee /usr/share/keyrings/yarnkey.gpg >/dev/null \
     && echo "deb [signed-by=/usr/share/keyrings/yarnkey.gpg] https://dl.yarnpkg.com/debian stable main" | tee /etc/apt/sources.list.d/yarn.list \
     && apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y -o Dpkg::Options::="--force-confold" -o Dpkg::Options::="--force-confdef" --allow-downgrades --allow-remove-essential --allow-change-held-packages \
         nodejs \
-        yarn \
-    && mkdir -p /usr/local/var/run/watchman
+        yarn
 
 ENV PATH="/app/node_modules/.bin:/usr/share/nodejs/yarn/bin:$PATH"
 
+RUN useradd -ms /bin/sh -u 1001 app
+USER app
+
 WORKDIR /app
 
-COPY scripts/develop.sh ./scripts/develop.sh
-COPY scripts/watchman ./scripts/watchman
+COPY --chown=app:app .yarn/releases .yarn/releases
+COPY --chown=app:app .yarn/plugins .yarn/plugins
+COPY --chown=app:app package.json yarn.lock .yarnrc.yml ./
+COPY --chown=app:app packages/caption-editor-app/package.json ./packages/caption-editor-app/package.json
+COPY --chown=app:app packages/search-component/package.json ./packages/search-component/package.json
 
-RUN ./scripts/develop.sh watches
+RUN --mount=type=secret,id=environment,uid=1001,gid=1001 \
+    . /run/secrets/environment \
+    && export GSAP_NPM_TOKEN FONT_AWESOME_NPM_TOKEN GITHUB_TOKEN \
+    && yarn install
 
-CMD ["./scripts/develop.sh", "watch"]
+COPY --chown=app:app . /app
+
+CMD ["yarn", "packages:dev"]

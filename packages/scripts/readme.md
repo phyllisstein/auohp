@@ -1,12 +1,32 @@
 # `@auohp/scripts`
 ![](mascot.gif)
 
-## Preparing audio
-Using the least-compressed video file available, extract an audio track as FLAC and upload it to S3. Since this is an internal API, it's not useful to optimize asset size; given that crisp speech in well-separated voices helps the transcriber, it's better to optimize for quality.
+Example scripts for interacting with key components of AUOHP transcription infrastructure.
 
-```bash
-ffmpeg -i '035_larry_kramer.mp4' -vn -c:a flac -y 035_larry_kramer.flac
+## Amazon Transcribe
+[Amazon Transcribe](https://aws.amazon.com/transcribe/) is an Amazon Web
+Services product that uses machine learning to create transcripts of audio
+files.
+
+[`aws-transcribe.fish`](./src/aws-transcribe.fish) sketches interactions with
+the features we use. First, it trains [a custom language
+model](https://docs.aws.amazon.com/transcribe/latest/dg/custom-language-models.html)
+on the text of interviews transcribed by humans. A large corpus of accurate text
+helps the model detect things like "GMHC" that ML models struggle with out of
+the box.
+
+```sh
+./src/aws-transcribe.fish path/to/pdfs
 ```
 
-## Custom language model
-The project includes a custom language model in Amazon Transcribe. [Trained on](./src/train-custom-model.fish) unstructured but human-verified transcriptions of the interviews, it more reliably catches acronyms, proper nouns, and terms of art.
+Custom model in hand, it extracts audio from interview videos, uploads it to
+Amazon S3, and kicks off transcription jobs. These will eventually deposit
+transcripts back in S3, in three formats: WebVTT and SRT captions, and a
+structured JSON record.
+
+```sh
+./src/aws-transcribe.fish path/to/interviews
+```
+
+Auto-generated captions usually need additional manicuring: AUOHP apps ignore
+them in favor of the JSON documents. But it couldn't hurt to have a fallback.

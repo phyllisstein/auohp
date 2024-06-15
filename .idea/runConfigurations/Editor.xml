@@ -1,0 +1,16 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Editor" type="js.build_tools.npm">
+    <package-json value="$PROJECT_DIR$/packages/caption-editor-app/package.json" />
+    <command value="run" />
+    <scripts>
+      <script value="start:dev" />
+    </scripts>
+    <node-interpreter value="$USER_HOME$/.nvm/versions/node/v20.10.0/bin/node" />
+    <package-manager value="$PROJECT_DIR$/.yarn/releases/yarn-4.1.1.cjs" />
+    <envs>
+      <env name="FONT_AWESOME_NPM_TOKEN" value="1B1D39FD-0515-4E32-B70A-42D7AD427010" />
+      <env name="GSAP_NPM_TOKEN" value="e8417e93-7552-4b33-a3ac-581bfafb5c69" />
+    </envs>
+    <method v="2" />
+  </configuration>
+</component>
