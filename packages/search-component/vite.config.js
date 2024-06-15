@@ -1,13 +1,20 @@
-import tsconfigPaths from 'vite-tsconfig-paths'
+import { nodeResolve } from '@rollup/plugin-node-resolve'
+import react from '@vitejs/plugin-react'
+import { defineConfig } from 'vite'
 
-/** @type {import('vite').UserConfig} */
-export default {
+export default defineConfig({
     appType: 'spa',
-    plugins: [tsconfigPaths()],
+    plugins: [
+        react(),
+        nodeResolve({
+            extensions: ['.tsx', '.ts', '.js'],
+            moduleDirectories: ['src', 'node_modules'],
+        }),
+    ],
     publicDir: '../public',
     root: './src',
     server: {
         host: '0.0.0.0',
         port: 4040,
     },
-}
+})
