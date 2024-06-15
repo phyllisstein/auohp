@@ -1,12 +1,11 @@
-version: '3.8'
-
 services:
   editor-proxy:
     image: phyllisstein/port-forward
     depends_on: [app]
+    init: true
     environment:
       - VIRTUAL_HOST=editor.auohp.here
-      - VIRTUAL_PORT=80
+      - LOCAL_PORT=80
       - REMOTE_HOST=app
       - REMOTE_PORT=3030
     networks:
@@ -15,9 +14,10 @@ services:
   search-component-proxy:
     image: phyllisstein/port-forward
     depends_on: [app]
+    init: true
     environment:
       - VIRTUAL_HOST=search.auohp.here
-      - VIRTUAL_PORT=80
+      - LOCAL_PORT=80
       - REMOTE_HOST=app
       - REMOTE_PORT=4040
     networks:
@@ -26,28 +26,36 @@ services:
   neo4j-bolt-proxy:
     image: phyllisstein/port-forward
     depends_on: [neo4j]
+    init: true
     environment:
       - VIRTUAL_HOST=bolt.auohp.here
-      - VIRTUAL_PORT=80
+      - LOCAL_PORT=80
       - REMOTE_HOST=neo4j
       - REMOTE_PORT=7687
     networks:
       - default
       - nginx-proxy
   neo4j-http-proxy:
-    image: phyllisstein/port-forward
+    image: marcnuri/port-forward
     depends_on: [neo4j]
+    init: true
     environment:
       - VIRTUAL_HOST=neo4j.auohp.here
-      - VIRTUAL_PORT=80
+      - LOCAL_PORT=80
       - REMOTE_HOST=neo4j
       - REMOTE_PORT=7474
     networks:
       - default
       - nginx-proxy
   app:
+    networks:
+      - default
+      - nginx-proxy
     build:
       context: .
+      secrets:
+        - source: environment
+          mode: 0440
     depends_on: [neo4j]
     expose:
       - '3030'
@@ -55,25 +63,28 @@ services:
     ports:
       - '3030:3030'
       - '4040:4040'
-    networks:
-      - default
-      - nginx-proxy
-    volumes:
-      - type: bind
-        source: .
-        target: /app
-      - type: volume
-        source: node_modules
-        target: /app/node_modules
-      - type: volume
-        source: app_modules
-        target: /app/packages/caption-editor-app/node_modules
-      - type: volume
-        source: script_modules
-        target: /app/packages/scripts/node_modules
-    secrets:
-      - environment
+    develop:
+      watch:
+        - path: packages/caption-editor-app
+          target: /app/packages/caption-editor-app
+          action: sync
+          ignore:
+            - node_modules/
+        - path: packages/search-component
+          target: /app/packages/search-component
+          action: sync
+          ignore:
+            - node_modules/
+        - path: packages/scripts
+          target: /app/packages/scripts
+          action: sync
+        - action: rebuild
+          path: yarn.lock
+
   neo4j:
+    networks:
+        - default
+        - nginx-proxy
     image: neo4j:5.13.0
     environment:
       - 'NEO4J_AUTH=neo4j/auohpauohp'
@@ -108,14 +119,11 @@ services:
         target: /ssl
 
 volumes:
-  app_modules:
   graph_data:
-  node_modules:
-  script_modules:
 
 secrets:
   environment:
-    file: ./.env
+    file: .env
 
 networks:
   default:

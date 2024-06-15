@@ -6,7 +6,7 @@ import { RecoilRoot } from 'recoil'
 import { ServerStyleSheet, StyleSheetManager, ThemeProvider } from 'styled-components'
 import { Preflight } from 'styled-preflight'
 
-import { AdobeClean } from 'assets/fonts'
+import { AdobeClean } from 'styles/assets/fonts'
 import { theme } from 'styles/theme'
 
 import { Body } from './body'

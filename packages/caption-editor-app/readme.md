@@ -1,1 +1,2 @@
-# @auohp/caption-editor
+# `@auohp/caption-editor-app`
+![](./mascot.gif)
