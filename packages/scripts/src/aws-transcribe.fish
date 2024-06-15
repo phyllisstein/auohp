@@ -67,8 +67,8 @@ function run-transcription-job
     set -l video_dir $argv[1]
     pushd $video_dir
 
-    for video in $video_dir/*.mp4
-        set -l basename (basename -s .mp4 $video | sed 's/[^a-zA-Z0-9]//g' | string lower)
+    for video in *.mp4
+        set -l basename (basename -s .mp4 $video | string lower)
 
         ffmpeg -i "$video" -vn -acodec flac -ar 16000 -ac 1 -f flac -y "$basename".flac
         aws s3 cp "$basename".flac s3://$AWS_BUCKET/

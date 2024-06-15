@@ -30,41 +30,69 @@ const neo4jDriver = neo4j.driver(
     },
 )
 
-function segmentIntoCaptions(segment: any) {
-}
-
+/**
+ * Captions are generated in a two-step process:
+ *
+ * 1. Store AWS Transcribe results in database as timestamped plain-text hunks,
+ *    which the user can correct and edit.
+ * 2. Generate static caption assets from hunks, which the user can format and
+ *    regenerate.
+ *
+ * "Source of truth" is the persisted hunks. Corrected and edited hunks are
+ * saved in the database. Static captions are generated from these hunks, and
+ * regenerated when hunks are updated or caption formatting changes.
+ *
+ * Hunks are the smallest unit of storage, persisted directly into the database.
+ * Edits to a hunk are assumed to occupy the same time frame as the original
+ * hunk. (TK: Timestamp editing might be useful, but cumbersome to cascade
+ * across many hunks.) This means that once a hunk has been defined, it will not
+ * be split or merged. Captions will work along the same assumptions: they
+ * follow hunk timestamps and are not split or merged, even if their text
+ * becomes too long.
+ *
+ * Premiere subtitle defaults:
+ *
+ * - Each subtitle must be less than 42 characters per line
+ * - Each subtitle must be no more than 2 lines
+ * - Each subtitle must be on screen for at least 3 seconds
+ *
+ * TODO: BBC has comprehensive guide to best practices:
+ *     <https://www.bbc.co.uk/accessibility/forproducts/guides/subtitles/>
+ */
 async function seed({ data, date, interviewee, interviewNumber, speakers, videoURL }: any) {
     if (
-        !Array.isArray(data?.results?.speaker_labels?.segments) ||
-        data.results.speaker_labels.segments.length === 0
+        !Array.isArray(data?.results?.speaker_labels?.segments)
+        || data.results.speaker_labels.segments.length === 0
     ) {
         throw new Error('No speaker labels found')
     }
 
-    let currentSpeaker = data.results.items[0].speaker_label
-    let currentCaption = [
-        data.results.items[0],
-    ]
-    let captions = []
-    for (let item = 0; item < data.results.items.length; item++) {
-        const currentItem = data.results.items[item]
-        if (currentItem.type === 'punctuation') {
-            currentCaption.push(currentItem)
-            continue
+    const segments = data.results.speaker_labels.segments.map((segment) => {
+        const text = segment.items.reduce((acc, item) => {
+            const word = data.results.items.find(
+                i => i.start_time === item.start_time,
+            )
+
+            if (word.type === 'punctuation') {
+                return acc + word.alternatives[0].content
+            }
+
+            return acc + ' ' + word.alternatives[0].content
+        }, '')
+
+        const startTime = round(Number.parseFloat(segment.start_time), 1)
+        const endTime = round(Number.parseFloat(segment.end_time), 1)
+        const duration = round(endTime - startTime, 1)
+
+        return {
+            duration,
+            endTime,
+            speaker: segment.speaker_label,
+            startTime,
+            statementUID: nanoid(),
+            text: text.trim(),
         }
-
-        if (currentItem.speaker_label !== currentSpeaker) {
-            captions.push(currentCaption)
-            currentCaption = []
-            currentSpeaker = currentItem.speaker_label
-        }
-
-        currentCaption.push(currentItem)
-    }
-
-    // const captions = segmentsIntoCaptions(segments)
-    await fs.writeFile('segments.json', JSON.stringify(captions, null, 4))
-    return
+    })
 
     await neo4jDriver.executeQuery(
         // language=Cypher
@@ -108,8 +136,8 @@ async function seed({ data, date, interviewee, interviewNumber, speakers, videoU
             `
                 MATCH (speaker:Speaker {label: $speaker}) <-[:INTERVIEWED_WITH]- (interview:Interview {number: $interviewNumber})
                 MATCH (speaker) <-[:INTERVIEWED_AS]- (person:Person)
-                CREATE (statement:Statement {text: $text})
-                MERGE (speaker)-[:SAYS {startTime: $startTime, endTime: $endTime}]->(statement)
+                CREATE (statement:Statement {text: $text, uid: $statementUID})
+                MERGE (speaker)-[:SAYS {startTime: $startTime, endTime: $endTime, duration: $duration}]->(statement)
                 RETURN statement, person, interview
             `, params)
 
@@ -193,9 +221,9 @@ async function main() {
         interviewee: 'Robert Vasquez-Pacheco',
         interviewNumber: 2,
         speakers: {
-            interviewee: '',
-            jim: '',
-            sarah: '',
+            interviewee: 'spk_1',
+            jim: 'spk_2',
+            sarah: 'spk_0',
         },
         videoURL: '/interviews/002_robert_vasquez-pacheco.mp4',
     })
@@ -214,9 +242,9 @@ async function main() {
         interviewee: 'Moises Agosto',
         interviewNumber: 3,
         speakers: {
-            interviewee: '',
-            jim: '',
-            sarah: '',
+            interviewee: 'spk_1',
+            jim: 'spk_2',
+            sarah: 'spk_0',
         },
         videoURL: '/interviews/003_moises_agosto.mp4',
     })
@@ -235,9 +263,9 @@ async function main() {
         interviewee: 'Mark Harrington',
         interviewNumber: 12,
         speakers: {
-            interviewee: '',
-            jim: '',
-            sarah: '',
+            interviewee: 'spk_0',
+            jim: 'spk_2',
+            sarah: 'spk_1',
         },
         videoURL: '/interviews/012_mark_harrington.mp4',
     })
@@ -256,9 +284,9 @@ async function main() {
         interviewee: 'Lei Chou',
         interviewNumber: 25,
         speakers: {
-            interviewee: '',
-            jim: '',
-            sarah: '',
+            interviewee: 'spk_1',
+            jim: 'spk_2',
+            sarah: 'spk_0',
         },
         videoURL: '/interviews/025_lei_chou.mp4',
     })
@@ -319,9 +347,9 @@ async function main() {
         interviewee: 'Douglas Crimp',
         interviewNumber: 74,
         speakers: {
-            interviewee: '',
-            jim: '',
-            sarah: '',
+            interviewee: 'spk_1',
+            jim: 'spk_2',
+            sarah: 'spk_0',
         },
         videoURL: '/interviews/074_douglas_crimp.mp4',
     })
