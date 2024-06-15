@@ -14,6 +14,7 @@
     },
     "devDependencies": {
         "@fortawesome/fontawesome-common-types": "^6.5.2",
+        "@rollup/plugin-node-resolve": "^15.2.3",
         "@stylelint/postcss-css-in-js": "^0.38.0",
         "@types/chroma-js": "~2.4.4",
         "@types/common-tags": "~1.8.4",
@@ -24,6 +25,7 @@
         "@types/react-dom": "^18",
         "@typescript-eslint/eslint-plugin": "^7.13.0",
         "@typescript-eslint/parser": "^7.13.0",
+        "@vitejs/plugin-react": "^4.3.1",
         "eslint": "^9.5.0",
         "eslint-import-resolver-typescript": "^3.6.1",
         "eslint-plugin-import": "^2.29.1",
