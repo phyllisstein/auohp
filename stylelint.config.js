@@ -42,7 +42,7 @@ const config = {
             [],
             {
                 emptyLineMinimumPropertyThreshold: 4,
-                unspecified: 'bottomAlphabetical',
+                unspecified: 'bottom',
             },
         ],
 

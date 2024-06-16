@@ -82,6 +82,10 @@ export default [
                     indentLogicalExpressions: true,
                 },
             ],
+            '@stylistic/jsx-indent-props': [
+                'warn',
+                4,
+            ],
             '@stylistic/jsx-quotes': [
                 'warn',
                 'prefer-single',
