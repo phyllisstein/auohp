@@ -1,6 +1,6 @@
 FROM ubuntu:noble
 
-ENV NODE_MAJOR=20
+ENV NODE_MAJOR=22
 
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y -o Dpkg::Options::="--force-confold" -o Dpkg::Options::="--force-confdef" --allow-downgrades --allow-remove-essential --allow-change-held-packages --no-install-recommends \

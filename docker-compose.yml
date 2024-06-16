@@ -36,7 +36,7 @@ services:
       - default
       - nginx-proxy
   neo4j-http-proxy:
-    image: marcnuri/port-forward
+    image: phyllisstein/port-forward
     depends_on: [neo4j]
     init: true
     environment:
@@ -75,9 +75,6 @@ services:
           action: sync
           ignore:
             - node_modules/
-        - path: packages/scripts
-          target: /app/packages/scripts
-          action: sync
         - action: rebuild
           path: yarn.lock
 
