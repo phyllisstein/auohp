@@ -120,7 +120,6 @@ __metadata:
     "@spectrum-css/typography": "npm:^5.1.5"
     "@spectrum-css/vars": "npm:^9.0.8"
     "@spectrum-css/well": "npm:^4.1.4"
-    "@stylelint/postcss-css-in-js": "npm:0.38.0"
     "@types/chroma-js": "npm:^2.4.4"
     "@types/common-tags": "npm:^1.8.4"
     "@types/eslint": "npm:^8.56.6"
@@ -158,13 +157,6 @@ __metadata:
     stream: "npm:^0.0.2"
     styled-components: "npm:^6.1.8"
     styled-preflight: "npm:^8.0.1"
-    stylelint: "npm:16.x"
-    stylelint-config-rational-order: "https://github.com/phyllisstein/stylelint-config-rational-order.git#empty-line-threshold"
-    stylelint-config-recommended: "npm:14.x"
-    stylelint-config-styled-components: "npm:^0.1.1"
-    stylelint-order: "npm:^6.0.4"
-    stylelint-stylus: "npm:^1.0.0"
-    sugarss: "npm:^4.0.1"
     tslib: "npm:^2.6.2"
     typescript-styled-plugin: "npm:^0.18.3"
     vite: "npm:^5.2.6"
@@ -191,7 +183,6 @@ __metadata:
   dependencies:
     "@fortawesome/fontawesome-common-types": "npm:^6.5.2"
     "@rollup/plugin-node-resolve": "npm:^15.2.3"
-    "@stylelint/postcss-css-in-js": "npm:^0.38.0"
     "@types/chroma-js": "npm:~2.4.4"
     "@types/common-tags": "npm:~1.8.4"
     "@types/eslint": "npm:~8.56.10"
@@ -226,15 +217,8 @@ __metadata:
     sass: "npm:^1.77.5"
     styled-components: "npm:^6.1.11"
     styled-preflight: "npm:^8.0.1"
-    stylelint: "npm:^16.6.1"
-    stylelint-config-rational-order: "https://github.com/phyllisstein/stylelint-config-rational-order.git#empty-line-threshold"
-    stylelint-config-recommended: "npm:^14.0.0"
-    stylelint-order: "npm:^6.0.4"
-    stylelint-stylus: "npm:^1.0.0"
     tslib: "npm:^2.6.3"
-    typescript-styled-plugin: "npm:^0.18.3"
     vite: "npm:^5.3.1"
-    vite-tsconfig-paths: "npm:^4.3.2"
   languageName: unknown
   linkType: soft
 
@@ -5538,7 +5522,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@stylelint/postcss-css-in-js@npm:0.38.0, @stylelint/postcss-css-in-js@npm:^0.38.0":
+"@stylelint/postcss-css-in-js@npm:^0.38.0":
   version: 0.38.0
   resolution: "@stylelint/postcss-css-in-js@npm:0.38.0"
   dependencies:
@@ -7408,13 +7392,17 @@ __metadata:
     postcss-html: "npm:^1.7.0"
     postcss-jsx: "npm:^0.36.4"
     postcss-safe-parser: "npm:^7.0.0"
+    postcss-scss: "npm:^4.0.9"
     postcss-styled-components: "npm:^0.2.1"
     postcss-syntax: "npm:^0.36.2"
     query-string: "npm:^9.0.0"
     react-player: "npm:^2.16.0"
     slate: "npm:^0.103.0"
     slate-react: "npm:^0.105.0"
-    stylelint-config-styled-components: "npm:^0.1.1"
+    stylelint: "npm:^16.6.1"
+    stylelint-config-rational-order: "https://github.com/phyllisstein/stylelint-config-rational-order.git#empty-line-threshold"
+    stylelint-config-recommended: "npm:^14.0.0"
+    stylelint-order: "npm:^6.0.4"
     stylelint-stylus: "npm:^1.0.0"
     tsx: "npm:^4.15.5"
     typescript: "npm:^5.4.5"
@@ -10659,13 +10647,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"globrex@npm:^0.1.2":
-  version: 0.1.2
-  resolution: "globrex@npm:0.1.2"
-  checksum: 10/81ce62ee6f800d823d6b7da7687f841676d60ee8f51f934ddd862e4057316d26665c4edc0358d4340a923ac00a514f8b67c787e28fe693aae16350f4e60d55e9
-  languageName: node
-  linkType: hard
-
 "gopd@npm:^1.0.1":
   version: 1.0.1
   resolution: "gopd@npm:1.0.1"
@@ -13550,6 +13531,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"postcss-scss@npm:^4.0.9":
+  version: 4.0.9
+  resolution: "postcss-scss@npm:4.0.9"
+  peerDependencies:
+    postcss: ^8.4.29
+  checksum: 10/d191c771344357a28995a2f53041ec699070331b8238e076001cedde97215bd3ebf596d0a9882b22c566977c4b72816dafc00028dc09153c6f97f71cd28a70f7
+  languageName: node
+  linkType: hard
+
 "postcss-selector-parser@npm:^6.0.16, postcss-selector-parser@npm:^6.0.2":
   version: 6.0.16
   resolution: "postcss-selector-parser@npm:6.0.16"
@@ -15215,19 +15205,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"stylelint-config-recommended@npm:14.x, stylelint-config-recommended@npm:^14.0.0":
+"stylelint-config-recommended@npm:^14.0.0":
   version: 14.0.0
   resolution: "stylelint-config-recommended@npm:14.0.0"
   peerDependencies:
     stylelint: ^16.0.0
   checksum: 10/36511115b06d9f51aa0edc05f6064a7aae98cc990da14dd03629951f63a029d9e66a4d5b1ca678cce699e24413a62c2cd608cc07413ca5026f9680ddb8993858
-  languageName: node
-  linkType: hard
-
-"stylelint-config-styled-components@npm:^0.1.1":
-  version: 0.1.1
-  resolution: "stylelint-config-styled-components@npm:0.1.1"
-  checksum: 10/1421187a27d11740f9ee224163231a9f3194c8055c27b0cb3204e76742c55a9397004bc70da9b3feee9988d0afe0d3c839186ef01d847a163ba7ad3299a9759a
   languageName: node
   linkType: hard
 
@@ -15269,7 +15252,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"stylelint@npm:16.x, stylelint@npm:^16.4.0, stylelint@npm:^16.6.1":
+"stylelint@npm:^16.4.0, stylelint@npm:^16.6.1":
   version: 16.6.1
   resolution: "stylelint@npm:16.6.1"
   dependencies:
@@ -15345,15 +15328,6 @@ __metadata:
   bin:
     stylus: bin/stylus
   checksum: 10/192fcded5a1c6a4d5059f6d508179bf630ab25f41aa143d03cd695702f9383ea76e187940e1843831391fca181353b4d0897d8c33a0266a9d8ed1d14c56a71bb
-  languageName: node
-  linkType: hard
-
-"sugarss@npm:^4.0.1":
-  version: 4.0.1
-  resolution: "sugarss@npm:4.0.1"
-  peerDependencies:
-    postcss: ^8.3.3
-  checksum: 10/d8c2f5a91c943d5f98930456f32f10c9ea2dca1a17634097d08063d6fc83c2c23c4fc5c5d6620010f763ef92dc31a00a626e433c2db9abd62a718c2c59624471
   languageName: node
   linkType: hard
 
@@ -15717,20 +15691,6 @@ __metadata:
   version: 9.6.0
   resolution: "ts-toolbelt@npm:9.6.0"
   checksum: 10/2c2dea2631dbd7372a79cccc6d09a377a6ca2f319f767fd239d2e312cd1d9165a90f8c1777a047227bfdcda6aeba3addbadce88fdfc7f43caf4534d385a43c82
-  languageName: node
-  linkType: hard
-
-"tsconfck@npm:^3.0.3":
-  version: 3.0.3
-  resolution: "tsconfck@npm:3.0.3"
-  peerDependencies:
-    typescript: ^5.0.0
-  peerDependenciesMeta:
-    typescript:
-      optional: true
-  bin:
-    tsconfck: bin/tsconfck.js
-  checksum: 10/1c17217dc3758e71bebdb223b7cd6e613f8f8c92a225cccc40d459554dfae50cbf9d339c6a4a5a8d04620fe1c21bb6d454b6e10421e3fcd808ea51d0b5039ffd
   languageName: node
   linkType: hard
 
@@ -16239,22 +16199,6 @@ __metadata:
   version: 1.1.2
   resolution: "vary@npm:1.1.2"
   checksum: 10/31389debef15a480849b8331b220782230b9815a8e0dbb7b9a8369559aed2e9a7800cd904d4371ea74f4c3527db456dc8e7ac5befce5f0d289014dbdf47b2242
-  languageName: node
-  linkType: hard
-
-"vite-tsconfig-paths@npm:^4.3.2":
-  version: 4.3.2
-  resolution: "vite-tsconfig-paths@npm:4.3.2"
-  dependencies:
-    debug: "npm:^4.1.1"
-    globrex: "npm:^0.1.2"
-    tsconfck: "npm:^3.0.3"
-  peerDependencies:
-    vite: "*"
-  peerDependenciesMeta:
-    vite:
-      optional: true
-  checksum: 10/c12e2087fd01ac8a694850c649b79d5b9798cdba0ef9ab4116f669d8ffa1a9a3195c5a14410d3d9a12d2f08cd35ddd74f03d9c7b13a2d590d002055cdaab45c0
   languageName: node
   linkType: hard
 
