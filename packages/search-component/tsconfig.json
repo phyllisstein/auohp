@@ -43,10 +43,7 @@
     "exclude": [
         "node_modules"
     ],
-    "plugins": [
-        {
-            "name": "typescript-styled-plugin",
-            "validate": false
-        }
-    ]
+    "typeAcquisition": {
+        "enable": true
+    }
 }
