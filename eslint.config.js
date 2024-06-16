@@ -166,7 +166,12 @@ export default [
         },
     },
     {
-        files: ['**/*.ts', '**/*.tsx'],
+        files: [
+            '*.ts',
+            '*.tsx',
+            '**/*.ts',
+            '**/*.tsx',
+        ],
         languageOptions: {
             parser: parserTS,
             parserOptions: {
