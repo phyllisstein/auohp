@@ -70,42 +70,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@auohp/caption-editor-api@workspace:packages/caption-editor-api":
-  version: 0.0.0-use.local
-  resolution: "@auohp/caption-editor-api@workspace:packages/caption-editor-api"
-  dependencies:
-    "@nestjs/cli": "npm:^10.0.0"
-    "@nestjs/common": "npm:^10.0.0"
-    "@nestjs/core": "npm:^10.0.0"
-    "@nestjs/platform-express": "npm:^10.0.0"
-    "@nestjs/schematics": "npm:^10.0.0"
-    "@nestjs/testing": "npm:^10.0.0"
-    "@types/eslint": "npm:~8.56.10"
-    "@types/eslint-config-prettier": "npm:~6.11.3"
-    "@types/express": "npm:^4.17.17"
-    "@types/jest": "npm:^29.5.2"
-    "@types/node": "npm:^20.3.1"
-    "@types/source-map-support": "npm:~0.5.10"
-    "@types/supertest": "npm:^6.0.0"
-    "@typescript-eslint/eslint-plugin": "npm:^6.0.0"
-    "@typescript-eslint/parser": "npm:^6.0.0"
-    eslint: "npm:^8.42.0"
-    eslint-config-prettier: "npm:^9.0.0"
-    eslint-plugin-prettier: "npm:^5.0.0"
-    jest: "npm:^29.5.0"
-    prettier: "npm:^3.0.0"
-    reflect-metadata: "npm:^0.2.0"
-    rxjs: "npm:^7.8.1"
-    source-map-support: "npm:^0.5.21"
-    supertest: "npm:^6.3.3"
-    ts-jest: "npm:^29.1.0"
-    ts-loader: "npm:^9.4.3"
-    ts-node: "npm:^10.9.1"
-    tsconfig-paths: "npm:^4.2.0"
-    typescript: "npm:^5.1.3"
-  languageName: unknown
-  linkType: soft
-
 "@auohp/caption-editor-app@workspace:packages/caption-editor-app":
   version: 0.0.0-use.local
   resolution: "@auohp/caption-editor-app@workspace:packages/caption-editor-app"
@@ -121,7 +85,7 @@ __metadata:
     "@spectrum-css/vars": "npm:^9.0.8"
     "@spectrum-css/well": "npm:^5.2.1"
     "@types/chroma-js": "npm:~2.4.4"
-    "@types/node": "npm:^20.14.2"
+    "@types/node": "npm:^20.14.7"
     "@types/ramda": "npm:~0.30.0"
     "@types/react": "npm:~18.3.3"
     "@types/react-dom": "npm:~18.3.0"
@@ -133,6 +97,7 @@ __metadata:
     ramda: "npm:^0.30.1"
     react: "npm:^18.3.1"
     react-dom: "npm:^18.3.1"
+    recoil: "npm:^0.7.7"
     slate: "npm:^0.103.0"
     slate-history: "npm:^0.100.0"
     slate-react: "npm:^0.105.0"
@@ -173,6 +138,42 @@ __metadata:
     sass: "npm:^1.77.5"
     tslib: "npm:^2.6.3"
     vite: "npm:^5.3.1"
+  languageName: unknown
+  linkType: soft
+
+"@auohp/transcript-api@workspace:packages/transcript-api":
+  version: 0.0.0-use.local
+  resolution: "@auohp/transcript-api@workspace:packages/transcript-api"
+  dependencies:
+    "@nestjs/cli": "npm:^10.0.0"
+    "@nestjs/common": "npm:^10.0.0"
+    "@nestjs/core": "npm:^10.0.0"
+    "@nestjs/platform-express": "npm:^10.0.0"
+    "@nestjs/schematics": "npm:^10.0.0"
+    "@nestjs/testing": "npm:^10.0.0"
+    "@types/eslint": "npm:~8.56.10"
+    "@types/eslint-config-prettier": "npm:~6.11.3"
+    "@types/express": "npm:^4.17.17"
+    "@types/jest": "npm:^29.5.2"
+    "@types/node": "npm:^20.3.1"
+    "@types/source-map-support": "npm:~0.5.10"
+    "@types/supertest": "npm:^6.0.0"
+    "@typescript-eslint/eslint-plugin": "npm:^6.0.0"
+    "@typescript-eslint/parser": "npm:^6.0.0"
+    eslint: "npm:^8.42.0"
+    eslint-config-prettier: "npm:^9.0.0"
+    eslint-plugin-prettier: "npm:^5.0.0"
+    jest: "npm:^29.5.0"
+    prettier: "npm:^3.0.0"
+    reflect-metadata: "npm:^0.2.0"
+    rxjs: "npm:^7.8.1"
+    source-map-support: "npm:^0.5.21"
+    supertest: "npm:^6.3.3"
+    ts-jest: "npm:^29.1.0"
+    ts-loader: "npm:^9.4.3"
+    ts-node: "npm:^10.9.1"
+    tsconfig-paths: "npm:^4.2.0"
+    typescript: "npm:^5.1.3"
   languageName: unknown
   linkType: soft
 
@@ -4216,6 +4217,15 @@ __metadata:
   dependencies:
     undici-types: "npm:~5.26.4"
   checksum: 10/c38e47b190fa0a8bdfde24b036dddcf9401551f2fb170a90ff33625c7d6f218907e81c74e0fa6e394804a32623c24c60c50e249badc951007830f0d02c48ee0f
+  languageName: node
+  linkType: hard
+
+"@types/node@npm:^20.14.7":
+  version: 20.14.7
+  resolution: "@types/node@npm:20.14.7"
+  dependencies:
+    undici-types: "npm:~5.26.4"
+  checksum: 10/f2cb458126a136719d9da6febdbc7afc9bb622047a30c5e6163db4206ff8c8002ec56b340d722fe1ad6280ebe7a505e0a5a10a39a3b5718837200201b94d5d07
   languageName: node
   linkType: hard
 
@@ -8672,6 +8682,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"hamt_plus@npm:1.0.2":
+  version: 1.0.2
+  resolution: "hamt_plus@npm:1.0.2"
+  checksum: 10/3680a1820b8e03c79e5977edb7e1ccb48b9db853f5a1fbee2d3b3615f8dded7fa276e158f52d3eea8cb6192a27b2622ae2112e197be7602a8f99814793dc096f
+  languageName: node
+  linkType: hard
+
 "has-bigints@npm:^1.0.1, has-bigints@npm:^1.0.2":
   version: 1.0.2
   resolution: "has-bigints@npm:1.0.2"
@@ -11891,6 +11908,22 @@ __metadata:
   dependencies:
     resolve: "npm:^1.1.6"
   checksum: 10/fe76bf9c21875ac16e235defedd7cbd34f333c02a92546142b7911a0f7c7059d2e16f441fe6fb9ae203f459c05a31b2bcf26202896d89e390eda7514d5d2702b
+  languageName: node
+  linkType: hard
+
+"recoil@npm:^0.7.7":
+  version: 0.7.7
+  resolution: "recoil@npm:0.7.7"
+  dependencies:
+    hamt_plus: "npm:1.0.2"
+  peerDependencies:
+    react: ">=16.13.1"
+  peerDependenciesMeta:
+    react-dom:
+      optional: true
+    react-native:
+      optional: true
+  checksum: 10/4ac9dfeddda2795f213b14290de09767b04fb98f1a760bcabe796c53830229f51de63a02cf54c18991c557f25cfeb9571a129ae0a19d734bd98cfc45eebbc82d
   languageName: node
   linkType: hard
 
