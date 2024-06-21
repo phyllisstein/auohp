@@ -6,6 +6,7 @@ import '@spectrum-css/typography/dist/index-vars.css'
 import '@spectrum-css/vars/dist/spectrum-dark.css'
 import '@spectrum-css/vars/dist/spectrum-global.css'
 import '@spectrum-css/vars/dist/spectrum-medium.css'
+import '@spectrum-css/well/dist/index-vars.css'
 
 import { StyledComponentsRegistry } from 'styles/global'
 
