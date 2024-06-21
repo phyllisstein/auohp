@@ -22,9 +22,15 @@ const NEO4J_LABELS = [
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
+const {
+    NEO4J_PASSWORD = 'auohpauohp',
+    NEO4J_URI = 'bolt://127.0.0.1:7687',
+    NEO4J_USERNAME = 'neo4j',
+} = process.env
+
 const neo4jDriver = neo4j.driver(
-    'bolt://localhost:7687',
-    neo4j.auth.basic('neo4j', 'auohpauohp'),
+    NEO4J_URI,
+    neo4j.auth.basic(NEO4J_USERNAME, NEO4J_PASSWORD),
     {
         disableLosslessIntegers: true,
     },
@@ -73,12 +79,12 @@ async function seed({ data, date, interviewee, interviewNumber, speakers, videoU
             MATCH (jim:Person {name: 'Jim Hubbard'})
             MATCH (sarah:Person {name: 'Sarah Schulman'})
             WITH jim, sarah
-            CREATE (i:Interview {number: $interviewNumber, date: date($date), uid: $interviewUID})
+            CREATE (i:Interview {number: $interviewNumber, date: date($date), uid: $interviewUID, url: $interviewURL})
             CREATE (video:Video {url: $videoURL, uid: $videoUID})
             CREATE (interviewee:Person {name: $interviewee, uid: $intervieweeUID})
-            CREATE (sarahSpeaker:Speaker {label: $speakers.sarah})
-            CREATE (jimSpeaker:Speaker {label: $speakers.jim})
-            CREATE (intervieweeSpeaker:Speaker {label: $speakers.interviewee})
+            CREATE (sarahSpeaker:Speaker:Interviewer {label: $speakers.sarah})
+            CREATE (jimSpeaker:Speaker:Interviewer {label: $speakers.jim})
+            CREATE (intervieweeSpeaker:Speaker:Interviewee {label: $speakers.interviewee})
             MERGE (interviewee)-[:INTERVIEWED_AS]->(intervieweeSpeaker)
             MERGE (jim)-[:INTERVIEWED_AS]->(jimSpeaker)
             MERGE (sarah)-[:INTERVIEWED_AS]->(sarahSpeaker)
@@ -92,6 +98,7 @@ async function seed({ data, date, interviewee, interviewNumber, speakers, videoU
             intervieweeUID: nanoid(),
             interviewNumber: int(interviewNumber),
             interviewUID: nanoid(),
+            interviewURL: `/${ interviewNumber }`,
             speakers,
             videoUID: nanoid(),
             videoURL,
@@ -208,10 +215,11 @@ async function bootstrap() {
 
 async function main() {
     await bootstrap()
+    let data
 
 
     // ~~~~~~~~~~~~~~~~~~~~~~ 002 - Robert Vasquez-Pacheco ~~~~~~~~~~~~~~~~~~~~~~ //
-    let data = JSON.parse(
+    data = JSON.parse(
         await fs.readFile(
             path.join(__dirname, '../assets/testing/002_robert_vasquez-pacheco.json'),
             'utf8',
