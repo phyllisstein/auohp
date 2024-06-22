@@ -63,6 +63,13 @@ export default [
                     ],
                 },
             ],
+            '@stylistic/js/arrow-parens': [
+                'warn',
+                'as-needed',
+                {
+                    requireForBlockBody: false,
+                },
+            ],
             '@stylistic/jsx-closing-bracket-location': ['warn', 'after-props'],
             '@stylistic/jsx-curly-newline': ['warn', 'consistent'],
             '@stylistic/jsx-curly-spacing': [
@@ -86,6 +93,7 @@ export default [
                 'warn',
                 4,
             ],
+            '@stylistic/jsx-one-expression-per-line': 'off',
             '@stylistic/jsx-quotes': [
                 'warn',
                 'prefer-single',
