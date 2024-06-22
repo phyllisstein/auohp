@@ -7,6 +7,7 @@ import * as fs from 'fs/promises'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
+import * as R from 'ramda'
 import round from 'lodash.round'
 import { nanoid } from 'nanoid'
 import neo4j, { type EagerResult, int } from 'neo4j-driver'
@@ -134,7 +135,13 @@ async function seed({ data, date, interviewee, interviewNumber, speakers, videoU
         }
     })
 
-    // await fs.writeFile('segments.json', JSON.stringify(segments, null, 4))
+    const sortedSegments = segments.sort((a, b) => a.startTime - b.startTime)
+    const groupedSegments = R.groupWith(
+        (a, b) => a.speaker === b.speaker,
+        sortedSegments,
+    )
+
+    await fs.writeFile('segments.json', JSON.stringify(groupedSegments, null, 4))
 
     for await (let segment of segments) {
         const result: EagerResult = await neo4jDriver.executeQuery(
