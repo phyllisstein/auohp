@@ -1,6 +1,6 @@
 'use client'
 
-import { type ReactNode, useMemo, useCallback, useRef, useEffect, useState } from 'react'
+import { type FunctionComponent, type ReactNode, useMemo, useCallback, useRef, useEffect, useState } from 'react'
 import { Editor, Transforms, Range, createEditor, type Descendant } from 'slate'
 import { withHistory } from 'slate-history'
 import {
@@ -17,19 +17,15 @@ const initialValue: Descendant[] = [
     {
         children: [
             {
-                attributes: {
-                    speaker: 'spk_1',
-                },
                 children: [
                     {
-                        attributes: {
-                            endTime: 104.42,
-                            startTime: 97.93,
-                        },
                         children: [{ text: 'Statement statement statement.' }],
+                        endTime: 104.42,
+                        startTime: 97.93,
                         type: 'statement',
                     },
                 ],
+                speaker: 'spk_1',
                 type: 'caption',
             },
         ],
@@ -41,20 +37,39 @@ interface CaptionProps {
     speaker: string
 }
 
-const Caption = ({ children, speaker }) => {
-    <div style={{ alignItems: 'stretch', display: 'flex', flexDirection: 'column', gap: '10px', justifyContent: 'center' }}>
+const Caption: FunctionComponent<CaptionProps> = ({ children, speaker, ...props }) => {
+    return (
+        <div { ...props } data-testid='caption' style={{ alignItems: 'stretch', display: 'flex', flexDirection: 'column', gap: '10px', justifyContent: 'center' }}>
+            <div style={{ display: 'flex', gap: '10px' }}>
+                <span style={{ fontWeight: 'bold' }}>{ speaker }</span>
+                <span>{ children }</span>
+            </div>
+        </div>
+    )
+}
 
-    </div>
+const Statement = ({ children, endTime, startTime, ...props }) => {
+    return (
+        <div { ...props } data-testid='statement'>
+            <div contentEditable={ false }>
+                <span>{ startTime }</span>
+                —
+                <span>{ endTime }</span>
+            </div>
+            { children }
+        </div>
+    )
 }
 
 // `attributes` are Slate's builtins; user-defined properties of a node come
 // through `element`.
 const Element = ({ attributes, children, element }) => {
+    debugger
     switch (element.type) {
     case 'caption':
-        return <div { ...attributes } data-testid='caption'>{ children }</div>
+        return <Caption { ...attributes } speaker={ element.speaker }>{ children }</Caption>
     case 'statement':
-        return <div { ...element?.attributes } { ...attributes } data-testid='statement'>{ children }</div>
+        return <Statement { ...attributes } endTime={ element.endTime } startTime={ element.startTime }>{ children }</Statement>
     default:
         return <div { ...attributes }>{ children }</div>
     }
