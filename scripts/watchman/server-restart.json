@@ -1,0 +1,23 @@
+[
+    "trigger",
+    "/app",
+    {
+        "name": "server-restart",
+        "expression": [
+            "name",
+            [
+                ".env",
+                "index.html",
+                "next.config.js",
+                "svelte.config.js",
+                "tsconfig.json",
+                "vite.config.js"
+            ]
+        ],
+        "command": [
+            "/app/scripts/develop.sh",
+            "serve"
+        ],
+        "append_files": false
+    }
+]

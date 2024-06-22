@@ -53,9 +53,9 @@ services:
       - nginx-proxy
     build:
       context: .
-      secrets:
-        - source: environment
-          mode: 0440
+    secrets:
+      - source: environment
+        mode: 0440
     depends_on: [neo4j]
     expose:
       - '3030'
@@ -63,20 +63,13 @@ services:
     ports:
       - '3030:3030'
       - '4040:4040'
-    develop:
-      watch:
-        - path: packages/caption-editor-app
-          target: /app/packages/caption-editor-app
-          action: sync
-          ignore:
-            - node_modules/
-        - path: packages/search-component
-          target: /app/packages/search-component
-          action: sync
-          ignore:
-            - node_modules/
-        - action: rebuild
-          path: yarn.lock
+    volumes:
+      - type: bind
+        source: .
+        target: /app
+      - type: volume
+        source: node_modules
+        target: /app/node_modules
 
   neo4j:
     networks:
@@ -102,6 +95,7 @@ services:
 
 volumes:
   graph_data:
+  node_modules:
 
 secrets:
   environment:
