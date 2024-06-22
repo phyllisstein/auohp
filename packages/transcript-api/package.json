@@ -6,7 +6,7 @@
         "url": "https://auohp.org"
     },
     "license": "GPL-3.0-or-later",
-    "name": "@auohp/caption-editor-api",
+    "name": "@auohp/transcript-api",
     "packageManager": "yarn@4.1.1",
     "scripts": {
         "build": "nest build",

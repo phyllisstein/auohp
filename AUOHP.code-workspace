@@ -9,12 +9,16 @@
             "path": "packages/caption-editor-app"
         },
         {
+            "name": "⚙️ @auohp/scripts",
+            "path": "packages/scripts"
+        },
+        {
             "name": "💾 @auohp/search-component",
             "path": "packages/search-component"
         },
         {
-            "name": "⚙️ @auohp/scripts",
-            "path": "packages/scripts"
+            "name": "🚀 @auohp/transcript-api",
+            "path": "packages/transcript-api"
         }
     ],
     "settings": {

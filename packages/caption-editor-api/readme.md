@@ -1,1 +1,0 @@
-# @auohp/caption-editor-api
