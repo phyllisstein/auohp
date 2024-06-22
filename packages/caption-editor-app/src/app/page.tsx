@@ -40,10 +40,10 @@ interface CaptionProps {
 const Caption: FunctionComponent<CaptionProps> = ({ children, speaker, ...props }) => {
     return (
         <div { ...props } data-testid='caption' style={{ alignItems: 'stretch', display: 'flex', flexDirection: 'column', gap: '10px', justifyContent: 'center' }}>
-            <div style={{ display: 'flex', gap: '10px' }}>
+            <div contentEditable={ false } style={{ display: 'flex', gap: '10px' }}>
                 <span style={{ fontWeight: 'bold' }}>{ speaker }</span>
-                <span>{ children }</span>
             </div>
+            { children }
         </div>
     )
 }
@@ -64,7 +64,6 @@ const Statement = ({ children, endTime, startTime, ...props }) => {
 // `attributes` are Slate's builtins; user-defined properties of a node come
 // through `element`.
 const Element = ({ attributes, children, element }) => {
-    debugger
     switch (element.type) {
     case 'caption':
         return <Caption { ...attributes } speaker={ element.speaker }>{ children }</Caption>
