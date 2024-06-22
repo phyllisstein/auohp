@@ -34,41 +34,39 @@ const initialValue: Descendant[] = [
 
 interface CaptionProps {
     children: ReactNode
-    speaker: string
 }
 
-const Caption: FunctionComponent<CaptionProps> = ({ children, speaker, ...props }) => {
+const Caption: FunctionComponent<CaptionProps> = ({ attributes, element, children }) => {
     return (
-        <div { ...props } data-testid='caption' style={{ alignItems: 'stretch', display: 'flex', flexDirection: 'column', gap: '10px', justifyContent: 'center' }}>
+        <div { ...attributes } data-testid='caption' style={{ alignItems: 'stretch', display: 'flex', flexDirection: 'column', gap: '10px', justifyContent: 'center' }}>
             <div contentEditable={ false } style={{ display: 'flex', gap: '10px' }}>
-                <span style={{ fontWeight: 'bold' }}>{ speaker }</span>
+                <span style={{ fontWeight: 'bold' }}>{ element.speaker }</span>
             </div>
             { children }
         </div>
     )
 }
 
-const Statement = ({ children, endTime, startTime, ...props }) => {
+const Statement = ({ attributes, element, children,  }) => {
     return (
-        <div { ...props } data-testid='statement'>
+        <div { ...attributes } data-testid='statement'>
             <div contentEditable={ false }>
-                <span>{ startTime }</span>
+                <span>{ element.startTime }</span>
                 —
-                <span>{ endTime }</span>
+                <span>{ element.endTime }</span>
             </div>
             { children }
         </div>
     )
 }
 
-// `attributes` are Slate's builtins; user-defined properties of a node come
-// through `element`.
-const Element = ({ attributes, children, element }) => {
+const Element = props => {
+    const { attributes, children, element } = props
     switch (element.type) {
     case 'caption':
-        return <Caption { ...attributes } speaker={ element.speaker }>{ children }</Caption>
+        return <Caption { ...props } />
     case 'statement':
-        return <Statement { ...attributes } endTime={ element.endTime } startTime={ element.startTime }>{ children }</Statement>
+        return <Statement { ...props } />
     default:
         return <div { ...attributes }>{ children }</div>
     }
@@ -77,7 +75,7 @@ const Element = ({ attributes, children, element }) => {
 const renderElement = props => <Element { ...props } />
 const renderLeaf = ({ attributes, children, leaf }) => <span { ...attributes }>{ children }</span>
 
-const withCaptions = (editor) => {}
+const withCaptions = editor => {}
 
 
 export default function Page() {
