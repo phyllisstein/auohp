@@ -18,7 +18,8 @@ export const Body = createGlobalStyle`
         padding: 0;
 
         font-size: 112.5%;
-        font-family: 'Adobe Clean',
+        font-family:
+            'Adobe Clean',
             -apple-system,
             BlinkMacSystemFont,
             'Segoe UI',
@@ -35,5 +36,10 @@ export const Body = createGlobalStyle`
         font-kerning: normal;
         font-variant-ligatures: common-ligatures;
         font-variant-numeric: lining-nums proportional-nums;
+    }
+
+    body {
+        color: ${ ({ theme }) => theme.palette.css.gray900 };
+        background-color: ${ ({ theme }) => theme.palette.css.gray200 };
     }
 `
