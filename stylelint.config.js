@@ -24,7 +24,12 @@ const config = {
         '@stylistic/block-opening-brace-space-before': null,
         '@stylistic/color-hex-case': 'upper',
         '@stylistic/declaration-block-trailing-semicolon': null,
-        '@stylistic/indentation': 4,
+        '@stylistic/indentation': [
+            4,
+            {
+                baseIndentLevel: 1,
+            },
+        ],
         '@stylistic/max-empty-lines': 2,
         '@stylistic/named-grid-areas-alignment': [
             true,
