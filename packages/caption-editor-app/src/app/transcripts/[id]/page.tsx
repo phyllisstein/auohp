@@ -7,15 +7,34 @@ const Root = styled.div`
     grid-gap: 1rem;
     grid-template-rows: 1fr 1fr;
     grid-template-columns: 1fr 2fr;
-    padding: 1rem;
+    width: 100%;
+    height: 100vh;
 `
+const Player = styled.div`
+    grid-row: 1;
+    grid-column: 2;
+`
+
+const TranscriptTrack = styled.div`
+    grid-row: 1 / -1;
+    grid-column: 1;
+
+    background-color: ${ ({ theme }) => theme.palette.css.celery800 };
+`
+
 
 export default function TranscriptPage() {
     return (
         <Root>
-            <video>
-                <source src='https://dyck.mobi/auohp/035_larry_kramer.mp4' type='video/mp4' />
-            </video>
+            <TranscriptTrack>
+                <h1>Transcript</h1>
+                { /* Transcript goes here */ }
+            </TranscriptTrack>
+            <Player>
+                <video>
+                    <source src='https://dyck.mobi/auohp/035_larry_kramer.mp4' type='video/mp4' />
+                </video>
+            </Player>
         </Root>
     )
 }
