@@ -63,7 +63,7 @@ export default [
                     ],
                 },
             ],
-            '@stylistic/js/arrow-parens': [
+            '@stylistic/arrow-parens': [
                 'warn',
                 'as-needed',
                 {
