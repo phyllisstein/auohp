@@ -1,5 +1,11 @@
-from pathlib import Path
+import json
 import click
+import whisperx
+import platform
+import os
+
+from pathlib import Path
+from spacy.cli.download import download as spacy_download
 
 from .subber import (
     to_json_captions,
@@ -7,36 +13,43 @@ from .subber import (
 )
 from .whisperer import transcribe_audio_file
 
+
+MODELS = os.path.join(os.environ["HOME"], ".subwhisp")
+
+if platform.system() == "Darwin":
+    device = "cpu"
+    compute_type = "int8"
+else:
+    device = "cuda"
+    compute_type = "float16"
+
+
 @click.group()
 def run():
     pass
 
-@click.group()
-def transcribe():
-    pass
-
-@transcribe.command()
+@click.command()
 @click.argument('input_file')
-def json(input_file):
+def transcribe(input_file):
     basename = Path(input_file).stem
     whisper_transcription = transcribe_audio_file(input_file)
 
     json_captions = to_json_captions(whisper_transcription)
-
     with open(f'{basename}.json', 'w') as f:
         f.write(json.dumps(json_captions))
 
-
-@transcribe.command()
-@click.argument('input_file')
-def vtt(input_file):
-    basename = Path(input_file).stem
-    whisper_transcription = transcribe_audio_file(input_file)
-
     vtt_captions = to_vtt_captions(whisper_transcription)
-
     with open(f'{basename}.vtt', 'w') as f:
         f.write(vtt_captions)
 
 
+@click.command()
+def models():
+    whisperx.load_model("large-v3", device=device, compute_type=compute_type, download_root=MODELS)
+    whisperx.load_align_model(language_code="en", device=device, model_dir=MODELS, model_name="WAV2VEC2_ASR_BASE_960H")
+    whisperx.DiarizationPipeline("pyannote/speaker-diarization-3.1", use_auth_token="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", device=device)
+    spacy_download("en_core_web_lg")
+
+
 run.add_command(transcribe)
+run.add_command(models)

@@ -386,7 +386,7 @@ def to_json_captions(input: dict, model: str = "en_core_web_lg", width: int = 42
     verbal_pauses = scan_for_pauses(wtext, word_timing)
     nlp = configure_spaCy(model, verbal_pauses)
     doc = nlp(wtext)
-    return write_json(doc, word_timing, word_speakers, **{"model": model, "width": width, "lines": lines})
+    return write_json(doc, word_timing, word_speakers, width=width, lines=lines)
 
 
 def to_vtt_captions(input: dict, model: str = "en_core_web_lg", width: int = 42, lines: int = 2):
@@ -394,4 +394,4 @@ def to_vtt_captions(input: dict, model: str = "en_core_web_lg", width: int = 42,
     verbal_pauses = scan_for_pauses(wtext, word_timing)
     nlp = configure_spaCy(model, verbal_pauses)
     doc = nlp(wtext)
-    return write_vtt(doc, word_timing, **{"model": model, "width": width, "lines": lines})
+    return write_vtt(doc, word_timing, width=width, lines=lines)
