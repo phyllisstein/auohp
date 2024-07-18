@@ -106,7 +106,7 @@ async function seed({ data, date, interviewee, interviewNumber, speakers, videoU
         },
     )
 
-    const segments = data.results.speaker_labels.segments.map((segment) => {
+    const segments = data.results.speaker_labels.segments.map(segment => {
         const text = segment.items.reduce((acc, item) => {
             const itemIndex = data.results.items.findIndex(
                 el => el.start_time === item.start_time,
@@ -141,7 +141,7 @@ async function seed({ data, date, interviewee, interviewNumber, speakers, videoU
         sortedSegments,
     )
 
-    await fs.writeFile('segments.json', JSON.stringify(groupedSegments, null, 4))
+    // await fs.writeFile('segments.json', JSON.stringify(groupedSegments, null, 4))
 
     for await (let segment of segments) {
         const result: EagerResult = await neo4jDriver.executeQuery(

@@ -322,7 +322,7 @@ def write_vtt(doc, timing, **args):
 def write_json(doc, timing, speakers, **args):
     segments = []
     for i, (start, end, text, speaker) in enumerate(iterate_document(doc, timing, speakers, **args), start=1):
-        segments.append({"start": start, "end": end, "text": text, "speaker": speaker})
+        segments.append({"startTime": start, "endTime": end, "text": text, "speaker": speaker})
     return {"segments": segments}
 
 def configure_spaCy(model: str, pauses: list = []):
