@@ -1,0 +1,14 @@
+[tool.poetry]
+name = "subwhisp"
+description = "A CLI for generating subtitles from audio files."
+version = "0.0.0"
+authors = ["Daniel P. Shannon <daniel@try.works>"]
+
+[tool.poetry.dependencies]
+click = "^8.1.7"
+huggingface-hub = "^0.23.5"
+python = "^3.11"
+spacy = "^3.7.2"
+
+[tool.poetry.scripts]
+subwhisp = "subwhisp.cli:run"

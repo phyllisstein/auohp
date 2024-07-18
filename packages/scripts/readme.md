@@ -30,3 +30,13 @@ structured JSON record.
 
 Auto-generated captions usually need additional manicuring: AUOHP apps ignore
 them in favor of the JSON documents. But it couldn't hurt to have a fallback.
+
+
+## Spacy + WhisperX
+```bash
+conda create --name=auohp python=3.11
+conda activate auohp
+conda install spacy more-itertools openai-whisper
+python -m spacy download en_core_web_lg
+python src/subwisp.py assets/whisperx/035_larry_kramer.json
+```
