@@ -7,7 +7,7 @@ authors = ["Daniel P. Shannon <daniel@try.works>"]
 [tool.poetry.dependencies]
 click = "^8.1.7"
 huggingface-hub = "^0.23.5"
-python = "^3.11"
+python = ">=3.8.0,<4"
 spacy = "^3.7.2"
 
 [tool.poetry.scripts]
