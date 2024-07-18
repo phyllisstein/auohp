@@ -316,7 +316,7 @@ def write_vtt(doc, timing, **args):
     for i, (start, end, text, _) in enumerate(iterate_document(doc, timing, {}, **args), start=1):
         ts1 = format_timestamp(start, always_include_hours=True, decimal_marker=comma)
         ts2 = format_timestamp(end, always_include_hours=True, decimal_marker=comma)
-        vtt += f"{ts1} --> {ts2}\n{text}\n"
+        vtt += f"{ts1} --> {ts2}\n{text}\n\n"
     return vtt
 
 def write_json(doc, timing, speakers, **args):
