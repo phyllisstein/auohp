@@ -289,8 +289,8 @@ def secondary_division_for(span: Span, max_width: int) -> int:
             logging.info("Forced division after word '%s' : '%s'", span.doc[token_divider].text, span.text)
     return token_divider
 
-def divide_span(span: Span, args) -> Iterator[Span]:
-    max_width = args.width
+def divide_span(span: Span, **args) -> Iterator[Span]:
+    max_width = args.get("width", 42)
     if span.end_char - span.start_char <= max_width:
         yield span
         return
@@ -300,35 +300,28 @@ def divide_span(span: Span, args) -> Iterator[Span]:
     if after_divider < span.end:
         yield from divide_span(span.doc[after_divider:span.end], args)
 
-def iterate_document(doc: Doc, timing: dict, args, speakers={}):
-    max_lines = args.lines
+def iterate_document(doc: Doc, timing: dict, speakers: dict, **args):
+    max_lines = args.get("lines", 2)
     for sentence in doc.sents:
-        for chunk in chunked(divide_span(sentence, args), max_lines):
+        for chunk in chunked(divide_span(sentence, **args), max_lines):
             subtitle = '\n'.join(line.text for line in chunk)
             sub_start, _ = chunk[0]._.get_time_span(timing)
             _, sub_end = chunk[-1]._.get_time_span(timing)
             speaker = chunk[0]._.get_speaker(speakers)
             yield sub_start, sub_end, subtitle, speaker
 
-def write_srt(doc, timing, args):
-    comma: str = ','
-    for i, (start, end, text, _) in enumerate(iterate_document(doc, timing, args), start=1):
-        ts1 = format_timestamp(start, always_include_hours=True, decimal_marker=comma)
-        ts2 = format_timestamp(end, always_include_hours=True, decimal_marker=comma)
-        print(f"{i}\n{ts1} --> {ts2}\n{text}\n")
-
-def write_vtt(doc, timing, args):
+def write_vtt(doc, timing, **args):
     comma: str = '.'
     vtt = f"WEBVTT\n\n"
-    for i, (start, end, text, _) in enumerate(iterate_document(doc, timing, args), start=1):
+    for i, (start, end, text, _) in enumerate(iterate_document(doc, timing, {}, **args), start=1):
         ts1 = format_timestamp(start, always_include_hours=True, decimal_marker=comma)
         ts2 = format_timestamp(end, always_include_hours=True, decimal_marker=comma)
         vtt += f"{ts1} --> {ts2}\n{text}\n"
     return vtt
 
-def write_json(doc, timing, speakers, args):
+def write_json(doc, timing, speakers, **args):
     segments = []
-    for i, (start, end, text, speaker) in enumerate(iterate_document(doc, timing, args, speakers=speakers), start=1):
+    for i, (start, end, text, speaker) in enumerate(iterate_document(doc, timing, speakers, **args), start=1):
         segments.append({"start": start, "end": end, "text": text, "speaker": speaker})
     return {"segments": segments}
 
