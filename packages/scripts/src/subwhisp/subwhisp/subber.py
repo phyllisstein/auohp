@@ -20,6 +20,7 @@ import spacy
 from spacy.language import Language
 from spacy.tokens import Doc, Span, Token
 from spacy.matcher import Matcher
+from spacy.cli.download import download as spacy_download
 
 def format_timestamp(seconds: float, always_include_hours: bool = False, decimal_marker: str = '.'):
     assert seconds >= 0, "non-negative timestamp expected"
@@ -332,6 +333,8 @@ def write_json(doc, timing, speakers, args):
     return {"segments": segments}
 
 def configure_spaCy(model: str, pauses: list = []):
+    if not spacy.util.is_package(model):
+        spacy_download(model)
     nlp = spacy.load(model)
     if model.startswith('xx'):
         raise NotImplementedError("spaCy multilanguage models are not currently supported")
