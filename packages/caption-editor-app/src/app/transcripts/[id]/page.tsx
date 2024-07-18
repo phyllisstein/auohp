@@ -13,6 +13,11 @@ const Root = styled.div`
 const Player = styled.div`
     grid-row: 1;
     grid-column: 2;
+
+    & > video {
+        width: 100%;
+        height: 100%;
+    }
 `
 
 const TranscriptTrack = styled.div`
@@ -31,8 +36,9 @@ export default function TranscriptPage() {
                 { /* Transcript goes here */ }
             </TranscriptTrack>
             <Player>
-                <video>
+                <video controls crossOrigin='anonymous' preload='metadata'>
                     <source src='https://dyck.mobi/auohp/035_larry_kramer.mp4' type='video/mp4' />
+                    <track kind='captions' src='/api/transcript' srcLang='en' />
                 </video>
             </Player>
         </Root>
