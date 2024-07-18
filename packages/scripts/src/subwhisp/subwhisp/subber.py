@@ -121,7 +121,7 @@ def fragmenter(doc: Doc, pauses: set) -> Doc:
                 left = subtree[0]
                 if left and left.i > 0 and not left.is_punct and left.text[0] != "'":
                     prior = left.nbor(-1)
-                    if prior.pos_ not in conjunction_or_punct and not prior.nbor(-1).is_punct:
+                    if prior.i > 0 and prior.pos_ not in conjunction_or_punct and not prior.nbor(-1).is_punct:
                         _fragment_at(prior, reason=clause_rule)
                 right = subtree[-1]
                 try:
