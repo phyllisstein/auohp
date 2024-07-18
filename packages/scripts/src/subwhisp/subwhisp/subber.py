@@ -298,7 +298,7 @@ def divide_span(span: Span, **args) -> Iterator[Span]:
     after_divider = divider + 1
     yield span.doc[span.start:after_divider]
     if after_divider < span.end:
-        yield from divide_span(span.doc[after_divider:span.end], args)
+        yield from divide_span(span.doc[after_divider:span.end], **args)
 
 def iterate_document(doc: Doc, timing: dict, speakers: dict, **args):
     max_lines = args.get("lines", 2)
