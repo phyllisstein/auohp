@@ -1,10 +1,6 @@
 from pathlib import Path
 import click
 
-from pyannote.audio import Pipeline
-from spacy.cli.download import download as spacy_download
-from whisperx import load_model as load_whisperx_model
-
 from .subber import (
     to_json_captions,
     to_vtt_captions
