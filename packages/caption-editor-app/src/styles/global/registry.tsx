@@ -22,19 +22,23 @@ export function StyledComponentsRegistry({ children }: { children: ReactNode }) 
         return <>{ styles }</>
     })
 
-    if (typeof window !== 'undefined') return <>{ children }</>
+    const innerComponents = (
+        <RecoilRoot>
+            <ThemeProvider theme={ theme }>
+                <Preflight />
+                <Body />
+                <AdobeClean />
+
+                { children }
+            </ThemeProvider>
+        </RecoilRoot>
+    )
+
+    if (typeof window !== 'undefined') return innerComponents
 
     return (
         <StyleSheetManager sheet={ styledComponentsStyleSheet.instance }>
-            <RecoilRoot>
-                <ThemeProvider theme={ theme }>
-                    <Preflight />
-                    <Body />
-                    <AdobeClean />
-
-                    { children }
-                </ThemeProvider>
-            </RecoilRoot>
+            { innerComponents }
         </StyleSheetManager>
     )
 }
