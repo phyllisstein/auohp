@@ -54,8 +54,15 @@ def get_time_span(span: Span, timing: dict):
     return (start, end)
 
 def get_speaker(span: Span, speakers: dict):
-    start_token = span[0]
-    return speakers.get(start_token.idx, None)
+    start_token = span[-1]
+
+    while not speakers.get(start_token.idx, None):
+        try:
+            start_token = start_token.nbor(-1)
+        except:
+            return "NO_SPEAKER"
+
+    return speakers.get(start_token.idx, "NO_SPEAKER")
 
 Token.set_extension("can_fragment_after", default=False)
 Token.set_extension("fragment_reason", default="")
