@@ -32,14 +32,17 @@ def run():
 @click.argument('input_file')
 def transcribe(input_file):
     basename = Path(input_file).stem
+
     whisper_transcription = transcribe_audio_file(input_file)
+    with open(f'{basename}.json', 'w') as f:
+        f.write(json.dumps(whisper_transcription))
 
     json_captions = to_json_captions(whisper_transcription)
-    with open(f'{basename}.json', 'w') as f:
+    with open(f'{basename}.captions.json', 'w') as f:
         f.write(json.dumps(json_captions))
 
     vtt_captions = to_vtt_captions(whisper_transcription)
-    with open(f'{basename}.vtt', 'w') as f:
+    with open(f'{basename}.captions.vtt', 'w') as f:
         f.write(vtt_captions)
 
 
