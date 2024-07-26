@@ -61,6 +61,9 @@
         "search.exclude": {
             "**/node_modules": true,
             "**/.yarn": true
+        },
+        "[packer]": {
+            "editor.defaultFormatter": "szTheory.vscode-packer-powertools"
         }
     }
 }
