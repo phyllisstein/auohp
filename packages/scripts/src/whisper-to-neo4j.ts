@@ -105,13 +105,8 @@ async function seed({ data, date, interviewee, interviewNumber, speakers, videoU
                 MERGE (speaker)-[:SAYS {startTime: $startTime, endTime: $endTime}]->(statement)
                 RETURN statement, person, interview
             `, {
-                interviewNumber,
-                speaker: segment.speaker,
-
-                startTime: segment.start,
-                endTime: segment.end,
-
-                text: segment.text,
+                ...segment,
+                interviewNumber: int(interviewNumber),
             },
         )
 
