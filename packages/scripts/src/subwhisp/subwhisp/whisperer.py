@@ -15,11 +15,11 @@ else:
 
 
 def transcribe_audio_file(audio_file: str, device: str = device, batch_size: int = 16, compute_type: str = compute_type):
-    model = whisperx.load_model("large-v3", device=device, compute_type=compute_type, download_root=MODELS, language="en")
+    model = whisperx.load_model("large-v2", device=device, compute_type=compute_type, download_root=MODELS, language="en", asr_options={"suppress_numerals": True})
     audio = whisperx.load_audio(audio_file)
     result = model.transcribe(audio, batch_size=batch_size, language="en")
 
-    model_a, metadata = whisperx.load_align_model(language_code="en", device=device, model_dir=MODELS, model_name="WAV2VEC2_ASR_BASE_960H")
+    model_a, metadata = whisperx.load_align_model(language_code="en", device=device, model_dir=MODELS, model_name="facebook/wav2vec2-large-960h-lv60-self")
     aligned_result = whisperx.align(result["segments"], model_a, metadata, audio, device, return_char_alignments=False)
 
     diarize_model = whisperx.DiarizationPipeline("pyannote/speaker-diarization-3.1", use_auth_token="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", device=device)

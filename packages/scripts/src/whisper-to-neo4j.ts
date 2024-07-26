@@ -62,17 +62,11 @@ function chunkBySpeaker(segments) {
  * Structured at the statement level, this, too, will intertwingle the
  * narratives of a wide slate of interviewees for a deep account of an event.
  *
- * Whisper data has already been segmented by speaker and broken into
- * caption-sized hunks. The natural-language processing model attempts to keep
- * from splitting entities across captions, but it's not perfect: be on the
- * lookout for a class of bugs in which, e.g., "Stop the Church" is split into
- * "Stop the" and "Church," across captions, and does not match as a phrase.
- *
  * Edits to the captions for correctness and style will be made against the data
  * model, from which the captions are generated. The data model is the source of
  * truth, and the captions are a derived artifact.
  */
-async function seed({ data, date, interviewee, interviewNumber, speakers, videoURL }) {
+async function seed({ data, date, interviewee, interviewNumber, speakers, videoURL, vtt }) {
     await neo4jDriver.executeQuery(
         // language=Cypher
         `
@@ -81,6 +75,7 @@ async function seed({ data, date, interviewee, interviewNumber, speakers, videoU
             WITH jim, sarah
             CREATE (i:Interview {number: $interviewNumber, date: date($date), uid: $interviewUID, url: $interviewURL})
             CREATE (video:Video {url: $videoURL, uid: $videoUID})
+            CREATE (vtt:VTT {text: $vtt})
             CREATE (interviewee:Person {name: $interviewee, uid: $intervieweeUID})
             CREATE (sarahSpeaker:Speaker:Interviewer {label: $speakers.sarah})
             CREATE (jimSpeaker:Speaker:Interviewer {label: $speakers.jim})
@@ -92,6 +87,7 @@ async function seed({ data, date, interviewee, interviewNumber, speakers, videoU
             CREATE (i)-[:INTERVIEWED_WITH]->(jimSpeaker)
             CREATE (i)-[:INTERVIEWED_WITH]->(sarahSpeaker)
             CREATE (i)-[:HAS_VIDEO]->(video)
+            CREATE (i)-[:HAS_CAPTIONS]->(vtt)
         `, {
             date,
             interviewNumber: int(interviewNumber),
@@ -104,6 +100,7 @@ async function seed({ data, date, interviewee, interviewNumber, speakers, videoU
 
             videoUID: nanoid(),
             videoURL,
+            vtt,
         },
     )
 
@@ -115,10 +112,11 @@ async function seed({ data, date, interviewee, interviewNumber, speakers, videoU
                 MATCH (speaker:Speaker {label: $speaker}) <-[:INTERVIEWED_WITH]- (interview:Interview {number: $interviewNumber})
                 MATCH (speaker) <-[:INTERVIEWED_AS]- (person:Person)
                 CREATE (statement:Statement {text: $text}) -[:FROM_WORDS]-> (words:WordTimings {words: $words})
-                MERGE (speaker)-[:SAYS {startTime: $startTime, endTime: $endTime}]->(statement)
+                MERGE (speaker)-[:SAYS {startTime: $start, endTime: $end}]->(statement)
                 RETURN statement, person, interview, words
             `, {
                 ...chunk,
+                words: JSON.stringify(chunk.words),
                 interviewNumber: int(interviewNumber),
             },
         )
@@ -145,14 +143,14 @@ async function bootstrap() {
     )
 
     await neo4jDriver.executeQuery(
-    // language=Cypher
+        // language=Cypher
         `
           DROP INDEX transcript_search IF EXISTS
         `,
     )
 
     await neo4jDriver.executeQuery(
-    // language=Cypher
+        // language=Cypher
         `
           DROP INDEX name_search IF EXISTS
         `,
@@ -189,7 +187,7 @@ async function main() {
     await bootstrap()
 
 
-    let data
+    let data, vtt
 
 
     // ~~~~~~~~~~~~~~~~~~~~~~ 002 - Robert Vasquez-Pacheco ~~~~~~~~~~~~~~~~~~~~~~ //
@@ -200,17 +198,23 @@ async function main() {
         ),
     )
 
+    vtt = await fs.readFile(
+        path.resolve(__dirname, '../assets/whisperx-subs/002.vtt'),
+        'utf8',
+    )
+
     await seed({
         data,
         date: '2002-12-14',
         interviewee: 'Robert Vasquez-Pacheco',
         interviewNumber: 2,
         speakers: {
-            interviewee: 'SPEAKER_00',
-            jim: 'SPEAKER_01',
-            sarah: 'SPEAKER_02',
+            interviewee: 'SPEAKER_02',
+            jim: 'SPEAKER_00',
+            sarah: 'SPEAKER_01',
         },
-        videoURL: '/interviews/002_robert_vasquez-pacheco.mp4',
+        videoURL: 'https://dyck.mobi/auohp/002_robert_vasquez-pacheco.mp4',
+        vtt,
     })
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
 
