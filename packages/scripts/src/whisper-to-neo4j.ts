@@ -86,6 +86,16 @@ async function seed({ data, date, interviewee, interviewNumber, speakers, videoU
     )
 
     for await (const segment of data.segments) {
+        if (!segment.speaker || typeof segment.speaker !== 'string' || segment.speaker.length < 1) {
+            console.warn(`
+                Missing speaker data:
+
+                ${ JSON.stringify(segment, null, 2) }
+            `)
+
+            continue
+        }
+
         const result: EagerResult = await neo4jDriver.executeQuery(
             // language=Cypher
             `
