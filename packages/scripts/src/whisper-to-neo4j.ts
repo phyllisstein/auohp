@@ -3,7 +3,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import { nanoid } from 'nanoid'
-import neo4j, { type EagerResult } from 'neo4j-driver'
+import neo4j, { type EagerResult, int } from 'neo4j-driver'
 
 
 const __filename = fileURLToPath(import.meta.url)
@@ -11,11 +11,13 @@ const __dirname = path.dirname(__filename)
 
 
 const NEO4J_LABELS = [
+    'Captions',
     'Interview',
     'Person',
     'Speaker',
     'Statement',
     'Video',
+    'WordTimings',
 ]
 
 const {
@@ -30,6 +32,26 @@ const neo4jDriver = neo4j.driver(
         disableLosslessIntegers: true,
     },
 )
+
+
+function chunkBySpeaker(segments) {
+    let chunkedSegments = [segments[0]]
+
+    for (let i = 1; i < segments.length; i++) {
+        const segment = segments[i]
+        const lastSegment = chunkedSegments[chunkedSegments.length - 1]
+
+        if (lastSegment?.speaker === segment.speaker) {
+            lastSegment.text += ` ${ segment.text }`
+            lastSegment.endTime = segment.endTime
+            lastSegment.words = lastSegment.words.concat(segment.words)
+        } else {
+            chunkedSegments.push(segment)
+        }
+    }
+
+    return chunkedSegments
+}
 
 
 /**
@@ -72,7 +94,7 @@ async function seed({ data, date, interviewee, interviewNumber, speakers, videoU
             CREATE (i)-[:HAS_VIDEO]->(video)
         `, {
             date,
-            interviewNumber: interviewNumber,
+            interviewNumber: int(interviewNumber),
 
             interviewee,
             speakers,
@@ -85,36 +107,26 @@ async function seed({ data, date, interviewee, interviewNumber, speakers, videoU
         },
     )
 
-    for await (const segment of data.segments) {
-        if (!segment.speaker || typeof segment.speaker !== 'string' || segment.speaker.length < 1) {
-            console.warn(`
-                Missing speaker data:
-
-                ${ JSON.stringify(segment, null, 2) }
-            `)
-
-            continue
-        }
-
+    const speakerChunks = chunkBySpeaker(data.segments)
+    for await (const chunk of speakerChunks) {
         const result: EagerResult = await neo4jDriver.executeQuery(
             // language=Cypher
             `
                 MATCH (speaker:Speaker {label: $speaker}) <-[:INTERVIEWED_WITH]- (interview:Interview {number: $interviewNumber})
                 MATCH (speaker) <-[:INTERVIEWED_AS]- (person:Person)
-                CREATE (statement:Statement {text: $text})
+                CREATE (statement:Statement {text: $text}) -[:FROM_WORDS]-> (words:WordTimings {words: $words})
                 MERGE (speaker)-[:SAYS {startTime: $startTime, endTime: $endTime}]->(statement)
-                RETURN statement, person, interview
+                RETURN statement, person, interview, words
             `, {
-                ...segment,
+                ...chunk,
                 interviewNumber: int(interviewNumber),
             },
         )
 
         if (!result?.records?.length) {
             console.error(`
-                Could not create node for segment starting ${ segment.start } in interview
-                ${ interviewNumber } for speaker ${ segment.speaker }.
-
+                Could not create node for segment starting ${ chunk.start } in interview
+                ${ interviewNumber } for speaker ${ chunk.speaker }.
 
                 ${ JSON.stringify(result, null, 2) }
             `)
@@ -179,24 +191,26 @@ async function main() {
 
     let data
 
-    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~ 035 - Larry Kramer ~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+
+    // ~~~~~~~~~~~~~~~~~~~~~~ 002 - Robert Vasquez-Pacheco ~~~~~~~~~~~~~~~~~~~~~~ //
     data = JSON.parse(
         await fs.readFile(
-            path.join(__dirname, '../assets/whisper/035_larry_kramer.json'),
+            path.resolve(__dirname, '../assets/whisperx-subs/002.json'),
             'utf8',
         ),
     )
+
     await seed({
         data,
-        date: '2003-11-15',
-        interviewee: 'Larry Kramer',
-        interviewNumber: 35,
+        date: '2002-12-14',
+        interviewee: 'Robert Vasquez-Pacheco',
+        interviewNumber: 2,
         speakers: {
-            interviewee: 'SPEAKER_0',
-            jim: 'SPEAKER_1',
-            sarah: 'SPEAKER_2',
+            interviewee: 'SPEAKER_00',
+            jim: 'SPEAKER_01',
+            sarah: 'SPEAKER_02',
         },
-        videoURL: '/interviews/035_larry_kramer.mp4',
+        videoURL: '/interviews/002_robert_vasquez-pacheco.mp4',
     })
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
 
