@@ -21,3 +21,16 @@ RETURN said.startTime AS timestamp,
     interview.number AS interviewNumber,
     score
 ORDER BY score DESC
+
+
+// Fetch word-by-word timings for a single statement.
+MATCH (interview:Interview)
+WITH interview LIMIT 1
+MATCH (interview) -[:INTERVIEWED_WITH]-> (speaker:Interviewee) -[:SAYS]-> (statement:Statement)
+WITH statement LIMIT 1
+MATCH (statement) -[:FROM_WORDS]-> (words:WordTimings)
+RETURN statement.text as text,
+       statement.startTime as startTime,
+       statement.endTime as endTime,
+       statement.duration as duration,
+       words.text as words

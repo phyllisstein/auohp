@@ -48,8 +48,8 @@ def transcribe(input_file):
 
 @click.command()
 def models():
-    whisperx.load_model("large-v3", device=device, compute_type=compute_type, download_root=MODELS, language="en")
-    whisperx.load_align_model(language_code="en", device=device, model_dir=MODELS, model_name="WAV2VEC2_ASR_BASE_960H")
+    whisperx.load_model("large-v2", device=device, compute_type=compute_type, download_root=MODELS, language="en")
+    whisperx.load_align_model(language_code="en", device=device, model_dir=MODELS, model_name="facebook/wav2vec2-large-960h-lv60-self")
     whisperx.DiarizationPipeline("pyannote/speaker-diarization-3.1", use_auth_token="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", device=device)
     spacy_download("en_core_web_lg")
 
