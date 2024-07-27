@@ -1,0 +1,12 @@
+project_id         = ""
+zone               = "us-east1-a"
+auohp_git_repo_url = ""
+
+# Base64-encoded deployment key
+git_ssh_key = "chunkybacon"
+
+# Plaintext SSH public key authorizing `auohp` user
+ssh_public_key = "ssh-ed25519 chunkybacon"
+
+# Path to the Google Cloud credentials file
+credentials_file = "../../../secrets/packer-builder-key.json"
