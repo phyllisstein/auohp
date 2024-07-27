@@ -1,0 +1,16 @@
+name: auohp
+channels:
+  - nvidia
+  - pytorch
+  - huggingface
+  - conda-forge
+  - defaults
+dependencies:
+  - pip=24.0
+  - python=3.10
+  - huggingface_hub=0.24.2
+  - numpy=1.26.4
+  - spacy=3.7.5
+  - poetry=1.8.3
+  - pip:
+    - '--editable=git+https://github.com/m-bain/whisperx.git@main#egg=whisperx'

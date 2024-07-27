@@ -3,6 +3,7 @@ import click
 import whisperx
 import platform
 import os
+import spacy
 
 from pathlib import Path
 from spacy.cli.download import download as spacy_download
@@ -42,7 +43,7 @@ def transcribe(input_file):
         f.write(json.dumps(json_captions))
 
     vtt_captions = to_vtt_captions(whisper_transcription)
-    with open(f'{basename}.captions.vtt', 'w') as f:
+    with open(f'{basename}.vtt', 'w') as f:
         f.write(vtt_captions)
 
 
@@ -51,7 +52,8 @@ def models():
     whisperx.load_model("large-v2", device=device, compute_type=compute_type, download_root=MODELS, language="en")
     whisperx.load_align_model(language_code="en", device=device, model_dir=MODELS, model_name="facebook/wav2vec2-large-960h-lv60-self")
     whisperx.DiarizationPipeline("pyannote/speaker-diarization-3.1", use_auth_token="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", device=device)
-    spacy_download("en_core_web_lg")
+    if not spacy.util.is_package("en_core_web_md"):
+        spacy_download("en_core_web_md")
 
 
 run.add_command(transcribe)
