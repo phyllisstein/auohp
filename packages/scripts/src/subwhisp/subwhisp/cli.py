@@ -15,7 +15,7 @@ from .subber import (
 from .whisperer import transcribe_audio_file
 
 
-MODELS = os.path.join(os.environ["HOME"], ".subwhisp")
+MODELS = "/opt/auohp/models"
 
 if platform.system() == "Darwin":
     device = "cpu"
@@ -34,18 +34,22 @@ def run():
 def transcribe(input_file):
     basename = Path(input_file).stem
 
-    whisper_transcription = transcribe_audio_file(input_file)
-    with open(f'{basename}.json', 'w') as f:
-        f.write(json.dumps(whisper_transcription))
+    try:
+        whisper_transcription = transcribe_audio_file(input_file)
+        with open(f'{basename}.json', 'w', encoding='utf8') as f:
+            f.write(json.dumps(whisper_transcription))
 
-    json_captions = to_json_captions(whisper_transcription)
-    with open(f'{basename}.captions.json', 'w') as f:
-        f.write(json.dumps(json_captions))
+        json_captions = to_json_captions(whisper_transcription)
+        with open(f'{basename}.captions.json', 'w', encoding='utf8') as f:
+            f.write(json.dumps(json_captions))
 
-    vtt_captions = to_vtt_captions(whisper_transcription)
-    with open(f'{basename}.vtt', 'w') as f:
-        f.write(vtt_captions)
-
+        vtt_captions = to_vtt_captions(whisper_transcription)
+        with open(f'{basename}.vtt', 'w', encoding='utf8') as f:
+            f.write(vtt_captions)
+    except Exception as e:
+        print(str(e))
+        import traceback
+        traceback.print_exc()
 
 @click.command()
 def models():
