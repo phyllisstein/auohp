@@ -3,7 +3,7 @@ import platform
 import os
 
 
-MODELS = os.path.join(os.environ["HOME"], ".subwhisp")
+MODELS = "/opt/auohp/models"
 
 
 if platform.system() == "Darwin":
