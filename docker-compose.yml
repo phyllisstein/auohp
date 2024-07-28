@@ -1,56 +1,4 @@
 services:
-  editor-proxy:
-    image: phyllisstein/port-forward
-    depends_on: [app]
-    init: true
-    environment:
-      - VIRTUAL_HOST=editor.auohp.here
-      - HTTPS_METHOD=noredirect
-      - LOCAL_PORT=80
-      - REMOTE_HOST=app
-      - REMOTE_PORT=3030
-    networks:
-      - default
-      - nginx-proxy
-  search-component-proxy:
-    image: phyllisstein/port-forward
-    depends_on: [app]
-    init: true
-    environment:
-      - VIRTUAL_HOST=search.auohp.here
-      - HTTPS_METHOD=noredirect
-      - LOCAL_PORT=80
-      - REMOTE_HOST=app
-      - REMOTE_PORT=4040
-    networks:
-      - default
-      - nginx-proxy
-  neo4j-bolt-proxy:
-    image: phyllisstein/port-forward
-    depends_on: [neo4j]
-    init: true
-    environment:
-      - VIRTUAL_HOST=bolt.auohp.here
-      - HTTPS_METHOD=noredirect
-      - LOCAL_PORT=80
-      - REMOTE_HOST=neo4j
-      - REMOTE_PORT=7687
-    networks:
-      - default
-      - nginx-proxy
-  neo4j-http-proxy:
-    image: phyllisstein/port-forward
-    depends_on: [neo4j]
-    init: true
-    environment:
-      - VIRTUAL_HOST=neo4j.auohp.here
-      - HTTPS_METHOD=noredirect
-      - LOCAL_PORT=80
-      - REMOTE_HOST=neo4j
-      - REMOTE_PORT=7474
-    networks:
-      - default
-      - nginx-proxy
   app:
     networks:
       - default
@@ -60,13 +8,19 @@ services:
     secrets:
       - source: environment
         mode: 0440
+    environment:
+      HTTPS_METHOD: noredirect
+      VIRTUAL_HOST_MULTIPORTS: |-
+        editor.auohp.here:
+          '/':
+            port: '3030'
+        search.auohp.here:
+          '/':
+            port: '4040'
     depends_on: [neo4j]
     expose:
       - '3030'
       - '4040'
-    ports:
-      - '3030:3030'
-      - '4040:4040'
     volumes:
       - type: bind
         source: .
@@ -74,18 +28,24 @@ services:
       - type: volume
         source: node_modules
         target: /app/node_modules
-
   neo4j:
     networks:
         - default
         - nginx-proxy
     image: neo4j:5.13.0
     environment:
-      - 'NEO4J_AUTH=neo4j/auohpauohp'
-      - 'NEO4J_PLUGINS=["apoc", "apoc-extended"]'
-      - 'NEO4J_server_default__listen__address=0.0.0.0'
-      - 'NEO4J_server_jvm_additional=-Dapoc.ttl.enabled=true'
-      - 'NEO4J_dbms_security_procedures_unrestricted=apoc.*'
+      NEO4J_AUTH: neo4j/auohpauohp
+      NEO4J_PLUGINS: '["apoc", "apoc-extended"]'
+      NEO4J_server_default__listen__address: '0.0.0.0'
+      NEO4J_server_jvm_additional: -Dapoc.ttl.enabled=true
+      NEO4J_dbms_security_procedures_unrestricted: apoc.*
+      VIRTUAL_HOST_MULTIPORTS: |-
+        bolt.auohp.here:
+          '/':
+            port: '7687'
+        neo4j.auohp.here:
+          '/':
+            port: '7474'
     ports:
       - '7474:7474'
       - '7687:7687'
