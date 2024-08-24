@@ -320,10 +320,15 @@ def iterate_document(doc: Doc, timing: dict, speakers: dict, **args):
 def write_vtt(doc, timing, **args):
     comma: str = '.'
     vtt = f"WEBVTT\n\n"
-    for i, (start, end, text, _) in enumerate(iterate_document(doc, timing, {}, **args), start=1):
+    last_speaker = None
+    for i, (start, end, text, speaker) in enumerate(iterate_document(doc, timing, {}, **args), start=1):
         ts1 = format_timestamp(start, always_include_hours=True, decimal_marker=comma)
         ts2 = format_timestamp(end, always_include_hours=True, decimal_marker=comma)
-        vtt += f"{ts1} --> {ts2}\n{text}\n\n"
+
+        dash = "- " if speaker != last_speaker else ""
+        last_speaker = speaker
+
+        vtt += f"{ts1} --> {ts2}\n{dash}{text}\n\n"
     return vtt
 
 def write_json(doc, timing, speakers, **args):
