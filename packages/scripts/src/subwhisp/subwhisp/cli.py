@@ -39,13 +39,6 @@ def transcribe(input_file):
         with open(f'{basename}.json', 'w', encoding='utf8') as f:
             f.write(json.dumps(whisper_transcription))
 
-        json_captions = to_json_captions(whisper_transcription)
-        with open(f'{basename}.captions.json', 'w', encoding='utf8') as f:
-            f.write(json.dumps(json_captions))
-
-        vtt_captions = to_vtt_captions(whisper_transcription)
-        with open(f'{basename}.vtt', 'w', encoding='utf8') as f:
-            f.write(vtt_captions)
     except Exception as e:
         print(str(e))
         import traceback
@@ -59,6 +52,29 @@ def models():
     if not spacy.util.is_package("en_core_web_md"):
         spacy_download("en_core_web_md")
 
+@click.command()
+@click.argument('input_file')
+def caption(input_file):
+    basename = Path(input_file).stem
+
+    try:
+        with open(input_file, 'r', encoding='utf8') as f:
+            whisper_transcription = json.load(f)
+
+        json_captions = to_json_captions(whisper_transcription)
+        with open(f'{basename}.captions.json', 'w', encoding='utf8') as f:
+            f.write(json.dumps(json_captions))
+
+        vtt_captions = to_vtt_captions(whisper_transcription)
+        with open(f'{basename}.vtt', 'w', encoding='utf8') as f:
+            f.write(vtt_captions)
+
+    except Exception as e:
+        print(str(e))
+        import traceback
+        traceback.print_exc()
+
 
 run.add_command(transcribe)
 run.add_command(models)
+run.add_command(caption)
