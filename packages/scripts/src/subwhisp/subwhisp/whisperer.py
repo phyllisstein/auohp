@@ -31,8 +31,8 @@ def transcribe_audio_file(audio_file: str, device: str = device, batch_size: int
 
     for segment in diarized_result["segments"]:
         try:
-            startTimestamp = str(datetime.timedelta(seconds=segment["start"]))
-            endTimestamp = str(datetime.timedelta(seconds=segment["end"]))
+            startTimestamp = str(datetime.timedelta(seconds=int(segment.get("start", 0))))
+            endTimestamp = str(datetime.timedelta(seconds=int(segment.get("end", 0))))
         except:
             startTimestamp = None
             endTimestamp = None
@@ -40,8 +40,8 @@ def transcribe_audio_file(audio_file: str, device: str = device, batch_size: int
         children = []
         for word in segment["words"]:
             try:
-                wordStartTimestamp = str(datetime.timedelta(seconds=word["start"]))
-                wordEndTimestamp = str(datetime.timedelta(seconds=word["end"]))
+                wordStartTimestamp = str(datetime.timedelta(seconds=int(word.get("start", 0))))
+                wordEndTimestamp = str(datetime.timedelta(seconds=int(word.get("end", 0))))
             except:
                 wordStartTimestamp = None
                 wordEndTimestamp = None
@@ -53,7 +53,10 @@ def transcribe_audio_file(audio_file: str, device: str = device, batch_size: int
                 "endTimestamp": wordEndTimestamp,
                 "word": word.get("word"),
                 "speaker": word.get("speaker"),
-                "type": "word"
+                "type": "word",
+                "children": [
+                    {"text": word.get("word")}
+                ]
             })
 
         frontend_editor_transcription.append({
