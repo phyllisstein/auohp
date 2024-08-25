@@ -29,28 +29,27 @@ else:
 def run():
     pass
 
+
 @click.command()
 @click.argument('input_file')
 def transcribe(input_file):
     basename = Path(input_file).stem
 
     try:
-        whisper_transcription = transcribe_audio_file(input_file)
+        (whisper_transcription, frontend_editor_transcription) = transcribe_audio_file(input_file)
+
+
         with open(f'{basename}.json', 'w', encoding='utf8') as f:
             f.write(json.dumps(whisper_transcription))
+
+        with open(f'{basename}.captions.json', 'w', encoding='utf8') as f:
+            f.write(json.dumps(frontend_editor_transcription))
+
 
     except Exception as e:
         print(str(e))
         import traceback
         traceback.print_exc()
-
-@click.command()
-def models():
-    whisperx.load_model("large-v2", device=device, compute_type=compute_type, download_root=MODELS, language="en")
-    whisperx.load_align_model(language_code="en", device=device, model_dir=MODELS, model_name="facebook/wav2vec2-large-960h-lv60-self")
-    whisperx.DiarizationPipeline("pyannote/speaker-diarization-3.1", use_auth_token="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", device=device)
-    if not spacy.util.is_package("en_core_web_md"):
-        spacy_download("en_core_web_md")
 
 @click.command()
 @click.argument('input_file')
@@ -61,10 +60,6 @@ def caption(input_file):
         with open(input_file, 'r', encoding='utf8') as f:
             whisper_transcription = json.load(f)
 
-        json_captions = to_json_captions(whisper_transcription)
-        with open(f'{basename}.captions.json', 'w', encoding='utf8') as f:
-            f.write(json.dumps(json_captions))
-
         vtt_captions = to_vtt_captions(whisper_transcription)
         with open(f'{basename}.vtt', 'w', encoding='utf8') as f:
             f.write(vtt_captions)
@@ -73,6 +68,15 @@ def caption(input_file):
         print(str(e))
         import traceback
         traceback.print_exc()
+
+
+@click.command()
+def models():
+    whisperx.load_model("large-v2", device=device, compute_type=compute_type, download_root=MODELS, language="en")
+    whisperx.load_align_model(language_code="en", device=device, model_dir=MODELS, model_name="facebook/wav2vec2-large-960h-lv60-self")
+    whisperx.DiarizationPipeline("pyannote/speaker-diarization-3.1", use_auth_token="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", device=device)
+    if not spacy.util.is_package("en_core_web_md"):
+        spacy_download("en_core_web_md")
 
 
 run.add_command(transcribe)
