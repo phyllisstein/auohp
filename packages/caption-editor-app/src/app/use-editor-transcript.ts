@@ -31,28 +31,13 @@ export function useEditorTranscript() {
     const transcript = useTranscript()
     const transcriptJSON = JSON.parse(transcript)
 
-    // const editorTranscript = useMemo(() => {
-    //     if (!transcript || transcript.length === 0) return initialValue
+    const sortedTranscript = useMemo(() => {
+        if (!transcriptJSON) {
+            return initialValue
+        }
 
-    //     return transcriptJSON.segments.map(segment => {
-    //         const captionChildren = segment.words.map(word => ({
-    //             type: 'word',
-    //             startTime: word.startTime,
-    //             endTime: word.endTime,
-    //             word: word.word,
-    //             children: [{ text: word.word + ' ' }], // FIXME: Terrible hack
-    //         }))
+        return transcriptJSON.sort((a, b) => b.start - a.start)
+    }, [transcriptJSON])
 
-    //         return {
-    //             startTime: dayjs.duration({ seconds: segment.startTime }).format('H:mm:ss'),
-    //             endTime: dayjs.duration({ seconds: segment.endTime }).format('H:mm:ss'),
-    //             speaker: segment.speaker,
-    //             content: segment.text,
-    //             type: 'statement',
-    //             children: captionChildren,
-    //         }
-    //     })
-    // }, [transcript])
-
-    return transcriptJSON
+    return sortedTranscript
 }
