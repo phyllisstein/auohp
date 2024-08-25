@@ -1,17 +1,21 @@
 'use client'
 
-import { type FunctionComponent, type ReactNode, useMemo, useCallback, useRef, useEffect, useState } from 'react'
-import { Editor, Transforms, Range, createEditor, type Descendant } from 'slate'
+import { Children, useEffect, useMemo } from 'react'
+import { createEditor, type Descendant } from 'slate'
 import { withHistory } from 'slate-history'
 import {
-    Slate,
     Editable,
-    ReactEditor,
+    Slate,
     withReact,
-    useSelected,
-    useFocused,
 } from 'slate-react'
-import { Header } from './page-styles'
+import * as R from 'ramda'
+
+import { Segment as StyledSegment } from './page-styles'
+import { useEditorTranscript } from './use-editor-transcript'
+
+
+const EMPTY = [{ children: [{ text: '' }] }]
+
 
 const initialValue: Descendant[] = [
     {
@@ -19,70 +23,89 @@ const initialValue: Descendant[] = [
             {
                 children: [
                     {
-                        children: [{ text: 'Statement statement statement.' }],
-                        endTime: 104.42,
+                        type: 'word',
                         startTime: 97.93,
-                        type: 'statement',
+                        endTime: 98.42,
+                        word: 'Hello',
+                        children: [{ text: 'Hello' }],
                     },
                 ],
-                speaker: 'spk_1',
-                type: 'caption',
+                endTime: 104.42,
+                startTime: 97.93,
+                type: 'segment',
+                speaker: 'SPEAKER_01',
+                content: 'Hello',
             },
         ],
+        type: 'transcript',
     },
 ]
 
-interface CaptionProps {
-    children: ReactNode
-}
 
-const Caption: FunctionComponent<CaptionProps> = ({ attributes, element, children }) => {
+const Segment = ({ attributes, element, children }) => {
     return (
-        <div { ...attributes } data-testid='caption' style={{ alignItems: 'stretch', display: 'flex', flexDirection: 'column', gap: '10px', justifyContent: 'center' }}>
-            <div contentEditable={ false } style={{ display: 'flex', gap: '10px' }}>
+        <StyledSegment { ...attributes } data-testid='statement'>
+            <div contentEditable={ false } style={{ gridRow: '1 / -1', gridColumn: '1' }}>
                 <span style={{ fontWeight: 'bold' }}>{ element.speaker }</span>
             </div>
-            { children }
-        </div>
-    )
-}
-
-const Statement = ({ attributes, element, children,  }) => {
-    return (
-        <div { ...attributes } data-testid='statement'>
-            <div contentEditable={ false }>
-                <span>{ element.startTime }</span>
+            <div contentEditable={ false } style={{ gridRow: '1', gridColumn: '2' }}>
+                <span>{ element.startTimestamp }</span>
                 —
-                <span>{ element.endTime }</span>
+                <span>{ element.endTimestamp }</span>
             </div>
-            { children }
-        </div>
+            <div style={{ gridRow: '2 / -1', gridColumn: '2 / -1' }}>
+                {
+                    R.intersperse(' ', Children.toArray(children))
+                }
+            </div>
+        </StyledSegment>
     )
 }
 
 const Element = props => {
     const { attributes, children, element } = props
     switch (element.type) {
-    case 'caption':
-        return <Caption { ...props } />
-    case 'statement':
-        return <Statement { ...props } />
+    case 'segment':
+        return <Segment { ...props } />
+    case 'word':
+        return <span { ...attributes } data-testid='word'>{ children }</span>
     default:
-        return <div { ...attributes }>{ children }</div>
+        return <div { ...attributes } data-testid='blank-div'>{ children }</div>
     }
 }
 
 const renderElement = props => <Element { ...props } />
-const renderLeaf = ({ attributes, children, leaf }) => <span { ...attributes }>{ children }</span>
+const renderLeaf = ({ attributes, children }) => <span { ...attributes }>{ children }</span>
 
 const withCaptions = editor => {}
 
+const withInlines = editor => {
+    const { isInline } = editor
+
+    editor.isInline = element => {
+        return element.type === 'word' ? true : isInline(element)
+    }
+
+    return editor
+}
+
 
 export default function Page() {
+    const editorTranscript = useEditorTranscript()
+
     const editor = useMemo(
-        () => withReact(withHistory(createEditor())),
+        () => withInlines(withReact(withHistory(createEditor()))),
         [],
     )
+
+    useEffect(() => {
+        if (!editorTranscript || editorTranscript.length < 1 || !editor) return
+
+        const children = [...editor.children]
+        children.forEach(node => editor.apply({ type: 'remove_node', path: [0], node }))
+        editorTranscript.forEach(node => editor.apply({ type: 'insert_node', path: [0], node }))
+        editor.onChange()
+    })
 
     return (
         <>

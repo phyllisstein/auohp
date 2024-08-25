@@ -9,3 +9,11 @@ export const Header = styled.h1`
     color: red;
     font-size: 3rem;
 `
+
+export const Segment = styled.div`
+    display: grid;
+    grid-template-rows: auto;
+    grid-template-columns: 1fr 4fr;
+    gap: 0.5rem;
+    margin: 2rem;
+`
