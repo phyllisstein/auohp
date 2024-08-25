@@ -50,7 +50,7 @@ const Segment = ({ attributes, element, children }) => {
             </div>
             <div contentEditable={ false } style={{ gridRow: '1', gridColumn: '2' }}>
                 <span>{ element.startTimestamp }</span>
-                —
+                &nbsp;&ndash;&nbsp;
                 <span>{ element.endTimestamp }</span>
             </div>
             <div style={{ gridRow: '2 / -1', gridColumn: '2 / -1' }}>
