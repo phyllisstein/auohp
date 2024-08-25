@@ -1,6 +1,7 @@
 import whisperx
 import platform
 import os
+import datetime
 
 
 MODELS = "/opt/auohp/models"
@@ -26,5 +27,43 @@ def transcribe_audio_file(audio_file: str, device: str = device, batch_size: int
     diarize_segments = diarize_model(audio)
 
     diarized_result = whisperx.assign_word_speakers(diarize_segments, aligned_result)
+    frontend_editor_transcription = []
 
-    return diarized_result
+    for segment in diarized_result["segments"]:
+        try:
+            startTimestamp = str(datetime.timedelta(seconds=segment["start"]))
+            endTimestamp = str(datetime.timedelta(seconds=segment["end"]))
+        except:
+            startTimestamp = None
+            endTimestamp = None
+
+        children = []
+        for word in segment["words"]:
+            try:
+                wordStartTimestamp = str(datetime.timedelta(seconds=word["start"]))
+                wordEndTimestamp = str(datetime.timedelta(seconds=word["end"]))
+            except:
+                wordStartTimestamp = None
+                wordEndTimestamp = None
+
+            children.append({
+                "start": word.get("start"),
+                "end": word.get("end"),
+                "startTimestamp": wordStartTimestamp,
+                "endTimestamp": wordEndTimestamp,
+                "word": word.get("word"),
+                "speaker": word.get("speaker"),
+                "type": "word"
+            })
+
+        frontend_editor_transcription.append({
+            "start": segment.get("start"),
+            "end": segment.get("end"),
+            "startTimestamp": startTimestamp,
+            "endTimestamp": endTimestamp,
+            "children": children,
+            "speaker": segment.get("speaker"),
+            "type": "segment"
+        })
+
+    return (diarized_result, frontend_editor_transcription)
