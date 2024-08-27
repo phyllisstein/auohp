@@ -386,7 +386,7 @@ def main():
     exit()
 
 
-def to_json_captions(input: dict, model: str = "en_core_web_md", width: int = 42, lines: int = 2):
+def to_json_captions(input: dict, model: str = "en_core_web_sm", width: int = 42, lines: int = 2):
     wtext, word_timing, word_speakers = load_whisper_json(input)
     verbal_pauses = scan_for_pauses(wtext, word_timing)
     nlp = configure_spaCy(model, verbal_pauses)
@@ -394,14 +394,14 @@ def to_json_captions(input: dict, model: str = "en_core_web_md", width: int = 42
     return write_json(doc, word_timing, word_speakers, width=width, lines=lines)
 
 
-def to_vtt_captions(input: dict, model: str = "en_core_web_md", width: int = 42, lines: int = 2):
+def to_vtt_captions(input: dict, model: str = "en_core_web_sm", width: int = 42, lines: int = 2):
     wtext, word_timing, word_speakers = load_whisper_json(input)
     verbal_pauses = scan_for_pauses(wtext, word_timing)
     nlp = configure_spaCy(model, verbal_pauses)
     doc = nlp(wtext)
     return write_vtt(doc, word_timing, width=width, lines=lines)
 
-def to_captions(input: dict, model: str = "en_core_web_md", width: int = 42, lines: int = 2):
+def to_captions(input: dict, model: str = "en_core_web_sm", width: int = 42, lines: int = 2):
     wtext, word_timing, word_speakers = load_whisper_json(input)
     verbal_pauses = scan_for_pauses(wtext, word_timing)
     nlp = configure_spaCy(model, verbal_pauses)
