@@ -10,7 +10,7 @@ import {
 } from 'slate-react'
 import * as R from 'ramda'
 
-import { Segment as StyledSegment } from './page-styles'
+import { Container, Segment as StyledSegment, VideoColumn } from './page-styles'
 import { useEditorTranscript } from './use-editor-transcript'
 
 
@@ -108,12 +108,15 @@ export default function Page() {
     })
 
     return (
-        <>
+        <Container>
             <Slate
                 editor={ editor }
                 initialValue={ initialValue }>
                 <Editable placeholder='Text...' renderElement={ renderElement } renderLeaf={ renderLeaf } />
             </Slate>
-        </>
+            <VideoColumn>
+                <Video />
+            </VideoColumn>
+        </Container>
     )
 }
