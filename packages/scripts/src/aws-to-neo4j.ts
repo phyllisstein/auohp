@@ -18,6 +18,7 @@ const NEO4J_LABELS = [
     'Speaker',
     'Statement',
     'Video',
+    'Job',
 ]
 
 const __filename = fileURLToPath(import.meta.url)
@@ -25,7 +26,7 @@ const __dirname = path.dirname(__filename)
 
 const {
     NEO4J_PASSWORD = 'auohpauohp',
-    NEO4J_URI = 'bolt://127.0.0.1:7687',
+    NEO4J_URI = 'bolt+s://bolt.auohp.here:443',
     NEO4J_USERNAME = 'neo4j',
 } = process.env
 
@@ -354,7 +355,7 @@ async function main() {
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~ 074 - Douglas Crimp ~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     data = JSON.parse(
         await fs.readFile(
-            path.join(__dirname, '../assets/testing/074_douglas_crimp.json'),
+            path.join(__dirname, '../assets/whisperx-subs/074_douglas_crimp.json'),
             'utf8',
         ),
     )
@@ -369,6 +370,27 @@ async function main() {
             sarah: 'spk_0',
         },
         videoURL: '/interviews/074_douglas_crimp.mp4',
+    })
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Alexandra Juhasz ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+    data = JSON.parse(
+        await fs.readFile(
+            path.join(__dirname, '../assets/whisperx-subs/008_alexandra_juhasz.json'),
+            'utf8',
+        ),
+    )
+    await seed({
+        data,
+        date: '2003-01-15',
+        interviewee: 'Alexandra Juhasz',
+        interviewNumber: 8,
+        speakers: {
+            interviewee: 'SPEAKER_00',
+            jim: 'SPEAKER_01',
+            sarah: 'SPEAKER_02',
+        },
+        videoURL: '/interviews/008_alexandra_juhasz.mp4',
     })
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
 
