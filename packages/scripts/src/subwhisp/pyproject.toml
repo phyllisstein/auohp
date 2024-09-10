@@ -7,15 +7,7 @@ authors = ["Daniel P. Shannon <daniel@try.works>"]
 [tool.poetry.dependencies]
 python = "^3.10"
 loguru = "^0.7.2"
-torch = { version = "^2.1.0", source = "torch_cuda118" }
-torchaudio = { version = "^2.1.0", source = "torch_cuda118" }
-torchvision = { version = "^0.16.0", source = "torch_cuda118" }
 "pyannote.audio" = "^3.1.0"
-
-[[tool.poetry.source]]
-name = "torch_cuda118"
-url = "https://download.pytorch.org/whl/cu118/"
-priority = "supplemental"
 
 [tool.poetry.scripts]
 subwhisp = "subwhisp.cli:run"

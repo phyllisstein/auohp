@@ -17,5 +17,5 @@ zone               = "us-east1-a"
 
 ```shell
 packer plugins install github.com/hashicorp/googlecompute
-packer build inference-image
+packer build -force inference-image
 ```

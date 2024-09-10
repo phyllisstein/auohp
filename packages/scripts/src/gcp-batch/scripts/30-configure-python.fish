@@ -7,7 +7,7 @@ cd /opt/auohp/packages/scripts/src/subwhisp
 sudo -u auohp /opt/conda/bin/conda init fish bash zsh
 source ~/.config/fish/config.fish
 
-conda env update -n base -f environment.yml
+python install_dependencies.py
 
 poetry config virtualenvs.create false
 poetry install
