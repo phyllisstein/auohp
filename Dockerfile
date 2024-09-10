@@ -1,4 +1,4 @@
-FROM phyllisstein/watchman:v2024.08.26.00-arm AS watchman
+FROM phyllisstein/watchman:v2024.08.26.00 AS watchman
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ App ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 FROM ubuntu:22.04 AS app
