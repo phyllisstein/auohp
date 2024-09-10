@@ -48,9 +48,9 @@ build {
     scripts = [
       "./scripts/00-bootstrap.fish",
       "./scripts/10-create-user.fish",
-      "./scripts/20-clone-repo.fish",
-      "./scripts/30-configure-python.fish",
-      "./scripts/40-cleanup.fish"
+      "sudo -u auohp ./scripts/20-clone-repo.fish",
+      "sudo -u auohp ./scripts/30-configure-python.fish",
+      "sudo -u auohp ./scripts/40-cleanup.fish"
     ]
   }
 }
