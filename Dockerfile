@@ -1,7 +1,7 @@
-FROM phyllisstein/watchman:v2022.06.20 AS watchman
+FROM phyllisstein/watchman:v2024.08.26.00-arm AS watchman
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ App ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
-FROM ubuntu:20.04 AS app
+FROM ubuntu:22.04 AS app
 
 COPY --from=watchman /usr/local/bin/* /usr/local/bin/
 COPY --from=watchman /usr/local/lib/* /usr/local/lib/
@@ -11,9 +11,6 @@ ENV NODE_MAJOR=22
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y -o Dpkg::Options::="--force-confold" -o Dpkg::Options::="--force-confdef" --allow-downgrades --allow-remove-essential --allow-change-held-packages --no-install-recommends \
         ca-certificates \
-        libboost-context1.71.0 \
-        libevent-2.1-7 \
-        libsnappy1v5 \
         curl \
         git \
         gnupg \

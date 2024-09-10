@@ -32,13 +32,13 @@ services:
     networks:
         - default
         - nginx-proxy
-    image: neo4j:5.13.0
+    image: neo4j:5.20
     environment:
       NEO4J_AUTH: neo4j/auohpauohp
-      NEO4J_PLUGINS: '["apoc", "apoc-extended"]'
+      NEO4J_PLUGINS: '["apoc", "genai"]'
       NEO4J_server_default__listen__address: '0.0.0.0'
       NEO4J_server_jvm_additional: -Dapoc.ttl.enabled=true
-      NEO4J_dbms_security_procedures_unrestricted: apoc.*
+      NEO4J_dbms_security_procedures_unrestricted: apoc.*, genai.*
       VIRTUAL_HOST_MULTIPORTS: |-
         bolt.auohp.here:
           '/':
