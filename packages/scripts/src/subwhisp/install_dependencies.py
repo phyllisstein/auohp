@@ -18,16 +18,17 @@ def install_dependencies():
         # Update conda
         subprocess.check_call(["conda", "update", "-y", "-n", "base", "-c", "conda-forge", "conda"])
 
-        # Install dependencies
-        subprocess.check_call(["conda", "env", "update", "--name", "base", "--file", "environment.yml"])
+        # Install other dependencies
+        subprocess.check_call(["conda", "env", "update", "--name", "auohp", "--file", "environment.yml"])
+        subprocess.check_call(["poetry", "install"])
 
         cuda_check = subprocess.run(["nvcc", "--version"], capture_output=True, text=True, shell=True)
         if cuda_check.returncode == 0:
             print("CUDA is available. Installing CUDA-enabled PyTorch and related modules.")
-            subprocess.check_call(["conda", "install", "-y", "pytorch", "torchvision", "torchaudio", "cudatoolkit=12.1", "-c", "pytorch", "-c", "nvidia"])
+            subprocess.check_call(["conda", "install", "--update-deps", "-y", "pytorch", "torchvision", "torchaudio", "cudatoolkit=12.1", "-c", "pytorch", "-c", "nvidia"])
         else:
             print("CUDA is not available. Installing CPU-only PyTorch and related modules.")
-            subprocess.check_call(["conda", "install", "-y", "pytorch", "torchvision", "torchaudio", "-c", "pytorch"])
+            subprocess.check_call(["conda", "install", "--update-deps", "-y", "pytorch", "torchvision", "torchaudio", "-c", "pytorch"])
 
     except Exception as e:
         print(f"Error installing dependencies: {e}")
