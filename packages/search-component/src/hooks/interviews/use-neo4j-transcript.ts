@@ -1,19 +1,62 @@
+import type { EagerResult } from 'neo4j-driver'
 import { useEffect, useState } from 'react'
 
 import { useNeo4j } from 'hooks/infrastructure'
 
-export interface Neo4jResult {
-    interviewNumber: number
-    interviewURL: string
+
+interface StatementTranscriptionMeta {
+    startTime: number
+    endTime: number
+    startTimestamp: string
+    endTimestamp: string
+}
+
+interface Transcript {
+    uid: string
+}
+
+interface Video {
+    uid: string
+    url: string
+}
+
+interface Person {
+    uid: string
+    name: string
+}
+
+interface DocumentaryArtefact {
+    uid: string
+    title: string
+    date: Date
+    labels: ['Documentary']
+}
+
+interface InterviewArtefact {
+    uid: string
+    title: string
+    date: Date
+    name: string
+    number: number
+    labels: ['Interview']
+}
+
+interface Statement {
+    text: string
+}
+
+interface Neo4jResult {
+    statementTranscriptionMeta: StatementTranscriptionMeta
+    transcript: Transcript
+    video: Video
+    person: Person
     score: number
-    speaker: string
-    statement: string
-    timestamp: number
-    videoURL: string
+    artefact: DocumentaryArtefact | InterviewArtefact
+    statement: Statement
 }
 
 export function useNeo4jTranscript(query: string, index: string): Neo4jResult[] {
-    const driver = useNeo4j('bolt://localhost:7687', 'neo4j', 'auohpauohp')
+    const driver = useNeo4j('bolt+s://bolt.auohp.here:443', 'neo4j', 'auohpauohp')
     const [searchResults, setSearchResults] = useState<Neo4jResult[]>([])
 
     useEffect(() => {
@@ -23,29 +66,26 @@ export function useNeo4jTranscript(query: string, index: string): Neo4jResult[] 
         }
 
         async function search() {
-            const result = await driver.executeQuery(
+            const result = await driver.executeQuery<EagerResult<Neo4jResult>>(
                 // language=Cypher
                 `
                     CALL db.index.fulltext.queryNodes($index, $query) YIELD node AS statement, score
-                    MATCH (statement)<-[speakerSays:SAYS]-(speaker:Interviewee)<-[:INTERVIEWED_AS]-(person)
-                    MATCH (speaker)<-[:INTERVIEWED_WITH]-(interview)-[:HAS_VIDEO]->(video)
-                    RETURN speakerSays.startTime AS timestamp,
-                        person.name AS speaker,
-                        statement.text AS statement,
-                        interview.number AS interviewNumber,
-                        interview.url AS interviewURL,
-                        video.url AS videoURL,
-                        score
+                    MATCH (statement) <-[statementTranscriptionMeta:TRANSCRIBED_STATEMENT]-(transcript)
+                    MATCH (transcript) -[:TRANSCRIBES]-> (video) <-[:HAS_VIDEO]- (artefact)
+                    OPTIONAL MATCH (video) -[:WITH_SPEAKER]-> () <-[:INTERVIEWED_AS]- (person)
+                    RETURN statementTranscriptionMeta, transcript, video, person, score, artefact, statement
                     ORDER BY score DESC
+                    LIMIT 10
                 `, { index, query })
 
             const searchResults = result.records.map(record => ({
-                interviewNumber: record.get('interviewNumber'),
-                score: record.get('score'),
-                speaker: record.get('speaker'),
-                statement: record.get('statement'),
-                timestamp: record.get('timestamp'),
-                videoURL: record.get('videoURL'),
+                statementTranscriptionMeta: record.get('statementTranscriptionMeta')?.properties,
+                transcript: record.get('transcript')?.properties,
+                video: record.get('video')?.properties,
+                person: record.get('person')?.properties,
+                score: record.get('score')?.properties,
+                artefact: record.get('artefact')?.properties,
+                statement: record.get('statement')?.properties,
             }))
 
             setSearchResults(searchResults)

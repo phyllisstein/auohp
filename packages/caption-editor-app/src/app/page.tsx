@@ -1,6 +1,6 @@
 'use client'
 
-import { Children, useEffect, useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { createEditor, type Descendant } from 'slate'
 import { withHistory } from 'slate-history'
 import {
@@ -10,11 +10,8 @@ import {
 } from 'slate-react'
 import * as R from 'ramda'
 
-import { Container, Segment as StyledSegment, VideoColumn } from './page-styles'
+import { Container, Segment as StyledSegment, Video, VideoColumn, EditorColumn } from './page-styles'
 import { useEditorTranscript } from './use-editor-transcript'
-
-
-const EMPTY = [{ children: [{ text: '' }] }]
 
 
 const initialValue: Descendant[] = [
@@ -34,7 +31,7 @@ const initialValue: Descendant[] = [
                 startTime: 97.93,
                 type: 'segment',
                 speaker: 'SPEAKER_01',
-                content: 'Hello',
+                transcription: 'Hello',
             },
         ],
         type: 'transcript',
@@ -45,7 +42,7 @@ const initialValue: Descendant[] = [
 const Segment = ({ attributes, element, children }) => {
     return (
         <StyledSegment { ...attributes } data-testid='statement'>
-            <div contentEditable={ false } style={{ gridRow: '1 / -1', gridColumn: '1' }}>
+            <div contentEditable={ false } style={{ gridRow: '1', gridColumn: '1 / 2' }}>
                 <span style={{ fontWeight: 'bold' }}>{ element.speaker }</span>
             </div>
             <div contentEditable={ false } style={{ gridRow: '1', gridColumn: '2' }}>
@@ -55,7 +52,7 @@ const Segment = ({ attributes, element, children }) => {
             </div>
             <div style={{ gridRow: '2 / -1', gridColumn: '2 / -1' }}>
                 {
-                    R.intersperse(' ', Children.toArray(children))
+                    children
                 }
             </div>
         </StyledSegment>
@@ -109,13 +106,17 @@ export default function Page() {
 
     return (
         <Container>
-            <Slate
-                editor={ editor }
-                initialValue={ initialValue }>
-                <Editable placeholder='Text...' renderElement={ renderElement } renderLeaf={ renderLeaf } />
-            </Slate>
+            <EditorColumn>
+                <Slate
+                    editor={ editor }
+                    initialValue={ initialValue }>
+                    <Editable placeholder='Text...' renderElement={ renderElement } renderLeaf={ renderLeaf } />
+                </Slate>
+            </EditorColumn>
             <VideoColumn>
-                <Video />
+                <Video controls>
+                    <source src='/assets/demo/the_ashes_action.mp4' type='video/mp4' />
+                </Video>
             </VideoColumn>
         </Container>
     )

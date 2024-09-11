@@ -36,8 +36,8 @@ export function useEditorTranscript() {
             return initialValue
         }
 
-        return transcriptJSON.sort((a, b) => b.start - a.start)
+        transcriptJSON.sort((a, b) => b.start - a.start)
     }, [transcriptJSON])
 
-    return sortedTranscript
+    return transcriptJSON
 }
