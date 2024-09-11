@@ -7,7 +7,6 @@ authors = ["Daniel P. Shannon <daniel@try.works>"]
 [tool.poetry.dependencies]
 python = "^3.10"
 loguru = "^0.7.2"
-"pyannote.audio" = "^3.1.0"
 
 [tool.poetry.scripts]
 subwhisp = "subwhisp.cli:run"
