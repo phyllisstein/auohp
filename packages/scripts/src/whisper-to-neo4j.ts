@@ -17,7 +17,6 @@ const NEO4J_LABELS = [
     'Speaker',
     'Statement',
     'Video',
-    'WordTimings',
 ]
 
 const {
