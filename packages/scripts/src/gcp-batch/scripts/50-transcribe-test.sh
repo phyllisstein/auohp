@@ -1,4 +1,6 @@
-#!/usr/bin/env fish
+#!/usr/bin/env bash
+
+set -eEuxo pipefail
 
 gsutil -m cp gs://auohp/00_larry_kramer_test.wav ~/00_larry_kramer_test.wav
 subwhisp transcribe ~/00_larry_kramer_test.wav
