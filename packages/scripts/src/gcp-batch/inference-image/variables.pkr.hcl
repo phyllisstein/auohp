@@ -6,6 +6,11 @@ variable "credentials_file" {
   type = string
 }
 
+variable "image_name" {
+  type    = string
+  default = "auohp-inference"
+}
+
 variable "auohp_git_repo_url" {
   type = string
 }
@@ -26,12 +31,12 @@ variable "zone" {
 
 variable "machine_type" {
   type    = string
-  default = "n1-standard-4"
+  default = "n1-standard-1"
 }
 
 variable "source_image" {
   type    = string
-  default = "c0-deeplearning-common-gpu-v20240708-debian-11-py310"
+  default = "c2-deeplearning-pytorch-2-3-cu121-v20240730-debian-11-py310"
 }
 
 variable "debug" {
