@@ -20,6 +20,7 @@ def install_dependencies():
 
         # Install other dependencies
         subprocess.check_call(["conda", "env", "update", "--name", "auohp", "--file", "environment.yml"])
+        subprocess.check_call(["poetry", "config", "virtualenvs.create", "false"])
         subprocess.check_call(["poetry", "install"])
 
         cuda_check = subprocess.run(["nvcc", "--version"], capture_output=True, text=True, shell=True)
