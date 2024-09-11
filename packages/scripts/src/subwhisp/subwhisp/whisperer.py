@@ -68,7 +68,9 @@ def transcribe_audio_file(audio_file: str, device: str = device, batch_size: int
             "end": segment.get("end"),
             "startTimestamp": startTimestamp,
             "endTimestamp": endTimestamp,
-            "children": children,
+            "children": [
+                {"text": transcription_segment}
+            ],
             "speaker": segment.get("speaker"),
             "type": "segment",
             "transcription": transcription_segment
