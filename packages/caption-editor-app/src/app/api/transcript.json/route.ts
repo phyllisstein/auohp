@@ -7,9 +7,9 @@ const __dirname = path.dirname(__filename)
 
 
 export async function GET() {
-    const vtt = await fs.readFile(path.resolve(__dirname, '../../../../public/assets/demo/008_alexandra_juhasz.json'), 'utf-8')
+    const json = await fs.readFile(path.resolve(__dirname, '../../../../public/assets/demo/the_ashes_action.captions.json'), 'utf-8')
 
-    return new Response(vtt, {
+    return new Response(json, {
         headers: {
             'Content-Type': 'application/json',
         },
