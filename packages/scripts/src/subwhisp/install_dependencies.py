@@ -16,10 +16,10 @@ def install_dependencies():
         subprocess.check_call(["conda", "--version"])
 
         # Update conda
-        subprocess.check_call(["conda", "update", "-y", "-n", "base", "-c", "conda-forge", "conda"])
+        # subprocess.check_call(["conda", "update", "-y", "-n", "base", "-c", "conda-forge", "conda"])
 
         # Install other dependencies
-        subprocess.check_call(["conda", "env", "update", "--name", "auohp", "--file", "environment.yml"])
+        subprocess.check_call(["conda", "env", "update", "--name", "base", "--file", "environment.yml"])
         subprocess.check_call(["poetry", "config", "virtualenvs.create", "false"])
         subprocess.check_call(["poetry", "install"])
 
