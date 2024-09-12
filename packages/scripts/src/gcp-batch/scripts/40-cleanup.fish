@@ -1,5 +1,3 @@
-#!/usr/bin/env bash
-
-set -eEuxo pipefail
+#!/usr/bin/env fish
 
 sudo chown -R auohp:auohp /home/auohp /opt/auohp /opt/conda
