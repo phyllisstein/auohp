@@ -11,10 +11,10 @@ source "googlecompute" "auohp_inference" {
 
   ssh_username            = "packer"
   temporary_key_pair_type = "ed25519"
-  use_os_login            = false
+  use_os_login            = true
 
-  # accelerator_type  = "projects/${var.project_id}/zones/${var.zone}/acceleratorTypes/nvidia-tesla-t4"
-  # accelerator_count = 1
+  accelerator_type  = "projects/${var.project_id}/zones/${var.zone}/acceleratorTypes/nvidia-tesla-t4"
+  accelerator_count = 1
 
   preemptible         = true
   on_host_maintenance = "TERMINATE"
@@ -31,13 +31,15 @@ build {
   sources = ["source.googlecompute.auohp_inference"]
 
   provisioner "shell" {
-    environment_vars = [
-      "DEBIAN_FRONTEND=noninteractive"
-    ]
     inline = [
       "sudo apt-get update",
-      "sudo apt-get upgrade -y",
-      "sudo apt-get install -y git ffmpeg",
+      <<EOF
+      DEBIAN_FRONTEND=noninteractive sudo apt-get upgrade -y \
+        -o Dpkg::Options::="--force-confdef" \
+        -o Dpkg::Options::="--force-confold" \
+        --yes
+EOF
+      ,"sudo apt-get install -y fish git ffmpeg",
       "sudo /opt/deeplearning/install-driver.sh"
     ]
   }
@@ -49,11 +51,11 @@ build {
       "AUOHP_PUBLIC_KEY=${var.ssh_public_key}"
     ]
     scripts = [
-      "./scripts/00-bootstrap.sh",
-      "./scripts/10-create-user.sh",
-      "./scripts/20-clone-repo.sh",
-      "./scripts/30-configure-python.sh",
-      "./scripts/40-cleanup.sh"
+      "./scripts/00-bootstrap.fish",
+      "./scripts/10-create-user.fish",
+      "./scripts/20-clone-repo.fish",
+      "./scripts/30-configure-python.fish",
+      "./scripts/40-cleanup.fish"
     ]
   }
 }

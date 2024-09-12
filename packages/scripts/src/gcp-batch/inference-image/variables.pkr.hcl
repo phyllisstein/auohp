@@ -31,12 +31,12 @@ variable "zone" {
 
 variable "machine_type" {
   type    = string
-  default = "n1-standard-1"
+  default = "n1-standard-4"
 }
 
 variable "source_image" {
   type    = string
-  default = "c2-deeplearning-pytorch-2-3-cu121-v20240730-debian-11-py310"
+  default = "c0-deeplearning-common-gpu-v20240708-debian-11-py310"
 }
 
 variable "debug" {
