@@ -1,10 +1,10 @@
-import '@spectrum-css/button/dist/index-vars.css'
-import '@spectrum-css/inlinealert/dist/index-vars.css'
-import '@spectrum-css/tokens/dist/index.css'
+import '@spectrum-css/button'
+import '@spectrum-css/inlinealert'
+import '@spectrum-css/tokens'
 import '@spectrum-css/vars/dist/spectrum-dark.css'
 import '@spectrum-css/vars/dist/spectrum-global.css'
 import '@spectrum-css/vars/dist/spectrum-medium.css'
-import '@spectrum-css/well/dist/index-vars.css'
+import '@spectrum-css/well'
 
 import { StyledComponentsRegistry } from 'styles/global'
 
