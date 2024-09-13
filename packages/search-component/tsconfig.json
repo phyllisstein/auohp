@@ -24,7 +24,7 @@
         "esModuleInterop": true,
         "resolveJsonModule": true,
         "isolatedModules": true,
-        "module": "ESNext",
+        "module": "es2020",
         "declaration": true,
         "removeComments": true,
         "emitDecoratorMetadata": true,

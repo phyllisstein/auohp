@@ -18,7 +18,7 @@
         "noEmit": true,
         "resolveJsonModule": true,
         "skipLibCheck": true,
-        "strict": false,
+        "strict": true,
         "paths": {
             "*": [
                 "*",
@@ -36,7 +36,7 @@
         ],
         "isolatedModules": true,
         "target": "es2020",
-        "module": "ESNext"
+        "module": "es2020"
     },
     "exclude": [
         "node_modules"
