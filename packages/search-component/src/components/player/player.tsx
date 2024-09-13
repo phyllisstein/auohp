@@ -1,14 +1,17 @@
 import queryString from 'query-string'
 import { useEffect, useRef } from 'react'
 
+import { useNeo4jVideo } from 'hooks/interviews'
+
 import './player.scss'
 
 interface PlayerProps {
-    videoURL: string
+    interviewNumber: number
 }
 
-export function Player({ videoURL }: PlayerProps) {
+export function Player({ interviewNumber }: PlayerProps) {
     const player = useRef<HTMLVideoElement>(null)
+    const videoURL = useNeo4jVideo(interviewNumber)
 
     useEffect(() => {
         const currentPlayer = player.current

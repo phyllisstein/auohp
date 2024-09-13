@@ -15,27 +15,23 @@ export const Segment = styled.div`
     grid-template-rows: auto;
     grid-template-columns: 1fr 4fr;
     gap: 0.5rem;
+    margin: 2rem;
 `
 
 
 export const Container = styled.main`
     display: grid;
     grid-template-rows: auto;
-    grid-template-columns: 4fr 3fr;
+    grid-template-columns: 1fr 3fr;
     gap: 0.5rem;
-    margin: 1rem;
+    margin: 2rem;
 `
 
 export const VideoColumn = styled.div`
     position: relative;
-    grid-column: 2
 `
 
 export const Video = styled.video`
     width: 100%;
     height: auto;
-`
-
-export const EditorColumn = styled.div`
-    grid-column: 1;
 `
