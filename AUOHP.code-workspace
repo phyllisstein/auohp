@@ -1,11 +1,11 @@
 {
     "folders": [
         {
-            "name": "✨ auohp",
+            "name": "▲  auohp",
             "path": "."
         },
         {
-            "name": "🚀 @auohp/caption-editor-app",
+            "name": "🌐 @auohp/caption-editor-app",
             "path": "packages/caption-editor-app"
         },
         {
@@ -13,20 +13,20 @@
             "path": "packages/scripts"
         },
         {
-            "name": "💾 @auohp/search-component",
+            "name": "🧩 @auohp/search-component",
             "path": "packages/search-component"
-        },
-        {
-            "name": "🚀 @auohp/transcript-api",
-            "path": "packages/transcript-api"
         }
     ],
     "settings": {
         "[javascript][typescript][javascriptreact][typescriptreact]": {
-            "editor.codeActionsOnSave": [
-                "source.fixAll.stylelint",
-                "source.fixAll.eslint"
-            ]
+            "editor.codeActionsOnSave": {
+                "source.addMissingImports.ts": "always",
+                "source.fixAll.stylelint": "always",
+                "source.organizeImports": "never",
+                "source.sortImports": "always",
+                "sourece.fixAll.eslint": "always",
+                "source.removeUnusedImports": "explicit"
+            }
         },
         "editor.defaultFormatter": "dbaeumer.vscode-eslint",
         "editor.formatOnSave": false,
@@ -44,7 +44,17 @@
             "source.fixAll.stylelint": "always"
         },
         "eslint.quiet": true,
-        "monorepoWorkspace.folders.prefix.unknown": "💾 ",
+        "monorepoWorkspace.folders.custom": [
+            {
+                "prefix": "🧩 ",
+                "regex": "(component)$"
+            }
+        ],
+        "monorepoWorkspace.folders.prefix.libs": "📦 ",
+        "monorepoWorkspace.folders.prefix.root": "▲  ",
+        "monorepoWorkspace.folders.prefix.apps": "🌐 ",
+        "monorepoWorkspace.folders.prefix.tools": "⚙️ ",
+        "monorepoWorkspace.folders.prefix.unknown": "📁 ",
         "monorepoWorkspace.folders.regex.apps": "(app|web|api|frontend|client|server|backend|service)s?$",
         "monorepoWorkspace.folders.regex.libs": "(common|package|lib|private|ui)s?$",
         "monorepoWorkspace.folders.regex.tools": "(tool|script|util|config)s?$",
