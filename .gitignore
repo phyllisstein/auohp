@@ -585,3 +585,4 @@ tags
 
 **/secrets/*
 !**/secrets/.gitkeep
+.fastRequest
