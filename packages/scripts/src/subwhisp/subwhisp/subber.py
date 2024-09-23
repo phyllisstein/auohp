@@ -47,11 +47,11 @@ def get_time_span(span: Span, timing: dict):
         end_token = end_token.nbor(-1)
     end_index = end_token.idx
     start_index = start_token.idx
-    start, _ = timing[start_index]
-    _, end = timing.get(end_index, (None, None))
-    if not end:
+    start_time, _ = timing[start_index]
+    _, end_time = timing.get(end_index, (None, None))
+    if not end_time:
         logging.debug("Timing alignment error: %s %d", span.text, end_token.idx)
-    return (start, end)
+    return (start_time, end_time)
 
 def get_speaker(span: Span, speakers: dict):
     start_token = span[-1]
@@ -321,9 +321,9 @@ def write_vtt(doc, timing, **args):
     comma: str = '.'
     vtt = f"WEBVTT\n\n"
     last_speaker = None
-    for i, (start, end, text, speaker) in enumerate(iterate_document(doc, timing, {}, **args), start=1):
-        ts1 = format_timestamp(start, always_include_hours=True, decimal_marker=comma)
-        ts2 = format_timestamp(end, always_include_hours=True, decimal_marker=comma)
+    for i, (start_time, end_time, text, speaker) in enumerate(iterate_document(doc, timing, {}, **args), start=1):
+        ts1 = format_timestamp(start_time, always_include_hours=True, decimal_marker=comma)
+        ts2 = format_timestamp(end_time, always_include_hours=True, decimal_marker=comma)
 
         dash = "- " if speaker != last_speaker else ""
         last_speaker = speaker
@@ -333,8 +333,11 @@ def write_vtt(doc, timing, **args):
 
 def write_json(doc, timing, speakers, **args):
     segments = []
-    for i, (start, end, text, speaker) in enumerate(iterate_document(doc, timing, speakers, **args), start=1):
-        segments.append({"startTime": start, "endTime": end, "text": text, "speaker": speaker})
+    last_speaker = None
+    
+    for i, (start_time, end_time, text, speaker) in enumerate(iterate_document(doc, timing, speakers, **args), start=1):
+        dash = "- " if speaker != last_speaker else ""
+        segments.append({"startTime": start_time, "endTime": end_time, "text": f"{dash}{text}", "speaker": speaker})
     return {"segments": segments}
 
 def configure_spaCy(model: str, pauses: list = []):

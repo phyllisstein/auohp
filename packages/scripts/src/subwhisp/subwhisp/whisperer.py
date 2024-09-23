@@ -47,8 +47,8 @@ def transcribe_audio_file(audio_file: str, device: str = device, batch_size: int
                 wordEndTimestamp = None
 
             child = {
-                "start": word.get("start"),
-                "end": word.get("end"),
+                "startTime": word.get("start"),
+                "endTime": word.get("end"),
                 "startTimestamp": wordStartTimestamp,
                 "endTimestamp": wordEndTimestamp,
                 "word": word.get("word"),
@@ -64,8 +64,8 @@ def transcribe_audio_file(audio_file: str, device: str = device, batch_size: int
 
         transcription_segment = " ".join([x["word"] for x in children])
         frontend_editor_transcription.append({
-            "start": segment.get("start"),
-            "end": segment.get("end"),
+            "startTime": segment.get("start"),
+            "endTime": segment.get("end"),
             "startTimestamp": startTimestamp,
             "endTimestamp": endTimestamp,
             "children": [
@@ -77,5 +77,6 @@ def transcribe_audio_file(audio_file: str, device: str = device, batch_size: int
         })
 
     frontend_editor_transcription = sorted(frontend_editor_transcription, key=lambda x: x["start"])
+    diarized_result = sorted(diarized_result["segments"], key=lambda x: x["start"])
 
     return (diarized_result, frontend_editor_transcription)
