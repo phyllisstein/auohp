@@ -12,16 +12,19 @@ const __dirname = path.dirname(__filename)
 
 const NEO4J_LABELS = [
     'Captions',
+    'Child',
     'Interview',
     'Person',
     'Speaker',
     'Statement',
+    'Transcript',
     'Video',
+    'VTT',
 ]
 
 const {
     NEO4J_PASSWORD = 'auohpauohp',
-    NEO4J_URI = 'bolt://127.0.0.1:7687',
+    NEO4J_URI = 'bolt+s://bolt.auohp.here:443',
     NEO4J_USERNAME = 'neo4j',
 } = process.env
 const neo4jDriver = neo4j.driver(
@@ -31,26 +34,6 @@ const neo4jDriver = neo4j.driver(
         disableLosslessIntegers: true,
     },
 )
-
-
-function chunkBySpeaker(segments) {
-    let chunkedSegments = [segments[0]]
-
-    for (let i = 1; i < segments.length; i++) {
-        const segment = segments[i]
-        const lastSegment = chunkedSegments[chunkedSegments.length - 1]
-
-        if (lastSegment?.speaker === segment.speaker) {
-            lastSegment.text += ` ${ segment.text }`
-            lastSegment.endTime = segment.endTime
-            lastSegment.words = lastSegment.words.concat(segment.words)
-        } else {
-            chunkedSegments.push(segment)
-        }
-    }
-
-    return chunkedSegments
-}
 
 
 /**
@@ -65,14 +48,85 @@ function chunkBySpeaker(segments) {
  * model, from which the captions are generated. The data model is the source of
  * truth, and the captions are a derived artifact.
  */
-async function seed({ data, date, interviewee, interviewNumber, speakers, videoURL, vtt }) {
+async function seedInterview({ data, date, interviewee, interviewNumber, speakers, videoURL, vtt, vttURL }) {
     await neo4jDriver.executeQuery(
         // language=Cypher
         `
             MATCH (jim:Person {name: 'Jim Hubbard'})
             MATCH (sarah:Person {name: 'Sarah Schulman'})
             WITH jim, sarah
-            CREATE (i:Interview {number: $interviewNumber, date: date($date), uid: $interviewUID, url: $interviewURL})
+            CREATE (i:Interview {number: $interviewNumber, date: date($date), uid: $interviewUID})
+            CREATE (video:Video {url: $videoURL, uid: $videoUID})
+            CREATE (vtt:VTT {text: $vtt, url: $vttURL, uid: $vttUID})
+            CREATE (transcript:Transcript {uid: $transcriptUID})
+            CREATE (interviewee:Person {name: $interviewee, uid: $intervieweeUID})
+            CREATE (sarahSpeaker:Speaker:Interviewer {label: $speakers.sarah})
+            CREATE (jimSpeaker:Speaker:Interviewer {label: $speakers.jim})
+            CREATE (intervieweeSpeaker:Speaker:Interviewee {label: $speakers.interviewee})
+            MERGE (interviewee)-[:INTERVIEWED_AS]->(intervieweeSpeaker)
+            MERGE (jim)-[:INTERVIEWED_AS]->(jimSpeaker)
+            MERGE (sarah)-[:INTERVIEWED_AS]->(sarahSpeaker)
+            CREATE (transcript)-[:INCLUDES_SPEAKER]->(intervieweeSpeaker)
+            CREATE (transcript)-[:INCLUDES_SPEAKER]->(jimSpeaker)
+            CREATE (transcript)-[:INCLUDES_SPEAKER]->(sarahSpeaker)
+            CREATE (i)-[:HAS_VIDEO]->(video)
+            CREATE (video)-[:HAS_CAPTIONS]->(vtt)
+            CREATE (video)-[:HAS_TRANSCRIPT]->(transcript)
+        `, {
+            date,
+            interviewNumber: int(interviewNumber),
+            transcriptUID: nanoid(),
+
+            interviewee,
+            speakers,
+            interviewUID: nanoid(),
+            intervieweeUID: nanoid(),
+
+            videoUID: nanoid(),
+            videoURL,
+            vtt,
+            vttURL,
+            vttUID: nanoid(),
+        },
+    )
+
+    for await (const chunk of data) {
+        let result: EagerResult
+        try {
+            result = await neo4jDriver.executeQuery(
+                // language=Cypher
+                `
+                    MATCH (interview:Interview {number: $interviewNumber}) -[:HAS_VIDEO]-> (video)
+                    MATCH (video)-[:HAS_TRANSCRIPT]-> (transcript)
+                    MATCH (transcript) -[:INCLUDES_SPEAKER]- (speaker:Speaker {label: $speaker})
+                    MATCH (speaker) <-[:INTERVIEWED_AS]- (person:Person)
+                    CREATE (speaker)-[:SAYS {startTime: $startTime, endTime: $endTime, startTimestamp: $startTimestamp, endTimestamp: $endTimestamp}]->(statement:Statement {text: $transcription})
+                    RETURN statement, person, interview
+                `, {
+                    ...chunk,
+                    speaker: chunk.speaker || speakers.interviewee,
+                    interviewNumber: int(interviewNumber),
+                },
+            )
+        } catch (error) {
+            console.error(`
+                Could not create node for segment starting ${ chunk.startTime } in interview
+                ${ interviewNumber } for speaker ${ chunk.speaker }.
+
+                ${ error.message }
+            `)
+        }
+    }
+}
+
+async function seedVideo({ data, date, speakers, videoURL, vtt }) {
+    await neo4jDriver.executeQuery(
+        // language=Cypher
+        `
+            MATCH (jim:Person {name: 'Jim Hubbard'})
+            MATCH (sarah:Person {name: 'Sarah Schulman'})
+            WITH jim, sarah
+            CREATE (i:Interview {number: $interviewNumber, date: date($date), uid: $interviewUID})
             CREATE (video:Video {url: $videoURL, uid: $videoUID})
             CREATE (vtt:VTT {text: $vtt})
             CREATE (interviewee:Person {name: $interviewee, uid: $intervieweeUID})
@@ -95,7 +149,6 @@ async function seed({ data, date, interviewee, interviewNumber, speakers, videoU
             speakers,
             interviewUID: nanoid(),
             intervieweeUID: nanoid(),
-            interviewURL: videoURL,
 
             videoUID: nanoid(),
             videoURL,
@@ -103,29 +156,46 @@ async function seed({ data, date, interviewee, interviewNumber, speakers, videoU
         },
     )
 
-    const speakerChunks = chunkBySpeaker(data.segments)
-    for await (const chunk of speakerChunks) {
-        const result: EagerResult = await neo4jDriver.executeQuery(
-            // language=Cypher
-            `
-                MATCH (speaker:Speaker {label: $speaker}) <-[:INTERVIEWED_WITH]- (interview:Interview {number: $interviewNumber})
-                MATCH (speaker) <-[:INTERVIEWED_AS]- (person:Person)
-                CREATE (statement:Statement {text: $text}) -[:FROM_WORDS]-> (words:WordTimings {words: $words})
-                MERGE (speaker)-[:SAYS {startTime: $start, endTime: $end}]->(statement)
-                RETURN statement, person, interview, words
-            `, {
-                ...chunk,
-                words: JSON.stringify(chunk.words),
-                interviewNumber: int(interviewNumber),
-            },
-        )
+    for await (const chunk of data) {
+        let result: EagerResult
+        try {
+            result = await neo4jDriver.executeQuery(
+                // language=Cypher
+                `
+                    MATCH (speaker:Speaker {label: $speaker}) <-[:INTERVIEWED_WITH]- (interview:Interview {number: $interviewNumber})
+                    MATCH (speaker) <-[:INTERVIEWED_AS]- (person:Person)
+                    MERGE (speaker)-[:SAYS {startTime: $startTime, endTime: $endTime}]->(statement)
+                    RETURN statement, person, interview
+                `, {
+                    ...chunk,
+                },
+            )
 
-        if (!result?.records?.length) {
+            const wordPromises = chunk.words.map(async word => {
+                await neo4jDriver.executeQuery(
+                    // language=Cypher
+                    `
+                        MATCH (statement:Statement) <-[says:SAYS]- (speaker:Speaker)
+                        WHERE says.startTime = $chunkStartTime AND says.endTime = $chunkEndTime
+                        CREATE (statement)-[:SAYS {startTime: $word.startTime, endTime: $word.endTime}]->(w:Word {text: $word.word})
+                        RETURN w
+                    `,
+                    {
+                        word,
+                        chunkStartTime: chunk.start,
+                        chunkEndTime: chunk.end,
+                    },
+                )
+            })
+
+            await Promise.all(wordPromises)
+        } catch (error) {
             console.error(`
-                Could not create node for segment starting ${ chunk.start } in interview
+                Could not create node for segment starting ${ chunk.startTime } in interview
                 ${ interviewNumber } for speaker ${ chunk.speaker }.
 
-                ${ JSON.stringify(result, null, 2) }
+                ${ result }
+                ${ chunk }
             `)
         }
     }
@@ -189,34 +259,92 @@ async function main() {
     let data, vtt
 
 
-    // ~~~~~~~~~~~~~~~~~~~~~~ 002 - Robert Vasquez-Pacheco ~~~~~~~~~~~~~~~~~~~~~~ //
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 025 - Lei Chou ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     data = JSON.parse(
         await fs.readFile(
-            path.resolve(__dirname, '../assets/whisperx-subs/002.json'),
+            path.resolve(__dirname, '../assets/025_lei_chou/025_lei_chou.captions.json'),
             'utf8',
         ),
     )
 
     vtt = await fs.readFile(
-        path.resolve(__dirname, '../assets/whisperx-subs/002.vtt'),
+        path.resolve(__dirname, '../assets/025_lei_chou/025_lei_chou.vtt'),
         'utf8',
     )
 
-    await seed({
+    await seedInterview({
         data,
-        date: '2002-12-14',
-        interviewee: 'Robert Vasquez-Pacheco',
-        interviewNumber: 2,
+        date: '2003-05-05',
+        interviewee: 'Lei Chou',
+        interviewNumber: 25,
         speakers: {
-            interviewee: 'SPEAKER_02',
-            jim: 'SPEAKER_00',
-            sarah: 'SPEAKER_01',
+            interviewee: 'SPEAKER_01',
+            jim: 'SPEAKER_03',
+            sarah: 'SPEAKER_02',
         },
-        videoURL: 'https://dyck.mobi/auohp/002_robert_vasquez-pacheco.mp4',
+        videoURL: 'https://dyck.mobi/auohp/025_lei_chou.mp4',
         vtt,
+        vttURL: 'https://dyck.mobi/auohp/025_lei_chou.vtt',
     })
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
 
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~ 027 - Ann Northrop ~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+    data = JSON.parse(
+        await fs.readFile(
+            path.resolve(__dirname, '../assets/027_ann_northrop.captions.json'),
+            'utf8',
+        ),
+    )
+
+    vtt = await fs.readFile(
+        path.resolve(__dirname, '../assets/027_ann_northrop.vtt'),
+        'utf8',
+    )
+
+    await seedInterview({
+        data,
+        date: '2003-05-28',
+        interviewee: 'Ann Northrop',
+        interviewNumber: 27,
+        speakers: {
+            interviewee: 'SPEAKER_00',
+            jim: 'SPEAKER_01',
+            sarah: 'SPEAKER_02',
+        },
+        videoURL: 'https://dyck.mobi/auohp/027_ann_northrop.mp4',
+        vtt,
+        vttURL: 'https://dyck.mobi/auohp/027_ann_northrop.vtt',
+    })
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~ 040 - Steve Quester ~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+    data = JSON.parse(
+        await fs.readFile(
+            path.resolve(__dirname, '../assets/040_steve_quester.captions.json'),
+            'utf8',
+        ),
+    )
+
+    vtt = await fs.readFile(
+        path.resolve(__dirname, '../assets/040_steve_quester.vtt'),
+        'utf8',
+    )
+
+    await seedInterview({
+        data,
+        date: '2004-01-17',
+        interviewee: 'Steve Quester',
+        interviewNumber: 40,
+        speakers: {
+            interviewee: 'SPEAKER_03',
+            jim: 'SPEAKER_01',
+            sarah: 'SPEAKER_05',
+        },
+        videoURL: 'https://dyck.mobi/auohp/040_steve_quester.mp4',
+        vtt,
+        vttURL: 'https://dyck.mobi/auohp/040_steve_quester.vtt',
+    })
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
 
     await neo4jDriver.close()
 }
