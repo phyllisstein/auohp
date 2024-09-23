@@ -1,6 +1,9 @@
+import { updateTranscript } from 'app/neo4j'
+import type { NextRequest } from 'next/server'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -21,3 +24,24 @@ export async function GET() {
     })
 }
 
+export async function PUT(request: NextRequest) {
+    let json = await request.json()
+
+    console.log(JSON.stringify(json[0].children.slice(-5), null, 2))
+
+    json[0].children = json[0].children.map(segment => {
+        const ret = {
+            ...segment,
+            transcription: segment.children[0].text,
+        }
+        return ret
+    })
+    console.log(JSON.stringify(json[0].children.slice(-5), null, 2))
+
+    try {
+        await updateTranscript(json)
+        return Response.json(json, { status: 201 })
+    } catch (err) {
+        return new Response(err.message, { status: 500 })
+    }
+}

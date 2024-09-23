@@ -37,6 +37,7 @@ __metadata:
     "@spectrum-css/vars": "npm:^9.0.8"
     "@spectrum-css/well": "npm:^5.2.2"
     "@types/chroma-js": "npm:~2.4.4"
+    "@types/lodash-es": "npm:^4"
     "@types/node": "npm:^22.5.4"
     "@types/ramda": "npm:~0.30.2"
     "@types/react": "npm:~18.3.5"
@@ -51,6 +52,7 @@ __metadata:
     chroma-js: "npm:^3.1.1"
     csstype: "npm:^3.1.3"
     jsdom: "npm:^25.0.0"
+    lodash-es: "npm:^4.17.21"
     next: "npm:^15.0.0-rc.0"
     playwright: "npm:^1.47.0"
     polished: "npm:^4.3.1"
@@ -65,6 +67,7 @@ __metadata:
     styled-preflight: "npm:^8.0.1"
     tslib: "npm:^2.7.0"
     typescript-styled-plugin: "npm:^0.18.3"
+    use-deep-compare-effect: "npm:^1.8.1"
     vitest: "npm:^2.1.0-beta.6"
     vitest-browser-react: "npm:^0.0.1"
   languageName: unknown
@@ -3863,6 +3866,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/lodash-es@npm:^4":
+  version: 4.17.12
+  resolution: "@types/lodash-es@npm:4.17.12"
+  dependencies:
+    "@types/lodash": "npm:*"
+  checksum: 10/56b9a433348b11c31051c6fa9028540a033a08fb80b400c589d740446c19444d73b217cf1471d4036448ef686a83e8cf2a35d1fadcb3f2105f26701f94aebb07
+  languageName: node
+  linkType: hard
+
 "@types/lodash.round@npm:^4":
   version: 4.0.9
   resolution: "@types/lodash.round@npm:4.0.9"
@@ -5705,7 +5717,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dequal@npm:^2.0.3":
+"dequal@npm:^2.0.2, dequal@npm:^2.0.3":
   version: 2.0.3
   resolution: "dequal@npm:2.0.3"
   checksum: 10/6ff05a7561f33603df87c45e389c9ac0a95e3c056be3da1a0c4702149e3a7f6fe5ffbb294478687ba51a9e95f3a60e8b6b9005993acd79c292c7d15f71964b6b
@@ -8490,6 +8502,13 @@ __metadata:
   dependencies:
     p-locate: "npm:^5.0.0"
   checksum: 10/72eb661788a0368c099a184c59d2fee760b3831c9c1c33955e8a19ae4a21b4116e53fa736dc086cdeb9fce9f7cc508f2f92d2d3aae516f133e16a2bb59a39f5a
+  languageName: node
+  linkType: hard
+
+"lodash-es@npm:^4.17.21":
+  version: 4.17.21
+  resolution: "lodash-es@npm:4.17.21"
+  checksum: 10/03f39878ea1e42b3199bd3f478150ab723f93cc8730ad86fec1f2804f4a07c6e30deaac73cad53a88e9c3db33348bb8ceeb274552390e7a75d7849021c02df43
   languageName: node
   linkType: hard
 
@@ -11847,6 +11866,18 @@ __metadata:
     querystringify: "npm:^2.1.1"
     requires-port: "npm:^1.0.0"
   checksum: 10/c9e96bc8c5b34e9f05ddfeffc12f6aadecbb0d971b3cc26015b58d5b44676a99f50d5aeb1e5c9e61fa4d49961ae3ab1ae997369ed44da51b2f5ac010d188e6ad
+  languageName: node
+  linkType: hard
+
+"use-deep-compare-effect@npm:^1.8.1":
+  version: 1.8.1
+  resolution: "use-deep-compare-effect@npm:1.8.1"
+  dependencies:
+    "@babel/runtime": "npm:^7.12.5"
+    dequal: "npm:^2.0.2"
+  peerDependencies:
+    react: ">=16.13"
+  checksum: 10/1b16c391ebd3378c38ab298fdf86c82183fc1125c24ae43c2fe73c0184ab5527e22d42ddaeddde8dc8b50b0a8e5752d262e0a6eb8e49c67369d76d86b9d655ac
   languageName: node
   linkType: hard
 
