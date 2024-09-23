@@ -5,8 +5,15 @@ export function useTranscript() {
 
     useEffect(() => {
         fetch('/api/transcript.json')
-            .then(response => response.text())
+            .then(async response => {
+                if (!response.ok) {
+                    throw new Error('Failed to fetch transcript')
+                }
+                const json = await response.json()
+                return json
+            })
             .then(setTranscriptJson)
+            .catch(console.error)
     }, [])
 
     return transcriptJson
