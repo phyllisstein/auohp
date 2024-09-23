@@ -18,9 +18,9 @@ export function Search() {
     const handleResultClick = (result: Neo4jResult) => {
         const nextURL = queryString.stringifyUrl({
             query: {
-                timestamp: result.timestamp,
+                timestamp: result.speakerSays.startTime,
             },
-            url: `/${ result.interviewNumber }`,
+            url: `/${ result.interview.number }`,
         })
 
         window.location.href = nextURL
@@ -34,10 +34,10 @@ export function Search() {
             <div>
                 {
                     !searchTransitioning && neo4jResults.map(result => (
-                        <div key={ `${ result.timestamp }-${ result.interviewNumber }` } onClick={ () => handleResultClick(result) }>
-                            <h3>{ result.statement }</h3>
-                            <p>{ result.speaker }</p>
-                            <aside>{ result.timestamp }</aside>
+                        <div key={ `${ result.speakerSays.startTime }-${ result.interview.uid }` } onClick={ () => handleResultClick(result) }>
+                            <h3>{ result.statement.text }</h3>
+                            <p>{ result.person.name }</p>
+                            <aside>{ result.speakerSays.startTimestamp }</aside>
                         </div>
                     ))
                 }

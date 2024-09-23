@@ -2,9 +2,24 @@ import { useEffect, useState } from 'react'
 
 import { useNeo4j } from 'hooks/infrastructure'
 
-export function useNeo4jVideo(interviewNumber: number) {
-    const driver = useNeo4j('bolt://localhost:7687', 'neo4j', 'auohpauohp')
-    const [videoURL, setVideoURL] = useState<string>(null)
+export interface Video {
+    uid: string
+    url: string
+}
+
+export interface VTT {
+    uid: string
+    url: string
+}
+
+interface Neo4jVideo {
+    video: Video
+    vtt: VTT
+}
+
+export function useNeo4jVideo(url: string) {
+    const driver = useNeo4j('bolt+s://bolt.auohp.here:443', 'neo4j', 'auohpauohp')
+    const [videoURL, setVideoURL] = useState<Neo4jVideo>(null)
 
     useEffect(() => {
         if (!driver) {
@@ -15,20 +30,23 @@ export function useNeo4jVideo(interviewNumber: number) {
             const result = await driver.executeQuery(
                 // language=Cypher
                 `
-                    MATCH (:Interview {number: $interviewNumber}) -[:HAS_VIDEO]-> (video:Video)
-                    RETURN video.url AS url
-                `, { interviewNumber },
+                    MATCH (video:Video {url: $url}) -[:HAS_CAPTIONS]-> (vtt)
+                    RETURN video, vtt
+                `, { url },
             )
 
             if (!result.records.length) {
                 return
             }
 
-            setVideoURL(result.records[0].get('url'))
+            setVideoURL({
+                video: result.records[0].get('video').properties,
+                vtt: result.records[0].get('vtt').properties,
+            })
         }
 
         void loadVideoMetadata()
-    }, [interviewNumber, driver])
+    }, [url, driver])
 
     return videoURL
 }

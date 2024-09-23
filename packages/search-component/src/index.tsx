@@ -10,9 +10,9 @@ export function renderSearch(element: HTMLElement) {
     )
 }
 
-export function renderPlayer(interviewNumber: number, element: HTMLElement) {
+export function renderPlayer(url: string, element: HTMLElement) {
     const root = createRoot(element)
     root.render(
-        <Player interviewNumber={ interviewNumber } />,
+        <Player url={ url } />,
     )
 }

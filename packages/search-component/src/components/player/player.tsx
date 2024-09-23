@@ -6,12 +6,12 @@ import { useNeo4jVideo } from 'hooks/interviews'
 import './player.scss'
 
 interface PlayerProps {
-    interviewNumber: number
+    url: string
 }
 
-export function Player({ interviewNumber }: PlayerProps) {
+export function Player({ url }: PlayerProps) {
     const player = useRef<HTMLVideoElement>(null)
-    const videoURL = useNeo4jVideo(interviewNumber)
+    const video = useNeo4jVideo(url)
 
     useEffect(() => {
         const currentPlayer = player.current
@@ -47,8 +47,9 @@ export function Player({ interviewNumber }: PlayerProps) {
 
     return (
         <div className='player-container'>
-            <video ref={ player } controls muted playsInline>
-                { videoURL && <source src={ videoURL } type='video/mp4' /> }
+            <video ref={ player } controls playsInline crossOrigin='anonymous'>
+                { video && <source src={ video.video.url } type='video/mp4' /> }
+                { video && <track default src={ video.vtt.url } kind='subtitles' srcLang='en' /> }
             </video>
         </div>
     )
