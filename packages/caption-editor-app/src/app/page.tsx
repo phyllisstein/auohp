@@ -1,5 +1,6 @@
 'use client'
 
+import * as R from 'ramda'
 import { Children, useEffect, useMemo } from 'react'
 import { createEditor, type Descendant } from 'slate'
 import { withHistory } from 'slate-history'
@@ -8,10 +9,9 @@ import {
     Slate,
     withReact,
 } from 'slate-react'
-import * as R from 'ramda'
 
-import { Container, Segment as StyledSegment, VideoColumn } from './page-styles'
-import { useEditorTranscript } from './use-editor-transcript'
+import { Container, Segment as StyledSegment, Video, VideoColumn } from './page-styles'
+import { useTranscript } from './use-transcript'
 
 
 const EMPTY = [{ children: [{ text: '' }] }]
@@ -91,7 +91,7 @@ const withInlines = editor => {
 
 
 export default function Page() {
-    const editorTranscript = useEditorTranscript()
+    const editorTranscript = useTranscript()
 
     const editor = useMemo(
         () => withInlines(withReact(withHistory(createEditor()))),

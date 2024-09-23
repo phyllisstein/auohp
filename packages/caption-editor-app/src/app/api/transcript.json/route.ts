@@ -7,9 +7,12 @@ const __dirname = path.dirname(__filename)
 
 
 export async function GET() {
-    const vtt = await fs.readFile(path.resolve(__dirname, '../../../../public/assets/demo/008_alexandra_juhasz.json'), 'utf-8')
+    let json = await fs.readFile(path.resolve(__dirname, '../../../../public/assets/demo/025_lei_chou.captions.json'), 'utf-8')
+    json = JSON.parse(json)
+    json = json.sort((a, b) => b.startTime - a.startTime)
+    json = JSON.stringify(json)
 
-    return new Response(vtt, {
+    return new Response(json, {
         headers: {
             'Content-Type': 'application/json',
         },
