@@ -40,10 +40,10 @@ def transcribe(input_file):
 
 
         with open(f'{basename}.json', 'w', encoding='utf8') as f:
-            f.write(json.dumps(whisper_transcription))
+            f.write(json.dumps(whisper_transcription, indent=2))
 
         with open(f'{basename}.captions.json', 'w', encoding='utf8') as f:
-            f.write(json.dumps(frontend_editor_transcription))
+            f.write(json.dumps(frontend_editor_transcription, indent=2))
 
 
     except Exception as e:
