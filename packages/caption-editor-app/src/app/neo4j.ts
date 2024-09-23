@@ -1,8 +1,7 @@
 'use server'
 
-import neo4j, { type Driver } from 'neo4j-driver'
+import neo4j, { type Driver, int } from 'neo4j-driver'
 
-import searchSpeakerCaptions from './search-speaker-captions.cypher'
 
 export interface Neo4jResult {
     endTime: number
@@ -15,9 +14,9 @@ export interface Neo4jResult {
     videoURL: string
 }
 
-const NEO4J_URI = process?.env?.NEO4J_URI || 'neo4j://localhost:7687'
+const NEO4J_URI = process?.env?.NEO4J_URI || 'neo4j://neo4j:7687'
 const NEO4J_USER = process?.env?.NEO4J_USER || 'neo4j'
-const NEO4J_PASSWORD = process?.env?.NEO4J_PASSWORD || 'neo4j'
+const NEO4J_PASSWORD = process?.env?.NEO4J_PASSWORD || 'auohpauohp'
 
 let driver: Driver | null = null
 export async function connect(
@@ -38,12 +37,11 @@ export async function connect(
     )
 
     try {
-        const serverInfo =  await driver.getServerInfo()
+        const serverInfo = await driver.getServerInfo()
         console.log(`Connected to ${ serverInfo.address }`)
     } catch (err) {
         console.error('Failed to connect to Neo4j')
         console.error(err)
-        await driver.close()
         throw new Error('Failed to connect to Neo4j')
     }
 
@@ -59,27 +57,97 @@ export async function disconnect() {
     console.log('Disconnected from Neo4j')
 }
 
-export async function transcriptSearch(query: string, index: string = 'transcript_search'): Promise<Neo4jResult[]> {
-    if (!query || !index) {
-        return []
+export async function updateTranscript(json) {
+    const driver = await connect()
+
+    try {
+        for (const segment of json[0].children) {
+            await driver.executeQuery(
+                // language=Cypher
+                `
+                    MATCH (interview:Interview {number: $interviewNumber}) -[:HAS_VIDEO]-> (video)
+                    MATCH (video)-[:HAS_TRANSCRIPT]-> (transcript)
+                    MATCH (transcript) -[:INCLUDES_SPEAKER]- (speaker:Speaker {label: $speaker})
+                    MATCH (statement) <-[:SAYS {startTime: $startTime, endTime: $endTime}]- (speaker)
+                    SET statement.text = $transcription
+                    RETURN statement
+                `, {
+                    ...segment,
+                    interviewNumber: int(25),
+                },
+            )
+        }
+    } catch (err) {
+        console.error('Failed to update transcript')
+        console.error(err)
     }
+}
 
-    driver = await connect()
-    const result = await driver.executeQuery(
-        searchSpeakerCaptions,
-        { index, query },
-    )
+export async function getTranscript(uid: string): Promise<Neo4jResult[]> {
+    const driver = await connect()
 
-    const searchResults = result.records.map(record => ({
-        endTime: record.get('endTime'),
-        interviewNumber: record.get('interviewNumber'),
-        score: record.get('score'),
-        speakerName: record.get('speakerName'),
-        startTime: record.get('startTime'),
-        statement: record.get('statement'),
-        statementUID: record.get('statementUID'),
-        videoURL: record.get('videoURL'),
-    }))
+    try {
+        const transcriptMeta = await driver.executeQuery(
+            `
+            MATCH (transcript:Transcript {uid: 'CUtQCtNOJd2r2ezf9Cukb'})
+            OPTIONAL MATCH (interview:Interview) -[:HAS_VIDEO]-> (video) -[:HAS_TRANSCRIPT]-> (transcript)
+            OPTIONAL MATCH (documentary:Documentary) -[:HAS_VIDEO]-> (video) -[:HAS_TRANSCRIPT]-> (transcript)
+            RETURN interview, documentary, transcript, video
+            LIMIT 1
+            `, { uid })
 
-    return searchResults
+        const meta = transcriptMeta.records[0]
+        if (!meta) {
+            console.error('Transcript not found')
+            throw new Error('Transcript not found')
+        }
+        const metadata = {
+            interview: meta.get('interview').properties,
+            documentary: meta.get('documentary').properties,
+            transcript: meta.get('transcript').properties,
+            video: meta.get('video').properties,
+        }
+
+        const rawTranscript = await driver.executeQuery(
+            // language=Cypher
+            `
+                MATCH (transcript:Transcript {uid: $uid})
+                MATCH (transcript) -[:INCLUDES_SPEAKER]-> (speaker:Speaker) -[speakerSays:SAYS]-> (statement)
+                RETURN speakerSays, statement, speaker
+                SORT BY speakerSays.startTime
+            `, { uid })
+
+        const transcriptChildren = rawTranscript.records.map(record => {
+            const speaker = record.get('speaker')
+            const statement = record.get('statement')
+            const speakerSays = record.get('speakerSays')
+
+            return {
+                endTime: speakerSays.properties.endTime,
+                endTimeStamp: speakerSays.properties.endTimeStamp,
+                startTime: speakerSays.properties.startTime,
+                startTimeStamp: speakerSays.properties.startTimeStamp,
+                speaker: speaker.properties.label,
+                type: 'segment',
+                transcription: statement.properties.text,
+                children: [
+                    {
+                        text: statement.properties.text,
+                    },
+                ],
+            }
+        })
+        const transcriptJSON = {
+            type: 'transcript',
+            interviewNumber: metadata.interview?.number,
+            uid: metadata.interview?.uid || metadata.documentary?.uid,
+            videoURL: metadata.video?.url,
+            children: transcriptChildren,
+        }
+        return [transcriptJSON]
+    } catch (err) {
+        console.error('Failed to get transcript')
+        console.error(err)
+        throw new Error('Failed to get transcript')
+    }
 }

@@ -58,7 +58,7 @@ async function seedInterview({ data, date, interviewee, interviewNumber, speaker
             CREATE (i:Interview {number: $interviewNumber, date: date($date), uid: $interviewUID})
             CREATE (video:Video {url: $videoURL, uid: $videoUID})
             CREATE (vtt:VTT {text: $vtt, url: $vttURL, uid: $vttUID})
-            CREATE (transcript:Transcript {uid: $transcriptUID})
+            CREATE (transcript:Transcript:Interview {uid: $transcriptUID})
             CREATE (interviewee:Person {name: $interviewee, uid: $intervieweeUID})
             CREATE (sarahSpeaker:Speaker:Interviewer {label: $speakers.sarah})
             CREATE (jimSpeaker:Speaker:Interviewer {label: $speakers.jim})
