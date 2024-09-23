@@ -1,119 +1,30 @@
-'use client'
-
-import * as R from 'ramda'
-import { Children, useEffect, useMemo } from 'react'
-import { createEditor, type Descendant } from 'slate'
-import { withHistory } from 'slate-history'
-import {
-    Editable,
-    Slate,
-    withReact,
-} from 'slate-react'
-
-import { Container, Segment as StyledSegment, Video, VideoColumn } from './page-styles'
-import { useTranscript } from './use-transcript'
+import { Editor } from './editor'
+import { Container, Video, VideoColumn } from './page-styles'
 
 
-const EMPTY = [{ children: [{ text: '' }] }]
-
-
-const initialValue: Descendant[] = [
-    {
-        children: [
-            {
-                children: [
-                    {
-                        type: 'word',
-                        startTime: 97.93,
-                        endTime: 98.42,
-                        word: 'Hello',
-                        children: [{ text: 'Hello' }],
-                    },
-                ],
-                endTime: 104.42,
-                startTime: 97.93,
-                type: 'segment',
-                speaker: 'SPEAKER_01',
-                content: 'Hello',
-            },
-        ],
-        type: 'transcript',
-    },
-]
-
-
-const Segment = ({ attributes, element, children }) => {
-    return (
-        <StyledSegment { ...attributes } data-testid='statement'>
-            <div contentEditable={ false } style={{ gridRow: '1 / -1', gridColumn: '1' }}>
-                <span style={{ fontWeight: 'bold' }}>{ element.speaker }</span>
-            </div>
-            <div contentEditable={ false } style={{ gridRow: '1', gridColumn: '2' }}>
-                <span>{ element.startTimestamp }</span>
-                &nbsp;&ndash;&nbsp;
-                <span>{ element.endTimestamp }</span>
-            </div>
-            <div style={{ gridRow: '2 / -1', gridColumn: '2 / -1' }}>
-                {
-                    R.intersperse(' ', Children.toArray(children))
+export default async function Page() {
+    async function fetchTranscript() {
+        'use server'
+        return fetch('http://127.0.0.1:3030/api/transcript.json')
+            .then(async response => {
+                if (!response.ok) {
+                    throw new Error('Failed to fetch transcript')
                 }
-            </div>
-        </StyledSegment>
-    )
-}
-
-const Element = props => {
-    const { attributes, children, element } = props
-    switch (element.type) {
-    case 'segment':
-        return <Segment { ...props } />
-    case 'word':
-        return <span { ...attributes } data-testid='word'>{ children }</span>
-    default:
-        return <div { ...attributes } data-testid='blank-div'>{ children }</div>
-    }
-}
-
-const renderElement = props => <Element { ...props } />
-const renderLeaf = ({ attributes, children }) => <span { ...attributes }>{ children }</span>
-
-const withCaptions = editor => {}
-
-const withInlines = editor => {
-    const { isInline } = editor
-
-    editor.isInline = element => {
-        return element.type === 'word' ? true : isInline(element)
+                const json = await response.json()
+                return json
+            })
+            .catch(console.error)
     }
 
-    return editor
-}
+    async function updateTranscript() {
+        'use server'
+    }
 
-
-export default function Page() {
-    const editorTranscript = useTranscript()
-
-    const editor = useMemo(
-        () => withInlines(withReact(withHistory(createEditor()))),
-        [],
-    )
-
-    useEffect(() => {
-        if (!editorTranscript || editorTranscript.length < 1 || !editor) return
-
-        const children = [...editor.children]
-        children.forEach(node => editor.apply({ type: 'remove_node', path: [0], node }))
-        editorTranscript.forEach(node => editor.apply({ type: 'insert_node', path: [0], node }))
-        editor.onChange()
-    })
+    const transcript = await fetchTranscript()
 
     return (
         <Container>
-            <Slate
-                editor={ editor }
-                initialValue={ initialValue }>
-                <Editable placeholder='Text...' renderElement={ renderElement } renderLeaf={ renderLeaf } />
-            </Slate>
+            <Editor editorTranscript={ transcript } />
             <VideoColumn>
                 <Video />
             </VideoColumn>
