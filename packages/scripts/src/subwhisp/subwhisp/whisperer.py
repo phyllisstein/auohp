@@ -76,7 +76,7 @@ def transcribe_audio_file(audio_file: str, device: str = device, batch_size: int
             "transcription": transcription_segment
         })
 
-    frontend_editor_transcription = sorted(frontend_editor_transcription, key=lambda x: x["start"])
-    diarized_result = sorted(diarized_result["segments"], key=lambda x: x["start"])
+    frontend_editor_transcription = sorted(frontend_editor_transcription, key=lambda x: x["startTime"])
+    # diarized_result = sorted(diarized_result["segments"], key=lambda x: x["startTime"])
 
     return (diarized_result, frontend_editor_transcription)
