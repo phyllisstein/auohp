@@ -334,10 +334,13 @@ def write_vtt(doc, timing, **args):
 def write_json(doc, timing, speakers, **args):
     segments = []
     last_speaker = None
-    
+
     for i, (start_time, end_time, text, speaker) in enumerate(iterate_document(doc, timing, speakers, **args), start=1):
         dash = "- " if speaker != last_speaker else ""
-        segments.append({"startTime": start_time, "endTime": end_time, "text": f"{dash}{text}", "speaker": speaker})
+        last_speaker = speaker
+        start_timestamp = format_timestamp(start_time, always_include_hours=True)
+        end_timestamp = format_timestamp(end_time, always_include_hours=True)
+        segments.append({"startTime": start_time, "endTime": end_time, "text": f"{dash}{text}", "speaker": speaker, "startTimestamp": start_timestamp, "endTimestamp": end_timestamp})
     return {"segments": segments}
 
 def configure_spaCy(model: str, pauses: list = []):
