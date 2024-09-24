@@ -1,52 +1,52 @@
-import { useEffect, useState } from 'react'
+import {useEffect, useState} from 'react'
 
-import { useNeo4j } from 'hooks/infrastructure'
+import {useNeo4j} from 'hooks/infrastructure'
 
 export interface Video {
-    uid: string
-    url: string
+  uid: string
+  url: string
 }
 
 export interface VTT {
-    uid: string
-    url: string
+  uid: string
+  url: string
 }
 
 interface Neo4jVideo {
-    video: Video
-    vtt: VTT
+  video: Video
+  vtt: VTT
 }
 
 export function useNeo4jVideo(url: string) {
-    const driver = useNeo4j('bolt+s://bolt.auohp.here:443', 'neo4j', 'auohpauohp')
-    const [videoURL, setVideoURL] = useState<Neo4jVideo>(null)
+  const driver = useNeo4j('bolt+s://bolt.auohp.here:443', 'neo4j', 'auohpauohp')
+  const [videoURL, setVideoURL] = useState<Neo4jVideo>(null)
 
-    useEffect(() => {
-        if (!driver) {
-            return
-        }
+  useEffect(() => {
+    if (!driver) {
+      return
+    }
 
-        async function loadVideoMetadata() {
-            const result = await driver.executeQuery(
-                // language=Cypher
-                `
+    async function loadVideoMetadata() {
+      const result = await driver.executeQuery(
+        // language=Cypher
+        `
                     MATCH (video:Video {url: $url}) -[:HAS_CAPTIONS]-> (vtt)
                     RETURN video, vtt
-                `, { url },
-            )
+                `, {url},
+      )
 
-            if (!result.records.length) {
-                return
-            }
+      if (!result.records.length) {
+        return
+      }
 
-            setVideoURL({
-                video: result.records[0].get('video').properties,
-                vtt: result.records[0].get('vtt').properties,
-            })
-        }
+      setVideoURL({
+        video: result.records[0].get('video').properties,
+        vtt: result.records[0].get('vtt').properties,
+      })
+    }
 
-        void loadVideoMetadata()
-    }, [url, driver])
+    void loadVideoMetadata()
+  }, [url, driver])
 
-    return videoURL
+  return videoURL
 }

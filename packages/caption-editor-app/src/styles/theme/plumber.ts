@@ -1,8 +1,8 @@
 import _ from 'lodash'
-import { getValueAndUnit } from 'polished'
-import { css } from 'styled-components'
+import {getValueAndUnit} from 'polished'
+import {css} from 'styled-components'
 
-import { unitless } from './scale'
+import {unitless} from './scale'
 
 // (UnitsPerEm − hhea.Ascender − hhea.Descender) / (2 × UnitsPerEm)
 const BASELINE = {
@@ -71,7 +71,7 @@ const getPlumber = ({
         ? unitless(fontSize) * gridHeightValue
         : unitless(lineHeight) * gridHeightValue
 
-    const { baselineDifference, correctedBaseline } = getBaselineCorrection({
+    const {baselineDifference, correctedBaseline} = getBaselineCorrection({
       baseline,
       fontSize: scaledFontSize,
       lineHeight,
@@ -87,27 +87,27 @@ const getPlumber = ({
     const gridFontSize = scaledFontSize * gridHeightValue
     const marginTop = `${
       round(leadingTop - shift) * gridHeightValue
-    }${ gridHeightUnit }`
+    }${gridHeightUnit}`
     const paddingTop = `${
       round(shift - baselineDifference) * gridHeightValue
-    }${ gridHeightUnit }`
+    }${gridHeightUnit}`
     const paddingBottom = `${
       round(1 - shift + baselineDifference) * gridHeightValue
-    }${ gridHeightUnit }`
+    }${gridHeightUnit}`
     const marginBottom = `${
       round(leadingBottom + shift - 1) * gridHeightValue
-    }${ gridHeightUnit }`
-    const fontSizeWithUnit = `${ round(gridFontSize) }${ gridHeightUnit }`
-    const lineHeightWithUnit = `${ round(lineHeight) }${ gridHeightUnit }`
+    }${gridHeightUnit}`
+    const fontSizeWithUnit = `${round(gridFontSize)}${gridHeightUnit}`
+    const lineHeightWithUnit = `${round(lineHeight)}${gridHeightUnit}`
 
     return css`
-      margin-top: ${ marginTop };
-      margin-bottom: ${ marginBottom };
-      padding-top: ${ paddingTop };
-      padding-bottom: ${ paddingBottom };
+  margin-top: ${marginTop};
+  margin-bottom: ${marginBottom};
+  padding-top: ${paddingTop};
+  padding-bottom: ${paddingBottom};
 
-      font-size: ${ fontSizeWithUnit };
-      line-height: ${ lineHeightWithUnit };
+  font-size: ${fontSizeWithUnit};
+  line-height: ${lineHeightWithUnit};
     `
   }
 
@@ -127,22 +127,22 @@ const getPlumber = ({
     )
     const [borderTop, borderBottom] = border
 
-    marginTop = `${ round(marginTop) }${ gridHeightUnit }`
-    marginBottom = `${ round(marginBottom) }${ gridHeightUnit }`
-    paddingTop = `calc(${ round(paddingTop) }${ gridHeightUnit } - ${ borderTop })`
-    paddingBottom = `calc(${ round(paddingBottom) }${ gridHeightUnit } - ${ borderBottom })`
+    marginTop = `${round(marginTop)}${gridHeightUnit}`
+    marginBottom = `${round(marginBottom)}${gridHeightUnit}`
+    paddingTop = `calc(${round(paddingTop)}${gridHeightUnit} - ${borderTop})`
+    paddingBottom = `calc(${round(paddingBottom)}${gridHeightUnit} - ${borderBottom})`
 
     return css`
-      margin-top: ${ marginTop };
-      margin-bottom: ${ marginBottom };
-      padding-top: ${ paddingTop };
-      padding-bottom: ${ paddingBottom };
+  margin-top: ${marginTop};
+  margin-bottom: ${marginBottom};
+  padding-top: ${paddingTop};
+  padding-bottom: ${paddingBottom};
     `
   }
 
   return plumber
 }
 
-export const primary = getPlumber({ baseline: BASELINE.MAISON })
-export const accent = getPlumber({ baseline: BASELINE.CHARLIE })
-export const mono = getPlumber({ baseline: BASELINE.PRAGMATAPRO })
+export const primary = getPlumber({baseline: BASELINE.MAISON})
+export const accent = getPlumber({baseline: BASELINE.CHARLIE})
+export const mono = getPlumber({baseline: BASELINE.PRAGMATAPRO})

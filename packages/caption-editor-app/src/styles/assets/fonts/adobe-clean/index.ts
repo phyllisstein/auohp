@@ -1,2 +1,2 @@
-export { AdobeClean } from './adobe-clean'
-export { AdobeCleanSerif } from './adobe-clean-serif'
+export {AdobeClean} from './adobe-clean'
+export {AdobeCleanSerif} from './adobe-clean-serif'

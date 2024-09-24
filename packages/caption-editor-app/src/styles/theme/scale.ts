@@ -1,4 +1,4 @@
-import { getValueAndUnit, modularScale } from 'polished'
+import {getValueAndUnit, modularScale} from 'polished'
 
 type ValueAndUnit = [number, string]
 
