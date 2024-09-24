@@ -1,31 +1,31 @@
 {
-    "version": "0.0.0",
-    "author": {
-        "email": "contact@auohp.org",
-        "name": "ACT UP Oral History Project",
-        "url": "https://auohp.org"
-    },
-    "license": "GPL-3.0-or-later",
-    "name": "@auohp/search-component",
-    "packageManager": "yarn@4.0.2",
-    "type": "module",
-    "scripts": {
-        "start:dev": "vite"
-    },
-    "devDependencies": {
-        "@fortawesome/fontawesome-common-types": "^6.5.2",
-        "@rollup/plugin-node-resolve": "^15.2.3",
-        "@types/react": "~18.3.3",
-        "@types/react-dom": "~18.3.0",
-        "@vitejs/plugin-react": "^4.3.1",
-        "sass": "^1.77.5",
-        "tslib": "^2.6.3",
-        "vite": "^5.3.1"
-    },
-    "dependencies": {
-        "fuzzbunny": "^1.0.1",
-        "neo4j-driver": "^5.21.0",
-        "react": "^18.3.1",
-        "react-dom": "^18.3.1"
-    }
+  "version": "0.0.0",
+  "author": {
+    "email": "contact@auohp.org",
+    "name": "ACT UP Oral History Project",
+    "url": "https://auohp.org"
+  },
+  "license": "GPL-3.0-or-later",
+  "name": "@auohp/search-component",
+  "packageManager": "yarn@4.0.2",
+  "type": "module",
+  "scripts": {
+    "start:dev": "vite"
+  },
+  "devDependencies": {
+    "@fortawesome/fontawesome-common-types": "^6.5.2",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@types/react": "~18.3.3",
+    "@types/react-dom": "~18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "sass": "^1.77.5",
+    "tslib": "^2.6.3",
+    "vite": "^5.3.1"
+  },
+  "dependencies": {
+    "fuzzbunny": "^1.0.1",
+    "neo4j-driver": "^5.21.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  }
 }

@@ -1,6 +1,4 @@
-/* eslint-disable sort-keys-fix/sort-keys-fix */
-
-import { rgb } from 'chroma-js'
+import {rgb} from 'chroma-js'
 import * as R from 'ramda'
 
 export const js = {
@@ -201,6 +199,6 @@ export const js = {
 
 export type JS = typeof js
 export type ColorNames = keyof JS
-export type CSS = { [k in ColorNames]: string }
+export type CSS = {[k in ColorNames]: string}
 
 export const css: CSS = R.map(R.invoker(0, 'css'), js)

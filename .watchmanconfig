@@ -1,8 +1,8 @@
 {
-    "ignore_dirs": [
-        ".git",
-        ".next",
-        ".yarn",
-        "node_modules"
-    ]
+  "ignore_dirs": [
+    ".git",
+    ".next",
+    ".yarn",
+    "node_modules"
+  ]
 }

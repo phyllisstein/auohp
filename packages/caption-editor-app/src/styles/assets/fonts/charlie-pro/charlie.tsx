@@ -1,4 +1,4 @@
-import { createGlobalStyle, css } from 'styled-components'
+import {createGlobalStyle, css} from 'styled-components'
 
 const fontFaces = css`
   @font-face {
@@ -147,5 +147,5 @@ const fontFaces = css`
 `
 
 export const Charlie = createGlobalStyle`
-  ${ fontFaces }
+  ${fontFaces}
 `

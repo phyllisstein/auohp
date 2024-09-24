@@ -1,4 +1,4 @@
-import { css as styledCSS } from 'styled-components'
+import {css as styledCSS} from 'styled-components'
 
 // import { PropertiesHyphen } from 'csstype' // FIXME: Not sure why this is breaking.
 
@@ -41,6 +41,6 @@ export function css({
   const property = Array.from(properties).join(',')
 
   return styledCSS`
-        transition: ${ property } ${ duration }ms ${ curve };
+  transition: ${property} ${duration}ms ${curve};
     `
 }
