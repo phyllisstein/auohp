@@ -10,7 +10,8 @@ from spacy.cli.download import download as spacy_download
 
 from .subber import (
     to_json_captions,
-    to_vtt_captions
+    to_vtt_captions,
+    to_captions,
 )
 from .whisperer import transcribe_audio_file
 
@@ -36,14 +37,9 @@ def transcribe(input_file):
     basename = Path(input_file).stem
 
     try:
-        (whisper_transcription, frontend_editor_transcription) = transcribe_audio_file(input_file)
-
-
+        whisper_transcription = transcribe_audio_file(input_file)
         with open(f'{basename}.json', 'w', encoding='utf8') as f:
             f.write(json.dumps(whisper_transcription, indent=2))
-
-        with open(f'{basename}.captions.json', 'w', encoding='utf8') as f:
-            f.write(json.dumps(frontend_editor_transcription, indent=2))
 
 
     except Exception as e:
@@ -60,9 +56,12 @@ def caption(input_file):
         with open(input_file, 'r', encoding='utf8') as f:
             whisper_transcription = json.load(f)
 
-        vtt_captions = to_vtt_captions(whisper_transcription)
+        (json_captions, vtt_captions) = to_captions(whisper_transcription)
+
         with open(f'{basename}.vtt', 'w', encoding='utf8') as f:
             f.write(vtt_captions)
+        with open(f'{basename}.captions.json', 'w', encoding='utf8') as f:
+            json.dump(json_captions, f, indent=2)
 
     except Exception as e:
         print(str(e))

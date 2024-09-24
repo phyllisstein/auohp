@@ -27,56 +27,5 @@ def transcribe_audio_file(audio_file: str, device: str = device, batch_size: int
     diarize_segments = diarize_model(audio)
 
     diarized_result = whisperx.assign_word_speakers(diarize_segments, aligned_result)
-    frontend_editor_transcription = []
 
-    for segment in diarized_result["segments"]:
-        try:
-            startTimestamp = str(datetime.timedelta(seconds=int(segment.get("start", 0))))
-            endTimestamp = str(datetime.timedelta(seconds=int(segment.get("end", 0))))
-        except:
-            startTimestamp = None
-            endTimestamp = None
-
-        children = []
-        for word in segment["words"]:
-            try:
-                wordStartTimestamp = str(datetime.timedelta(seconds=int(word.get("start", 0))))
-                wordEndTimestamp = str(datetime.timedelta(seconds=int(word.get("end", 0))))
-            except:
-                wordStartTimestamp = None
-                wordEndTimestamp = None
-
-            child = {
-                "startTime": word.get("start"),
-                "endTime": word.get("end"),
-                "startTimestamp": wordStartTimestamp,
-                "endTimestamp": wordEndTimestamp,
-                "word": word.get("word"),
-                "speaker": word.get("speaker"),
-                "type": "word",
-                "children": [
-                    {"text": word.get("word")}
-                ]
-            }
-
-            children.append(child)
-
-
-        transcription_segment = " ".join([x["word"] for x in children])
-        frontend_editor_transcription.append({
-            "startTime": segment.get("start"),
-            "endTime": segment.get("end"),
-            "startTimestamp": startTimestamp,
-            "endTimestamp": endTimestamp,
-            "children": [
-                {"text": transcription_segment}
-            ],
-            "speaker": segment.get("speaker"),
-            "type": "segment",
-            "transcription": transcription_segment
-        })
-
-    frontend_editor_transcription = sorted(frontend_editor_transcription, key=lambda x: x["startTime"])
-    # diarized_result = sorted(diarized_result["segments"], key=lambda x: x["startTime"])
-
-    return (diarized_result, frontend_editor_transcription)
+    return diarized_result
