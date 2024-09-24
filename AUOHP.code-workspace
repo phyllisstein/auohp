@@ -20,12 +20,8 @@
   "settings": {
     "[javascript][typescript][javascriptreact][typescriptreact]": {
       "editor.codeActionsOnSave": {
-        "source.addMissingImports.ts": "always",
         "source.fixAll.stylelint": "always",
-        "source.organizeImports": "never",
-        "source.sortImports": "always",
-        "sourece.fixAll.eslint": "always",
-        "source.removeUnusedImports": "explicit"
+        "sourece.fixAll.eslint": "always"
       }
     },
     "editor.defaultFormatter": "dbaeumer.vscode-eslint",
@@ -39,10 +35,6 @@
       "javascriptreact"
     ],
     "eslint.workingDirectories": [{ "mode": "auto"}],
-    "editor.codeActionsOnSave": {
-      "source.fixAll.eslint": "always",
-      "source.fixAll.stylelint": "always"
-    },
     "eslint.quiet": true,
     "monorepoWorkspace.folders.custom": [
       {
