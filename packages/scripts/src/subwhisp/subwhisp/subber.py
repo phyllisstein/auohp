@@ -62,7 +62,7 @@ def get_speaker(span: Span, speakers: dict):
         except:
             return "NO_SPEAKER"
 
-    return speakers.get(start_token.idx, "NO_SPEAKER")
+    return speakers.get(start_token.idx, "SPEAKER_00")
 
 Token.set_extension("can_fragment_after", default=False)
 Token.set_extension("fragment_reason", default="")
@@ -340,8 +340,22 @@ def write_json(doc, timing, speakers, **args):
         last_speaker = speaker
         start_timestamp = format_timestamp(start_time, always_include_hours=True)
         end_timestamp = format_timestamp(end_time, always_include_hours=True)
-        segments.append({"startTime": start_time, "endTime": end_time, "text": f"{dash}{text}", "speaker": speaker, "startTimestamp": start_timestamp, "endTimestamp": end_timestamp})
-    return {"segments": segments}
+        segments.append({
+            "startTime": start_time,
+            "endTime": end_time,
+            "transcription": f"{dash}{text}",
+            "speaker": speaker,
+            "startTimestamp": start_timestamp,
+            "endTimestamp": end_timestamp,
+            "type": "segment",
+            "children": [{"text": text}]
+        })
+    return [
+        {
+            "type": "transcript",
+            "children": segments
+        }
+    ]
 
 def configure_spaCy(model: str, pauses: list = []):
     if not spacy.util.is_package(model):
