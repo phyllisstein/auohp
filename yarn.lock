@@ -51,6 +51,7 @@ __metadata:
     chai: "npm:^5.1.1"
     chroma-js: "npm:^3.1.1"
     csstype: "npm:^3.1.3"
+    culori: "npm:^4.0.1"
     jsdom: "npm:^25.0.0"
     lodash-es: "npm:^4.17.21"
     next: "npm:^15.0.0-rc.0"
@@ -5513,6 +5514,13 @@ __metadata:
   version: 3.1.3
   resolution: "csstype@npm:3.1.3"
   checksum: 10/f593cce41ff5ade23f44e77521e3a1bcc2c64107041e1bf6c3c32adc5187d0d60983292fda326154d20b01079e24931aa5b08e4467cc488b60bb1e7f6d478ade
+  languageName: node
+  linkType: hard
+
+"culori@npm:^4.0.1":
+  version: 4.0.1
+  resolution: "culori@npm:4.0.1"
+  checksum: 10/8751ea969bfa7d89fdd7dbc67d6bb37a10c459416574b26853b099f7a0c068d0d29942b3c034f60092f4593faa4e7008e0aca743a418f815fac19939332c4bea
   languageName: node
   linkType: hard
 
