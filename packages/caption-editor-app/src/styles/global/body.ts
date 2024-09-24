@@ -39,7 +39,7 @@ export const Body = createGlobalStyle`
   }
 
   body {
-    color: ${({theme}) => theme.palette.css.gray900};
-    background-color: ${({theme}) => theme.palette.css.gray200};
+    color: ${({theme}) => theme.palette.gray900};
+    background-color: ${({theme}) => theme.palette.gray200};
   }
 `
