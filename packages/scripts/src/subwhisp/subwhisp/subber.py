@@ -12,6 +12,7 @@ import os
 import argparse
 import logging
 import json
+import re
 from more_itertools import chunked
 from itertools import pairwise
 from collections.abc import Iterator
@@ -320,30 +321,22 @@ def iterate_document(doc: Doc, timing: dict, speakers: dict, **args):
 def write_vtt(doc, timing, **args):
     comma: str = '.'
     vtt = f"WEBVTT\n\n"
-    last_speaker = None
     for i, (start_time, end_time, text, speaker) in enumerate(iterate_document(doc, timing, {}, **args), start=1):
         ts1 = format_timestamp(start_time, always_include_hours=True, decimal_marker=comma)
         ts2 = format_timestamp(end_time, always_include_hours=True, decimal_marker=comma)
 
-        dash = "- " if speaker != last_speaker else ""
-        last_speaker = speaker
-
-        vtt += f"{ts1} --> {ts2}\n{dash}{text}\n\n"
+        vtt += f"{ts1} --> {ts2}\n{text}\n\n"
     return vtt
 
 def write_json(doc, timing, speakers, **args):
     segments = []
-    last_speaker = None
-
     for i, (start_time, end_time, text, speaker) in enumerate(iterate_document(doc, timing, speakers, **args), start=1):
-        dash = "- " if speaker != last_speaker else ""
-        last_speaker = speaker
         start_timestamp = format_timestamp(start_time, always_include_hours=True)
         end_timestamp = format_timestamp(end_time, always_include_hours=True)
         segments.append({
             "startTime": start_time,
             "endTime": end_time,
-            "transcription": f"{dash}{text}",
+            "transcription": text.replace("\n", " "),
             "speaker": speaker,
             "startTimestamp": start_timestamp,
             "endTimestamp": end_timestamp,
