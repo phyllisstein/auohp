@@ -2,30 +2,43 @@ import {useEffect, useState} from 'react'
 
 import {useNeo4j} from 'hooks/infrastructure'
 
-export interface Person {
+
+export interface WithLabels {
+  labels: string[]
+}
+
+export interface Person extends WithLabels {
   name: string
   uid: string
 }
 
-export interface Statement {
+export interface Statement extends WithLabels {
   text: string
 }
 
-export interface Interview {
+export interface Interview extends WithLabels {
   number: number
   uid: string
 }
 
-export interface Video {
+export interface Documentary extends WithLabels {
+  date: string
+  title: string
+  uid: string
+  slug: string
+}
+
+export interface Video extends WithLabels {
   url: string
+  uid: string
 }
 
 export interface Neo4jResult {
   person: Person
   speakerSays: SaysEdge
   statement: Statement
-  interview: Interview
   video: Video
+  artefact: Documentary | Interview
 }
 
 interface SaysEdge {
@@ -50,19 +63,22 @@ export function useNeo4jTranscript(query: string, index: string): Neo4jResult[] 
         // language=Cypher
         `
                     CALL db.index.fulltext.queryNodes($index, $query) YIELD node AS statement, score
-                    MATCH (statement)<-[speakerSays:SAYS]-(speaker:Interviewee)<-[:INTERVIEWED_AS]-(person)
-                    MATCH (speaker)<-[:INCLUDES_SPEAKER]-(transcript)<-[:HAS_TRANSCRIPT]-(video)<-[:HAS_VIDEO]-(interview)
-                    RETURN statement, person, speakerSays, interview, video
+                    MATCH (statement)<-[speakerSays:SAYS]-(speaker)
+                    MATCH (speaker)<-[:INCLUDES_SPEAKER]-()<-[:HAS_TRANSCRIPT]-(video)<-[:HAS_VIDEO]-(artefact)
+                    OPTIONAL MATCH (speaker) <-[:INTERVIEWED_AS]- (person)
+                    RETURN statement, person, speakerSays, artefact, video
                     ORDER BY score DESC
                 `, {index, query})
 
-      const searchResults = result.records.map(record => ({
-        person: record.get('person').properties,
-        speakerSays: record.get('speakerSays').properties,
-        statement: record.get('statement').properties,
-        interview: record.get('interview').properties,
-        video: record.get('video').properties,
-      }))
+      const searchResults = result.records.map(record => {
+        return {
+          person: record.get('person'),
+          speakerSays: record.get('speakerSays'),
+          statement: record.get('statement'),
+          artefact: record.get('artefact'),
+          video: record.get('video'),
+        }
+      })
 
       setSearchResults(searchResults)
     }
