@@ -24,7 +24,7 @@ const TranscriptTrack = styled.div`
   grid-row: 1 / -1;
   grid-column: 1;
 
-  background-color: ${({theme}) => theme.palette.css.celery800};
+  background-color: ${({theme}) => theme.palette.celery800};
 `
 
 
