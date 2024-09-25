@@ -23,7 +23,7 @@ from spacy.tokens import Doc, Span, Token
 from spacy.matcher import Matcher
 from spacy.cli.download import download as spacy_download
 
-def format_timestamp(seconds: float, always_include_hours: bool = False, decimal_marker: str = '.'):
+def format_timestamp(seconds: float, always_include_hours: bool = False, decimal_marker: str = '.', milliseconds: bool = False):
     assert seconds >= 0, "non-negative timestamp expected"
     milliseconds = round(seconds * 1000.0)
 
@@ -37,7 +37,8 @@ def format_timestamp(seconds: float, always_include_hours: bool = False, decimal
     milliseconds -= seconds * 1_000
 
     hours_marker = f"{hours:02d}:" if always_include_hours or hours > 0 else ""
-    return f"{hours_marker}{minutes:02d}:{seconds:02d}{decimal_marker}{milliseconds:03d}"
+    milliseconds_marker = f"{decimal_marker}{milliseconds:03d}" if milliseconds else ""
+    return f"{hours_marker}{minutes:02d}:{seconds:02d}{milliseconds_marker}"
 
 def get_time_span(span: Span, timing: dict):
     start_token = span[0]
@@ -322,8 +323,8 @@ def write_vtt(doc, timing, **args):
     comma: str = '.'
     vtt = f"WEBVTT\n\n"
     for i, (start_time, end_time, text, speaker) in enumerate(iterate_document(doc, timing, {}, **args), start=1):
-        ts1 = format_timestamp(start_time, always_include_hours=True, decimal_marker=comma)
-        ts2 = format_timestamp(end_time, always_include_hours=True, decimal_marker=comma)
+        ts1 = format_timestamp(start_time, always_include_hours=True, decimal_marker=comma, milliseconds=True)
+        ts2 = format_timestamp(end_time, always_include_hours=True, decimal_marker=comma, milliseconds=True)
 
         vtt += f"{ts1} --> {ts2}\n{text}\n\n"
     return vtt
@@ -341,7 +342,7 @@ def write_json(doc, timing, speakers, **args):
             "startTimestamp": start_timestamp,
             "endTimestamp": end_timestamp,
             "type": "segment",
-            "children": [{"text": text}]
+            "children": [{"text": text.replace("\n", " ")}]
         })
     return [
         {
