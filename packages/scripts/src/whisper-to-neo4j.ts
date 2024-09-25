@@ -98,7 +98,7 @@ async function seedInterview({data, date, interviewee, interviewNumber, speakers
         `
                     MATCH (interview:Interview {number: $interviewNumber}) -[:HAS_VIDEO]-> (video)
                     MATCH (video)-[:HAS_TRANSCRIPT]-> (transcript)
-                    MATCH (transcript) -[:INCLUDES_SPEAKER]- (speaker:Speaker {label: $speaker})
+                    MATCH (transcript) -[:INCLUDES_SPEAKER]-> (speaker:Speaker {label: $speaker})
                     MATCH (speaker) <-[:INTERVIEWED_AS]- (person:Person)
                     CREATE (speaker)-[:SAYS {startTime: $startTime, endTime: $endTime, startTimestamp: $startTimestamp, endTimestamp: $endTimestamp}]->(statement:Statement {text: $transcription})
                     RETURN statement, person, interview
@@ -259,93 +259,150 @@ async function main() {
   let data, vtt
 
 
-  // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 025 - Lei Chou ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+  // ~~~~~~~~~~~~~~~~~~~~~~~~ 064 - Vincent Gagliostro ~~~~~~~~~~~~~~~~~~~~~~~~ //
   data = JSON.parse(
     await fs.readFile(
-      path.resolve(__dirname, '../assets/025_lei_chou.captions.json'),
+      path.resolve(__dirname, '../assets/064_vincent_gagliostro.captions.json'),
       'utf8',
     ),
   )
 
   vtt = await fs.readFile(
-    path.resolve(__dirname, '../assets/025_lei_chou.vtt'),
+    path.resolve(__dirname, '../assets/064_vincent_gagliostro.vtt'),
     'utf8',
   )
 
   await seedInterview({
     data,
-    date: '2003-05-05',
-    interviewee: 'Lei Chou',
-    interviewNumber: 25,
-    speakers: {
-      interviewee: 'SPEAKER_01',
-      jim: 'SPEAKER_03',
-      sarah: 'SPEAKER_02',
-    },
-    videoURL: 'https://dyck.mobi/auohp/025_lei_chou.mp4',
-    vtt,
-    vttURL: 'https://dyck.mobi/auohp/025_lei_chou.vtt',
-  })
-  // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
-
-  // ~~~~~~~~~~~~~~~~~~~~~~~~~~~ 027 - Ann Northrop ~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
-  data = JSON.parse(
-    await fs.readFile(
-      path.resolve(__dirname, '../assets/027_ann_northrop.captions.json'),
-      'utf8',
-    ),
-  )
-
-  vtt = await fs.readFile(
-    path.resolve(__dirname, '../assets/027_ann_northrop.vtt'),
-    'utf8',
-  )
-
-  await seedInterview({
-    data,
-    date: '2003-05-28',
-    interviewee: 'Ann Northrop',
-    interviewNumber: 27,
+    date: '2005-07-08',
+    interviewee: 'Vincent Gagliostro',
+    interviewNumber: 64,
     speakers: {
       interviewee: 'SPEAKER_00',
       jim: 'SPEAKER_01',
       sarah: 'SPEAKER_02',
     },
-    videoURL: 'https://dyck.mobi/auohp/027_ann_northrop.mp4',
+    videoURL: 'https://dyck.mobi/auohp/064_vincent_gagliostro.mp4',
     vtt,
-    vttURL: 'https://dyck.mobi/auohp/027_ann_northrop.vtt',
+    vttURL: 'https://dyck.mobi/auohp/064_vincent_gagliostro.vtt',
   })
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
 
-  // ~~~~~~~~~~~~~~~~~~~~~~~~~~~ 040 - Steve Quester ~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+  // ~~~~~~~~~~~~~~~~~~~~~~~~~~ 082 - David Robinson ~~~~~~~~~~~~~~~~~~~~~~~~~~ //
   data = JSON.parse(
     await fs.readFile(
-      path.resolve(__dirname, '../assets/040_steve_quester.captions.json'),
+      path.resolve(__dirname, '../assets/082_david_robinson.captions.json'),
       'utf8',
     ),
   )
 
   vtt = await fs.readFile(
-    path.resolve(__dirname, '../assets/040_steve_quester.vtt'),
+    path.resolve(__dirname, '../assets/082_david_robinson.vtt'),
+    'utf8',
+  )
+
+  await seedInterview({
+    data,
+    date: '2007-07-16',
+    interviewee: 'David Robinson',
+    interviewNumber: 82,
+    speakers: {
+      interviewee: 'SPEAKER_03',
+      jim: 'SPEAKER_00',
+      sarah: 'SPEAKER_01',
+    },
+    videoURL: 'https://dyck.mobi/auohp/082_david_robinson.mp4',
+    vtt,
+    vttURL: 'https://dyck.mobi/auohp/082_david_robinson.vtt',
+  })
+  // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+
+  // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 087 - Jill Harris ~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+  data = JSON.parse(
+    await fs.readFile(
+      path.resolve(__dirname, '../assets/087_jill_harris.captions.json'),
+      'utf8',
+    ),
+  )
+
+  vtt = await fs.readFile(
+    path.resolve(__dirname, '../assets/087_jill_harris.vtt'),
+    'utf8',
+  )
+
+  await seedInterview({
+    data,
+    date: '2008-06-27',
+    interviewee: 'Jill Harris',
+    interviewNumber: 87,
+    speakers: {
+      interviewee: 'SPEAKER_02',
+      jim: 'SPEAKER_01',
+      sarah: 'SPEAKER_04',
+    },
+    videoURL: 'https://dyck.mobi/auohp/087_jill_harris.mp4',
+    vtt,
+    vttURL: 'https://dyck.mobi/auohp/087_jill_harris.vtt',
+  })
+  // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+
+  // ~~~~~~~~~~~~~~~~~~~~~~~~~~~ 117 - Alexis Danzig ~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+  data = JSON.parse(
+    await fs.readFile(
+      path.resolve(__dirname, '../assets/117_alexis_danzig.captions.json'),
+      'utf8',
+    ),
+  )
+
+  vtt = await fs.readFile(
+    path.resolve(__dirname, '../assets/117_alexis_danzig.vtt'),
     'utf8',
   )
 
   await seedInterview({
     data,
     date: '2004-01-17',
-    interviewee: 'Steve Quester',
-    interviewNumber: 40,
+    interviewee: 'Alexis Danzig',
+    interviewNumber: 117,
     speakers: {
-      interviewee: 'SPEAKER_03',
-      jim: 'SPEAKER_01',
-      sarah: 'SPEAKER_05',
+      interviewee: 'SPEAKER_01',
+      jim: 'SPEAKER_00',
+      sarah: 'SPEAKER_02',
     },
-    videoURL: 'https://dyck.mobi/auohp/040_steve_quester.mp4',
+    videoURL: 'https://dyck.mobi/auohp/117_alexis_danzig.mp4',
     vtt,
-    vttURL: 'https://dyck.mobi/auohp/040_steve_quester.vtt',
+    vttURL: 'https://dyck.mobi/auohp/117_alexis_danzig.vtt',
   })
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
 
+  // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 119 - Mary Cotter ~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+  data = JSON.parse(
+    await fs.readFile(
+      path.resolve(__dirname, '../assets/119_mary_cotter.captions.json'),
+      'utf8',
+    ),
+  )
+
+  vtt = await fs.readFile(
+    path.resolve(__dirname, '../assets/119_mary_cotter.vtt'),
+    'utf8',
+  )
+
+  await seedInterview({
+    data,
+    date: '2010-06-23',
+    interviewee: 'Mary Cotter',
+    interviewNumber: 117,
+    speakers: {
+      interviewee: 'SPEAKER_00',
+      jim: 'SPEAKER_01',
+      sarah: 'SPEAKER_02',
+    },
+    videoURL: 'https://dyck.mobi/auohp/119_mary_cotter.mp4',
+    vtt,
+    vttURL: 'https://dyck.mobi/auohp/119_mary_cotter.vtt',
+  })
+  // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
   await neo4jDriver.close()
 }
 
