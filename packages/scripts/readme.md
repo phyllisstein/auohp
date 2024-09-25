@@ -40,3 +40,8 @@ conda install spacy more-itertools openai-whisper
 python -m spacy download en_core_web_sm
 python src/subwisp.py assets/whisperx/035_larry_kramer.json
 ```
+
+## ffmpeg
+```bash
+ffmpeg -i $f -vn -ar 16k -ac 2 -acodec pcm_s16le -y "$f".wav
+```
