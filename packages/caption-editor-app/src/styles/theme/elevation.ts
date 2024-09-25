@@ -113,8 +113,8 @@ export function box(level = 1) {
 }
 
 box.animation = animationCSS({
-    duration: AnimationDuration.Elevation,
-    properties: 'box-shadow',
+  duration: AnimationDuration.Elevation,
+  properties: 'box-shadow',
 })
 
 export function text(level = 1) {
@@ -133,6 +133,6 @@ export function text(level = 1) {
 }
 
 text.animation = animationCSS({
-    duration: AnimationDuration.Elevation,
-    properties: 'text-shadow',
+  duration: AnimationDuration.Elevation,
+  properties: 'text-shadow',
 })
