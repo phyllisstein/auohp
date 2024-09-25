@@ -11,11 +11,7 @@ const __dirname = path.dirname(__filename)
 
 export async function GET() {
   const jsonString = await fs.readFile(path.resolve(__dirname, '../../../../public/assets/demo/025_lei_chou.captions.json'), 'utf-8')
-  let json = JSON.parse(jsonString)
-  json = [{
-    type: 'transcript',
-    children: json,
-  }]
+  const json = JSON.parse(jsonString)
 
   return Response.json(json, {
     headers: {
@@ -27,8 +23,6 @@ export async function GET() {
 export async function PUT(request: NextRequest) {
   let json = await request.json()
 
-  console.log(JSON.stringify(json[0].children.slice(-5), null, 2))
-
   json[0].children = json[0].children.map(segment => {
     const ret = {
       ...segment,
@@ -36,7 +30,6 @@ export async function PUT(request: NextRequest) {
     }
     return ret
   })
-  console.log(JSON.stringify(json[0].children.slice(-5), null, 2))
 
   try {
     await updateTranscript(json)

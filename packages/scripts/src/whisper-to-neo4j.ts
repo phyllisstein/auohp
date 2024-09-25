@@ -90,7 +90,7 @@ async function seedInterview({data, date, interviewee, interviewNumber, speakers
     },
   )
 
-  for await (const chunk of data) {
+  for await (const chunk of data[0].children) {
     let result: EagerResult
     try {
       result = await neo4jDriver.executeQuery(
@@ -262,13 +262,13 @@ async function main() {
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 025 - Lei Chou ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
   data = JSON.parse(
     await fs.readFile(
-      path.resolve(__dirname, '../assets/025_lei_chou/025_lei_chou.captions.json'),
+      path.resolve(__dirname, '../assets/025_lei_chou.captions.json'),
       'utf8',
     ),
   )
 
   vtt = await fs.readFile(
-    path.resolve(__dirname, '../assets/025_lei_chou/025_lei_chou.vtt'),
+    path.resolve(__dirname, '../assets/025_lei_chou.vtt'),
     'utf8',
   )
 
