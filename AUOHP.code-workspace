@@ -66,6 +66,9 @@
     },
     "[packer]": {
       "editor.defaultFormatter": "szTheory.vscode-packer-powertools"
+    },
+    "[html]": {
+      "editor.defaultFormatter": "vscode.html-language-features"
     }
   }
 }
