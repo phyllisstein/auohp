@@ -15,10 +15,10 @@ def install_dependencies(cuda_enabled):
 
         if cuda_enabled:
             print("CUDA is enabled. Installing CUDA-enabled PyTorch and related modules.")
-            subprocess.check_call(["conda", "install", "--update-deps", "-y", "pytorch=2.3", "torchvision", "torchaudio", "cudatoolkit=12.1", "-c", "pytorch", "-c", "nvidia"])
+            subprocess.check_call(["conda", "install", "--update-deps", "-y", "pytorch", "torchvision", "torchaudio", "cudatoolkit", "-c", "pytorch", "-c", "nvidia"])
         else:
             print("CUDA is not enabled. Installing CPU-only PyTorch and related modules.")
-            subprocess.check_call(["conda", "install", "--update-deps", "-y", "pytorch=2.3", "torchvision", "torchaudio", "-c", "pytorch"])
+            subprocess.check_call(["conda", "install", "--update-deps", "-y", "pytorch", "torchvision", "torchaudio", "-c", "pytorch"])
 
     except Exception as e:
         print(f"Error installing dependencies: {e}")
