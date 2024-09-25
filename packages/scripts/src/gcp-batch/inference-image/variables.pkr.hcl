@@ -39,6 +39,11 @@ variable "source_image" {
   default = "c0-deeplearning-common-gpu-v20240708-debian-11-py310"
 }
 
+variable "accelerator_type" {
+  type    = string
+  default = "t4"
+}
+
 variable "debug" {
   type    = bool
   default = false

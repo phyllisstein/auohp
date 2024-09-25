@@ -13,7 +13,7 @@ source "googlecompute" "auohp_inference" {
   temporary_key_pair_type = "ed25519"
   use_os_login            = true
 
-  accelerator_type  = "projects/${var.project_id}/zones/${var.zone}/acceleratorTypes/nvidia-tesla-t4"
+  accelerator_type  = "projects/${var.project_id}/zones/${var.zone}/acceleratorTypes/nvidia-tesla-${var.accelerator_type}"
   accelerator_count = 1
 
   preemptible         = true
