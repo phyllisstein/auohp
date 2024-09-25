@@ -9,7 +9,12 @@ const __dirname = path.dirname(__filename)
   */
 export default {
   compiler: {
-    styledComponents: true,
+    styledComponents: {
+      displayName: true,
+      ssr: true,
+      fileName: true,
+      minify: false,
+    },
   },
   webpack(config, {dev}) {
     config.resolve.enforceExtension = false

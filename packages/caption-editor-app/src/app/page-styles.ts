@@ -22,7 +22,7 @@ export const Segment = styled.div`
 export const Container = styled.main`
   display: grid;
   grid-template-rows: auto;
-  grid-template-columns: 1fr 3fr;
+  grid-template-columns: 3fr 1fr;
   gap: 0.5rem;
   margin: 2rem;
 `
