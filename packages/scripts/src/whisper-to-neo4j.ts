@@ -58,7 +58,7 @@ async function seedInterview({data, date, interviewee, interviewNumber, speakers
             CREATE (i:Interview {number: $interviewNumber, date: date($date), uid: $interviewUID})
             CREATE (video:Video {url: $videoURL, uid: $videoUID})
             CREATE (vtt:VTT {text: $vtt, url: $vttURL, uid: $vttUID})
-            CREATE (transcript:Transcript:Interview {uid: $transcriptUID})
+            CREATE (transcript:Transcript {uid: $transcriptUID})
             CREATE (interviewee:Person {name: $interviewee, uid: $intervieweeUID})
             CREATE (sarahSpeaker:Speaker:Interviewer {label: $speakers.sarah})
             CREATE (jimSpeaker:Speaker:Interviewer {label: $speakers.jim})
@@ -119,83 +119,71 @@ async function seedInterview({data, date, interviewee, interviewNumber, speakers
   }
 }
 
-async function seedVideo({data, date, speakers, videoURL, vtt}) {
+async function seedVideo({data, date, videoURL, vtt, vttURL, title, slug}) {
+  const documentaryUID = nanoid()
+  const videoUID = nanoid()
+  const transcriptUID = nanoid()
+  const vttUID = nanoid()
+
   await neo4jDriver.executeQuery(
     // language=Cypher
     `
-            MATCH (jim:Person {name: 'Jim Hubbard'})
-            MATCH (sarah:Person {name: 'Sarah Schulman'})
-            WITH jim, sarah
-            CREATE (i:Interview {number: $interviewNumber, date: date($date), uid: $interviewUID})
+            CREATE (doc:Documentary {uid: $documentaryUID, title: $documentaryTitle, date: date($documentaryDate), slug: $documentarySlug})
             CREATE (video:Video {url: $videoURL, uid: $videoUID})
-            CREATE (vtt:VTT {text: $vtt})
-            CREATE (interviewee:Person {name: $interviewee, uid: $intervieweeUID})
-            CREATE (sarahSpeaker:Speaker:Interviewer {label: $speakers.sarah})
-            CREATE (jimSpeaker:Speaker:Interviewer {label: $speakers.jim})
-            CREATE (intervieweeSpeaker:Speaker:Interviewee {label: $speakers.interviewee})
-            MERGE (interviewee)-[:INTERVIEWED_AS]->(intervieweeSpeaker)
-            MERGE (jim)-[:INTERVIEWED_AS]->(jimSpeaker)
-            MERGE (sarah)-[:INTERVIEWED_AS]->(sarahSpeaker)
-            CREATE (i)-[:INTERVIEWED_WITH]->(intervieweeSpeaker)
-            CREATE (i)-[:INTERVIEWED_WITH]->(jimSpeaker)
-            CREATE (i)-[:INTERVIEWED_WITH]->(sarahSpeaker)
-            CREATE (i)-[:HAS_VIDEO]->(video)
-            CREATE (i)-[:HAS_CAPTIONS]->(vtt)
+            CREATE (vtt:VTT {text: $vtt, url: $vttURL, uid: $vttUID})
+            CREATE (transcript:Transcript {uid: $transcriptUID})
+            CREATE (doc)-[:HAS_VIDEO]->(video)
+            CREATE (video)-[:HAS_CAPTIONS]->(vtt)
+            CREATE (video)-[:HAS_TRANSCRIPT]->(transcript)
         `, {
-      date,
-      interviewNumber: int(interviewNumber),
+      documentaryDate: date,
+      documentaryTitle: title,
+      documentarySlug: slug,
+      documentaryUID,
 
-      interviewee,
-      speakers,
-      interviewUID: nanoid(),
-      intervieweeUID: nanoid(),
+      transcriptUID,
 
-      videoUID: nanoid(),
+      videoUID,
       videoURL,
       vtt,
+      vttUID,
+      vttURL,
     },
   )
 
-  for await (const chunk of data) {
+  const allSpeakers = new Set()
+  for (const chunk of data[0].children) {
+    allSpeakers.add(chunk.speaker)
+  }
+
+  await neo4jDriver.executeQuery(
+    // language=Cypher
+    `
+      UNWIND $speakers AS speaker
+      MATCH (doc:Documentary {uid: $documentaryUID}) -[:HAS_VIDEO]-> (video) -[:HAS_TRANSCRIPT]-> (transcript {uid: $transcriptUID})
+      CREATE (transcript)-[:INCLUDES_SPEAKER]->(s:Speaker {label: speaker})
+      RETURN s
+    `, { speakers: Array.from(allSpeakers), documentaryUID, transcriptUID },
+  )
+
+  for await (const chunk of data[0].children) {
     let result: EagerResult
     try {
       result = await neo4jDriver.executeQuery(
         // language=Cypher
         `
-                    MATCH (speaker:Speaker {label: $speaker}) <-[:INTERVIEWED_WITH]- (interview:Interview {number: $interviewNumber})
-                    MATCH (speaker) <-[:INTERVIEWED_AS]- (person:Person)
-                    MERGE (speaker)-[:SAYS {startTime: $startTime, endTime: $endTime}]->(statement)
-                    RETURN statement, person, interview
-                `, {
+          MATCH (transcript {uid: $transcriptUID}) -[:INCLUDES_SPEAKER]-> (speaker:Speaker {label: $speaker})
+          CREATE (speaker)-[:SAYS {startTime: $startTime, endTime: $endTime, startTimestamp: $startTimestamp, endTimestamp: $endTimestamp}]->(statement:Statement {text: $transcription})
+          RETURN statement, speaker
+        `,
+        {
           ...chunk,
-        },
-      )
-
-      const wordPromises = chunk.words.map(async word => {
-        await neo4jDriver.executeQuery(
-          // language=Cypher
-          `
-                        MATCH (statement:Statement) <-[says:SAYS]- (speaker:Speaker)
-                        WHERE says.startTime = $chunkStartTime AND says.endTime = $chunkEndTime
-                        CREATE (statement)-[:SAYS {startTime: $word.startTime, endTime: $word.endTime}]->(w:Word {text: $word.word})
-                        RETURN w
-                    `,
-          {
-            word,
-            chunkStartTime: chunk.start,
-            chunkEndTime: chunk.end,
-          },
-        )
-      })
-
-      await Promise.all(wordPromises)
+          transcriptUID,
+        })
     } catch (error) {
       console.error(`
-                Could not create node for segment starting ${chunk.startTime} in interview
-                ${interviewNumber} for speaker ${chunk.speaker}.
-
-                ${result}
-                ${chunk}
+                Could not create node for segment starting ${chunk.startTime} in video
+                ${documentaryUID} for speaker ${chunk.speaker}.
             `)
     }
   }
@@ -252,10 +240,7 @@ async function bootstrap() {
   )
 }
 
-async function main() {
-  await bootstrap()
-
-
+async function seedAllInterviews() {
   let data, vtt
 
 
@@ -403,6 +388,43 @@ async function main() {
     vttURL: 'https://dyck.mobi/auohp/119_mary_cotter.vtt',
   })
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+}
+
+async function seedAllVideos() {
+  let data, vtt
+
+
+  // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ The Ashes Action ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+  data = JSON.parse(
+    await fs.readFile(
+      path.resolve(__dirname, '../assets/the_ashes_action.captions.json'),
+      'utf8',
+    ),
+  )
+
+  vtt = await fs.readFile(
+    path.resolve(__dirname, '../assets/the_ashes_action.vtt'),
+    'utf8',
+  )
+
+  await seedVideo({
+    data,
+    date: '1992-10-11',
+    vtt,
+    vttURL: 'https://dyck.mobi/auohp/the_ashes_action.vtt',
+    videoURL: 'https://dyck.mobi/auohp/the_ashes_action.mp4',
+    title: 'The Ashes Action',
+    slug: 'ashes-action',
+  })
+  // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+}
+
+async function main() {
+  await bootstrap()
+
+  await seedAllInterviews()
+  await seedAllVideos()
+
   await neo4jDriver.close()
 }
 
