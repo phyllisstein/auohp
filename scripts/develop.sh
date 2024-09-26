@@ -10,7 +10,7 @@ restart_server() {
 
   echo "Starting development server..."
   [[ -e "/run/secrets/environment" ]] || { echo "Missing environment secrets." && exit 1; }
-  source /run/secrets/environment && export GSAP_NPM_TOKEN GITHUB_TOKEN FONT_AWESOME_NPM_TOKEN
+  source /run/secrets/environment && export GSAP_NPM_TOKEN GITHUB_TOKEN FONT_AWESOME_NPM_TOKEN NEO4J_PASSWORD NEO4J_USERNAME NEO4J_URI AURA_INSTANCEID AUTA_INSTANCENAME
   yarn packages:dev
   disown
 }
@@ -35,7 +35,7 @@ yarn_install() {
   [[ -e "/run/secrets/environment" ]] || { echo "Missing environment secrets." && exit 0; }
   pkill -f "yarn install" || true
   echo "Running yarn install..."
-  source /run/secrets/environment && export FONT_AWESOME_NPM_TOKEN GITHUB_TOKEN GSAP_NPM_TOKEN
+  source /run/secrets/environment && export GSAP_NPM_TOKEN GITHUB_TOKEN FONT_AWESOME_NPM_TOKEN NEO4J_PASSWORD NEO4J_USERNAME NEO4J_URI AURA_INSTANCEID AUTA_INSTANCENAME
   yarn install
 }
 
