@@ -1,7 +1,18 @@
 import neo4j, {type Driver} from 'neo4j-driver'
 import {useEffect, useState} from 'react'
 
-export function useNeo4j(url: string, username: string, password: string): Driver | null {
+const {
+  NEO4J_URI = 'neo4j://localhost:7687',
+  NEO4J_USERNAME = 'neo4j',
+  NEO4J_PASSWORD = 'auohpauohp',
+} = process.env
+}
+
+export function useNeo4j(
+  uri: string = NEO4J_URI,
+  username: string = NEO4J_USERNAME,
+  password: string = NEO4J_PASSWORD,
+): Driver | null {
   const [driver, setDriver] = useState<Driver | null>(null)
 
   useEffect(() => {
@@ -11,7 +22,7 @@ export function useNeo4j(url: string, username: string, password: string): Drive
 
     async function connect() {
       const driver = neo4j.driver(
-        url,
+        uri,
         neo4j.auth.basic(username, password),
         {
           disableLosslessIntegers: true,
@@ -28,7 +39,7 @@ export function useNeo4j(url: string, username: string, password: string): Drive
         void driver.close()
       }
     }
-  }, [driver, password, url, username])
+  }, [driver, password, uri, username])
 
   return driver
 }
