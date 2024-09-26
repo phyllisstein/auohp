@@ -5,8 +5,7 @@ const {
   NEO4J_URI = 'neo4j://localhost:7687',
   NEO4J_USERNAME = 'neo4j',
   NEO4J_PASSWORD = 'auohpauohp',
-} = process.env
-}
+} = import.meta.env
 
 export function useNeo4j(
   uri: string = NEO4J_URI,
