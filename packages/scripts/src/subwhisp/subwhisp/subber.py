@@ -368,7 +368,7 @@ def main():
     parser.add_argument('input_file')
     parser.add_argument('-m', '--model', help='specify spaCy model', default="en_core_web_lg")
     parser.add_argument('-e', '--entities', help='optional custom entities for spaCy (.jsonl format)', default="")
-    parser.add_argument('-w', '--width', help='maximum line width', default=42, type=int)
+    parser.add_argument('-w', '--width', help='maximum line width', default=60, type=int)
     parser.add_argument('-l', '--lines', help='maximum lines per subtitle', default=2, type=int, choices=range(1,4))
     parser.add_argument('-d', '--debug', help='print debug information',
                         action="store_const", dest="loglevel", const=logging.DEBUG, default=logging.WARNING)
