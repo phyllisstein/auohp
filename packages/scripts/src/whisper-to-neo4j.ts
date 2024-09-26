@@ -100,12 +100,13 @@ async function seedInterview({ data, date, interviewee, interviewNumber, speaker
                     MATCH (video)-[:HAS_TRANSCRIPT]-> (transcript)
                     MATCH (transcript) -[:INCLUDES_SPEAKER]-> (speaker:Speaker {label: $speaker})
                     MATCH (speaker) <-[:INTERVIEWED_AS]- (person:Person)
-                    CREATE (speaker)-[:SAYS {startTime: $startTime, endTime: $endTime, startTimestamp: $startTimestamp, endTimestamp: $endTimestamp}]->(statement:Statement {text: $transcription})
+                    CREATE (speaker)-[:SAYS {startTime: $startTime, endTime: $endTime, startTimestamp: $startTimestamp, endTimestamp: $endTimestamp}]->(statement:Statement {text: $transcription, uid: $statementUID})
                     RETURN statement, person, interview
                 `, {
         ...chunk,
         speaker: chunk.speaker || speakers.interviewee,
         interviewNumber: int(interviewNumber),
+        statementUID: nanoid(),
       },
       )
     } catch (error) {
@@ -243,6 +244,35 @@ async function bootstrap() {
 async function seedAllInterviews() {
   let data, vtt
 
+
+  // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 025 - Lei Chou ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+  data = JSON.parse(
+    await fs.readFile(
+      path.resolve(__dirname, '../assets/025_lei_chou.captions.json'),
+      'utf8',
+    ),
+  )
+
+  vtt = await fs.readFile(
+    path.resolve(__dirname, '../assets/025_lei_chou.vtt'),
+    'utf8',
+  )
+
+  await seedInterview({
+    data,
+    date: '2003-05-05',
+    interviewee: 'Lei Chou',
+    interviewNumber: 25,
+    speakers: {
+      interviewee: 'SPEAKER_01',
+      jim: 'SPEAKER_03',
+      sarah: 'SPEAKER_02',
+    },
+    videoURL: 'https://dyck.mobi/auohp/025_lei_chou.mp4',
+    vtt,
+    vttURL: 'https://dyck.mobi/auohp/025_lei_chou.vtt',
+  })
+  // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
 
   // ~~~~~~~~~~~~~~~~~~~~~~~~ 064 - Vincent Gagliostro ~~~~~~~~~~~~~~~~~~~~~~~~ //
   data = JSON.parse(
