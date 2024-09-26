@@ -18,7 +18,7 @@ interface Neo4jVideo {
 }
 
 export function useNeo4jVideo(url: string) {
-  const driver = useNeo4j('bolt+s://bolt.auohp.here:443', 'neo4j', 'auohpauohp')
+  const driver = useNeo4j()
   const [videoURL, setVideoURL] = useState<Neo4jVideo>(null)
 
   useEffect(() => {

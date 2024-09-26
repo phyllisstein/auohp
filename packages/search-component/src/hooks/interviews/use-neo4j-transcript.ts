@@ -49,7 +49,7 @@ interface SaysEdge {
 }
 
 export function useNeo4jTranscript(query: string, index: string): Neo4jResult[] {
-  const driver = useNeo4j('neo4j+s://0faeaca6.databases.neo4j.io', 'neo4j', 'UmjT5CRbO2bZrL2-3ubNCilKtYOXudX5hHL8akj4s5Y')
+  const driver = useNeo4j()
   const [searchResults, setSearchResults] = useState<Neo4jResult[]>([])
 
   useEffect(() => {
