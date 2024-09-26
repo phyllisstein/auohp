@@ -1,9 +1,9 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import {fileURLToPath} from 'node:url'
+import { fileURLToPath } from 'node:url'
 
-import {nanoid} from 'nanoid'
-import neo4j, {type EagerResult, int} from 'neo4j-driver'
+import { nanoid } from 'nanoid'
+import neo4j, { type EagerResult, int } from 'neo4j-driver'
 
 
 const __filename = fileURLToPath(import.meta.url)
@@ -23,8 +23,8 @@ const NEO4J_LABELS = [
 ]
 
 const {
-  NEO4J_PASSWORD = 'auohpauohp',
-  NEO4J_URI = 'bolt+s://bolt.auohp.here:443',
+  NEO4J_PASSWORD = 'UmjT5CRbO2bZrL2-3ubNCilKtYOXudX5hHL8akj4s5Y',
+  NEO4J_URI = 'neo4j+s://0faeaca6.databases.neo4j.io',
   NEO4J_USERNAME = 'neo4j',
 } = process.env
 const neo4jDriver = neo4j.driver(
@@ -48,7 +48,7 @@ const neo4jDriver = neo4j.driver(
  * model, from which the captions are generated. The data model is the source of
  * truth, and the captions are a derived artifact.
  */
-async function seedInterview({data, date, interviewee, interviewNumber, speakers, videoURL, vtt, vttURL}) {
+async function seedInterview({ data, date, interviewee, interviewNumber, speakers, videoURL, vtt, vttURL }) {
   await neo4jDriver.executeQuery(
     // language=Cypher
     `
@@ -73,21 +73,21 @@ async function seedInterview({data, date, interviewee, interviewNumber, speakers
             CREATE (video)-[:HAS_CAPTIONS]->(vtt)
             CREATE (video)-[:HAS_TRANSCRIPT]->(transcript)
         `, {
-      date,
-      interviewNumber: int(interviewNumber),
-      transcriptUID: nanoid(),
+    date,
+    interviewNumber: int(interviewNumber),
+    transcriptUID: nanoid(),
 
-      interviewee,
-      speakers,
-      interviewUID: nanoid(),
-      intervieweeUID: nanoid(),
+    interviewee,
+    speakers,
+    interviewUID: nanoid(),
+    intervieweeUID: nanoid(),
 
-      videoUID: nanoid(),
-      videoURL,
-      vtt,
-      vttURL,
-      vttUID: nanoid(),
-    },
+    videoUID: nanoid(),
+    videoURL,
+    vtt,
+    vttURL,
+    vttUID: nanoid(),
+  },
   )
 
   for await (const chunk of data[0].children) {
@@ -103,10 +103,10 @@ async function seedInterview({data, date, interviewee, interviewNumber, speakers
                     CREATE (speaker)-[:SAYS {startTime: $startTime, endTime: $endTime, startTimestamp: $startTimestamp, endTimestamp: $endTimestamp}]->(statement:Statement {text: $transcription})
                     RETURN statement, person, interview
                 `, {
-          ...chunk,
-          speaker: chunk.speaker || speakers.interviewee,
-          interviewNumber: int(interviewNumber),
-        },
+        ...chunk,
+        speaker: chunk.speaker || speakers.interviewee,
+        interviewNumber: int(interviewNumber),
+      },
       )
     } catch (error) {
       console.error(`
@@ -119,7 +119,7 @@ async function seedInterview({data, date, interviewee, interviewNumber, speakers
   }
 }
 
-async function seedVideo({data, date, videoURL, vtt, vttURL, title, slug}) {
+async function seedVideo({ data, date, videoURL, vtt, vttURL, title, slug }) {
   const documentaryUID = nanoid()
   const videoUID = nanoid()
   const transcriptUID = nanoid()
@@ -136,19 +136,19 @@ async function seedVideo({data, date, videoURL, vtt, vttURL, title, slug}) {
             CREATE (video)-[:HAS_CAPTIONS]->(vtt)
             CREATE (video)-[:HAS_TRANSCRIPT]->(transcript)
         `, {
-      documentaryDate: date,
-      documentaryTitle: title,
-      documentarySlug: slug,
-      documentaryUID,
+    documentaryDate: date,
+    documentaryTitle: title,
+    documentarySlug: slug,
+    documentaryUID,
 
-      transcriptUID,
+    transcriptUID,
 
-      videoUID,
-      videoURL,
-      vtt,
-      vttUID,
-      vttURL,
-    },
+    videoUID,
+    videoURL,
+    vtt,
+    vttUID,
+    vttURL,
+  },
   )
 
   const allSpeakers = new Set()
@@ -220,7 +220,7 @@ async function bootstrap() {
                 CREATE CONSTRAINT ${label}UID IF NOT EXISTS
                 FOR (n:${label}) REQUIRE n.uid IS UNIQUE
             `,
-      {label},
+      { label },
     )
   }
 
@@ -236,7 +236,7 @@ async function bootstrap() {
     `
             CREATE (jim:Person {name: 'Jim Hubbard', uid: $jimUID})
             CREATE (sarah:Person {name: 'Sarah Schulman', uid: $sarahUID})
-        `, {jimUID: nanoid(), sarahUID: nanoid()},
+        `, { jimUID: nanoid(), sarahUID: nanoid() },
   )
 }
 

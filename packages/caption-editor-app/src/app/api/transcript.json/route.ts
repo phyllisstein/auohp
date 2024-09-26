@@ -10,7 +10,7 @@ const __dirname = path.dirname(__filename)
 
 
 export async function GET() {
-  const jsonString = await fs.readFile(path.resolve(__dirname, '../../../../public/assets/demo/025_lei_chou.captions.json'), 'utf-8')
+  const jsonString = await fs.readFile(path.resolve(__dirname, '../../../../public/assets/demo/082_david_robinson.captions.json'), 'utf-8')
   const json = JSON.parse(jsonString)
 
   return Response.json(json, {
