@@ -332,17 +332,17 @@ def write_vtt(doc, timing, **args):
 def write_json(doc, timing, speakers, **args):
     segments = []
     for i, (start_time, end_time, text, speaker) in enumerate(iterate_document(doc, timing, speakers, **args), start=1):
-        start_timestamp = format_timestamp(start_time, always_include_hours=True)
-        end_timestamp = format_timestamp(end_time, always_include_hours=True)
+        start_timestamp = format_timestamp(start_time, always_include_hours=False)
+        end_timestamp = format_timestamp(end_time, always_include_hours=False)
         segments.append({
             "startTime": start_time,
             "endTime": end_time,
-            "transcription": text.replace("\n", " "),
+            "transcription": text,
             "speaker": speaker,
             "startTimestamp": start_timestamp,
             "endTimestamp": end_timestamp,
             "type": "segment",
-            "children": [{"text": text.replace("\n", " ")}]
+            "children": [{"text": text}]
         })
     return [
         {
