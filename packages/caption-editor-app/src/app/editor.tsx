@@ -2,7 +2,7 @@
 
 import {debounce} from 'lodash-es'
 import * as R from 'ramda'
-import {Children, useMemo} from 'react'
+import {Children, useEffect, useMemo} from 'react'
 import {createEditor, type Descendant} from 'slate'
 import {withHistory} from 'slate-history'
 import {
@@ -10,7 +10,6 @@ import {
   Slate,
   withReact,
 } from 'slate-react'
-import useDeepCompareEffect from 'use-deep-compare-effect'
 import {Segment as StyledSegment} from './page-styles'
 
 const EMPTY: Descendant[] = [{
@@ -88,7 +87,7 @@ export function Editor({initialContent = EMPTY, editorTranscript}) {
     [],
   )
 
-  useDeepCompareEffect(() => {
+  useEffect(() => {
     if (!editorTranscript || editorTranscript.length < 1 || !editor) return
 
     const children = [...editor.children]
