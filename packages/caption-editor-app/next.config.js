@@ -8,6 +8,9 @@ const __dirname = path.dirname(__filename)
   * @type {import('next').NextConfig}
   */
 export default {
+  serverRuntimeConfig: {
+    host: '0.0.0.0',
+  },
   compiler: {
     styledComponents: {
       displayName: true,
