@@ -41,19 +41,23 @@ def format_timestamp(seconds: float, always_include_hours: bool = False, decimal
     return f"{hours_marker}{minutes:02d}:{seconds:02d}{milliseconds_marker}"
 
 def get_time_span(span: Span, timing: dict):
-    start_token = span[0]
-    end_token = span[-1]
-    while (start_token.is_punct or not timing.get(start_token.idx, None)) and start_token.i > 0:
-        start_token = start_token.nbor(-1)
-    while (end_token.is_punct or not timing.get(end_token.idx, None)) and end_token.i > 0:
-        end_token = end_token.nbor(-1)
-    end_index = end_token.idx
-    start_index = start_token.idx
-    start_time, _ = timing[start_index]
-    _, end_time = timing.get(end_index, (None, None))
-    if not end_time:
-        logging.debug("Timing alignment error: %s %d", span.text, end_token.idx)
-    return (start_time, end_time)
+    try:
+        start_token = span[0]
+        end_token = span[-1]
+        while start_token.is_punct or not timing.get(start_token.idx, None):
+            start_token = start_token.nbor(-1)
+        while end_token.is_punct or not timing.get(end_token.idx, None):
+            end_token = end_token.nbor(-1)
+        end_index = end_token.idx
+        start_index = start_token.idx
+        start_time, _ = timing[start_index]
+        _, end_time = timing.get(end_index, (None, None))
+        if not end_time:
+            logging.debug("Timing alignment error: %s %d", span.text, end_token.idx)
+        return (start_time, end_time)
+    except:
+        logging.debug("Timing alignment error: %s", span.text)
+        return (0.0, 0.0)
 
 def get_speaker(span: Span, speakers: dict):
     start_token = span[-1]
@@ -231,7 +235,7 @@ def load_whisper_json(jsdata: dict) -> tuple[str, dict, dict]:
     doc_timing = {}
     doc_speakers = {}
     doc_text = ""
-    for s in jsdata:
+    for s in jsdata['segments']:
         if 'words' not in s:
             raise ValueError('JSON input file must contain word timestamps')
         for word_timed in s['words']:
