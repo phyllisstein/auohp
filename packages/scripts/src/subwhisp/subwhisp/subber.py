@@ -341,7 +341,7 @@ def write_json(doc, timing, speakers, **args):
             "speaker": speaker,
             "startTimestamp": start_timestamp,
             "endTimestamp": end_timestamp,
-            "type": "segment",
+            "type": "statement",
             "children": [{"text": text}]
         })
     return [

@@ -1,7 +1,6 @@
 import whisperx
 import platform
-import os
-import datetime
+from .subber import format_timestamp
 
 
 MODELS = "/opt/auohp/models"
@@ -27,5 +26,21 @@ def transcribe_audio_file(audio_file: str, device: str = device, batch_size: int
     diarize_segments = diarize_model(audio)
 
     diarized_result = whisperx.assign_word_speakers(diarize_segments, aligned_result)
+
+    segments = []
+    for segment in diarized_result["segments"]:
+        start_timestamp = format_timestamp(segment["start"])
+        end_timestamp = format_timestamp(segment["end"])
+        segments.append({
+            "speaker": segment["speaker"],
+            "startTimestamp": start_timestamp,
+            "endTimestamp": end_timestamp,
+            "text": segment["text"],
+            "startTime": segment["start"],
+            "endTime": segment["end"],
+            "type": "statement",
+            "children": [{"text": segment["text"]}],
+            "words": segment["words"]
+        })
 
     return diarized_result
