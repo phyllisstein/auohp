@@ -32,7 +32,7 @@ def transcribe_audio_file(audio_file: str, device: str = device, batch_size: int
         start_timestamp = format_timestamp(segment["start"])
         end_timestamp = format_timestamp(segment["end"])
         segments.append({
-            "speaker": segment["speaker"],
+            "speaker": segment.get("speaker") or "SPEAKER_NULL",
             "startTimestamp": start_timestamp,
             "endTimestamp": end_timestamp,
             "text": segment["text"],
@@ -43,4 +43,4 @@ def transcribe_audio_file(audio_file: str, device: str = device, batch_size: int
             "words": segment["words"]
         })
 
-    return diarized_result
+    return segments

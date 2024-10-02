@@ -231,7 +231,7 @@ def load_whisper_json(jsdata: dict) -> tuple[str, dict, dict]:
     doc_timing = {}
     doc_speakers = {}
     doc_text = ""
-    for s in jsdata['segments']:
+    for s in jsdata:
         if 'words' not in s:
             raise ValueError('JSON input file must contain word timestamps')
         for word_timed in s['words']:
