@@ -43,9 +43,9 @@ def format_timestamp(seconds: float, always_include_hours: bool = False, decimal
 def get_time_span(span: Span, timing: dict):
     start_token = span[0]
     end_token = span[-1]
-    while start_token.is_punct or not timing.get(start_token.idx, None):
+    while (start_token.is_punct or not timing.get(start_token.idx, None)) and start_token.i > 0:
         start_token = start_token.nbor(-1)
-    while end_token.is_punct or not timing.get(end_token.idx, None):
+    while (end_token.is_punct or not timing.get(end_token.idx, None)) and end_token.i < 0:
         end_token = end_token.nbor(-1)
     end_index = end_token.idx
     start_index = start_token.idx
