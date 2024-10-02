@@ -35,7 +35,7 @@ def transcribe_audio_file(audio_file: str, device: str = device, batch_size: int
             "speaker": segment.get("speaker") or "SPEAKER_NULL",
             "startTimestamp": start_timestamp,
             "endTimestamp": end_timestamp,
-            "text": segment["text"],
+            "transcription": segment["text"],
             "startTime": segment["start"],
             "endTime": segment["end"],
             "type": "statement",
