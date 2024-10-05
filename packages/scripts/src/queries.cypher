@@ -34,3 +34,17 @@ RETURN statement.text as text,
    statement.endTime as endTime,
    statement.duration as duration,
    words.text as words
+
+
+// Another full-text search example, this time with a phrase.
+CALL db.index.fulltext.queryNodes('transcript_search', '"ashes action"') YIELD node AS statement, score
+MATCH (statement)<-[speakerSays:SAYS]-(transcript:Transcript)<-[:HAS_TRANSCRIPT]-(artefact)-[:HAS_VIDEO]->(video)
+MATCH (speaker) <-[:INTERVIEWED_AS]- (person)
+RETURN statement, person, speakerSays, artefact, video, transcript, speaker
+ORDER BY score DESC
+
+// Reconstruct a transcript
+MATCH (interview:Interview {uid: "QIzCef06-xiHL5YPZxu6U"}) -[:HAS_TRANSCRIPT]-> () -[saying:SAYS]-> (statement)
+MATCH (statement) <-[:SAYS]- (speaker:Speaker) <-[:INTERVIEWED_AS]- (person)
+RETURN statement, saying, speaker, person
+ORDER BY saying.startTime ASC
