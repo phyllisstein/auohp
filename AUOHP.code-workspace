@@ -20,8 +20,9 @@
   "settings": {
     "[javascript][typescript][javascriptreact][typescriptreact]": {
       "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": "always",
         "source.fixAll.stylelint": "always",
-        "sourece.fixAll.eslint": "always"
+        "source.fixAll.sortJSON": "explicit"
       }
     },
     "editor.defaultFormatter": "dbaeumer.vscode-eslint",
