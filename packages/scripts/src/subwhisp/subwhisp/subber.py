@@ -341,12 +341,12 @@ def write_json(doc, timing, speakers, **args):
         segments.append({
             "startTime": start_time,
             "endTime": end_time,
-            "transcription": text,
+            "transcription": text.strip(),
             "speaker": speaker,
-            "startTimestamp": start_timestamp,
-            "endTimestamp": end_timestamp,
+            "startTimestamp": start_timestamp.strip(),
+            "endTimestamp": end_timestamp.strip(),
             "type": "statement",
-            "children": [{"text": text}]
+            "children": [{"text": text.strip()}]
         })
     return [
         {
