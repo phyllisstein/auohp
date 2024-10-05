@@ -57,7 +57,7 @@ async function seedInterview({data, date, interviewee, interviewNumber, jsonCapt
             MATCH (sarah:Person {name: 'Sarah Schulman'})
             WITH jim, sarah
             CREATE (i:Interview {number: $interviewNumber, date: date($date), uid: $interviewUID, title: $interviewee})
-            CREATE (video:Video {url: $videoURL, uid: $videoUID})
+            CREATE (video:Video:Asset {url: $videoURL, uid: $videoUID})
             CREATE (vtt:VTT:Caption {text: $vtt, url: $vttURL, uid: $vttUID})
             CREATE (json:JSON:Caption {text: $jsonCaption, url: $jsonCaptionURL, uid: $jsonCaptionUID})
             CREATE (transcript:Transcript {uid: $transcriptUID})
@@ -71,7 +71,7 @@ async function seedInterview({data, date, interviewee, interviewNumber, jsonCapt
             CREATE (transcript)-[:INCLUDES_SPEAKER]->(intervieweeSpeaker)
             CREATE (transcript)-[:INCLUDES_SPEAKER]->(jimSpeaker)
             CREATE (transcript)-[:INCLUDES_SPEAKER]->(sarahSpeaker)
-            CREATE (i)-[:HAS_VIDEO]->(video)
+            CREATE (i)-[:HAS_ASSET]->(video)
             CREATE (video)-[:HAS_CAPTIONS]->(vtt)
             CREATE (video)-[:HAS_CAPTIONS]->(json)
             CREATE (i)-[:HAS_TRANSCRIPT]->(transcript)
@@ -417,17 +417,18 @@ async function seedStopChurch() {
   await neo4jDriver.executeQuery(
     // language=Cypher
     `
-      CREATE (stopChurch:Action {uid: $stopChurchUID, title: $stopChurchTitle, date: date($stopChurchDate)})
-      CREATE (leaflet:Leaflet {uid: $leafletUID})
-      CREATE (stopChurch)-[:HAS_LEAFLET]->(leaflet)-[:HAS_IMAGE]->(image:Image {url: $imageURL})
-      CREATE (leaflet)-[:FOR_ACTION]->(stopChurch)
+      CREATE (stopChurch:Action {uid: $stopChurchUID, name: $stopChurchName, date: date($stopChurchDate)})
+      CREATE (leaflet:Leaflet {uid: $leafletUID, title: $leafletTitle})
+      CREATE (stopChurch)-[:HAS_LEAFLET]->(leaflet)-[:HAS_ASSET]->(image:Image:Asset {url: $imageURL})
+      CREATE (leaflet)-[:MENTIONS]->(stopChurch)
       RETURN stopChurch, leaflet
     `, {
       imageURL: 'https://dyck.mobi/auohp/stopchurch-gigapixel-recovery-quality-4x.png',
       stopChurchDate: '1989-12-10',
-      stopChurchTitle: 'Stop the Church',
+      stopChurchName: 'Stop the Church',
       stopChurchUID,
       leafletUID,
+      leafletTitle: 'Stop This Man',
     },
   )
 
@@ -489,11 +490,11 @@ async function seedAshesAction() {
     // language=Cypher
     `
       CREATE (doc:Documentary:Film {uid: $documentaryUID, title: $documentaryTitle, date: date($documentaryDate), slug: $documentarySlug})
-      CREATE (video:Video {url: $videoURL, uid: $videoUID})
+      CREATE (video:Video:Asset {url: $videoURL, uid: $videoUID})
       CREATE (vtt:VTT:Captions {text: $vtt, url: $vttURL, uid: $vttUID})
       CREATE (json:JSON:Captions {text: $jsonCaption, url: $jsonCaptionURL, uid: $jsonCaptionUID})
       CREATE (transcript:Transcript {uid: $transcriptUID})
-      CREATE (doc)-[:HAS_VIDEO]->(video)
+      CREATE (doc)-[:HAS_ASSET]->(video)
       CREATE (video)-[:HAS_CAPTIONS]->(vtt)
       CREATE (video)-[:HAS_CAPTIONS]->(json)
       CREATE (doc)-[:HAS_TRANSCRIPT]->(transcript)
@@ -540,7 +541,7 @@ async function seedAshesAction() {
         // language=Cypher
         `
           MATCH (transcript {uid: $transcriptUID}) -[:INCLUDES_SPEAKER]-> (speaker:Speaker {label: $speaker})
-          CREATE (transcript)-[:TRANSCRIBES {startTime: $startTime, endTime: $endTime, startTimestamp: $startTimestamp, endTimestamp: $endTimestamp}]->(statement:Statement {text: $transcription})
+          CREATE (transcript)-[:TRANSCRIBES {startTime: $startTime, endTime: $endTime, startTimestamp: $startTimestamp, endTimestamp: $endTimestamp}]->(statement:Statement {text: $transcription, uid: $statementUID})
           CREATE (speaker)-[:SAYS]->(statement)
           RETURN statement, speaker
         `,
@@ -561,14 +562,14 @@ async function seedAshesAction() {
     // language=Cypher
     `
       MATCH (doc:Documentary {uid: $documentaryUID})
-      CREATE (aa:Action {uid: $actionUID, title: $actionTitle, date: date($actionDate)})
+      CREATE (aa:Action {uid: $actionUID, name: $actionName, date: date($actionDate)})
       CREATE (aa)-[:HAS_DOCUMENTARY]->(doc)
-      CREATE (doc)-[:FOR_ACTION]->(aa)
+      CREATE (doc)-[:MENTIONS]->(aa)
     `,
     {
       documentaryUID,
       actionUID,
-      actionTitle: 'The Ashes Action',
+      actionName: 'The Ashes Action',
       actionDate: '1992-10-11',
     },
   )
@@ -578,9 +579,9 @@ async function seedAshesAction() {
     `
         MATCH (aa:Action {uid: $actionUID})
         MATCH (gf:Collective {name: 'Gran Fury'})
-        CREATE (leaflet:Leaflet {uid: $leafletUID})-[:FOR_ACTION]->(aa)
+        CREATE (leaflet:Leaflet {uid: $leafletUID, title: $leafletTitle})-[:MENTIONS]->(aa)
         CREATE (aa)-[:HAS_LEAFLET]->(leaflet)
-        CREATE (leaflet)-[:HAS_IMAGE]->(image:Image {url: $imageURL})
+        CREATE (leaflet)-[:HAS_ASSET]->(image:Image:Asset {url: $imageURL, uid: $imageUID})
         CREATE (leaflet)-[:HAS_TRANSCRIPT]->(transcript:Transcript {uid: $transcriptUID})
         CREATE (transcript)-[:TRANSCRIBES]->(statement:Statement {text: $transcription, uid: $statementUID})
         CREATE (gf)-[:DESIGNS]->(leaflet)
@@ -589,6 +590,8 @@ async function seedAshesAction() {
       actionUID,
       leafletUID: nanoid(),
       imageURL: 'https://dyck.mobi/auohp/synAshes_flyer-gigapixel-recovery-quality-4x-fs8.png',
+      leafletTitle: 'White House Urn Text',
+      imageUID: nanoid(),
       transcriptUID: nanoid(),
       transcription: stripIndent`
           You have lost someone to AIDS. For more than a decade, your government has
@@ -608,12 +611,29 @@ async function seedAshesAction() {
   )
 }
 
+async function seedDemoEdges() {
+  await neo4jDriver.executeQuery(
+    // language=Cypher
+    `
+      MATCH (vince:Statement {text: 'Stop the church was a phrase that was met to a lot of objection.'}) <-[:TRANSCRIBES]- () <-[:HAS_TRANSCRIPT]- (a1),
+            (alexis:Statement {text: ' stop the church, for example.'}) <-[:TRANSCRIBES]- () <-[:HAS_TRANSCRIPT]- (a2),
+            (ashes:Statement {text: 'I want you to remember that stop the church is pretty easy to convince people about what an evil group of perverts we are, right?'}) <-[:TRANSCRIBES]- () <-[:HAS_TRANSCRIPT]- (a3),
+            (stt:Action {name: 'Stop the Church'})
+      CREATE (vince) -[:MENTIONS]-> (stt)
+      CREATE (alexis) -[:MENTIONS]-> (stt)
+      CREATE (ashes) -[:MENTIONS]-> (stt)
+      RETURN vince, alexis, ashes, stt
+    `,
+  )
+}
+
 async function main() {
   await bootstrap()
 
   await seedAllInterviews()
   await seedAshesAction()
   await seedStopChurch()
+  await seedDemoEdges()
 
   await neo4jDriver.close()
 }

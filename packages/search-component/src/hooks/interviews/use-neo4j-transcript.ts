@@ -2,43 +2,50 @@ import {useEffect, useState} from 'react'
 
 import {useNeo4j} from 'hooks/infrastructure'
 
+export type Propertized<T> = {properties: T, labels: string[]}
 
-export interface WithLabels {
-  labels: string[]
-}
 
-export interface Person extends WithLabels {
+export interface Person {
   name: string
   uid: string
 }
 
-export interface Statement extends WithLabels {
+export interface Statement {
   text: string
 }
 
-export interface Interview extends WithLabels {
+export interface Interview {
   number: number
   uid: string
 }
 
-export interface Documentary extends WithLabels {
+export interface Documentary {
   date: string
   title: string
   uid: string
   slug: string
 }
 
-export interface Video extends WithLabels {
+export interface Video {
   url: string
   uid: string
 }
 
+export interface Leaflet {
+  title: string
+  uid: string
+}
+
+interface Asset {
+  url: string
+}
+
 export interface Neo4jResult {
-  person: Person
-  speakerSays: SaysEdge
-  statement: Statement
-  video: Video
-  artefact: Documentary | Interview
+  person?: Propertized<Person>
+  meta: Propertized<SaysEdge>
+  statement: Propertized<Statement>
+  artefact: Propertized<Documentary> | Propertized<Interview> | Propertized<Leaflet>
+  asset?: Propertized<Asset>
 }
 
 interface SaysEdge {
@@ -62,21 +69,23 @@ export function useNeo4jTranscript(query: string, index: string): Neo4jResult[] 
       const result = await driver.executeQuery(
         // language=Cypher
         `
-                    CALL db.index.fulltext.queryNodes($index, $query) YIELD node AS statement, score
-                    MATCH (statement)<-[speakerSays:SAYS]-(speaker)
-                    MATCH (speaker)<-[:INCLUDES_SPEAKER]-()<-[:HAS_TRANSCRIPT]-(video)<-[:HAS_VIDEO]-(artefact)
-                    OPTIONAL MATCH (speaker) <-[:INTERVIEWED_AS]- (person)
-                    RETURN statement, person, speakerSays, artefact, video
-                    ORDER BY score DESC
-                `, {index, query})
+          CALL db.index.fulltext.queryNodes($index, $query) YIELD node AS statement, score
+          MATCH (statement)<-[meta:TRANSCRIBES]-(transcript) <-[:HAS_TRANSCRIPT]- (artefact)
+          OPTIONAL MATCH (person) -[:INTERVIEWED_AS]-> (speaker) -[:SAYS]-> (statement)
+          WHERE speaker:Interviewee
+          OPTIONAL MATCH (artefact) -[:HAS_ASSET]-> (asset)
+          RETURN statement, meta, person, speaker, asset, artefact, score
+          ORDER BY score DESC
+        `, {index, query})
 
       const searchResults = result.records.map(record => {
         return {
-          person: record.get('person'),
-          speakerSays: record.get('speakerSays'),
           statement: record.get('statement'),
+          meta: record.get('meta'),
+          person: record.get('person'),
           artefact: record.get('artefact'),
-          video: record.get('video'),
+          asset: record.get('asset'),
+          score: record.get('score'),
         }
       })
 
