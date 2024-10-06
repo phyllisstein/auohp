@@ -28,10 +28,34 @@ export const SearchResults = styled.ul`
 `
 
 export const SearchResult = styled.li`
-  display: inline-flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: auto;
+  grid-template-columns: 1fr 1fr;
+  margin: 0;
+  padding: 1rem 0;
+`
+
+export const ResultMatch = styled.div`
+  grid-row: 1 / 1;
+  grid-column: 1 / 3;
   padding: 0.5em;
 
-  background-color: white;
-  border-bottom: 1px solid black;
+  font-size: 1em;
+`
+
+export const ResultSource = styled.div`
+  grid-row: 2/3;
+  grid-column: 1/2;
+  padding: 0.5em;
+
+  font-size: 0.8em;
+`
+
+export const ResultTimestamp = styled.div`
+  grid-row: 2/3;
+  grid-column: 2/3;
+  padding: 0.5em;
+
+  color: grey;
+  font-size: 0.8em;
 `
