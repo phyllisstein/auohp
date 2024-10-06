@@ -23,7 +23,7 @@ from spacy.tokens import Doc, Span, Token
 from spacy.matcher import Matcher
 from spacy.cli.download import download as spacy_download
 
-def format_timestamp(seconds: float, always_include_hours: bool = False, decimal_marker: str = '.', milliseconds: bool = False):
+def format_timestamp(seconds: float, always_include_hours: bool = False, decimal_marker: str = '.', always_include_milliseconds: bool = False):
     assert seconds >= 0, "non-negative timestamp expected"
     milliseconds = round(seconds * 1000.0)
 
@@ -37,7 +37,7 @@ def format_timestamp(seconds: float, always_include_hours: bool = False, decimal
     milliseconds -= seconds * 1_000
 
     hours_marker = f"{hours:02d}:" if always_include_hours or hours > 0 else ""
-    milliseconds_marker = f"{decimal_marker}{milliseconds:03d}" if milliseconds else ""
+    milliseconds_marker = f"{decimal_marker}{milliseconds:03d}" if always_include_milliseconds else ""
     return f"{hours_marker}{minutes:02d}:{seconds:02d}{milliseconds_marker}"
 
 def get_time_span(span: Span, timing: dict):
@@ -327,8 +327,8 @@ def write_vtt(doc, timing, **args):
     comma: str = '.'
     vtt = f"WEBVTT\n\n"
     for i, (start_time, end_time, text, speaker) in enumerate(iterate_document(doc, timing, {}, **args), start=1):
-        ts1 = format_timestamp(start_time, always_include_hours=True, decimal_marker=comma, milliseconds=True)
-        ts2 = format_timestamp(end_time, always_include_hours=True, decimal_marker=comma, milliseconds=True)
+        ts1 = format_timestamp(start_time, always_include_hours=True, decimal_marker=comma, always_include_milliseconds=True)
+        ts2 = format_timestamp(end_time, always_include_hours=True, decimal_marker=comma, always_include_milliseconds=True)
 
         vtt += f"{ts1} --> {ts2}\n{text}\n\n"
     return vtt
