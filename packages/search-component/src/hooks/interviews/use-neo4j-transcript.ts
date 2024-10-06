@@ -87,7 +87,11 @@ export function useNeo4jTranscript(query: string, index: string): Neo4jResult[] 
           asset: record.get('asset'),
           score: record.get('score'),
         }
-      })
+      }).filter(
+        result =>
+          !result.artefact.labels.includes('Interview')
+          || result.person !== null,
+      )
 
       setSearchResults(searchResults)
     }
