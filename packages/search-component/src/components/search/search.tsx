@@ -1,13 +1,17 @@
 import {type Neo4jResult, isDocumentary, isInterview, isLeaflet, useNeo4jTranscript} from 'hooks/interviews'
 import {debounce} from 'lodash-es'
 import queryString from 'query-string'
-import {type ChangeEvent, useState, useTransition} from 'react'
-import {SearchContainer, SearchInput, SearchResult, SearchResults} from './search-styles'
+import {type ChangeEvent, useEffect, useRef, useState, useTransition} from 'react'
+import {SearchContainer, SearchInput, SearchResult, SearchResults, ResultMatch, ResultSource, ResultTimestamp} from './search-styles'
+import {Results} from './results'
+import deepEqual from 'fast-deep-equal'
 
 
 export function Search() {
   const [search, setSearch] = useState<string>('')
   const [searchTransitioning, searchTransition] = useTransition()
+  const searchBox = useRef<HTMLInputElement>(null)
+  const [boxRect, setBoxRect] = useState<DOMRect | null>(null)
 
   const handleSearch = debounce((e: ChangeEvent<HTMLInputElement>) => {
     searchTransition(() => {
@@ -33,36 +37,47 @@ export function Search() {
     window.location.href = nextURL
   }
 
+  useEffect(() => {
+    if (searchBox.current) {
+      const nextBox = searchBox.current.getBoundingClientRect().toJSON()
+      if (!deepEqual(nextBox, boxRect)) {
+        setBoxRect(nextBox)
+      }
+    }
+  })
+
   const neo4jResults = useNeo4jTranscript(search, 'transcript_search')
 
   return (
     <SearchContainer className='search-container'>
-      <SearchInput type='search' onChange={handleSearch} />
-      <SearchResults>
-        {
-          !searchTransitioning && neo4jResults.map(result => (
-            <SearchResult key={`${result.meta.properties.startTime}-${result.artefact.properties.uid}`} onClick={() => handleResultClick(result)}>
-              <div>
-                {result.statement.properties.text}
-              </div>
-              <div>
-                <strong>
-                  {
-                    isDocumentary(result.artefact)
-                      ? result.artefact.properties.title
-                      : isInterview(result.artefact)
-                        ? result.person.properties.name
-                        : isLeaflet(result.artefact)
-                          ? result.artefact.properties.title
-                          : ''
-                  }
-                </strong>
-              </div>
-              <aside>{result.meta.properties.startTimestamp}</aside>
-            </SearchResult>
-          ))
-        }
-      </SearchResults>
+      <SearchInput ref={searchBox} type='search' onChange={handleSearch} />
+      <Results {...boxRect}>
+        <SearchResults>
+          {
+            !searchTransitioning && neo4jResults.map(result => (
+              <SearchResult key={`${result.meta.properties.startTime}-${result.artefact.properties.uid}`} onClick={() => handleResultClick(result)}>
+                <ResultMatch>
+                  {result.statement.properties.text}
+                </ResultMatch>
+                <ResultSource>
+                  <strong>
+                    {
+                      isDocumentary(result.artefact)
+                        ? result.artefact.properties.title
+                        : isInterview(result.artefact)
+                          ? result.person.properties.name
+                          : isLeaflet(result.artefact)
+                            ? result.artefact.properties.title
+                            : ''
+                    }
+                  </strong>
+                </ResultSource>
+                <ResultTimestamp>{result.meta.properties.startTimestamp}</ResultTimestamp>
+              </SearchResult>
+            ))
+          }
+        </SearchResults>
+      </Results>
     </SearchContainer>
   )
 }
