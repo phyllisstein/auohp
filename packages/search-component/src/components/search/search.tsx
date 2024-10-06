@@ -1,11 +1,8 @@
+import {type Documentary, type Interview, type Leaflet, type Neo4jResult, type Propertized, useNeo4jTranscript} from 'hooks/interviews'
+import {debounce} from 'lodash-es'
 import queryString from 'query-string'
 import {type ChangeEvent, useState, useTransition} from 'react'
-import {debounce} from 'lodash-es'
-
-import {type Neo4jResult, type Documentary, type Interview, type Leaflet, useNeo4jTranscript} from 'hooks/interviews'
-
-import type {Propertized} from 'hooks/interviews'
-import './search.scss'
+import {SearchContainer, SearchInput, SearchResult, SearchResults} from './search-styles'
 
 function isDocumentary(artefact: Propertized<Documentary> | Propertized<Interview> | Propertized<Leaflet>): artefact is Propertized<Documentary> {
   return Array.isArray(artefact.labels) && artefact.labels.includes('Documentary')
@@ -50,29 +47,33 @@ export function Search() {
   const neo4jResults = useNeo4jTranscript(search, 'transcript_search')
 
   return (
-    <div className='search-container'>
-      <input type='search' onChange={handleSearch} />
-      <div>
+    <SearchContainer className='search-container'>
+      <SearchInput type='search' onChange={handleSearch} />
+      <SearchResults>
         {
           !searchTransitioning && neo4jResults.map(result => (
-            <div key={`${result.meta.properties.startTime}-${result.artefact.properties.uid}`} onClick={() => handleResultClick(result)}>
-              <h3>{result.statement.properties.text}</h3>
-              <p>
-                {
-                  isDocumentary(result.artefact)
-                    ? result.artefact.properties.title
-                    : isInterview(result.artefact)
-                      ? result.person.properties.name
-                      : isLeaflet(result.artefact)
-                        ? result.artefact.properties.title
-                        : ''
-                }
-              </p>
+            <SearchResult key={`${result.meta.properties.startTime}-${result.artefact.properties.uid}`} onClick={() => handleResultClick(result)}>
+              <div>
+                {result.statement.properties.text}
+              </div>
+              <div>
+                <strong>
+                  {
+                    isDocumentary(result.artefact)
+                      ? result.artefact.properties.title
+                      : isInterview(result.artefact)
+                        ? result.person.properties.name
+                        : isLeaflet(result.artefact)
+                          ? result.artefact.properties.title
+                          : ''
+                  }
+                </strong>
+              </div>
               <aside>{result.meta.properties.startTimestamp}</aside>
-            </div>
+            </SearchResult>
           ))
         }
-      </div>
-    </div>
+      </SearchResults>
+    </SearchContainer>
   )
 }
