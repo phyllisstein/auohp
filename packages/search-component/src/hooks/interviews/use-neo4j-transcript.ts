@@ -1,59 +1,6 @@
 import {useEffect, useState} from 'react'
-
 import {useNeo4j} from 'hooks/infrastructure'
-
-export type Propertized<T> = {properties: T, labels: string[]}
-
-
-export interface Person {
-  name: string
-  uid: string
-}
-
-export interface Statement {
-  text: string
-}
-
-export interface Interview {
-  number: number
-  uid: string
-}
-
-export interface Documentary {
-  date: string
-  title: string
-  uid: string
-  slug: string
-}
-
-export interface Video {
-  url: string
-  uid: string
-}
-
-export interface Leaflet {
-  title: string
-  uid: string
-}
-
-interface Asset {
-  url: string
-}
-
-export interface Neo4jResult {
-  person?: Propertized<Person>
-  meta: Propertized<SaysEdge>
-  statement: Propertized<Statement>
-  artefact: Propertized<Documentary> | Propertized<Interview> | Propertized<Leaflet>
-  asset?: Propertized<Asset>
-}
-
-interface SaysEdge {
-  startTimestamp: string
-  endTimestamp: string
-  startTime: number
-  endTime: number
-}
+import type {Neo4jResult} from './types'
 
 export function useNeo4jTranscript(query: string, index: string): Neo4jResult[] {
   const driver = useNeo4j()

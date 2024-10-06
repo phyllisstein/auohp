@@ -1,20 +1,9 @@
-import {type Documentary, type Interview, type Leaflet, type Neo4jResult, type Propertized, useNeo4jTranscript} from 'hooks/interviews'
+import {type Neo4jResult, isDocumentary, isInterview, isLeaflet, useNeo4jTranscript} from 'hooks/interviews'
 import {debounce} from 'lodash-es'
 import queryString from 'query-string'
 import {type ChangeEvent, useState, useTransition} from 'react'
 import {SearchContainer, SearchInput, SearchResult, SearchResults} from './search-styles'
 
-function isDocumentary(artefact: Propertized<Documentary> | Propertized<Interview> | Propertized<Leaflet>): artefact is Propertized<Documentary> {
-  return Array.isArray(artefact.labels) && artefact.labels.includes('Documentary')
-}
-
-function isInterview(artefact: Propertized<Documentary> | Propertized<Interview> | Propertized<Leaflet>): artefact is Propertized<Interview> {
-  return Array.isArray(artefact.labels) && artefact.labels.includes('Interview')
-}
-
-function isLeaflet(artefact: Propertized<Documentary> | Propertized<Interview> | Propertized<Leaflet>): artefact is Propertized<Leaflet> {
-  return Array.isArray(artefact.labels) && artefact.labels.includes('Leaflet')
-}
 
 export function Search() {
   const [search, setSearch] = useState<string>('')
