@@ -71,7 +71,7 @@ def caption(input_file):
 
 @click.command()
 def models():
-    whisperx.load_model("large-v3", device=device, compute_type=compute_type, download_root=MODELS, language="en")
+    whisperx.load_model("large-v3-turbo", device=device, compute_type=compute_type, download_root=MODELS, language="en")
     whisperx.load_align_model(language_code="en", device=device, model_dir=MODELS, model_name="facebook/wav2vec2-base-960h")
     whisperx.DiarizationPipeline("pyannote/speaker-diarization-3.1", use_auth_token="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", device=device)
     if not spacy.util.is_package("en_core_web_sm"):
