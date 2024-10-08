@@ -1,0 +1,2 @@
+{:paths ["src" "resources"]
+ :deps {io.github.ggerganov/whispercpp             {:mvn/version "1.4.0"}}}
