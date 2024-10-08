@@ -1,6 +1,22 @@
 # File created using '.gitignore Generator' for Visual Studio Code: https://bit.ly/vscode-gig
-# Created by https://www.toptal.com/developers/gitignore/api/yarn,visualstudiocode,vim,svelte,sublimetext,nova,node,macos,jetbrains,git,dotenv,direnv,python
-# Edit at https://www.toptal.com/developers/gitignore?templates=yarn,visualstudiocode,vim,svelte,sublimetext,nova,node,macos,jetbrains,git,dotenv,direnv,python
+# Created by https://www.toptal.com/developers/gitignore/api/yarn,visualstudiocode,vim,svelte,sublimetext,python,nova,node,macos,jetbrains,git,dotenv,direnv,clojure,leiningen
+# Edit at https://www.toptal.com/developers/gitignore?templates=yarn,visualstudiocode,vim,svelte,sublimetext,python,nova,node,macos,jetbrains,git,dotenv,direnv,clojure,leiningen
+
+### Clojure ###
+pom.xml
+pom.xml.asc
+*.jar
+*.class
+/lib/
+/classes/
+/target/
+/checkouts/
+.lein-deps-sum
+.lein-repl-history
+.lein-plugins/
+.lein-failures
+.nrepl-port
+.cpcache/
 
 ### direnv ###
 .direnv
@@ -137,6 +153,8 @@ fabric.properties
 # https://plugins.jetbrains.com/plugin/8053-azure-toolkit-for-intellij
 .idea/**/azureSettings.xml
 
+### Leiningen ###
+
 ### macOS ###
 # General
 .DS_Store
@@ -144,8 +162,7 @@ fabric.properties
 .LSOverride
 
 # Icon must end with two \r
-Icon
-
+Icon
 
 # Thumbnails
 ._*
@@ -578,9 +595,10 @@ tags
 # and uncomment the following lines
 # .pnp.*
 
-# End of https://www.toptal.com/developers/gitignore/api/yarn,visualstudiocode,vim,svelte,sublimetext,nova,node,macos,jetbrains,git,dotenv,direnv,python
+# End of https://www.toptal.com/developers/gitignore/api/yarn,visualstudiocode,vim,svelte,sublimetext,python,nova,node,macos,jetbrains,git,dotenv,direnv,clojure,leiningen
 
 # Custom rules (everything added below won't be overriden by 'Generate .gitignore File' if you use 'Update' option)
+
 .yarn/cache
 
 **/secrets/*

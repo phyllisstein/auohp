@@ -15,6 +15,10 @@
     {
       "name": "🧩 @auohp/search-component",
       "path": "packages/search-component"
+    },
+    {
+      "name": "🌐 @auohp/whisper-clj-app",
+      "path": "packages/whisper-clj-app"
     }
   ],
   "settings": {
