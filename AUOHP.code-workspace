@@ -76,6 +76,12 @@
     },
     "[nginx]": {
       "editor.defaultFormatter": "ahmadalli.vscode-nginx-conf"
+    },
+    "[clojure]": {
+      "editor.defaultFormatter": "betterthantomorrow.calva",
+      "editor.formatOnSave": true,
+      "editor.formatOnPaste": true,
+      "editor.formatOnType": true
     }
   }
 }
