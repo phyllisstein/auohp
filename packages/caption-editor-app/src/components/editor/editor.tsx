@@ -1,8 +1,7 @@
 'use client'
 
-import {debounce} from 'lodash-es'
 import * as R from 'ramda'
-import {Children, useEffect, useMemo} from 'react'
+import {useEffect, useMemo} from 'react'
 import {createEditor, type Descendant, Path} from 'slate'
 import {withHistory} from 'slate-history'
 import {
@@ -10,7 +9,7 @@ import {
   Slate,
   withReact,
 } from 'slate-react'
-import {Segment as StyledSegment} from './page-styles'
+import {Statement} from './statement'
 
 const EMPTY: Descendant[] = [{
   children: [
@@ -28,31 +27,13 @@ const EMPTY: Descendant[] = [{
       startTime: 97.93,
       type: 'segment',
       speaker: 'SPEAKER_01',
-      content: '',
+      transcription: '',
+      uid: '0',
     },
   ],
   type: 'transcript',
 }]
 
-const Statement = ({attributes, element, children}) => {
-  return (
-    <StyledSegment {...attributes} data-testid='statement'>
-      <div contentEditable={false} style={{gridRow: '1 / -1', gridColumn: '1'}}>
-        <span style={{fontWeight: 'bold'}}>{element.speaker}</span>
-      </div>
-      <div contentEditable={false} style={{gridRow: '1', gridColumn: '2'}}>
-        <span>{element.startTimestamp}</span>
-                &nbsp;&ndash;&nbsp;
-        <span>{element.endTimestamp}</span>
-      </div>
-      <div style={{gridRow: '2 / -1', gridColumn: '2 / -1'}}>
-        {
-          children
-        }
-      </div>
-    </StyledSegment>
-  )
-}
 
 const Element = props => {
   const {attributes, children, element} = props
@@ -96,10 +77,14 @@ export function Editor({initialContent = EMPTY, editorTranscript}) {
   }, [editorTranscript])
 
   const handleEdit = async value => {
+    console.log({operations: editor.operations})
+
     const changes = editor.operations.filter(
       op => 'set_selection' !== op.type,
     )
     if (R.isEmpty(changes)) return
+
+    // TODO: Handle and batch multiple changes
     if (changes.length > 1) {
       return
     }
