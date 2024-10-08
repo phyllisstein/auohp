@@ -113,6 +113,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@auohp/whisper-clj-app@workspace:packages/whisper-clj-app":
+  version: 0.0.0-use.local
+  resolution: "@auohp/whisper-clj-app@workspace:packages/whisper-clj-app"
+  languageName: unknown
+  linkType: soft
+
 "@aws-crypto/crc32@npm:5.2.0":
   version: 5.2.0
   resolution: "@aws-crypto/crc32@npm:5.2.0"
