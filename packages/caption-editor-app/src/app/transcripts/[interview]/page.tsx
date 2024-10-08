@@ -1,5 +1,5 @@
-import {Editor} from './editor'
-import {Container, Video, VideoColumn} from './page-styles'
+import {Editor} from 'components/editor'
+import {Container, PlayerColumn} from './page.styles'
 
 interface Params {
   params: {
@@ -28,9 +28,9 @@ export default async function Page({params}: Params) {
   return (
     <Container>
       <Editor editorTranscript={transcript} />
-      <VideoColumn>
-        <Video />
-      </VideoColumn>
+      <PlayerColumn>
+        <div />
+      </PlayerColumn>
     </Container>
   )
 }
