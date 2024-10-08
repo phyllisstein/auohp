@@ -1,5 +1,6 @@
 services:
   app:
+    init: true
     networks:
       - default
       - nginx-proxy
@@ -29,6 +30,7 @@ services:
         source: node_modules
         target: /app/node_modules
   neo4j:
+    init: true
     networks:
         - default
         - nginx-proxy
