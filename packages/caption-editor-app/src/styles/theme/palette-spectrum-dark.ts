@@ -1,8 +1,5 @@
-import {formatCss, toGamut} from 'culori'
+import {rgbToP3} from './palette-coloring'
 import * as R from 'ramda'
-
-// @ts-expect-error
-const toP3 = toGamut('p3')
 
 const rgb = {
   gray50: 'rgb(29, 29, 29)',
@@ -200,9 +197,9 @@ const rgb = {
   magenta1400: 'rgb(255, 252, 253)',
 }
 
-const format = R.pipe(
-  toP3,
-  formatCss,
-)
+export type RGBPalette = typeof rgb
+export type P3Palatte = {[key in keyof RGBPalette]: string}
 
-export const paletteDark = R.map(format, rgb)
+const p3: P3Palatte = R.map(rgbToP3, rgb) as P3Palatte
+
+export default p3
