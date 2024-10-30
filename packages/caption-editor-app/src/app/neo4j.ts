@@ -1,4 +1,5 @@
 'use server'
+import {lightFormat} from 'date-fns'
 
 import neo4j, {type Driver, int} from 'neo4j-driver'
 import * as R from 'ramda'
@@ -22,6 +23,13 @@ export interface Neo4jResult {
   children: TranscriptChild[]
 }
 
+export interface Interview {
+  number: number
+  uid: string
+  date: Date
+  title: string
+}
+
 const NEO4J_URI = process?.env?.NEO4J_URI || 'neo4j://neo4j:7687'
 const NEO4J_USER = process?.env?.NEO4J_USER || 'neo4j'
 const NEO4J_PASSWORD = process?.env?.NEO4J_PASSWORD || 'auohpauohp'
@@ -32,10 +40,6 @@ export async function connect(
   username: string = NEO4J_USER,
   password: string = NEO4J_PASSWORD,
 ): Promise<Driver> {
-  if (driver) {
-    return driver
-  }
-
   driver = neo4j.driver(
     uri,
     neo4j.auth.basic(username, password),
@@ -197,5 +201,32 @@ export async function getInterviewTranscript(interviewNumber: number): Promise<N
   } catch (err) {
     console.error(err)
     throw new Error('Failed to get transcript')
+  }
+}
+
+export async function listInterviews(): Promise<Transcript[]> {
+  const driver = await connect()
+
+  try {
+    const result = await driver.executeQuery(`
+      MATCH (interview:Interview)
+      RETURN interview
+    `)
+
+    return result.records.map(record => {
+      const interview = record.get('interview')
+      return {
+        number: interview.properties.number,
+        uid: interview.properties.uid,
+        date: lightFormat(
+          interview.properties.date.toStandardDate(),
+          'yyyy-MM-dd',
+        ),
+        title: interview.properties.title,
+      }
+    }).sort((a, b) => a.date.localeCompare(b.date))
+  } catch (err) {
+    console.error(err)
+    throw new Error('Failed to list interviews')
   }
 }
