@@ -8,26 +8,17 @@ services:
     expose:
       - '3030'
       - '4040'
-    ports:
-      - '3030:3030'
-      - '4040:4040'
-    network_mode: host
     volumes:
       - type: bind
         source: .
         target: /app
-      - type: volume
-        source: node_modules
-        target: /app/node_modules
   nginx:
+    depends_on: [app]
     build:
       context: ./scripts/nginx
     ports:
       - '80:80'
       - '443:443'
-    network_mode: host
-volumes:
-  node_modules:
 secrets:
   environment:
     file: .env
