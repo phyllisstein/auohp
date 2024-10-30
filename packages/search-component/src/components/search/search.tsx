@@ -46,7 +46,7 @@ export function Search() {
     }
   })
 
-  const neo4jResults = useNeo4jTranscript(search, 'transcript_search')
+  const neo4jResults = useNeo4jTranscript(search)
 
   return (
     <SearchContainer className='search-container'>

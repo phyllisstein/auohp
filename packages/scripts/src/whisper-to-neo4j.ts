@@ -2,6 +2,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import {fileURLToPath} from 'node:url'
 
+import * as R from 'ramda'
 import {nanoid} from 'nanoid'
 import neo4j, {type EagerResult, int} from 'neo4j-driver'
 import {stripIndent} from 'common-tags'
@@ -12,27 +13,29 @@ const __dirname = path.dirname(__filename)
 
 
 const NEO4J_LABELS = [
+  'Broadsheet',
   'Documentary',
   'Interview',
-  'Leaflet',
   'Person',
   'Speaker',
   'Statement',
   'Transcript',
-  'VTT',
   'Video',
+  'VTT',
 ]
 
 const {
   NEO4J_PASSWORD,
   NEO4J_URI,
   NEO4J_USERNAME,
+  OPENAI_API_KEY,
 } = process.env
 const neo4jDriver = neo4j.driver(
   NEO4J_URI,
   neo4j.auth.basic(NEO4J_USERNAME, NEO4J_PASSWORD),
   {
     disableLosslessIntegers: true,
+    connectionTimeout: 2500,
   },
 )
 
@@ -53,29 +56,29 @@ async function seedInterview({data, date, interviewee, interviewNumber, jsonCapt
   await neo4jDriver.executeQuery(
     // language=Cypher
     `
-            MATCH (jim:Person {name: 'Jim Hubbard'})
-            MATCH (sarah:Person {name: 'Sarah Schulman'})
-            WITH jim, sarah
-            CREATE (i:Interview {number: $interviewNumber, date: date($date), uid: $interviewUID, title: $interviewee})
-            CREATE (video:Video:Asset {url: $videoURL, uid: $videoUID})
-            CREATE (vtt:VTT:Caption {text: $vtt, url: $vttURL, uid: $vttUID})
-            CREATE (json:JSON:Caption {text: $jsonCaption, url: $jsonCaptionURL, uid: $jsonCaptionUID})
-            CREATE (transcript:Transcript {uid: $transcriptUID})
-            CREATE (interviewee:Person {name: $interviewee, uid: $intervieweeUID})
-            CREATE (sarahSpeaker:Speaker:Interviewer {label: $speakers.sarah})
-            CREATE (jimSpeaker:Speaker:Interviewer {label: $speakers.jim})
-            CREATE (intervieweeSpeaker:Speaker:Interviewee {label: $speakers.interviewee})
-            MERGE (interviewee)-[:INTERVIEWED_AS]->(intervieweeSpeaker)
-            MERGE (jim)-[:INTERVIEWED_AS]->(jimSpeaker)
-            MERGE (sarah)-[:INTERVIEWED_AS]->(sarahSpeaker)
-            CREATE (transcript)-[:INCLUDES_SPEAKER]->(intervieweeSpeaker)
-            CREATE (transcript)-[:INCLUDES_SPEAKER]->(jimSpeaker)
-            CREATE (transcript)-[:INCLUDES_SPEAKER]->(sarahSpeaker)
-            CREATE (i)-[:HAS_ASSET]->(video)
-            CREATE (video)-[:HAS_CAPTIONS]->(vtt)
-            CREATE (video)-[:HAS_CAPTIONS]->(json)
-            CREATE (i)-[:HAS_TRANSCRIPT]->(transcript)
-        `, {
+      MATCH (jim:Person {name: 'Jim Hubbard'})
+      MATCH (sarah:Person {name: 'Sarah Schulman'})
+      WITH jim, sarah
+      CREATE (i:Interview {number: $interviewNumber, date: date($date), uid: $interviewUID, title: $interviewee})
+      CREATE (video:Video:Asset {url: $videoURL, uid: $videoUID})
+      CREATE (vtt:VTT:Caption {text: $vtt, url: $vttURL, uid: $vttUID})
+      CREATE (json:JSON:Caption {text: $jsonCaption, url: $jsonCaptionURL, uid: $jsonCaptionUID})
+      CREATE (transcript:Transcript {uid: $transcriptUID})
+      CREATE (interviewee:Person {name: $interviewee, uid: $intervieweeUID})
+      CREATE (sarahSpeaker:Speaker:Interviewer {label: $speakers.sarah})
+      CREATE (jimSpeaker:Speaker:Interviewer {label: $speakers.jim})
+      CREATE (intervieweeSpeaker:Speaker:Interviewee {label: $speakers.interviewee})
+      MERGE (interviewee)-[:INTERVIEWED_AS]->(intervieweeSpeaker)
+      MERGE (jim)-[:INTERVIEWED_AS]->(jimSpeaker)
+      MERGE (sarah)-[:INTERVIEWED_AS]->(sarahSpeaker)
+      CREATE (transcript)-[:INCLUDES_SPEAKER]->(intervieweeSpeaker)
+      CREATE (transcript)-[:INCLUDES_SPEAKER]->(jimSpeaker)
+      CREATE (transcript)-[:INCLUDES_SPEAKER]->(sarahSpeaker)
+      CREATE (i)-[:HAS_ASSET]->(video)
+      CREATE (video)-[:HAS_CAPTIONS]->(vtt)
+      CREATE (video)-[:HAS_CAPTIONS]->(json)
+      CREATE (i)-[:HAS_TRANSCRIPT]->(transcript)
+    `, {
       date,
       interviewNumber: int(interviewNumber),
       transcriptUID: nanoid(),
@@ -410,7 +413,7 @@ async function seedAllInterviews() {
 }
 
 async function seedStopChurch() {
-  const leafletUID = nanoid()
+  const broadsheetUID = nanoid()
   const stopChurchUID = nanoid()
   const transcriptUID = nanoid()
 
@@ -418,29 +421,30 @@ async function seedStopChurch() {
     // language=Cypher
     `
       CREATE (stopChurch:Action {uid: $stopChurchUID, name: $stopChurchName, date: date($stopChurchDate)})
-      CREATE (leaflet:Leaflet {uid: $leafletUID, title: $leafletTitle})
-      CREATE (stopChurch)-[:HAS_LEAFLET]->(leaflet)-[:HAS_ASSET]->(image:Image:Asset {url: $imageURL})
-      CREATE (leaflet)-[:MENTIONS]->(stopChurch)
-      RETURN stopChurch, leaflet
+      CREATE (broadsheet:Broadsheet {uid: $broadsheetUID, title: $broadsheetTitle})
+      CREATE (broadsheet)-[:HAS_ASSET]->(image:Image:Asset {url: $imageURL})
+      CREATE (broadsheet)-[:MENTIONS]->(stopChurch)
+      CREATE (stopChurch)-[:HAS_BROADSHEET]->(broadsheet)
+      RETURN stopChurch, broadsheet
     `, {
       imageURL: 'https://dyck.mobi/auohp/stopchurch-gigapixel-recovery-quality-4x.png',
       stopChurchDate: '1989-12-10',
       stopChurchName: 'Stop the Church',
       stopChurchUID,
-      leafletUID,
-      leafletTitle: 'Stop This Man',
+      broadsheetUID,
+      broadsheetTitle: 'Stop This Man',
     },
   )
 
   await neo4jDriver.executeQuery(
     // language=Cypher
     `
-      MATCH (leaflet:Leaflet {uid: $leafletUID})
-      CREATE (leaflet)-[:HAS_TRANSCRIPT]->(transcript:Transcript {uid: $transcriptUID})
+      MATCH (broadsheet:Broadsheet {uid: $broadsheetUID})
+      CREATE (broadsheet)-[:HAS_TRANSCRIPT]->(transcript:Transcript {uid: $transcriptUID})
       CREATE (transcript)-[:TRANSCRIBES]->(statement:Statement {text: $transcription, uid: $statementUID})
       RETURN statement
     `, {
-      leafletUID,
+      broadsheetUID,
       transcriptUID,
       transcription: stripIndent`
         STOP THE CHURCH
@@ -565,8 +569,7 @@ async function seedAshesAction() {
       CREATE (aa:Action {uid: $actionUID, name: $actionName, date: date($actionDate)})
       CREATE (aa)-[:HAS_DOCUMENTARY]->(doc)
       CREATE (doc)-[:MENTIONS]->(aa)
-    `,
-    {
+    `, {
       documentaryUID,
       actionUID,
       actionName: 'The Ashes Action',
@@ -577,35 +580,34 @@ async function seedAshesAction() {
   await neo4jDriver.executeQuery(
     // language=Cypher
     `
-        MATCH (aa:Action {uid: $actionUID})
-        MATCH (gf:Collective {name: 'Gran Fury'})
-        CREATE (leaflet:Leaflet {uid: $leafletUID, title: $leafletTitle})-[:MENTIONS]->(aa)
-        CREATE (aa)-[:HAS_LEAFLET]->(leaflet)
-        CREATE (leaflet)-[:HAS_ASSET]->(image:Image:Asset {url: $imageURL, uid: $imageUID})
-        CREATE (leaflet)-[:HAS_TRANSCRIPT]->(transcript:Transcript {uid: $transcriptUID})
-        CREATE (transcript)-[:TRANSCRIBES]->(statement:Statement {text: $transcription, uid: $statementUID})
-        CREATE (gf)-[:DESIGNS]->(leaflet)
-      `,
-    {
+      MATCH (aa:Action {uid: $actionUID})
+      MATCH (gf:Collective {name: 'Gran Fury'})
+      CREATE (broadsheet:Broadsheet {uid: $broadsheetUID, title: $broadsheetTitle})-[:MENTIONS]->(aa)
+      CREATE (aa)-[:HAS_BROADSHEET]->(broadsheet)
+      CREATE (broadsheet)-[:HAS_ASSET]->(image:Image:Asset {url: $imageURL, uid: $imageUID})
+      CREATE (broadsheet)-[:HAS_TRANSCRIPT]->(transcript:Transcript {uid: $transcriptUID})
+      CREATE (transcript)-[:TRANSCRIBES]->(statement:Statement {text: $transcription, uid: $statementUID})
+      CREATE (gf)-[:DESIGNS]->(broadsheet)
+    `, {
       actionUID,
-      leafletUID: nanoid(),
+      broadsheetUID: nanoid(),
       imageURL: 'https://dyck.mobi/auohp/synAshes_flyer-gigapixel-recovery-quality-4x-fs8.png',
-      leafletTitle: 'White House Urn Text',
+      broadsheetTitle: 'White House Urn',
       imageUID: nanoid(),
       transcriptUID: nanoid(),
       transcription: stripIndent`
-          You have lost someone to AIDS. For more than a decade, your government has
-          mocked your loss. You have spoken out in anger, joined political protests,
-          carried fake coffins and mock tombstones, and splattered red paint to represent
-          someone's HIV-positive blood, perhaps your own. George Bush believes that the
-          White House gates shield him, from you, your loss, and his responsibility for
-          the AIDS crisis. Now it is time to bring AIDS home to George Bush. On October
-          11th, we will carry the actual ashes of people we love in funeral procession to
-          the White House. In an act of grief and rage and love, we will deposit their
-          ashes on the White House lawn.
+        You have lost someone to AIDS. For more than a decade, your government has
+        mocked your loss. You have spoken out in anger, joined political protests,
+        carried fake coffins and mock tombstones, and splattered red paint to represent
+        someone's HIV-positive blood, perhaps your own. George Bush believes that the
+        White House gates shield him, from you, your loss, and his responsibility for
+        the AIDS crisis. Now it is time to bring AIDS home to George Bush. On October
+        11th, we will carry the actual ashes of people we love in funeral procession to
+        the White House. In an act of grief and rage and love, we will deposit their
+        ashes on the White House lawn.
 
-          Join us to protest twelve years of genocidal AIDS policy.
-        `,
+        Join us to protest twelve years of genocidal AIDS policy.
+      `,
       statementUID: nanoid(),
     },
   )
@@ -627,6 +629,51 @@ async function seedDemoEdges() {
   )
 }
 
+async function seedVectorIndex() {
+  const BATCH_SIZE = 100
+  let batch = []
+  const importBatch = async () => {
+    const toEncode = R.pluck('text', batch)
+    await neo4jDriver.executeQuery(
+      // language=Cypher
+      `
+        CALL genai.vector.encodeBatch($toEncode, 'OpenAI', {token: $token}) YIELD index, vector
+        MATCH (s:Statement {uid: $batch[index].uid})
+        CALL db.create.setNodeVectorProperty(s, 'embedding', vector)
+        `, {toEncode, batch, token: OPENAI_API_KEY},
+    )
+  }
+
+  const statements = await neo4jDriver.executeQuery(`
+    MATCH (s:Statement)
+    RETURN s.uid AS uid, s.text AS text
+  `)
+
+  for (const statement of statements.records) {
+    const {uid, text} = statement.toObject()
+    batch.push({uid, text})
+    if (batch.length === BATCH_SIZE) {
+      await importBatch()
+      batch = []
+    }
+  }
+  if (batch.length) {
+    await importBatch()
+  }
+
+  await neo4jDriver.executeQuery(
+    // language=Cypher
+    `
+      CREATE VECTOR INDEX statement_embedding IF NOT EXISTS
+      FOR (s:Statement) ON s.embedding
+      OPTIONS {indexConfig: {
+        \`vector.dimensions\`: 1536,
+        \`vector.similarity_function\`: 'cosine'
+      }}
+    `,
+  )
+}
+
 async function main() {
   await bootstrap()
 
@@ -634,6 +681,7 @@ async function main() {
   await seedAshesAction()
   await seedStopChurch()
   await seedDemoEdges()
+  await seedVectorIndex()
 
   await neo4jDriver.close()
 }
