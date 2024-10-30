@@ -6,6 +6,7 @@ import * as R from 'ramda'
 import {nanoid} from 'nanoid'
 import neo4j, {type EagerResult, int} from 'neo4j-driver'
 import {stripIndent} from 'common-tags'
+import delay from 'delay'
 
 
 const __filename = fileURLToPath(import.meta.url)
@@ -101,32 +102,49 @@ async function seedInterview({data, date, interviewee, interviewNumber, jsonCapt
     },
   )
 
-  for await (const chunk of data) {
-    let result: EagerResult
+  const BATCH_SIZE = 100
+  let batch = []
+  let batchIndex = 0
+
+  const importBatch = async () => {
+    batchIndex++
+
     try {
-      result = await neo4jDriver.executeQuery(
+      await neo4jDriver.executeQuery(
         // language=Cypher
         `
-          MATCH (interview:Interview {number: $interviewNumber})-[:HAS_TRANSCRIPT]-> (transcript)
-          MATCH (transcript) -[:INCLUDES_SPEAKER]-> (speaker:Speaker {label: $speaker})
-          CREATE (transcript)-[:TRANSCRIBES {startTime: $startTime, endTime: $endTime, startTimestamp: $startTimestamp, endTimestamp: $endTimestamp}]->(statement:Statement {text: $transcription, uid: $statementUID})
+          UNWIND $batch AS chunk
+          MATCH (interview:Interview {number: chunk.interviewNumber})-[:HAS_TRANSCRIPT]-> (transcript)
+          MATCH (transcript) -[:INCLUDES_SPEAKER]-> (speaker:Speaker {label: chunk.speaker})
+          CREATE (transcript)-[:TRANSCRIBES {startTime: chunk.startTime, endTime: chunk.endTime, startTimestamp: chunk.startTimestamp, endTimestamp: chunk.endTimestamp}]->(statement:Statement {text: chunk.transcription, uid: chunk.statementUID})
           CREATE (speaker) -[:SAYS]-> (statement)
           RETURN statement
-      `, {
-          ...chunk,
-          speaker: chunk.speaker || speakers.interviewee,
-          interviewNumber: int(interviewNumber),
-          statementUID: nanoid(),
-        },
-      )
+      `, {batch})
     } catch (error) {
       console.error(`
-        Could not create node for segment starting ${chunk.startTime} in interview
-        ${interviewNumber} for speaker ${chunk.speaker}.
+        Could not create batch number ${batchIndex} for interview number ${interviewNumber}.
 
-        ${error.message}
+        Error: ${error}
       `)
     }
+  }
+
+  for await (const chunk of data) {
+    batch.push({
+      ...chunk,
+      speaker: chunk.speaker || speakers.interviewee,
+      interviewNumber: int(interviewNumber),
+      statementUID: nanoid(),
+    })
+
+    if (batch.length === BATCH_SIZE) {
+      await importBatch()
+      batch = []
+    }
+  }
+
+  if (batch.length) {
+    await importBatch()
   }
 }
 
@@ -538,6 +556,14 @@ async function seedAshesAction() {
     `, {speakers: Array.from(allSpeakers), documentaryUID, transcriptUID},
   )
 
+  await neo4jDriver.executeQuery(
+    `
+      MATCH (doc:Documentary {uid: $documentaryUID}) -[:HAS_TRANSCRIPT]-> (transcript) -[:INCLUDES_SPEAKER]-> (drSpeaker:Speaker {label: 'SPEAKER_02'})
+      MATCH (dr:Person {name: 'David Robinson'})
+      CREATE (dr)-[:INTERVIEWED_AS]->(drSpeaker)
+    `, {documentaryUID},
+  )
+
   for await (const chunk of data) {
     let result: EagerResult
     try {
@@ -617,14 +643,21 @@ async function seedDemoEdges() {
   await neo4jDriver.executeQuery(
     // language=Cypher
     `
-      MATCH (vince:Statement {text: 'Stop the church was a phrase that was met to a lot of objection.'}) <-[:TRANSCRIBES]- () <-[:HAS_TRANSCRIPT]- (a1),
-            (alexis:Statement {text: ' stop the church, for example.'}) <-[:TRANSCRIBES]- () <-[:HAS_TRANSCRIPT]- (a2),
-            (ashes:Statement {text: 'I want you to remember that stop the church is pretty easy to convince people about what an evil group of perverts we are, right?'}) <-[:TRANSCRIBES]- () <-[:HAS_TRANSCRIPT]- (a3),
-            (stt:Action {name: 'Stop the Church'})
-      CREATE (vince) -[:MENTIONS]-> (stt)
-      CREATE (alexis) -[:MENTIONS]-> (stt)
-      CREATE (ashes) -[:MENTIONS]-> (stt)
+      MATCH (stt:Action {name: 'Stop the Church'})
+      MERGE (vince:Statement {text: 'Stop the church was a phrase that was met to a lot of objection.'}) -[:MENTIONS]-> (stt),
+            (alexis:Statement {text: ' stop the church, for example.'}) -[:MENTIONS]-> (stt),
+            (ashes:Statement {text: 'I want you to remember that stop the church is pretty easy to convince people about what an evil group of perverts we are, right?'}) -[:MENTIONS]-> (stt)
       RETURN vince, alexis, ashes, stt
+    `,
+  )
+
+  await neo4jDriver.executeQuery(
+    // language=Cypher
+    `
+      MATCH (s:Statement {text: 'So we did the ashes action in October of 92.'}),
+            (a:Action {name: 'The Ashes Action'})
+      MERGE (s) -[:MENTIONS]-> (a)
+      RETURN s, a
     `,
   )
 }
