@@ -8,7 +8,8 @@ interface Params {
 }
 
 export async function GET(request: NextRequest, {params}: Params) {
-  const interviewId = Number.parseInt(params.interview)
+  const {interview} = await params
+  const interviewId = Number.parseInt(interview)
 
   if (!interviewId) {
     return new Response('Missing interview query parameter', {status: 400})

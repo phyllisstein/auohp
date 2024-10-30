@@ -11,7 +11,9 @@ export default async function Page({params}: Params) {
   async function fetchTranscript() {
     'use server'
 
-    return fetch(`http://127.0.0.1:3030/api/transcript/${params.interview}`)
+    const {interview} = await params
+
+    return fetch(`http://127.0.0.1:3030/api/transcript/${interview}`)
       .then(async response => {
         if (!response.ok) {
           console.error(response)

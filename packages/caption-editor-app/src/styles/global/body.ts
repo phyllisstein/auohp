@@ -40,6 +40,6 @@ export const Body = createGlobalStyle`
 
   body {
     color: ${({theme}) => theme.palette.gray900};
-    background-color: ${({theme}) => theme.palette.purple900} !important;
+    background-color: ${({theme}) => theme.palette.gray200} !important;
   }
 `
