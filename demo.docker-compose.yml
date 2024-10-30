@@ -26,28 +26,8 @@ services:
       - '80:80'
       - '443:443'
     network_mode: host
-  neo4j:
-    init: true
-    image: neo4j:5.24
-    environment:
-      NEO4J_AUTH: neo4j/auohpauohp
-      NEO4J_PLUGINS: '["apoc", "genai"]'
-      NEO4J_server_default__listen__address: '0.0.0.0'
-      NEO4J_server_jvm_additional: -Dapoc.ttl.enabled=true
-      NEO4J_dbms_security_procedures_unrestricted: apoc.*, genai.*
-      NEO4J_dbms_memory_heap_initial__size: 2G
-      NEO4J_dbms_memory_heap_max__size: 4G
-      NEO4J_dbms_memory_pagecache_size: 2G
-    ports:
-      - '7474:7474'
-      - '7687:7687'
-    volumes:
-      - type: volume
-        source: graph_data
-        target: /data
 volumes:
   node_modules:
-  graph_data:
 secrets:
   environment:
     file: .env
