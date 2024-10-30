@@ -2,12 +2,22 @@ import {useEffect, useState} from 'react'
 import {useNeo4j} from 'hooks/infrastructure'
 import type {Neo4jResult} from './types'
 
-export function useNeo4jTranscript(query: string, index: string): Neo4jResult[] {
+
+const {
+  VITE_OPENAI_API_KEY: OPENAI_API_KEY,
+} = import.meta.env
+
+
+export function useNeo4jTranscript(query: string): Neo4jResult[] {
   const driver = useNeo4j()
   const [searchResults, setSearchResults] = useState<Neo4jResult[]>([])
 
   useEffect(() => {
-    if (!driver || !index || !query) {
+    if (!OPENAI_API_KEY) {
+      throw new Error('Must provide an OpenAI API key')
+    }
+
+    if (!driver || !query) {
       setSearchResults([])
       return
     }
@@ -16,14 +26,14 @@ export function useNeo4jTranscript(query: string, index: string): Neo4jResult[] 
       const result = await driver.executeQuery(
         // language=Cypher
         `
-          CALL db.index.fulltext.queryNodes($index, $query) YIELD node AS statement, score
+          CALL genai.vector.encodeBatch([$query], 'OpenAI', {token: $token}) YIELD vector
+          CALL db.index.vector.queryNodes('statement_embedding', 15, vector) YIELD node AS statement
           MATCH (statement)<-[meta:TRANSCRIBES]-(transcript) <-[:HAS_TRANSCRIPT]- (artefact)
           OPTIONAL MATCH (person) -[:INTERVIEWED_AS]-> (speaker) -[:SAYS]-> (statement)
           WHERE speaker:Interviewee
           OPTIONAL MATCH (artefact) -[:HAS_ASSET]-> (asset)
-          RETURN statement, meta, person, speaker, asset, artefact, score
-          ORDER BY score DESC
-        `, {index, query})
+          RETURN statement, meta, person, speaker, asset, artefact
+        `, {query, token: OPENAI_API_KEY})
 
       const searchResults = result.records.map(record => {
         return {
@@ -32,7 +42,6 @@ export function useNeo4jTranscript(query: string, index: string): Neo4jResult[] 
           person: record.get('person'),
           artefact: record.get('artefact'),
           asset: record.get('asset'),
-          score: record.get('score'),
         }
       }).filter(
         result =>
@@ -44,7 +53,7 @@ export function useNeo4jTranscript(query: string, index: string): Neo4jResult[] 
     }
 
     void search()
-  }, [query, index, driver])
+  }, [query, driver])
 
   return searchResults
 }
