@@ -52,10 +52,10 @@ async function main(fn = '') {
     const params = {
       ...BASE_PARAMS,
       Media: {
-        MediaFileUri: `s3://${BUCKET}/${file}.flac`,
+        MediaFileUri: `s3://${ BUCKET }/${ file }.flac`,
       },
-      OutputKey: `${file}.json`,
-      TranscriptionJobName: `${start}-${file}`,
+      OutputKey: `${ file }.json`,
+      TranscriptionJobName: `${ start }-${ file }`,
     }
 
     console.log('Starting transcription job for', file)

@@ -1,6 +1,6 @@
-import {useEffect, useState} from 'react'
-import {useNeo4j} from 'hooks/infrastructure'
-import type {Neo4jResult} from './types'
+import { useEffect, useState } from 'react'
+import { useNeo4j } from 'hooks/infrastructure'
+import type { Neo4jResult } from './types'
 
 
 const {
@@ -33,7 +33,7 @@ export function useNeo4jTranscript(query: string): Neo4jResult[] {
           WHERE speaker:Interviewee
           OPTIONAL MATCH (artefact) -[:HAS_ASSET]-> (asset)
           RETURN statement, meta, person, speaker, asset, artefact
-        `, {query, token: OPENAI_API_KEY})
+        `, { query, token: OPENAI_API_KEY })
 
       const searchResults = result.records.map(record => {
         return {

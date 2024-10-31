@@ -1,4 +1,4 @@
-import {listInterviews} from 'app/neo4j'
+import { listInterviews } from 'app/neo4j'
 
 export async function GET() {
   const interviews = await listInterviews()

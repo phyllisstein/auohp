@@ -5,12 +5,12 @@
 
 import * as fs from 'fs/promises'
 import path from 'path'
-import {fileURLToPath} from 'url'
+import { fileURLToPath } from 'url'
 
 import * as R from 'ramda'
 import round from 'lodash.round'
-import {nanoid} from 'nanoid'
-import neo4j, {type EagerResult, int} from 'neo4j-driver'
+import { nanoid } from 'nanoid'
+import neo4j, { type EagerResult, int } from 'neo4j-driver'
 
 const NEO4J_LABELS = [
   'Interview',
@@ -67,7 +67,7 @@ const neo4jDriver = neo4j.driver(
  * TODO: BBC has comprehensive guide to best practices:
  *     <https://www.bbc.co.uk/accessibility/forproducts/guides/subtitles/>
  */
-async function seed({data, date, interviewee, interviewNumber, speakers, videoURL}: any) {
+async function seed({ data, date, interviewee, interviewNumber, speakers, videoURL }: any) {
   if (
     !Array.isArray(data?.results?.speaker_labels?.segments)
     || data.results.speaker_labels.segments.length === 0
@@ -100,7 +100,7 @@ async function seed({data, date, interviewee, interviewNumber, speakers, videoUR
       intervieweeUID: nanoid(),
       interviewNumber: int(interviewNumber),
       interviewUID: nanoid(),
-      interviewURL: `/${interviewNumber}`,
+      interviewURL: `/${ interviewNumber }`,
       speakers,
       videoUID: nanoid(),
       videoURL,
@@ -161,9 +161,9 @@ async function seed({data, date, interviewee, interviewNumber, speakers, videoUR
     if (!result?.records?.length) {
       console.error(`
                 No records returned for segment:Could not create node for
-                segment starting ${segment.startTime} in interview
-                ${interviewNumber} for speaker ${segment.speaker}.\n\n\n
-                ${JSON.stringify(result, null, 2)}
+                segment starting ${ segment.startTime } in interview
+                ${ interviewNumber } for speaker ${ segment.speaker }.\n\n\n
+                ${ JSON.stringify(result, null, 2) }
             `)
     }
   }
@@ -198,10 +198,10 @@ async function bootstrap() {
     await neo4jDriver.executeQuery(
       // language=Cypher
       `
-                CREATE CONSTRAINT ${label}UID IF NOT EXISTS
-                FOR (n:${label}) REQUIRE n.uid IS UNIQUE
+                CREATE CONSTRAINT ${ label }UID IF NOT EXISTS
+                FOR (n:${ label }) REQUIRE n.uid IS UNIQUE
             `,
-      {label},
+      { label },
     )
   }
 
@@ -217,7 +217,7 @@ async function bootstrap() {
     `
             CREATE (jim:Person {name: 'Jim Hubbard', uid: $jimUID})
             CREATE (sarah:Person {name: 'Sarah Schulman', uid: $sarahUID})
-        `, {jimUID: nanoid(), sarahUID: nanoid()},
+        `, { jimUID: nanoid(), sarahUID: nanoid() },
   )
 }
 

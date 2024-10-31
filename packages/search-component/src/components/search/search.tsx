@@ -1,9 +1,9 @@
-import {type Neo4jResult, isDocumentary, isInterview, isLeaflet, useNeo4jTranscript} from 'hooks/interviews'
-import {debounce} from 'lodash-es'
+import { type Neo4jResult, isDocumentary, isInterview, isLeaflet, useNeo4jTranscript } from 'hooks/interviews'
+import { debounce } from 'lodash-es'
 import queryString from 'query-string'
-import {type ChangeEvent, useEffect, useRef, useState, useTransition} from 'react'
-import {SearchContainer, SearchInput, SearchResult, SearchResults, ResultMatch, ResultSource, ResultTimestamp} from './search-styles'
-import {Results} from './results'
+import { type ChangeEvent, useEffect, useRef, useState, useTransition } from 'react'
+import { SearchContainer, SearchInput, SearchResult, SearchResults, ResultMatch, ResultSource, ResultTimestamp } from './search-styles'
+import { Results } from './results'
 import deepEqual from 'fast-deep-equal'
 
 
@@ -21,11 +21,11 @@ export function Search() {
 
   const handleResultClick = (result: Neo4jResult) => {
     const url = isDocumentary(result.artefact)
-      ? `/${result.artefact.properties.slug}`
+      ? `/${ result.artefact.properties.slug }`
       : isInterview(result.artefact)
-        ? `/${result.artefact.properties.number}`
+        ? `/${ result.artefact.properties.number }`
         : isLeaflet(result.artefact)
-          ? `/${result.artefact.properties.title}`
+          ? `/${ result.artefact.properties.title }`
           : ''
     const nextURL = queryString.stringifyUrl({
       query: {
@@ -50,14 +50,14 @@ export function Search() {
 
   return (
     <SearchContainer className='search-container'>
-      <SearchInput ref={searchBox} type='search' onChange={handleSearch} />
-      <Results {...boxRect}>
+      <SearchInput ref={ searchBox } type='search' onChange={ handleSearch } />
+      <Results { ...boxRect }>
         <SearchResults>
           {
             !searchTransitioning && neo4jResults.map(result => (
-              <SearchResult key={`${result.meta.properties.startTime}-${result.artefact.properties.uid}`} onClick={() => handleResultClick(result)}>
+              <SearchResult key={ `${ result.meta.properties.startTime }-${ result.artefact.properties.uid }` } onClick={ () => handleResultClick(result) }>
                 <ResultMatch>
-                  {result.statement.properties.text}
+                  { result.statement.properties.text }
                 </ResultMatch>
                 <ResultSource>
                   <strong>
@@ -72,7 +72,7 @@ export function Search() {
                     }
                   </strong>
                 </ResultSource>
-                <ResultTimestamp>{result.meta.properties.startTimestamp}</ResultTimestamp>
+                <ResultTimestamp>{ result.meta.properties.startTimestamp }</ResultTimestamp>
               </SearchResult>
             ))
           }

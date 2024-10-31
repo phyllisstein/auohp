@@ -1,7 +1,7 @@
 import queryString from 'query-string'
-import {useEffect, useRef} from 'react'
+import { useEffect, useRef } from 'react'
 
-import {useNeo4jVideo} from 'hooks/interviews'
+import { useNeo4jVideo } from 'hooks/interviews'
 
 import './player.scss'
 
@@ -9,7 +9,7 @@ interface PlayerProps {
   url: string
 }
 
-export function Player({url}: PlayerProps) {
+export function Player({ url }: PlayerProps) {
   const player = useRef<HTMLVideoElement>(null)
   const video = useNeo4jVideo(url)
   const hasSetTimestamp = useRef<boolean>(false)
@@ -67,9 +67,9 @@ export function Player({url}: PlayerProps) {
 
   return (
     <div className='player-container'>
-      <video ref={player} controls playsInline crossOrigin='anonymous'>
-        {video && <source src={video.video.url} type='video/mp4' />}
-        {video && <track default src={video.vtt.url} kind='subtitles' srcLang='en' />}
+      <video ref={ player } controls playsInline crossOrigin='anonymous'>
+        { video && <source src={ video.video.url } type='video/mp4' /> }
+        { video && <track default src={ video.vtt.url } kind='subtitles' srcLang='en' /> }
       </video>
     </div>
   )

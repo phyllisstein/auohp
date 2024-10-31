@@ -1,6 +1,6 @@
-import {useEffect, useState} from 'react'
+import { useEffect, useState } from 'react'
 
-import {useNeo4j} from 'hooks/infrastructure'
+import { useNeo4j } from 'hooks/infrastructure'
 
 export interface Video {
   uid: string
@@ -32,7 +32,7 @@ export function useNeo4jVideo(url: string) {
         `
                     MATCH (video:Video {url: $url}) -[:HAS_CAPTIONS]-> (vtt)
                     RETURN video, vtt
-                `, {url},
+                `, { url },
       )
 
       if (!result.records.length) {

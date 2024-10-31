@@ -1,6 +1,6 @@
 'use client'
 
-import {createGlobalStyle} from 'styled-components'
+import { createGlobalStyle } from 'styled-components'
 
 export const Body = createGlobalStyle`
   *,
@@ -39,7 +39,7 @@ export const Body = createGlobalStyle`
   }
 
   body {
-    color: ${({theme}) => theme.palette.gray900};
-    background-color: ${({theme}) => theme.palette.gray200} !important;
+    color: ${ ({ theme }) => theme.palette.gray900 };
+    background-color: ${ ({ theme }) => theme.palette.gray200 } !important;
   }
 `
