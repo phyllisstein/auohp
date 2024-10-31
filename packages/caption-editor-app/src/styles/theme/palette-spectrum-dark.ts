@@ -1,4 +1,4 @@
-import {rgbToP3} from './palette-coloring'
+import { rgbToP3 } from './palette-coloring'
 import * as R from 'ramda'
 
 const rgb = {
@@ -198,7 +198,7 @@ const rgb = {
 }
 
 export type RGBPalette = typeof rgb
-export type P3Palatte = {[key in keyof RGBPalette]: string}
+export type P3Palatte = { [key in keyof RGBPalette]: string }
 
 const p3: P3Palatte = R.map(rgbToP3, rgb) as P3Palatte
 

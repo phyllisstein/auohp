@@ -23,11 +23,11 @@ export default async function Page() {
   return (
     <div>
       <ul>
-        {interviews.map(interview => (
-          <li key={interview.uid}>
-            <a href={`/transcript/${interview.number}`}>{interview.date} – {interview.title}</a>
+        { interviews.map(interview => (
+          <li key={ interview.uid }>
+            <a href={ `/transcript/${ interview.number }` }>{ interview.date } – { interview.title }</a>
           </li>
-        ))}
+        )) }
       </ul>
     </div>
   )

@@ -1,11 +1,11 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import {fileURLToPath} from 'node:url'
+import { fileURLToPath } from 'node:url'
 
 import * as R from 'ramda'
-import {nanoid} from 'nanoid'
-import neo4j, {type EagerResult, int} from 'neo4j-driver'
-import {stripIndent} from 'common-tags'
+import { nanoid } from 'nanoid'
+import neo4j, { type EagerResult, int } from 'neo4j-driver'
+import { stripIndent } from 'common-tags'
 import delay from 'delay'
 
 
@@ -53,7 +53,7 @@ const neo4jDriver = neo4j.driver(
  * model, from which the captions are generated. The data model is the source of
  * truth, and the captions are a derived artifact.
  */
-async function seedInterview({data, date, interviewee, interviewNumber, jsonCaption, jsonCaptionURL, speakers, videoURL, vtt, vttURL}) {
+async function seedInterview({ data, date, interviewee, interviewNumber, jsonCaption, jsonCaptionURL, speakers, videoURL, vtt, vttURL }) {
   await neo4jDriver.executeQuery(
     // language=Cypher
     `
@@ -119,12 +119,12 @@ async function seedInterview({data, date, interviewee, interviewNumber, jsonCapt
           CREATE (transcript)-[:TRANSCRIBES {startTime: chunk.startTime, endTime: chunk.endTime, startTimestamp: chunk.startTimestamp, endTimestamp: chunk.endTimestamp}]->(statement:Statement {text: chunk.transcription, uid: chunk.statementUID})
           CREATE (speaker) -[:SAYS]-> (statement)
           RETURN statement
-      `, {batch})
+      `, { batch })
     } catch (error) {
       console.error(`
-        Could not create batch number ${batchIndex} for interview number ${interviewNumber}.
+        Could not create batch number ${ batchIndex } for interview number ${ interviewNumber }.
 
-        Error: ${error}
+        Error: ${ error }
       `)
     }
   }
@@ -176,10 +176,10 @@ async function bootstrap() {
     await neo4jDriver.executeQuery(
       // language=Cypher
       `
-        CREATE CONSTRAINT ${label}UID IF NOT EXISTS
-        FOR (n:${label}) REQUIRE n.uid IS UNIQUE
+        CREATE CONSTRAINT ${ label }UID IF NOT EXISTS
+        FOR (n:${ label }) REQUIRE n.uid IS UNIQUE
       `,
-      {label},
+      { label },
     )
   }
 
@@ -205,7 +205,7 @@ async function bootstrap() {
         CREATE (jim:Person {name: 'Jim Hubbard', uid: $jimUID})
         CREATE (sarah:Person {name: 'Sarah Schulman', uid: $sarahUID})
         CREATE (:Committee:Collective {name: 'Gran Fury', uid: $gfUID})
-    `, {jimUID: nanoid(), sarahUID: nanoid(), gfUID: nanoid()},
+    `, { jimUID: nanoid(), sarahUID: nanoid(), gfUID: nanoid() },
   )
 }
 
@@ -553,7 +553,7 @@ async function seedAshesAction() {
       MATCH (doc:Documentary {uid: $documentaryUID}) -[:HAS_TRANSCRIPT]-> (transcript {uid: $transcriptUID})
       CREATE (transcript)-[:INCLUDES_SPEAKER]->(s:Speaker {label: speaker})
       RETURN s
-    `, {speakers: Array.from(allSpeakers), documentaryUID, transcriptUID},
+    `, { speakers: Array.from(allSpeakers), documentaryUID, transcriptUID },
   )
 
   await neo4jDriver.executeQuery(
@@ -561,7 +561,7 @@ async function seedAshesAction() {
       MATCH (doc:Documentary {uid: $documentaryUID}) -[:HAS_TRANSCRIPT]-> (transcript) -[:INCLUDES_SPEAKER]-> (drSpeaker:Speaker {label: 'SPEAKER_02'})
       MATCH (dr:Person {name: 'David Robinson'})
       CREATE (dr)-[:INTERVIEWED_AS]->(drSpeaker)
-    `, {documentaryUID},
+    `, { documentaryUID },
   )
 
   for await (const chunk of data) {
@@ -582,8 +582,8 @@ async function seedAshesAction() {
         })
     } catch (error) {
       console.error(`
-        Could not create node for segment starting ${chunk.startTime} in video
-        ${documentaryUID} for speaker ${chunk.speaker}.
+        Could not create node for segment starting ${ chunk.startTime } in video
+        ${ documentaryUID } for speaker ${ chunk.speaker }.
       `)
     }
   }
@@ -644,9 +644,9 @@ async function seedDemoEdges() {
     // language=Cypher
     `
       MATCH (stt:Action {name: 'Stop the Church'})
-      MERGE (vince:Statement {text: 'Stop the church was a phrase that was met to a lot of objection.'}) -[:MENTIONS]-> (stt),
-            (alexis:Statement {text: ' stop the church, for example.'}) -[:MENTIONS]-> (stt),
-            (ashes:Statement {text: 'I want you to remember that stop the church is pretty easy to convince people about what an evil group of perverts we are, right?'}) -[:MENTIONS]-> (stt)
+      MERGE (vince:Statement {text: 'Stop the church was a phrase that was met to a lot of objection.'}) -[:MENTIONS]-> (stt)
+      MERGE (alexis:Statement {text: ' stop the church, for example.'}) -[:MENTIONS]-> (stt)
+      MERGE (ashes:Statement {text: 'I want you to remember that stop the church is pretty easy to convince people about what an evil group of perverts we are, right?'}) -[:MENTIONS]-> (stt)
       RETURN vince, alexis, ashes, stt
     `,
   )
@@ -673,7 +673,7 @@ async function seedVectorIndex() {
         CALL genai.vector.encodeBatch($toEncode, 'OpenAI', {token: $token}) YIELD index, vector
         MATCH (s:Statement {uid: $batch[index].uid})
         CALL db.create.setNodeVectorProperty(s, 'embedding', vector)
-        `, {toEncode, batch, token: OPENAI_API_KEY},
+        `, { toEncode, batch, token: OPENAI_API_KEY },
     )
   }
 
@@ -683,8 +683,8 @@ async function seedVectorIndex() {
   `)
 
   for (const statement of statements.records) {
-    const {uid, text} = statement.toObject()
-    batch.push({uid, text})
+    const { uid, text } = statement.toObject()
+    batch.push({ uid, text })
     if (batch.length === BATCH_SIZE) {
       await importBatch()
       batch = []

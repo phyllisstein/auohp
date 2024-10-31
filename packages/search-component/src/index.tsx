@@ -1,8 +1,8 @@
-import {createRoot} from 'react-dom/client'
-import {StrictMode} from 'react'
+import { createRoot } from 'react-dom/client'
+import { StrictMode } from 'react'
 
-import {Player} from 'components/player'
-import {Search} from 'components/search'
+import { Player } from 'components/player'
+import { Search } from 'components/search'
 
 export function renderSearch(element: HTMLElement) {
   const root = createRoot(element)
@@ -17,7 +17,7 @@ export function renderPlayer(url: string, element: HTMLElement) {
   const root = createRoot(element)
   root.render(
     <StrictMode>
-      <Player url={url} />
+      <Player url={ url } />
     </StrictMode>,
   )
 }

@@ -1,4 +1,4 @@
-export type Propertized<T> = {properties: T, labels: string[]}
+export type Propertized<T> = { properties: T, labels: string[] }
 
 export interface Person {
   name: string

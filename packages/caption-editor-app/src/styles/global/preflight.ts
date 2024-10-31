@@ -1,6 +1,6 @@
 'use client'
 
-import {createGlobalStyle} from 'styled-components'
+import { createGlobalStyle } from 'styled-components'
 
 export const Preflight = createGlobalStyle`
   *,

@@ -39,6 +39,8 @@ export default [
           requireForBlockBody: false,
         },
       ],
+      '@stylistic/block-spacing': 'off',
+      '@stylistic/ts/block-spacing': ['warn', 'always'],
       '@stylistic/brace-style': [
         'warn',
         '1tbs',
@@ -75,10 +77,10 @@ export default [
       '@stylistic/jsx-curly-spacing': [
         'warn',
         {
-          attributes: {when: 'never'},
-          children: {when: 'never'},
-          spacing: {objectLiterals: 'never'},
-          when: 'never',
+          attributes: { when: 'always' },
+          children: { when: 'always' },
+          spacing: { objectLiterals: 'never' },
+          when: 'always',
         },
       ],
       '@stylistic/jsx-indent': [
@@ -138,12 +140,11 @@ export default [
         },
       ],
       '@stylistic/no-trailing-spaces': 'warn',
-      '@stylistic/block-spacing': 'off',
-      '@stylistic/ts/block-spacing': ['warn', 'never'],
       '@stylistic/object-curly-spacing': 'off',
       '@stylistic/ts/object-curly-spacing': [
         'warn',
-        'never',
+        'always',
+        { objectsInObjects: false },
       ],
       '@stylistic/operator-linebreak': 'warn',
       '@stylistic/quote-props': ['warn', 'consistent-as-needed'],
@@ -163,7 +164,7 @@ export default [
         },
       ],
       '@stylistic/space-before-function-paren': 'warn',
-      '@stylistic/template-curly-spacing': ['warn', 'never'],
+      '@stylistic/template-curly-spacing': ['warn', 'always'],
       'react/jsx-sort-props': [
         'warn',
         {

@@ -1,4 +1,4 @@
-import {css} from 'styled-components'
+import { css } from 'styled-components'
 
 const breakpoints = {
   lg: '1056px',
@@ -15,19 +15,19 @@ export const between = (
   end: Breakpoint,
   style: RuleSet<object>,
 ) => css`
-  @media (min-width: ${breakpoints[start]}) and (max-width: ${breakpoints[end]}) {
-    ${style}
+  @media (min-width: ${ breakpoints[start] }) and (max-width: ${ breakpoints[end] }) {
+    ${ style }
   }
 `
 
 export const above = (breakpoint: Breakpoint, style: RuleSet<object>) => css`
-  @media (min-width: ${breakpoints[breakpoint]}) {
-    ${style}
+  @media (min-width: ${ breakpoints[breakpoint] }) {
+    ${ style }
   }
 `
 
 export const below = (breakpoint: Breakpoint, style: RuleSet<object>) => css`
-  @media (max-width: ${breakpoints[breakpoint]}) {
-    ${style}
+  @media (max-width: ${ breakpoints[breakpoint] }) {
+    ${ style }
   }
 `

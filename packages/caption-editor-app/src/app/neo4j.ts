@@ -1,7 +1,7 @@
 'use server'
-import {lightFormat} from 'date-fns'
+import { lightFormat } from 'date-fns'
 
-import neo4j, {type Driver, int} from 'neo4j-driver'
+import neo4j, { type Driver, int } from 'neo4j-driver'
 import * as R from 'ramda'
 
 export interface TranscriptChild {
@@ -14,7 +14,7 @@ export interface TranscriptChild {
   type: string
   transcription: string
   uid: string
-  children: Array<{text: string}>
+  children: Array<{ text: string }>
 }
 export interface Neo4jResult {
   type: string
@@ -50,7 +50,7 @@ export async function connect(
 
   try {
     const serverInfo = await driver.getServerInfo()
-    console.log(`Connected to ${serverInfo.address}`)
+    console.log(`Connected to ${ serverInfo.address }`)
   } catch (err) {
     console.error('Failed to connect to Neo4j')
     console.error(err)
@@ -87,7 +87,7 @@ export async function updateTranscriptStatement(attributes: Partial<TranscriptCh
     const person = R.pick(['speakerName'], attributes)
     const statement = R.assoc('text', transcription, R.pick(['uid'], attributes))
 
-    console.log({statement, statementMeta, speaker, person})
+    console.log({ statement, statementMeta, speaker, person })
 
     const result = await driver.executeQuery(
       // language=Cypher
@@ -99,7 +99,7 @@ export async function updateTranscriptStatement(attributes: Partial<TranscriptCh
         SET speaker += $speaker
         SET person += $person
         RETURN transcript, statement, speaker, statementMeta, person
-      `, {statement, statementMeta, speaker, person})
+      `, { statement, statementMeta, speaker, person })
 
     if (result.records.length === 0) {
       throw new Error('Failed to update statement')
@@ -146,7 +146,7 @@ export async function getInterviewTranscript(interviewNumber: number): Promise<N
         MATCH (interview:Interview {number: $interviewNumber})-[:HAS_TRANSCRIPT]->(transcript:Transcript)
         RETURN interview, transcript
         LIMIT 1
-      `, {interviewNumber: int(interviewNumber)})
+      `, { interviewNumber: int(interviewNumber) })
 
     if (!Array.isArray(transcriptMeta.records) || transcriptMeta.records.length === 0) {
       console.error('Transcript not found')
@@ -166,7 +166,7 @@ export async function getInterviewTranscript(interviewNumber: number): Promise<N
         MATCH (transcript) -[statementMeta:TRANSCRIBES]->(statement)<-[:SAYS]-(speaker)<-[:INTERVIEWED_AS]-(person)
         RETURN transcript, statement, speaker, statementMeta, person
         ORDER BY statementMeta.startTime
-      `, {uid: metadata.transcript.properties.uid})
+      `, { uid: metadata.transcript.properties.uid })
 
     const transcriptChildren: TranscriptChild[] = rawTranscript.records.map(record => {
       const speaker = record.get('speaker')
