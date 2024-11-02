@@ -17,7 +17,7 @@ else:
 def transcribe_audio_file(audio_file: str, device: str = device, batch_size: int = 16, compute_type: str = compute_type):
     model = whisperx.load_model("large-v3-turbo", device=device, compute_type=compute_type, download_root=MODELS, language="en")
     audio = whisperx.load_audio(audio_file)
-    result = model.transcribe(audio, language="en")
+    result = model.transcribe(audio, language="en", batch_size=batch_size)
 
     model_a, metadata = whisperx.load_align_model(language_code="en", device=device, model_dir=MODELS, model_name="facebook/wav2vec2-base-960h")
     aligned_result = whisperx.align(result["segments"], model_a, metadata, audio, device, return_char_alignments=False)
