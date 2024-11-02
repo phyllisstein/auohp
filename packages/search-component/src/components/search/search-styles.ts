@@ -43,6 +43,15 @@ export const ResultMatch = styled.div`
   font-size: 1em;
 `
 
+export const ResultImage = styled.img`
+  grid-row: 1 / 1;
+  grid-column: 1 / 2;
+  padding: 0.5em;
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+`
+
 export const ResultSource = styled.div`
   grid-row: 2/3;
   grid-column: 1/2;
