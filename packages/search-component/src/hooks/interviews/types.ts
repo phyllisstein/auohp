@@ -26,7 +26,7 @@ export interface Video {
   uid: string
 }
 
-export interface Leaflet {
+export interface Broadsheet {
   title: string
   uid: string
 }
@@ -39,7 +39,7 @@ export interface Neo4jResult {
   person?: Propertized<Person>
   meta: Propertized<SaysEdge>
   statement: Propertized<Statement>
-  artefact: Propertized<Documentary> | Propertized<Interview> | Propertized<Leaflet>
+  artefact: Propertized<Documentary> | Propertized<Interview> | Propertized<Broadsheet>
   asset?: Propertized<Asset>
 }
 
@@ -50,14 +50,14 @@ export interface SaysEdge {
   endTime: number
 }
 
-export function isDocumentary(artefact: Propertized<Documentary> | Propertized<Interview> | Propertized<Leaflet>): artefact is Propertized<Documentary> {
+export function isDocumentary(artefact: Propertized<Documentary> | Propertized<Interview> | Propertized<Broadsheet>): artefact is Propertized<Documentary> {
   return Array.isArray(artefact.labels) && artefact.labels.includes('Documentary')
 }
 
-export function isInterview(artefact: Propertized<Documentary> | Propertized<Interview> | Propertized<Leaflet>): artefact is Propertized<Interview> {
+export function isInterview(artefact: Propertized<Documentary> | Propertized<Interview> | Propertized<Broadsheet>): artefact is Propertized<Interview> {
   return Array.isArray(artefact.labels) && artefact.labels.includes('Interview')
 }
 
-export function isLeaflet(artefact: Propertized<Documentary> | Propertized<Interview> | Propertized<Leaflet>): artefact is Propertized<Leaflet> {
-  return Array.isArray(artefact.labels) && artefact.labels.includes('Leaflet')
+export function isBroadsheet(artefact: Propertized<Documentary> | Propertized<Interview> | Propertized<Broadsheet>): artefact is Propertized<Broadsheet> {
+  return Array.isArray(artefact.labels) && artefact.labels.includes('Broadsheet')
 }

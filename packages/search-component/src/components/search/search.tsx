@@ -1,8 +1,8 @@
-import { type Neo4jResult, isDocumentary, isInterview, isLeaflet, useNeo4jTranscript } from 'hooks/interviews'
+import { type Neo4jResult, isDocumentary, isInterview, isBroadsheet, useNeo4jTranscript } from 'hooks/interviews'
 import { debounce } from 'lodash-es'
 import queryString from 'query-string'
 import { type ChangeEvent, useEffect, useRef, useState, useTransition } from 'react'
-import { SearchContainer, SearchInput, SearchResult, SearchResults, ResultMatch, ResultSource, ResultTimestamp } from './search-styles'
+import { SearchContainer, SearchInput, SearchResult, SearchResults, ResultImage, ResultMatch, ResultSource, ResultTimestamp } from './search-styles'
 import { Results } from './results'
 import deepEqual from 'fast-deep-equal'
 
@@ -24,9 +24,10 @@ export function Search() {
       ? `/${ result.artefact.properties.slug }`
       : isInterview(result.artefact)
         ? `/${ result.artefact.properties.number }`
-        : isLeaflet(result.artefact)
-          ? `/${ result.artefact.properties.title }`
-          : ''
+        : ''
+
+    if (!url) return
+
     const nextURL = queryString.stringifyUrl({
       query: {
         timestamp: result.meta.properties.startTime,
@@ -56,9 +57,11 @@ export function Search() {
           {
             !searchTransitioning && neo4jResults.map(result => (
               <SearchResult key={ `${ result.meta.properties.startTime }-${ result.artefact.properties.uid }` } onClick={ () => handleResultClick(result) }>
-                <ResultMatch>
-                  { result.statement.properties.text }
-                </ResultMatch>
+                {
+                  isBroadsheet(result.artefact)
+                    ? <ResultImage src={ result.asset.properties.url } />
+                    : <ResultMatch>{ result.statement.properties.text }</ResultMatch>
+                }
                 <ResultSource>
                   <strong>
                     {
@@ -66,7 +69,7 @@ export function Search() {
                         ? result.artefact.properties.title
                         : isInterview(result.artefact)
                           ? result.person.properties.name
-                          : isLeaflet(result.artefact)
+                          : isBroadsheet(result.artefact)
                             ? result.artefact.properties.title
                             : ''
                     }
