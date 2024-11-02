@@ -1,13 +1,13 @@
-import { getInterviewTranscript } from 'app/neo4j'
+import { getVTTInterviewTranscript } from 'app/neo4j'
 import type { NextRequest } from 'next/server'
 
 interface Params {
-  params: {
+  params: Promise<{
     interview: string
-  }
+  }>
 }
 
-export async function GET(request: NextRequest, { params }: Params) {
+export async function GET(_request: NextRequest, { params }: Params) {
   const { interview } = await params
   const interviewId = Number.parseInt(interview)
 
@@ -15,11 +15,11 @@ export async function GET(request: NextRequest, { params }: Params) {
     return new Response('Missing interview query parameter', { status: 400 })
   }
 
-  const transcript = await getInterviewTranscript(interviewId)
+  const transcript = await getVTTInterviewTranscript(interviewId)
 
-  return Response.json(transcript, {
+  return new Response(transcript, {
     headers: {
-      'Content-Type': 'application/json',
+      'Content-Type': 'text/vtt',
     },
   })
 }

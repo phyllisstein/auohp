@@ -2,9 +2,9 @@ import { Editor } from 'components/editor'
 import { Container, PlayerColumn } from './page.styles'
 
 interface Params {
-  params: {
+  params: Promise<{
     interview: string
-  }
+  }>
 }
 
 export default async function Page({ params }: Params) {
@@ -13,7 +13,7 @@ export default async function Page({ params }: Params) {
 
     const { interview } = await params
 
-    return fetch(`http://127.0.0.1:3030/api/transcript/${ interview }`)
+    return fetch(`http://127.0.0.1:3030/api/transcript/${ interview }/json`)
       .then(async response => {
         if (!response.ok) {
           console.error(response)
