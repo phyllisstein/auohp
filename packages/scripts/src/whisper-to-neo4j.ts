@@ -60,7 +60,7 @@ async function seedInterview({ data, date, interviewee, interviewNumber, jsonCap
       MATCH (jim:Person {name: 'Jim Hubbard'})
       MATCH (sarah:Person {name: 'Sarah Schulman'})
       WITH jim, sarah
-      CREATE (i:Interview {number: $interviewNumber, date: date($date), uid: $interviewUID, title: $interviewee})
+      CREATE (i:Interview {number: $interviewNumber, date: date($date), uid: $interviewUID, interviewee: $interviewee})
       CREATE (video:Video:Asset {url: $videoURL, uid: $videoUID})
       CREATE (vtt:VTT:Caption {text: $vtt, url: $vttURL, uid: $vttUID})
       CREATE (json:JSON:Caption {text: $jsonCaption, url: $jsonCaptionURL, uid: $jsonCaptionUID})
