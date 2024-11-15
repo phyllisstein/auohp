@@ -31,7 +31,7 @@ variable "zone" {
 
 variable "machine_type" {
   type    = string
-  default = "n1-standard-4"
+  default = "n1-standard-16"
 }
 
 variable "source_image" {
