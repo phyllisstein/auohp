@@ -13,7 +13,13 @@ from .subber import (
     to_vtt_captions,
     to_captions,
 )
-from .whisperer import transcribe_audio_file
+from .whisperer import (
+    load_audio_file,
+    transcribe_audio_file,
+    align_transcription,
+    diarize_audio_file,
+    whisper_to_json,
+)
 
 
 MODELS = "/opt/auohp/models"
@@ -37,9 +43,24 @@ def transcribe(input_file):
     basename = Path(input_file).stem
 
     try:
-        whisper_transcription = transcribe_audio_file(input_file)
+        audio_file = load_audio_file(input_file)
+        raw_transcription = transcribe_audio_file(audio_file)
+        aligned_result = align_transcription(raw_transcription, audio_file)
+        diarized_result = diarize_audio_file(aligned_result, audio_file)
+        (transcription, by_speaker) = whisper_to_json(diarized_result)
+
         with open(f'{basename}.json', 'w', encoding='utf8') as f:
-            f.write(json.dumps(whisper_transcription, indent=2))
+            f.write(json.dumps(transcription, indent=2))
+        with open(f'{basename}.speakers.json', 'w', encoding='utf8') as f:
+            f.write(json.dumps(by_speaker, indent=2))
+
+
+        (json_captions, vtt_captions) = to_captions(transcription)
+
+        with open(f'{basename}.vtt', 'w', encoding='utf8') as f:
+            f.write(vtt_captions)
+        with open(f'{basename}.captions.json', 'w', encoding='utf8') as f:
+            json.dump(json_captions, f, indent=2)
 
 
     except Exception as e:
