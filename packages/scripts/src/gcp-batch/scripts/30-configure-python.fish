@@ -15,8 +15,7 @@ echo "set -gx PATH /usr/local/cuda/bin \$PATH" | sudo tee -a /home/auohp/.config
 
 cd /opt/auohp/packages/scripts/src/subwhisp
 conda env update -n base -f environment.yml
-# conda install -y pytorch-cuda=11.3 torchvision torchaudio cudatoolkit -c pytorch -c nvidia
-conda install -y pytorch-cuda=12 torchvision torchaudio cudatoolkit pytorch -c pytorch -c nvidia
+conda install -y pytorch-cuda=12 torchvision torchaudio cuda-toolkit pytorch -c pytorch -c nvidia
 
 poetry config virtualenvs.create false
 poetry install
