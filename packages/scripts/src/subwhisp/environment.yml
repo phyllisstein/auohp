@@ -3,6 +3,7 @@ channels:
   - pytorch
   - huggingface
   - conda-forge
+  - nvidia
 dependencies:
   - click=8.1.7
   - huggingface_hub=0.24.2
@@ -15,5 +16,6 @@ dependencies:
   - spacy=3.7.5
   - spacy-legacy=3.0.12
   - spacy-loggers=1.0.5
+  - networkx
   - pip:
     - '--editable=git+https://github.com/m-bain/whisperx.git@main#egg=whisperx'
