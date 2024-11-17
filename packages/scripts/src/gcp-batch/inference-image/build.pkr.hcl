@@ -5,7 +5,7 @@ source "googlecompute" "auohp_inference" {
   source_image      = var.source_image
   zone              = var.zone
   machine_type      = var.machine_type
-  image_name        = var.image_name
+  image_name        = "${var.image_name}-${formatdate("YYYYMMDDHHmmss", timestamp())}"
   image_description = "Debian/CUDA/PyTorch inference image (${timestamp()})"
   disk_size         = 100
 
