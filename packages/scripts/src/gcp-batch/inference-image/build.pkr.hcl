@@ -5,7 +5,7 @@ source "googlecompute" "auohp_inference" {
   source_image      = var.source_image
   zone              = var.zone
   machine_type      = var.machine_type
-  image_name        = "${var.image_name}-${formatdate("YYYYMMDDHHmmss", timestamp())}"
+  image_name        = var.image_name
   image_description = "Debian/CUDA/PyTorch inference image (${timestamp()})"
   disk_size         = 100
 
@@ -33,13 +33,7 @@ build {
   provisioner "shell" {
     inline = [
       "sudo apt-get update",
-      <<EOF
-      DEBIAN_FRONTEND=noninteractive sudo apt-get upgrade -y \
-        -o Dpkg::Options::="--force-confdef" \
-        -o Dpkg::Options::="--force-confold" \
-        --yes
-EOF
-      ,"sudo apt-get install -y fish git ffmpeg",
+      "sudo apt-get install -y fish git ffmpeg",
       "sudo /opt/deeplearning/install-driver.sh"
     ]
   }
@@ -48,7 +42,8 @@ EOF
     environment_vars = [
       "AUOHP_GIT_REPO_URL=${var.auohp_git_repo_url}",
       "GIT_SSH_KEY_BASE64=${var.git_ssh_key}",
-      "AUOHP_PUBLIC_KEY=${var.ssh_public_key}"
+      "AUOHP_PUBLIC_KEY=${var.ssh_public_key}",
+      "LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH"
     ]
     scripts = [
       "./scripts/00-bootstrap.fish",
