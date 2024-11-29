@@ -36,7 +36,7 @@ variable "machine_type" {
 
 variable "source_image" {
   type    = string
-  default = "c0-deeplearning-common-gpu-v20240708-debian-11-py310"
+  default = "c0-deeplearning-common-gpu-v20241118-debian-11-py310"
 }
 
 variable "accelerator_type" {
