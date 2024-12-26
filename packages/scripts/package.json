@@ -14,19 +14,19 @@
   },
   "private": true,
   "devDependencies": {
-    "@aws-sdk/client-s3": "^3.598.0",
+    "@aws-sdk/client-s3": "^3.717.0",
     "@types/common-tags": "^1",
     "@types/lodash.round": "^4",
-    "@types/node": "^20.14.2",
-    "@types/ramda": "~0.30.0",
+    "@types/node": "^22.10.2",
+    "@types/ramda": "~0.30.2",
     "delay": "^6.0.0",
-    "neo4j-driver": "^5.21.0"
+    "neo4j-driver": "^5.27.0"
   },
   "dependencies": {
-    "@aws-sdk/client-transcribe": "^3.598.0",
+    "@aws-sdk/client-transcribe": "^3.716.0",
     "common-tags": "^1.8.2",
     "lodash.round": "^4.0.4",
-    "nanoid": "^5.0.7",
+    "nanoid": "^5.0.9",
     "ramda": "^0.30.1"
   }
 }

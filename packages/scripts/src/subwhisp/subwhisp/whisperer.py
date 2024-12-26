@@ -38,31 +38,31 @@ def load_audio_file(audio_file: str):
 
 
 def whisper_to_json(transcription):
-        segments = []
-        for segment in transcription["segments"]:
-            start_timestamp = format_timestamp(segment["start"])
-            end_timestamp = format_timestamp(segment["end"])
-            segments.append({
-                "speaker": segment.get("speaker") or "SPEAKER_NULL",
-                "startTimestamp": start_timestamp.strip(),
-                "endTimestamp": end_timestamp.strip(),
-                "transcription": segment["text"].strip(),
-                "startTime": segment["start"],
-                "endTime": segment["end"],
-                "type": "statement",
-                "children": [{"text": segment["text"].strip()}],
-                "words": segment["words"]
-            })
+    segments = []
+    for segment in transcription["segments"]:
+        start_timestamp = format_timestamp(segment["start"])
+        end_timestamp = format_timestamp(segment["end"])
+        segments.append({
+            "speaker": segment.get("speaker") or "SPEAKER_NULL",
+            "startTimestamp": start_timestamp.strip(),
+            "endTimestamp": end_timestamp.strip(),
+            "transcription": segment["text"].strip(),
+            "startTime": segment["start"],
+            "endTime": segment["end"],
+            "type": "statement",
+            "children": [{"text": segment["text"].strip()}],
+            "words": segment["words"]
+        })
 
-        merged_segments = []
-        for segment in segments:
-            if merged_segments and merged_segments[-1]["speaker"] == segment["speaker"]:
-                merged_segments[-1]["endTimestamp"] = segment["endTimestamp"]
-                merged_segments[-1]["endTime"] = segment["endTime"]
-                merged_segments[-1]["transcription"] += " " + segment["transcription"]
-                merged_segments[-1]["children"].append({"text": segment["transcription"]})
-                merged_segments[-1]["words"].extend(segment["words"])
-            else:
-                merged_segments.append(segment)
+    merged_segments = []
+    for segment in segments:
+        if merged_segments and merged_segments[-1]["speaker"] == segment["speaker"]:
+            merged_segments[-1]["endTimestamp"] = segment["endTimestamp"]
+            merged_segments[-1]["endTime"] = segment["endTime"]
+            merged_segments[-1]["transcription"] += " " + segment["transcription"]
+            merged_segments[-1]["children"].append({"text": segment["transcription"]})
+            merged_segments[-1]["words"].extend(segment["words"])
+        else:
+            merged_segments.append(segment)
 
-        return (segments, merged_segments)
+    return (segments, merged_segments)

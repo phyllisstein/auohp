@@ -35,10 +35,6 @@
       {
         "name": "next"
       },
-      {
-        "name": "typescript-styled-plugin",
-        "validate": false
-      }
     ],
     "strictNullChecks": false,
     "noImplicitAny": false
