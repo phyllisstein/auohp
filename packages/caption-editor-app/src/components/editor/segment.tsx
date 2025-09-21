@@ -1,6 +1,6 @@
-'use client'
+"use client";
 
-import styled from 'styled-components'
+import styled from "styled-components";
 
 export const Segment = styled.div`
   display: grid;
@@ -8,4 +8,4 @@ export const Segment = styled.div`
   grid-template-columns: 1fr 4fr;
   gap: 0.5rem;
   margin: 2rem;
-`
+`;

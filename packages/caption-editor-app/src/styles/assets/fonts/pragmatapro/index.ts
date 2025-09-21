@@ -1,1 +1,1 @@
-export * from './pragmatapro'
+export * from "./pragmatapro";

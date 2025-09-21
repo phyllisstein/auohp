@@ -1,12 +1,12 @@
-import { atom } from 'recoil'
+import { atom } from "recoil";
 
 export const playerState = atom({
-  key: 'player:state',
-  default: {
-    currentTime: 0,
-    duration: 0,
-    isPlaying: false,
-    isSeeking: false,
-    volume: 1,
-  },
-})
+    default: {
+        currentTime: 0,
+        duration: 0,
+        isPlaying: false,
+        isSeeking: false,
+        volume: 1,
+    },
+    key: "player:state",
+});

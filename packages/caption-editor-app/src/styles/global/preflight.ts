@@ -1,6 +1,6 @@
-'use client'
+"use client";
 
-import { createGlobalStyle } from 'styled-components'
+import { createGlobalStyle } from "styled-components";
 
 export const Preflight = createGlobalStyle`
   *,
@@ -266,4 +266,4 @@ export const Preflight = createGlobalStyle`
     height: auto;
   }
 
-`
+`;
