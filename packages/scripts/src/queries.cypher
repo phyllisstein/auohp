@@ -4,9 +4,9 @@ MATCH (interview:Interview {number: $interviewNumber}) -[:INTERVIEWED_WITH]-> (s
 MATCH (subject) -[:INTERVIEWED_AS]-> (speaker)
 MATCH (speaker) -[saying:SAYS]-> (statement)
 RETURN saying.startTime as startTime,
-   saying.endTime as endTime,
-   saying.duration as duration,
-   statement.text as text
+      saying.endTime as endTime,
+      saying.duration as duration,
+      statement.text as text
 
 // Search full-text Lucene index of `(:Statement {text})`. In the `MATCH`
 // clause, attaching the `:Interviewee` label neatly filters out questions and
@@ -15,11 +15,11 @@ CALL db.index.fulltext.queryNodes('transcript_search', 'action') YIELD node AS s
 MATCH (statement)<-[said:SAYS]-(speaker:Interviewee)<-[:INTERVIEWED_AS]-(person)
 MATCH (speaker)<-[:INTERVIEWED_WITH]-(interview)-[:HAS_VIDEO]->(video)
 RETURN said.startTime AS timestamp,
-  person.name AS speaker,
-  statement.text AS statement,
-  video.url AS videoURL,
-  interview.number AS interviewNumber,
-  score
+    person.name AS speaker,
+    statement.text AS statement,
+    video.url AS videoURL,
+    interview.number AS interviewNumber,
+    score
 ORDER BY score DESC
 
 
@@ -30,10 +30,10 @@ MATCH (interview) -[:INTERVIEWED_WITH]-> (speaker:Interviewee) -[:SAYS]-> (state
 WITH statement LIMIT 1
 MATCH (statement) -[:FROM_WORDS]-> (words:WordTimings)
 RETURN statement.text as text,
-   statement.startTime as startTime,
-   statement.endTime as endTime,
-   statement.duration as duration,
-   words.text as words
+      statement.startTime as startTime,
+      statement.endTime as endTime,
+      statement.duration as duration,
+      words.text as words
 
 
 // Another full-text search example, this time with a phrase.

@@ -25,10 +25,10 @@ poetry install
 
 
 if python -c "import torch; assert torch.cuda.is_available(), 'CUDA not available'"
-  echo "CUDA is available"
+    echo "CUDA is available"
 else
-  echo "CUDA is not available"
-  exit 1
+    echo "CUDA is not available"
+    exit 1
 end
 
 subwhisp models
