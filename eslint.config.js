@@ -1,11 +1,8 @@
-import sortKeysPlus from "eslint-plugin-sort-keys-plus";
 import stylistic from "@stylistic/eslint-plugin";
 import stylisticTS from "@stylistic/eslint-plugin-ts";
 import parserTS from "@typescript-eslint/parser";
-import tsSortKeys from "eslint-plugin-typescript-sort-keys";
 import tseslint from "typescript-eslint";
 import typescriptESLint from "@typescript-eslint/eslint-plugin";
-import sortDestructureKeys from "eslint-plugin-sort-destructure-keys";
 import eslint from "@eslint/js";
 import jsxA11y from "eslint-plugin-jsx-a11y";
 import react from "eslint-plugin-react";
@@ -38,8 +35,6 @@ export default [
             "jsx-a11y": jsxA11y,
             react,
             "react-hooks": reactHooks,
-            "sort-destructure-keys": sortDestructureKeys,
-            "sort-keys-plus": sortKeysPlus,
         },
         rules: {
             ...next.configs.recommended.rules,
@@ -109,7 +104,7 @@ export default [
                 {
                     callbacksLast: true,
                     ignoreCase: true,
-                    noSortAlphabetically: false,
+                    noSortAlphabetically: true,
                     reservedFirst: true,
                     shorthandFirst: true,
                 },
@@ -177,20 +172,6 @@ export default [
                     additionalHooks: "(useRecoilCallback|useRecoilTransaction_UNSTABLE)",
                 },
             ],
-            "sort-destructure-keys/sort-destructure-keys": [
-                "warn",
-                {
-                    caseSensitive: false,
-                },
-            ],
-            "sort-keys-plus/sort-keys": [
-                "warn",
-                "asc",
-                {
-                    caseSensitive: false,
-                    natural: true,
-                },
-            ],
         },
         settings: {
             react: {
@@ -217,7 +198,6 @@ export default [
         plugins: {
             "@stylistic/ts": stylisticTS,
             "@typescript-eslint": typescriptESLint,
-            "typescript-sort-keys": tsSortKeys,
         },
         rules: {
             ...tseslint.configs.recommendedTypeChecked.rules,
@@ -237,22 +217,6 @@ export default [
                     destructuredArrayIgnorePattern: "^_",
                     ignoreRestSiblings: true,
                     varsIgnorePattern: "^_",
-                },
-            ],
-            "typescript-sort-keys/interface": [
-                "warn",
-                "asc",
-                {
-                    caseSensitive: false,
-                    natural: true,
-                },
-            ],
-            "typescript-sort-keys/string-enum": [
-                "warn",
-                "asc",
-                {
-                    caseSensitive: false,
-                    natural: true,
                 },
             ],
         },

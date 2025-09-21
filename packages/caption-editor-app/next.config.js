@@ -8,6 +8,7 @@ const __dirname = path.dirname(__filename);
   * @type {import('next').NextConfig}
   */
 export default {
+    allowedDevOrigins: ["*.auohp.here", "localhost:3000", "127.0.0.1:3000"],
     compiler: {
         styledComponents: {
             displayName: true,
