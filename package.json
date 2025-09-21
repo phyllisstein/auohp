@@ -62,12 +62,11 @@
         "typescript-eslint": "^8.18.2"
     },
     "dependencies": {
-        "@gsap/shockingly": "^3.12.5",
         "gsap": "^3.12.5",
         "query-string": "^9.1.1",
         "react-player": "^2.16.0",
         "slate": "^0.112.0",
         "slate-react": "^0.112.0"
     },
-    "packageManager": "yarn@4.3.1"
+    "packageManager": "yarn@4.10.2"
 }
