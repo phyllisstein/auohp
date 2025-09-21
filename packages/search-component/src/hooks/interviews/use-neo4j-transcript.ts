@@ -26,14 +26,18 @@ export function useNeo4jTranscript(query: string): Neo4jResult[] {
             const result = await driver.executeQuery(
                 // language=Cypher
                 `
-          CALL genai.vector.encodeBatch([$query], 'OpenAI', {token: $token}) YIELD vector
-          CALL db.index.vector.queryNodes('statement_embedding', 15, vector) YIELD node AS statement
-          MATCH (statement)<-[meta:TRANSCRIBES]-(transcript) <-[:HAS_TRANSCRIPT]- (artefact)
-          OPTIONAL MATCH (person) -[:INTERVIEWED_AS]-> (speaker) -[:SAYS]-> (statement)
-          WHERE speaker:Interviewee
-          OPTIONAL MATCH (artefact) -[:HAS_ASSET]-> (asset)
-          RETURN statement, meta, person, speaker, asset, artefact
-        `, { query, token: OPENAI_API_KEY });
+                    CALL genai.vector.encodeBatch([$query], 'OpenAI', {token: $token}) YIELD vector
+                    CALL db.index.vector.queryNodes('statement_embedding', 15, vector) YIELD node AS statement
+                    MATCH (statement)<-[meta:TRANSCRIBES]-(transcript) <-[:HAS_TRANSCRIPT]- (artefact)
+                    OPTIONAL MATCH (person) -[:INTERVIEWED_AS]-> (speaker) -[:SAYS]-> (statement)
+                    WHERE speaker:Interviewee
+                    OPTIONAL MATCH (artefact) -[:HAS_ASSET]-> (asset)
+                    RETURN statement, meta, person, speaker, asset, artefact
+                `, {
+                    query,
+                    token: OPENAI_API_KEY,
+                },
+            );
 
             const searchResults = result.records.map(record => {
                 return {

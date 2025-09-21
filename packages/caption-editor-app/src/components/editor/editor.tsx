@@ -11,9 +11,16 @@ import {
 } from "slate-react";
 import { Statement } from "./statement";
 
-const EMPTY: Descendant[] = [{
+const EMPTY = [{
+    type: "transcript",
     children: [
         {
+            endTime: 104.42,
+            speaker: "SPEAKER_01",
+            startTime: 97.93,
+            transcription: "",
+            type: "segment",
+            uid: "0",
             children: [
                 {
                     children: [{ text: "" }],
@@ -23,15 +30,8 @@ const EMPTY: Descendant[] = [{
                     word: "",
                 },
             ],
-            endTime: 104.42,
-            speaker: "SPEAKER_01",
-            startTime: 97.93,
-            transcription: "",
-            type: "segment",
-            uid: "0",
         },
     ],
-    type: "transcript",
 }];
 
 
@@ -47,7 +47,20 @@ const Element = props => {
     }
 };
 
-const renderElement = props => <Element { ...props } />;
+const renderElement = props => {
+    const { attributes, children, element } = props;
+
+    switch (element.type) {
+        case "segment":
+            return <div { ...attributes }>{ children }</div>;
+        case "statement":
+            return <Statement { ...props } />;
+        case "word":
+            return <span { ...attributes } data-testid="word">{ children }</span>;
+        default:
+            return <div { ...attributes } data-testid="blank-div">{ children }</div>;
+    }
+};
 const renderLeaf = ({ attributes, children }) => <span { ...attributes }>{ children }</span>;
 
 const withCaptions = editor => {};

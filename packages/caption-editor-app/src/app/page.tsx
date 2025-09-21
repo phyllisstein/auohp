@@ -25,7 +25,7 @@ export default async function Page() {
             <ul>
                 { interviews.map(interview => (
                     <li key={ interview.uid }>
-                        <a href={ `/transcript/${ interview.number }` }>{ interview.date } – { interview.title }</a>
+                        <a href={ `/transcript/${ interview.number }` }>{ interview.date } – { interview.interviewee }</a>
                     </li>
                 )) }
             </ul>

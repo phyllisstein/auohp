@@ -76,7 +76,7 @@ async function seed({ data, date, interviewee, interviewNumber, speakers, videoU
     }
 
     await neo4jDriver.executeQuery(
-    // language=Cypher
+        // language=Cypher
         `
             MATCH (jim:Person {name: 'Jim Hubbard'})
             MATCH (sarah:Person {name: 'Sarah Schulman'})
@@ -156,7 +156,8 @@ async function seed({ data, date, interviewee, interviewNumber, speakers, videoU
             `, {
                 ...segment,
                 interviewNumber: int(interviewNumber),
-            });
+            },
+        );
 
         if (!result?.records?.length) {
             console.error(`
@@ -173,24 +174,24 @@ async function bootstrap() {
     await neo4jDriver.getServerInfo();
 
     await neo4jDriver.executeQuery(
-    // language=Cypher
+        // language=Cypher
         `
-          MATCH p = ()--()
-          DETACH DELETE p
+            MATCH p = ()--()
+            DETACH DELETE p
+        `,
+    );
+
+    await neo4jDriver.executeQuery(
+        // language=Cypher
+        `
+            DROP INDEX transcript_search IF EXISTS
         `,
     );
 
     await neo4jDriver.executeQuery(
     // language=Cypher
         `
-          DROP INDEX transcript_search IF EXISTS
-        `,
-    );
-
-    await neo4jDriver.executeQuery(
-    // language=Cypher
-        `
-          DROP INDEX name_search IF EXISTS
+            DROP INDEX name_search IF EXISTS
         `,
     );
 
@@ -206,14 +207,15 @@ async function bootstrap() {
     }
 
     await neo4jDriver.executeQuery(
-    // language=Cypher
+        // language=Cypher
         `
             CREATE FULLTEXT INDEX transcript_search IF NOT EXISTS
             FOR (n:Statement) ON EACH [n.text]
-        `);
+        `,
+    );
 
     await neo4jDriver.executeQuery(
-    // language=Cypher
+        // language=Cypher
         `
             CREATE (jim:Person {name: 'Jim Hubbard', uid: $jimUID})
             CREATE (sarah:Person {name: 'Sarah Schulman', uid: $sarahUID})
