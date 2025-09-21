@@ -1,57 +1,57 @@
 {
-  "compileOnSave": false,
-  "compilerOptions": {
-    "baseUrl": "./",
-    "outDir": "./dist",
-    "jsx": "preserve",
-    "paths": {
-      "*": [
-        "*",
-        "src/*",
-        "node_modules/*"
-      ]
+    "compileOnSave": false,
+    "compilerOptions": {
+        "baseUrl": "./",
+        "outDir": "./dist",
+        "jsx": "preserve",
+        "paths": {
+            "*": [
+                "*",
+                "src/*",
+                "node_modules/*"
+            ]
+        },
+        "lib": [
+            "dom",
+            "dom.iterable",
+            "esnext"
+        ],
+        "allowJs": true,
+        "strict": false,
+        "forceConsistentCasingInFileNames": true,
+        "noEmit": true,
+        "esModuleInterop": true,
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+        "module": "es2020",
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true,
+        "allowSyntheticDefaultImports": true,
+        "target": "es2020",
+        "incremental": true,
+        "skipLibCheck": true,
+        "moduleResolution": "node",
+        "plugins": [
+            {
+                "name": "next"
+            },
+        ],
+        "strictNullChecks": false,
+        "noImplicitAny": false
     },
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
+    "include": [
+        "./src/**/*.ts",
+        "./src/**/*.tsx",
+        "./src/**/*.d.ts",
+        "./next-env.d.ts",
+        ".next/types/**/*.ts",
+        "./cql.d.ts",
+        "*.ts"
     ],
-    "allowJs": true,
-    "strict": false,
-    "forceConsistentCasingInFileNames": true,
-    "noEmit": true,
-    "esModuleInterop": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "module": "es2020",
-    "emitDecoratorMetadata": true,
-    "experimentalDecorators": true,
-    "allowSyntheticDefaultImports": true,
-    "target": "es2020",
-    "incremental": true,
-    "skipLibCheck": true,
-    "moduleResolution": "node",
-    "plugins": [
-      {
-        "name": "next"
-      },
+    "exclude": [
+        "node_modules"
     ],
-    "strictNullChecks": false,
-    "noImplicitAny": false
-  },
-  "include": [
-    "./src/**/*.ts",
-    "./src/**/*.tsx",
-    "./src/**/*.d.ts",
-    "./next-env.d.ts",
-    ".next/types/**/*.ts",
-    "./cql.d.ts",
-    "*.ts"
-  ],
-  "exclude": [
-    "node_modules"
-  ],
-  "typeAcquisition": {
-    "enable": true
-  }
+    "typeAcquisition": {
+        "enable": true
+    }
 }

@@ -1,3 +1,3 @@
-import { should } from 'chai'
+import { should } from "chai";
 
-should()
+should();
