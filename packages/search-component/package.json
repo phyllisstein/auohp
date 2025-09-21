@@ -13,7 +13,6 @@
     "start:dev": "vite"
   },
   "devDependencies": {
-    "@fortawesome/fontawesome-common-types": "^6.7.2",
     "@rollup/plugin-node-resolve": "^16.0.0",
     "@types/react": "~19.0.2",
     "@types/react-dom": "~19.0.2",

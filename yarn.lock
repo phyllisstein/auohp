@@ -26,7 +26,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@auohp/caption-editor-app@workspace:packages/caption-editor-app"
   dependencies:
-    "@fortawesome/fontawesome-common-types": "npm:^6.7.2"
     "@spectrum-css/button": "npm:^13.5.0"
     "@spectrum-css/card": "npm:^9.3.0"
     "@spectrum-css/inlinealert": "npm:^8.2.0"
@@ -87,6 +86,7 @@ __metadata:
     "@types/ramda": "npm:~0.30.2"
     common-tags: "npm:^1.8.2"
     delay: "npm:^6.0.0"
+    dotenv: "npm:^16.4.7"
     lodash.round: "npm:^4.0.4"
     nanoid: "npm:^5.0.9"
     neo4j-driver: "npm:^5.27.0"
@@ -98,7 +98,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@auohp/search-component@workspace:packages/search-component"
   dependencies:
-    "@fortawesome/fontawesome-common-types": "npm:^6.7.2"
     "@rollup/plugin-node-resolve": "npm:^16.0.0"
     "@types/react": "npm:~19.0.2"
     "@types/react-dom": "npm:~19.0.2"
@@ -2312,20 +2311,6 @@ __metadata:
   dependencies:
     levn: "npm:^0.4.1"
   checksum: 10/e34d02ea1dccd716e51369620263a4b2167aff3c0510ed776e21336cc3ad7158087449a76931baf07cdc33810cb6919db375f2e9f409435d2c6e0dd5f4786b25
-  languageName: node
-  linkType: hard
-
-"@fortawesome/fontawesome-common-types@npm:^6.7.2":
-  version: 6.7.2
-  resolution: "@fortawesome/fontawesome-common-types@npm:6.7.2::__archiveUrl=https%3A%2F%2Fnpm.fontawesome.com%2F%40fortawesome%2Ffontawesome-common-types%2F-%2F6.7.2%2Ffontawesome-common-types-6.7.2.tgz"
-  checksum: 10/3c2e938afe6f5939bd63181faaec7b062902d9ed970c75d6becb1fd8e5ca0ed937e7d1513bd7ae545da407d0682039e50730cdb3136b58656128838ea2c58ac0
-  languageName: node
-  linkType: hard
-
-"@gsap/shockingly@npm:^3.12.5":
-  version: 3.12.5
-  resolution: "@gsap/shockingly@npm:3.12.5"
-  checksum: 10/a139a27aa632509b8a991c061987c4f88fc4fddc7c6699f6c14c09b667649bb5a763aa6b9276e386753bf1796e5915fb02b8b6985be15abef7c790d19644ec37
   languageName: node
   linkType: hard
 
@@ -5205,7 +5190,6 @@ __metadata:
   resolution: "auohp@workspace:."
   dependencies:
     "@eslint/js": "npm:^9.17.0"
-    "@gsap/shockingly": "npm:^3.12.5"
     "@stylelint/postcss-css-in-js": "npm:0.38.0"
     "@stylistic/eslint-plugin": "npm:^2.12.1"
     "@stylistic/eslint-plugin-ts": "npm:^2.12.1"
@@ -6277,6 +6261,13 @@ __metadata:
     domelementtype: "npm:^2.3.0"
     domhandler: "npm:^5.0.3"
   checksum: 10/9a169a6e57ac4c738269a73ab4caf785114ed70e46254139c1bbc8144ac3102aacb28a6149508395ae34aa5d6a40081f4fa5313855dc8319c6d8359866b6dfea
+  languageName: node
+  linkType: hard
+
+"dotenv@npm:^16.4.7":
+  version: 16.4.7
+  resolution: "dotenv@npm:16.4.7"
+  checksum: 10/f13bfe97db88f0df4ec505eeffb8925ec51f2d56a3d0b6d916964d8b4af494e6fb1633ba5d09089b552e77ab2a25de58d70259b2c5ed45ec148221835fc99a0c
   languageName: node
   linkType: hard
 

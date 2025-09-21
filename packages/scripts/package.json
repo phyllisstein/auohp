@@ -25,6 +25,7 @@
   "dependencies": {
     "@aws-sdk/client-transcribe": "^3.716.0",
     "common-tags": "^1.8.2",
+    "dotenv": "^16.4.7",
     "lodash.round": "^4.0.4",
     "nanoid": "^5.0.9",
     "ramda": "^0.30.1"
