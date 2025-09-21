@@ -161,14 +161,14 @@ export async function updateTranscriptStatement(attributes: Partial<TranscriptCh
         const result = await session.run<WithProperties<Neo4jStatement>>(
             // language=Cypher
             `
-        MATCH (statement:Statement {uid: $statement.uid}) <-[transcribes:TRANSCRIBES]-(transcript:Transcript)
-        MATCH (statement) <-[:SAYS]-(speaker)<-[:INTERVIEWED_AS]-(person)
-        SET statement += $statement
-        SET transcribes += transcribes
-        SET speaker += $speaker
-        SET person += $person
-        RETURN transcript, statement, speaker, transcribes, person
-      `, { person, speaker, statement, transcribes });
+                MATCH (statement:Statement {uid: $statement.uid}) <-[transcribes:TRANSCRIBES]-(transcript:Transcript)
+                MATCH (statement) <-[:SAYS]-(speaker)<-[:INTERVIEWED_AS]-(person)
+                SET statement += $statement
+                SET transcribes += transcribes
+                SET speaker += $speaker
+                SET person += $person
+                RETURN transcript, statement, speaker, transcribes, person
+            `, { person, speaker, statement, transcribes });
 
         if (result.records.length === 0) {
             throw new Error("Failed to update statement");
@@ -275,12 +275,12 @@ export async function getInterviewTranscript(interviewNumber: number): Promise<N
     const session = await getSession();
 
     try {
-        const transcriptMeta = await session.run<WithProperties<Neo4jInterview>>(
-            `
-        MATCH (interview:Interview {number: $interviewNumber})-[:HAS_TRANSCRIPT]->(transcript:Transcript)
-        RETURN interview, transcript
-        LIMIT 1
-      `, { interviewNumber: int(interviewNumber) });
+        const transcriptMeta = await session.run<WithProperties<Neo4jInterview>>(`
+                MATCH (interview:Interview {number: $interviewNumber})-[:HAS_TRANSCRIPT]->(transcript:Transcript)
+                RETURN interview, transcript
+                LIMIT 1
+            `, { interviewNumber: int(interviewNumber) },
+        );
 
         if (!Array.isArray(transcriptMeta.records) || transcriptMeta.records.length === 0) {
             console.error(`Interview ${ interviewNumber } not found`);
@@ -296,11 +296,19 @@ export async function getInterviewTranscript(interviewNumber: number): Promise<N
         const rawTranscript = await session.run<WithProperties<Neo4jStatement>>(
             // language=Cypher
             `
-        MATCH (transcript:Transcript {uid: $uid})
-        MATCH (transcript) -[transcribes:TRANSCRIBES]->(statement)<-[:SAYS]-(speaker)<-[:INTERVIEWED_AS]-(person)
-        RETURN transcript, statement, speaker, transcribes, person
-        ORDER BY transcribes.startTime
-      `, { uid: metadata.transcript.uid });
+                MATCH (transcript:Transcript {uid: $uid})
+                MATCH (transcript) -[transcribes:TRANSCRIBES]->(statement)<-[:SAYS]-(speaker)<-[:INTERVIEWED_AS]-(person)
+                RETURN transcript, statement, speaker, transcribes, person
+                ORDER BY transcribes.startTime
+            `, {
+                uid: metadata.transcript.uid,
+            },
+        );
+
+        if (!Array.isArray(rawTranscript.records) || rawTranscript.records.length === 0) {
+            console.error(`Transcript for interview ${ interviewNumber } is empty`);
+            throw new Error(`Transcript for interview ${ interviewNumber } is empty`);
+        }
 
         const interviewTranscriptData = {
             interview: metadata.interview,
@@ -333,10 +341,10 @@ export async function listInterviews(): Promise<Transcript[]> {
 
     try {
         const result = await driver.executeQuery(`
-      MATCH (interview:Interview)
-      RETURN interview
-      ORDER BY interview.date ASC
-    `);
+            MATCH (interview:Interview)
+            RETURN interview
+            ORDER BY interview.date ASC
+        `);
 
         return result.records.map(record => {
             const interview = record.get("interview");
@@ -345,8 +353,8 @@ export async function listInterviews(): Promise<Transcript[]> {
                     interview.properties.date.toStandardDate(),
                     "yyyy-MM-dd",
                 ),
+                interviewee: interview.properties.interviewee,
                 number: interview.properties.number,
-                title: interview.properties.title,
                 uid: interview.properties.uid,
             };
         });
