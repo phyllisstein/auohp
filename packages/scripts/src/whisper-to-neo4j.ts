@@ -1,44 +1,46 @@
-import fs from 'node:fs/promises'
-import path from 'node:path'
-import { fileURLToPath } from 'node:url'
+import "dotenv/config";
 
-import * as R from 'ramda'
-import { nanoid } from 'nanoid'
-import neo4j, { type EagerResult, int } from 'neo4j-driver'
-import { stripIndent } from 'common-tags'
-import delay from 'delay'
+import fs from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+import * as R from "ramda";
+import { nanoid } from "nanoid";
+import neo4j, { type EagerResult, int } from "neo4j-driver";
+import { stripIndent } from "common-tags";
 
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 
 const NEO4J_LABELS = [
-  'Broadsheet',
-  'Documentary',
-  'Interview',
-  'Person',
-  'Speaker',
-  'Statement',
-  'Transcript',
-  'Video',
-  'VTT',
-]
+    "Broadsheet",
+    "Documentary",
+    "Interview",
+    "Person",
+    "Speaker",
+    "Statement",
+    "Transcript",
+    "Video",
+    "VTT",
+];
 
 const {
-  NEO4J_PASSWORD,
-  NEO4J_URI,
-  NEO4J_USERNAME,
-  OPENAI_API_KEY,
-} = process.env
+    FILTER_INTERVIEWER_SPEAKER_HACK,
+    NEO4J_PASSWORD,
+    NEO4J_URI,
+    NEO4J_USERNAME,
+    OPENAI_API_KEY,
+} = process.env;
 const neo4jDriver = neo4j.driver(
-  NEO4J_URI,
-  neo4j.auth.basic(NEO4J_USERNAME, NEO4J_PASSWORD),
-  {
-    disableLosslessIntegers: true,
-    connectionTimeout: 2500,
-  },
-)
+    NEO4J_URI,
+    neo4j.auth.basic(NEO4J_USERNAME, NEO4J_PASSWORD),
+    {
+        connectionTimeout: 2500,
+        disableLosslessIntegers: true,
+    },
+);
 
 
 /**
@@ -54,9 +56,9 @@ const neo4jDriver = neo4j.driver(
  * truth, and the captions are a derived artifact.
  */
 async function seedInterview({ data, date, interviewee, interviewNumber, jsonCaption, jsonCaptionURL, speakers, videoURL, vtt, vttURL }) {
-  await neo4jDriver.executeQuery(
+    await neo4jDriver.executeQuery(
     // language=Cypher
-    `
+        `
       MATCH (jim:Person {name: 'Jim Hubbard'})
       MATCH (sarah:Person {name: 'Sarah Schulman'})
       WITH jim, sarah
@@ -80,364 +82,404 @@ async function seedInterview({ data, date, interviewee, interviewNumber, jsonCap
       CREATE (video)-[:HAS_CAPTIONS]->(json)
       CREATE (i)-[:HAS_TRANSCRIPT]->(transcript)
     `, {
-      date,
-      interviewNumber: int(interviewNumber),
-      transcriptUID: nanoid(),
+            date,
+            interviewee,
+            intervieweeUID: nanoid(),
 
-      interviewee,
-      speakers,
-      interviewUID: nanoid(),
-      intervieweeUID: nanoid(),
+            interviewNumber: int(interviewNumber),
+            interviewUID: nanoid(),
+            jsonCaption,
+            jsonCaptionUID: nanoid(),
 
-      videoUID: nanoid(),
-      videoURL,
+            speakers,
+            jsonCaptionURL: vttURL,
 
-      vtt,
-      vttURL,
-      vttUID: nanoid(),
+            transcriptUID: nanoid(),
+            videoUID: nanoid(),
+            videoURL,
 
-      jsonCaption,
-      jsonCaptionURL: vttURL,
-      jsonCaptionUID: nanoid(),
-    },
-  )
+            vtt,
+            vttUID: nanoid(),
+            vttURL,
+        },
+    );
 
-  const BATCH_SIZE = 100
-  let batch = []
-  let batchIndex = 0
+    const BATCH_SIZE = 100;
+    let statementBatch = [];
 
-  const importBatch = async () => {
-    batchIndex++
+    let segment = {
+        children: [],
+        endTime: null,
+        endTimestamp: null,
+        interviewNumber: int(interviewNumber),
+        speaker: null,
+        startTime: null,
+        startTimestamp: null,
+        statementUID: nanoid(),
+        transcription: "",
+        type: "segment",
+        words: [],
+    };
 
-    try {
-      await neo4jDriver.executeQuery(
-        // language=Cypher
-        `
-          UNWIND $batch AS chunk
-          MATCH (interview:Interview {number: chunk.interviewNumber})-[:HAS_TRANSCRIPT]-> (transcript)
-          MATCH (transcript) -[:INCLUDES_SPEAKER]-> (speaker:Speaker {label: chunk.speaker})
-          CREATE (transcript)-[:TRANSCRIBES {startTime: chunk.startTime, endTime: chunk.endTime, startTimestamp: chunk.startTimestamp, endTimestamp: chunk.endTimestamp}]->(statement:Statement {text: chunk.transcription, uid: chunk.statementUID})
-          CREATE (speaker) -[:SAYS]-> (statement)
-          RETURN statement
-      `, { batch })
-    } catch (error) {
-      console.error(`
-        Could not create batch number ${ batchIndex } for interview number ${ interviewNumber }.
+    const importBatch = async () => {
+        if (FILTER_INTERVIEWER_SPEAKER_HACK && segment.speaker !== speakers.interviewee) {
+            return;
+        }
+
+        try {
+            // FIXME: Eliminate :Speaker
+            //       (:Transcript)-[:TRANSCRIBES]->(:Statement)<-[:SAYS]-(:Person)
+            // FIXME: Eliminate [:TRANSCRIBES] edge
+            // FIXME: Times as DURATIONs
+            //        https://neo4j.com/docs/cypher-manual/current/values-and-types/temporal/#cypher-temporal-durations
+            await neo4jDriver.executeQuery(
+                // language=Cypher
+                `
+          MATCH (interview:Interview {number: $segment.interviewNumber})-[:HAS_TRANSCRIPT]-> (transcript)
+          MATCH (transcript) -[:INCLUDES_SPEAKER]-> (speaker:Speaker {label: $segment.speaker})
+          CREATE (segmentStatement:Statement {text: $segment.transcription, uid: $segment.statementUID})
+          CREATE (speaker) -[:SAYS {startTime: $segment.startTime, endTime: $segment.endTime, startTimestamp: $segment.startTimestamp, endTimestamp: $segment.endTimestamp}]-> (segmentStatement)
+          CREATE (transcript) -[:TRANSCRIBES {startTime: $segment.startTime, endTime: $segment.endTime, startTimestamp: $segment.startTimestamp, endTimestamp: $segment.endTimestamp}]-> (segmentStatement)
+          WITH segmentStatement
+          UNWIND $statementBatch AS chunk
+          CREATE (segmentStatement) -[:SAYS {startTime: chunk.startTime, endTime: chunk.endTime, startTimestamp: chunk.startTimestamp, endTimestamp: chunk.endTimestamp}]-> (caption:Caption {text: chunk.transcription, uid: chunk.statementUID})
+          RETURN count(caption)
+        `, { segment, statementBatch },
+            );
+        } catch (error) {
+            console.error(`
+        Could not create batch statement at timestamp ${ segment.startTime }--${ segment.endTime }
+        for speaker ${ segment.speaker } in interview ${ interviewNumber }.
 
         Error: ${ error }
-      `)
+      `);
+        }
+    };
+
+    for await (const chunk of data) {
+        if (segment.speaker !== chunk.speaker) {
+            await importBatch();
+            statementBatch = [];
+            segment = {
+                ...chunk,
+                children: [],
+                interviewNumber: int(interviewNumber),
+                speaker: chunk.speaker || speakers.interviewee,
+                statementUID: nanoid(),
+                transcription: "",
+                words: [],
+            };
+        }
+
+        segment.endTimestamp = chunk.endTimestamp;
+        segment.endTime = chunk.endTime;
+        segment.transcription += ` ${ chunk.transcription }`;
+        segment.words.push(...chunk.words);
+        segment.children.push(...chunk.children);
+
+        statementBatch.push({
+            ...chunk,
+            interviewNumber: int(interviewNumber),
+            speaker: chunk.speaker || speakers.interviewee,
+            statementUID: nanoid(),
+        });
     }
-  }
 
-  for await (const chunk of data) {
-    batch.push({
-      ...chunk,
-      speaker: chunk.speaker || speakers.interviewee,
-      interviewNumber: int(interviewNumber),
-      statementUID: nanoid(),
-    })
-
-    if (batch.length === BATCH_SIZE) {
-      await importBatch()
-      batch = []
+    if (statementBatch.length) {
+        await importBatch();
     }
-  }
-
-  if (batch.length) {
-    await importBatch()
-  }
 }
 
 async function bootstrap() {
-  await neo4jDriver.getServerInfo()
+    await neo4jDriver.getServerInfo();
 
-  await neo4jDriver.executeQuery(
+    await neo4jDriver.executeQuery(
     // language=Cypher
-    `
+        `
       MATCH (n) DETACH DELETE n
     `,
-  )
+    );
 
-  await neo4jDriver.executeQuery(
+    await neo4jDriver.executeQuery(
     // language=Cypher
-    `
+        `
       DROP INDEX transcript_search IF EXISTS
     `,
-  )
+    );
 
-  await neo4jDriver.executeQuery(
+    await neo4jDriver.executeQuery(
     // language=Cypher
-    `
+        `
       DROP INDEX name_search IF EXISTS
     `,
-  )
+    );
 
-  for await (let label of NEO4J_LABELS) {
-    await neo4jDriver.executeQuery(
-      // language=Cypher
-      `
+    for await (let label of NEO4J_LABELS) {
+        await neo4jDriver.executeQuery(
+            // language=Cypher
+            `
         CREATE CONSTRAINT ${ label }UID IF NOT EXISTS
         FOR (n:${ label }) REQUIRE n.uid IS UNIQUE
       `,
-      { label },
-    )
-  }
+            { label },
+        );
+    }
 
-  await neo4jDriver.executeQuery(
+    await neo4jDriver.executeQuery(
     // language=Cypher
-    `
+        `
       CREATE FULLTEXT INDEX transcript_search IF NOT EXISTS
       FOR (s:Statement) ON EACH [s.text]
     `,
-  )
+    );
 
-  await neo4jDriver.executeQuery(
+    await neo4jDriver.executeQuery(
     // language=Cypher
-    `
+        `
       CREATE FULLTEXT INDEX name_search IF NOT EXISTS
       FOR (p:Person) ON EACH [p.name]
     `,
-  )
+    );
 
-  await neo4jDriver.executeQuery(
+    await neo4jDriver.executeQuery(
     // language=Cypher
-    `
+        `
         CREATE (jim:Person {name: 'Jim Hubbard', uid: $jimUID})
         CREATE (sarah:Person {name: 'Sarah Schulman', uid: $sarahUID})
         CREATE (:Committee:Collective {name: 'Gran Fury', uid: $gfUID})
-    `, { jimUID: nanoid(), sarahUID: nanoid(), gfUID: nanoid() },
-  )
+    `, { gfUID: nanoid(), jimUID: nanoid(), sarahUID: nanoid() },
+    );
 }
 
 async function seedAllInterviews() {
-  let data, vtt, jsonCaption
+    let data, vtt, jsonCaption;
 
 
-  // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 025 - Lei Chou ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
-  data = JSON.parse(
-    await fs.readFile(
-      path.resolve(__dirname, '../assets/025_lei_chou.json'),
-      'utf8',
-    ),
-  )
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 025 - Lei Chou ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+    data = JSON.parse(
+        await fs.readFile(
+            path.resolve(__dirname, "../assets/025_lei_chou.json"),
+            "utf8",
+        ),
+    );
 
-  jsonCaption = await fs.readFile(
-    path.resolve(__dirname, '../assets/025_lei_chou.captions.json'),
-    'utf8',
-  )
+    jsonCaption = await fs.readFile(
+        path.resolve(__dirname, "../assets/025_lei_chou.captions.json"),
+        "utf8",
+    );
 
-  vtt = await fs.readFile(
-    path.resolve(__dirname, '../assets/025_lei_chou.vtt'),
-    'utf8',
-  )
+    vtt = await fs.readFile(
+        path.resolve(__dirname, "../assets/025_lei_chou.vtt"),
+        "utf8",
+    );
 
-  await seedInterview({
-    data,
-    date: '2003-05-05',
-    interviewee: 'Lei Chou',
-    interviewNumber: 25,
-    speakers: {
-      interviewee: 'SPEAKER_01',
-      jim: 'SPEAKER_03',
-      sarah: 'SPEAKER_02',
-    },
-    videoURL: 'https://dyck.mobi/auohp/025_lei_chou.mp4',
-    vttURL: 'https://dyck.mobi/auohp/025_lei_chou.vtt',
-    vtt,
-    jsonCaption,
-    jsonCaptionURL: 'https://dyck.mobi/auohp/025_lei_chou.captions.json',
-  })
-  // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+    await seedInterview({
+        data,
+        date: "2003-05-05",
+        interviewee: "Lei Chou",
+        interviewNumber: 25,
+        jsonCaption,
+        jsonCaptionURL: "https://dyck.mobi/auohp/025_lei_chou.captions.json",
+        speakers: {
+            interviewee: "SPEAKER_01",
+            jim: "SPEAKER_03",
+            sarah: "SPEAKER_02",
+        },
+        videoURL: "https://dyck.mobi/auohp/025_lei_chou.mp4",
+        vtt,
+        vttURL: "https://dyck.mobi/auohp/025_lei_chou.vtt",
+    });
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
 
-  // ~~~~~~~~~~~~~~~~~~~~~~~~ 064 - Vincent Gagliostro ~~~~~~~~~~~~~~~~~~~~~~~~ //
-  data = JSON.parse(
-    await fs.readFile(
-      path.resolve(__dirname, '../assets/064_vincent_gagliostro.json'),
-      'utf8',
-    ),
-  )
+    // ~~~~~~~~~~~~~~~~~~~~~~~~ 064 - Vincent Gagliostro ~~~~~~~~~~~~~~~~~~~~~~~~ //
+    data = JSON.parse(
+        await fs.readFile(
+            path.resolve(__dirname, "../assets/064_vincent_gagliostro.json"),
+            "utf8",
+        ),
+    );
 
-  jsonCaption = await fs.readFile(
-    path.resolve(__dirname, '../assets/064_vincent_gagliostro.captions.json'),
-    'utf8',
-  )
+    jsonCaption = await fs.readFile(
+        path.resolve(__dirname, "../assets/064_vincent_gagliostro.captions.json"),
+        "utf8",
+    );
 
-  vtt = await fs.readFile(
-    path.resolve(__dirname, '../assets/064_vincent_gagliostro.vtt'),
-    'utf8',
-  )
+    vtt = await fs.readFile(
+        path.resolve(__dirname, "../assets/064_vincent_gagliostro.vtt"),
+        "utf8",
+    );
 
-  await seedInterview({
-    data,
-    date: '2005-07-08',
-    interviewee: 'Vincent Gagliostro',
-    interviewNumber: 64,
-    speakers: {
-      interviewee: 'SPEAKER_00',
-      jim: 'SPEAKER_01',
-      sarah: 'SPEAKER_02',
-    },
-    videoURL: 'https://dyck.mobi/auohp/064_vincent_gagliostro.mp4',
-    vttURL: 'https://dyck.mobi/auohp/064_vincent_gagliostro.vtt',
-    vtt,
-    jsonCaption,
-    jsonCaptionURL: 'https://dyck.mobi/auohp/064_vincent_gagliostro.captions.json',
-  })
-  // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+    await seedInterview({
+        data,
+        date: "2005-07-08",
+        interviewee: "Vincent Gagliostro",
+        interviewNumber: 64,
+        jsonCaption,
+        jsonCaptionURL: "https://dyck.mobi/auohp/064_vincent_gagliostro.captions.json",
+        speakers: {
+            interviewee: "SPEAKER_00",
+            jim: "SPEAKER_01",
+            sarah: "SPEAKER_02",
+        },
+        videoURL: "https://dyck.mobi/auohp/064_vincent_gagliostro.mp4",
+        vtt,
+        vttURL: "https://dyck.mobi/auohp/064_vincent_gagliostro.vtt",
+    });
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
 
-  // ~~~~~~~~~~~~~~~~~~~~~~~~~~ 082 - David Robinson ~~~~~~~~~~~~~~~~~~~~~~~~~~ //
-  data = JSON.parse(
-    await fs.readFile(
-      path.resolve(__dirname, '../assets/082_david_robinson.json'),
-      'utf8',
-    ),
-  )
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~ 082 - David Robinson ~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+    data = JSON.parse(
+        await fs.readFile(
+            path.resolve(__dirname, "../assets/082_david_robinson.json"),
+            "utf8",
+        ),
+    );
 
-  jsonCaption = await fs.readFile(
-    path.resolve(__dirname, '../assets/082_david_robinson.captions.json'),
-    'utf8',
-  )
+    jsonCaption = await fs.readFile(
+        path.resolve(__dirname, "../assets/082_david_robinson.captions.json"),
+        "utf8",
+    );
 
-  vtt = await fs.readFile(
-    path.resolve(__dirname, '../assets/082_david_robinson.vtt'),
-    'utf8',
-  )
+    vtt = await fs.readFile(
+        path.resolve(__dirname, "../assets/082_david_robinson.vtt"),
+        "utf8",
+    );
 
-  await seedInterview({
-    data,
-    date: '2007-07-16',
-    interviewee: 'David Robinson',
-    interviewNumber: 82,
-    speakers: {
-      interviewee: 'SPEAKER_03',
-      jim: 'SPEAKER_00',
-      sarah: 'SPEAKER_01',
-    },
-    videoURL: 'https://dyck.mobi/auohp/082_david_robinson.mp4',
-    vttURL: 'https://dyck.mobi/auohp/082_david_robinson.vtt',
-    vtt,
-    jsonCaption,
-    jsonCaptionURL: 'https://dyck.mobi/auohp/082_david_robinson.captions.json',
-  })
-  // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+    await seedInterview({
+        data,
+        date: "2007-07-16",
+        interviewee: "David Robinson",
+        interviewNumber: 82,
+        jsonCaption,
+        jsonCaptionURL: "https://dyck.mobi/auohp/082_david_robinson.captions.json",
+        speakers: {
+            interviewee: "SPEAKER_03",
+            jim: "SPEAKER_00",
+            sarah: "SPEAKER_01",
+        },
+        videoURL: "https://dyck.mobi/auohp/082_david_robinson.mp4",
+        vtt,
+        vttURL: "https://dyck.mobi/auohp/082_david_robinson.vtt",
+    });
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
 
-  // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 087 - Jill Harris ~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
-  data = JSON.parse(
-    await fs.readFile(
-      path.resolve(__dirname, '../assets/087_jill_harris.json'),
-      'utf8',
-    ),
-  )
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 087 - Jill Harris ~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+    data = JSON.parse(
+        await fs.readFile(
+            path.resolve(__dirname, "../assets/087_jill_harris.json"),
+            "utf8",
+        ),
+    );
 
-  jsonCaption = await fs.readFile(
-    path.resolve(__dirname, '../assets/087_jill_harris.captions.json'),
-    'utf8',
-  )
+    jsonCaption = await fs.readFile(
+        path.resolve(__dirname, "../assets/087_jill_harris.captions.json"),
+        "utf8",
+    );
 
-  vtt = await fs.readFile(
-    path.resolve(__dirname, '../assets/087_jill_harris.vtt'),
-    'utf8',
-  )
+    vtt = await fs.readFile(
+        path.resolve(__dirname, "../assets/087_jill_harris.vtt"),
+        "utf8",
+    );
 
-  await seedInterview({
-    data,
-    date: '2008-06-27',
-    interviewee: 'Jill Harris',
-    interviewNumber: 87,
-    speakers: {
-      interviewee: 'SPEAKER_02',
-      jim: 'SPEAKER_01',
-      sarah: 'SPEAKER_04',
-    },
-    videoURL: 'https://dyck.mobi/auohp/087_jill_harris.mp4',
-    vttURL: 'https://dyck.mobi/auohp/087_jill_harris.vtt',
-    vtt,
-    jsonCaption,
-    jsonCaptionURL: 'https://dyck.mobi/auohp/087_jill_harris.captions.json',
-  })
-  // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+    await seedInterview({
+        data,
+        date: "2008-06-27",
+        interviewee: "Jill Harris",
+        interviewNumber: 87,
+        jsonCaption,
+        jsonCaptionURL: "https://dyck.mobi/auohp/087_jill_harris.captions.json",
+        speakers: {
+            interviewee: "SPEAKER_02",
+            jim: "SPEAKER_01",
+            sarah: "SPEAKER_04",
+        },
+        videoURL: "https://dyck.mobi/auohp/087_jill_harris.mp4",
+        vtt,
+        vttURL: "https://dyck.mobi/auohp/087_jill_harris.vtt",
+    });
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
 
-  // ~~~~~~~~~~~~~~~~~~~~~~~~~~~ 117 - Alexis Danzig ~~~~~~~~~~~~~~~~~~~~~~~~~~ //
-  data = JSON.parse(
-    await fs.readFile(
-      path.resolve(__dirname, '../assets/117_alexis_danzig.json'),
-      'utf8',
-    ),
-  )
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~ 117 - Alexis Danzig ~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+    data = JSON.parse(
+        await fs.readFile(
+            path.resolve(__dirname, "../assets/117_alexis_danzig.json"),
+            "utf8",
+        ),
+    );
 
-  jsonCaption = await fs.readFile(
-    path.resolve(__dirname, '../assets/117_alexis_danzig.captions.json'),
-    'utf8',
-  )
+    jsonCaption = await fs.readFile(
+        path.resolve(__dirname, "../assets/117_alexis_danzig.captions.json"),
+        "utf8",
+    );
 
-  vtt = await fs.readFile(
-    path.resolve(__dirname, '../assets/117_alexis_danzig.vtt'),
-    'utf8',
-  )
+    vtt = await fs.readFile(
+        path.resolve(__dirname, "../assets/117_alexis_danzig.vtt"),
+        "utf8",
+    );
 
-  await seedInterview({
-    data,
-    date: '2004-01-17',
-    interviewee: 'Alexis Danzig',
-    interviewNumber: 117,
-    speakers: {
-      interviewee: 'SPEAKER_01',
-      jim: 'SPEAKER_00',
-      sarah: 'SPEAKER_02',
-    },
-    videoURL: 'https://dyck.mobi/auohp/117_alexis_danzig.mp4',
-    vttURL: 'https://dyck.mobi/auohp/117_alexis_danzig.vtt',
-    vtt,
-    jsonCaption,
-    jsonCaptionURL: 'https://dyck.mobi/auohp/117_alexis_danzig.captions.json',
-  })
-  // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+    await seedInterview({
+        data,
+        date: "2004-01-17",
+        interviewee: "Alexis Danzig",
+        interviewNumber: 117,
+        jsonCaption,
+        jsonCaptionURL: "https://dyck.mobi/auohp/117_alexis_danzig.captions.json",
+        speakers: {
+            interviewee: "SPEAKER_01",
+            jim: "SPEAKER_00",
+            sarah: "SPEAKER_02",
+        },
+        videoURL: "https://dyck.mobi/auohp/117_alexis_danzig.mp4",
+        vtt,
+        vttURL: "https://dyck.mobi/auohp/117_alexis_danzig.vtt",
+    });
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
 
-  // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 119 - Mary Cotter ~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
-  data = JSON.parse(
-    await fs.readFile(
-      path.resolve(__dirname, '../assets/119_mary_cotter.json'),
-      'utf8',
-    ),
-  )
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 119 - Mary Cotter ~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+    data = JSON.parse(
+        await fs.readFile(
+            path.resolve(__dirname, "../assets/119_mary_cotter.json"),
+            "utf8",
+        ),
+    );
 
-  jsonCaption = await fs.readFile(
-    path.resolve(__dirname, '../assets/119_mary_cotter.captions.json'),
-    'utf8',
-  )
+    jsonCaption = await fs.readFile(
+        path.resolve(__dirname, "../assets/119_mary_cotter.captions.json"),
+        "utf8",
+    );
 
-  vtt = await fs.readFile(
-    path.resolve(__dirname, '../assets/119_mary_cotter.vtt'),
-    'utf8',
-  )
+    vtt = await fs.readFile(
+        path.resolve(__dirname, "../assets/119_mary_cotter.vtt"),
+        "utf8",
+    );
 
-  await seedInterview({
-    data,
-    date: '2010-06-23',
-    interviewee: 'Mary Cotter',
-    interviewNumber: 119,
-    speakers: {
-      interviewee: 'SPEAKER_00',
-      jim: 'SPEAKER_01',
-      sarah: 'SPEAKER_02',
-    },
-    videoURL: 'https://dyck.mobi/auohp/119_mary_cotter.mp4',
-    vttURL: 'https://dyck.mobi/auohp/119_mary_cotter.vtt',
-    vtt,
-    jsonCaption,
-    jsonCaptionURL: 'https://dyck.mobi/auohp/119_mary_cotter.captions.json',
-  })
-  // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+    await seedInterview({
+        data,
+        date: "2010-06-23",
+        interviewee: "Mary Cotter",
+        interviewNumber: 119,
+        jsonCaption,
+        jsonCaptionURL: "https://dyck.mobi/auohp/119_mary_cotter.captions.json",
+        speakers: {
+            interviewee: "SPEAKER_00",
+            jim: "SPEAKER_01",
+            sarah: "SPEAKER_02",
+        },
+        videoURL: "https://dyck.mobi/auohp/119_mary_cotter.mp4",
+        vtt,
+        vttURL: "https://dyck.mobi/auohp/119_mary_cotter.vtt",
+    });
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
 }
 
 async function seedStopChurch() {
-  const broadsheetUID = nanoid()
-  const stopChurchUID = nanoid()
-  const transcriptUID = nanoid()
+    const broadsheetUID = nanoid();
+    const stopChurchUID = nanoid();
+    const transcriptUID = nanoid();
 
-  await neo4jDriver.executeQuery(
+    await neo4jDriver.executeQuery(
     // language=Cypher
-    `
+        `
       CREATE (stopChurch:Action {uid: $stopChurchUID, name: $stopChurchName, date: date($stopChurchDate)})
       CREATE (broadsheet:Broadsheet {uid: $broadsheetUID, title: $broadsheetTitle})
       CREATE (broadsheet)-[:HAS_ASSET]->(image:Image:Asset {url: $imageURL})
@@ -445,26 +487,27 @@ async function seedStopChurch() {
       CREATE (stopChurch)-[:HAS_BROADSHEET]->(broadsheet)
       RETURN stopChurch, broadsheet
     `, {
-      imageURL: 'https://dyck.mobi/auohp/stopchurch-gigapixel-recovery-quality-4x.png',
-      stopChurchDate: '1989-12-10',
-      stopChurchName: 'Stop the Church',
-      stopChurchUID,
-      broadsheetUID,
-      broadsheetTitle: 'Stop This Man',
-    },
-  )
+            broadsheetTitle: "Stop This Man",
+            broadsheetUID,
+            imageURL: "https://dyck.mobi/auohp/stopchurch-gigapixel-recovery-quality-4x.png",
+            stopChurchDate: "1989-12-10",
+            stopChurchName: "Stop the Church",
+            stopChurchUID,
+        },
+    );
 
-  await neo4jDriver.executeQuery(
+    // FIXME: :Statement is a clumsy way to think about the text of a broadsheet.
+    await neo4jDriver.executeQuery(
     // language=Cypher
-    `
+        `
       MATCH (broadsheet:Broadsheet {uid: $broadsheetUID})
       CREATE (broadsheet)-[:HAS_TRANSCRIPT]->(transcript:Transcript {uid: $transcriptUID})
       CREATE (transcript)-[:TRANSCRIBES]->(statement:Statement {text: $transcription, uid: $statementUID})
       RETURN statement
     `, {
-      broadsheetUID,
-      transcriptUID,
-      transcription: stripIndent`
+            broadsheetUID,
+            statementUID: nanoid(),
+            transcription: stripIndent`
         STOP THE CHURCH
         Massive protest
         Sunday December 10
@@ -476,41 +519,41 @@ async function seedStopChurch() {
         Take direct action.
         Take control of your body.
       `,
-      statementUID: nanoid(),
-    },
-  )
+            transcriptUID,
+        },
+    );
 }
 
 async function seedAshesAction() {
-  let data, vtt, jsonCaption
+    let data, vtt, jsonCaption;
 
 
-  data = JSON.parse(
-    await fs.readFile(
-      path.resolve(__dirname, '../assets/the_ashes_action.json'),
-      'utf8',
-    ),
-  )
+    data = JSON.parse(
+        await fs.readFile(
+            path.resolve(__dirname, "../assets/the_ashes_action.json"),
+            "utf8",
+        ),
+    );
 
-  jsonCaption = await fs.readFile(
-    path.resolve(__dirname, '../assets/the_ashes_action.captions.json'),
-    'utf8',
-  )
+    jsonCaption = await fs.readFile(
+        path.resolve(__dirname, "../assets/the_ashes_action.captions.json"),
+        "utf8",
+    );
 
-  vtt = await fs.readFile(
-    path.resolve(__dirname, '../assets/the_ashes_action.vtt'),
-    'utf8',
-  )
+    vtt = await fs.readFile(
+        path.resolve(__dirname, "../assets/the_ashes_action.vtt"),
+        "utf8",
+    );
 
-  const actionUID = nanoid()
-  const documentaryUID = nanoid()
-  const videoUID = nanoid()
-  const transcriptUID = nanoid()
-  const vttUID = nanoid()
+    const actionUID = nanoid();
+    const documentaryUID = nanoid();
+    const videoUID = nanoid();
+    const transcriptUID = nanoid();
+    const vttUID = nanoid();
 
-  await neo4jDriver.executeQuery(
+    await neo4jDriver.executeQuery(
     // language=Cypher
-    `
+        `
       CREATE (doc:Documentary:Film {uid: $documentaryUID, title: $documentaryTitle, date: date($documentaryDate), slug: $documentarySlug})
       CREATE (video:Video:Asset {url: $videoURL, uid: $videoUID})
       CREATE (vtt:VTT:Captions {text: $vtt, url: $vttURL, uid: $vttUID})
@@ -521,91 +564,91 @@ async function seedAshesAction() {
       CREATE (video)-[:HAS_CAPTIONS]->(json)
       CREATE (doc)-[:HAS_TRANSCRIPT]->(transcript)
     `, {
-      documentaryDate: '1992-10-11',
-      documentaryTitle: 'The Ashes Action',
-      documentarySlug: 'ashes-action',
-      documentaryUID,
+            documentaryDate: "1992-10-11",
+            documentarySlug: "ashes-action",
+            documentaryTitle: "The Ashes Action",
+            documentaryUID,
 
-      transcriptUID,
+            jsonCaption,
 
-      videoUID,
-      videoURL: 'https://dyck.mobi/auohp/the_ashes_action.mp4',
+            jsonCaptionUID: nanoid(),
+            jsonCaptionURL: "https://dyck.mobi/auohp/the_ashes_action.captions.json",
 
-      vtt,
-      vttUID,
-      vttURL: 'https://dyck.mobi/auohp/the_ashes_action.vtt',
+            transcriptUID,
+            videoUID,
+            videoURL: "https://dyck.mobi/auohp/the_ashes_action.mp4",
 
-      jsonCaption,
-      jsonCaptionUID: nanoid(),
-      jsonCaptionURL: 'https://dyck.mobi/auohp/the_ashes_action.captions.json',
-    },
-  )
+            vtt,
+            vttUID,
+            vttURL: "https://dyck.mobi/auohp/the_ashes_action.vtt",
+        },
+    );
 
-  const allSpeakers = new Set()
-  for (const chunk of data) {
-    allSpeakers.add(chunk.speaker)
-  }
+    const allSpeakers = new Set();
+    for (const chunk of data) {
+        allSpeakers.add(chunk.speaker);
+    }
 
-  await neo4jDriver.executeQuery(
+    await neo4jDriver.executeQuery(
     // language=Cypher
-    `
+        `
       UNWIND $speakers AS speaker
       MATCH (doc:Documentary {uid: $documentaryUID}) -[:HAS_TRANSCRIPT]-> (transcript {uid: $transcriptUID})
       CREATE (transcript)-[:INCLUDES_SPEAKER]->(s:Speaker {label: speaker})
       RETURN s
-    `, { speakers: Array.from(allSpeakers), documentaryUID, transcriptUID },
-  )
+    `, { documentaryUID, speakers: Array.from(allSpeakers), transcriptUID },
+    );
 
-  await neo4jDriver.executeQuery(
-    `
+    await neo4jDriver.executeQuery(
+        `
       MATCH (doc:Documentary {uid: $documentaryUID}) -[:HAS_TRANSCRIPT]-> (transcript) -[:INCLUDES_SPEAKER]-> (drSpeaker:Speaker {label: 'SPEAKER_02'})
       MATCH (dr:Person {name: 'David Robinson'})
       CREATE (dr)-[:INTERVIEWED_AS]->(drSpeaker)
     `, { documentaryUID },
-  )
+    );
 
-  for await (const chunk of data) {
-    let result: EagerResult
-    try {
-      result = await neo4jDriver.executeQuery(
-        // language=Cypher
-        `
+    for await (const chunk of data) {
+        let result: EagerResult;
+        try {
+            result = await neo4jDriver.executeQuery(
+                // language=Cypher
+                `
           MATCH (transcript {uid: $transcriptUID}) -[:INCLUDES_SPEAKER]-> (speaker:Speaker {label: $speaker})
           CREATE (transcript)-[:TRANSCRIBES {startTime: $startTime, endTime: $endTime, startTimestamp: $startTimestamp, endTimestamp: $endTimestamp}]->(statement:Statement {text: $transcription, uid: $statementUID})
           CREATE (speaker)-[:SAYS]->(statement)
           RETURN statement, speaker
         `,
-        {
-          ...chunk,
-          transcriptUID,
-          statementUID: nanoid(),
-        })
-    } catch (error) {
-      console.error(`
+                {
+                    ...chunk,
+                    statementUID: nanoid(),
+                    transcriptUID,
+                });
+        } catch (error) {
+            console.error(`
         Could not create node for segment starting ${ chunk.startTime } in video
         ${ documentaryUID } for speaker ${ chunk.speaker }.
-      `)
+      `);
+        }
     }
-  }
 
-  await neo4jDriver.executeQuery(
+    await neo4jDriver.executeQuery(
     // language=Cypher
-    `
+        `
       MATCH (doc:Documentary {uid: $documentaryUID})
       CREATE (aa:Action {uid: $actionUID, name: $actionName, date: date($actionDate)})
       CREATE (aa)-[:HAS_DOCUMENTARY]->(doc)
       CREATE (doc)-[:MENTIONS]->(aa)
     `, {
-      documentaryUID,
-      actionUID,
-      actionName: 'The Ashes Action',
-      actionDate: '1992-10-11',
-    },
-  )
+            actionDate: "1992-10-11",
+            actionName: "The Ashes Action",
+            actionUID,
+            documentaryUID,
+        },
+    );
 
-  await neo4jDriver.executeQuery(
+    await neo4jDriver.executeQuery(
     // language=Cypher
-    `
+        `
       MATCH (aa:Action {uid: $actionUID})
       MATCH (gf:Collective {name: 'Gran Fury'})
       CREATE (broadsheet:Broadsheet {uid: $broadsheetUID, title: $broadsheetTitle})-[:MENTIONS]->(aa)
@@ -615,13 +658,13 @@ async function seedAshesAction() {
       CREATE (transcript)-[:TRANSCRIBES]->(statement:Statement {text: $transcription, uid: $statementUID})
       CREATE (gf)-[:DESIGNS]->(broadsheet)
     `, {
-      actionUID,
-      broadsheetUID: nanoid(),
-      imageURL: 'https://dyck.mobi/auohp/synAshes_flyer-gigapixel-recovery-quality-4x-fs8.png',
-      broadsheetTitle: 'White House Urn',
-      imageUID: nanoid(),
-      transcriptUID: nanoid(),
-      transcription: stripIndent`
+            actionUID,
+            broadsheetTitle: "White House Urn",
+            broadsheetUID: nanoid(),
+            imageUID: nanoid(),
+            imageURL: "https://dyck.mobi/auohp/synAshes_flyer-gigapixel-recovery-quality-4x-fs8.png",
+            statementUID: nanoid(),
+            transcription: stripIndent`
         You have lost someone to AIDS. For more than a decade, your government has
         mocked your loss. You have spoken out in anger, joined political protests,
         carried fake coffins and mock tombstones, and splattered red paint to represent
@@ -634,69 +677,72 @@ async function seedAshesAction() {
 
         Join us to protest twelve years of genocidal AIDS policy.
       `,
-      statementUID: nanoid(),
-    },
-  )
+            transcriptUID: nanoid(),
+        },
+    );
 }
 
 async function seedDemoEdges() {
-  await neo4jDriver.executeQuery(
+    await neo4jDriver.executeQuery(
     // language=Cypher
-    `
+        `
       MATCH (stt:Action {name: 'Stop the Church'})
       MERGE (vince:Statement {text: 'Stop the church was a phrase that was met to a lot of objection.'}) -[:MENTIONS]-> (stt)
       MERGE (alexis:Statement {text: ' stop the church, for example.'}) -[:MENTIONS]-> (stt)
       MERGE (ashes:Statement {text: 'I want you to remember that stop the church is pretty easy to convince people about what an evil group of perverts we are, right?'}) -[:MENTIONS]-> (stt)
       RETURN vince, alexis, ashes, stt
     `,
-  )
+    );
 
-  await neo4jDriver.executeQuery(
+    await neo4jDriver.executeQuery(
     // language=Cypher
-    `
+        `
       MATCH (s:Statement {text: 'So we did the ashes action in October of 92.'}),
             (a:Action {name: 'The Ashes Action'})
       MERGE (s) -[:MENTIONS]-> (a)
       RETURN s, a
     `,
-  )
+    );
 }
 
 async function seedVectorIndex() {
-  const BATCH_SIZE = 100
-  let batch = []
-  const importBatch = async () => {
-    const toEncode = R.pluck('text', batch)
-    await neo4jDriver.executeQuery(
-      // language=Cypher
-      `
+    const BATCH_SIZE = 100;
+    let batch = [];
+    const importBatch = async () => {
+        const toEncode = R.pluck("text", batch);
+        await neo4jDriver.executeQuery(
+            // language=Cypher
+            `
         CALL genai.vector.encodeBatch($toEncode, 'OpenAI', {token: $token}) YIELD index, vector
         MATCH (s:Statement {uid: $batch[index].uid})
         CALL db.create.setNodeVectorProperty(s, 'embedding', vector)
-        `, { toEncode, batch, token: OPENAI_API_KEY },
-    )
-  }
+        `, { batch, toEncode, token: OPENAI_API_KEY },
+        );
+    };
 
-  const statements = await neo4jDriver.executeQuery(`
+    // FIXME: Instead of filtering out interviewer questions and breaking
+    // accessibility when generating captions, we should filter out interviewer
+    // questions when generating the vector index.
+    const statements = await neo4jDriver.executeQuery(`
     MATCH (s:Statement)
     RETURN s.uid AS uid, s.text AS text
-  `)
+  `);
 
-  for (const statement of statements.records) {
-    const { uid, text } = statement.toObject()
-    batch.push({ uid, text })
-    if (batch.length === BATCH_SIZE) {
-      await importBatch()
-      batch = []
+    for (const statement of statements.records) {
+        const { text, uid } = statement.toObject();
+        batch.push({ text, uid });
+        if (batch.length === BATCH_SIZE) {
+            await importBatch();
+            batch = [];
+        }
     }
-  }
-  if (batch.length) {
-    await importBatch()
-  }
+    if (batch.length) {
+        await importBatch();
+    }
 
-  await neo4jDriver.executeQuery(
+    await neo4jDriver.executeQuery(
     // language=Cypher
-    `
+        `
       CREATE VECTOR INDEX statement_embedding IF NOT EXISTS
       FOR (s:Statement) ON s.embedding
       OPTIONS {indexConfig: {
@@ -704,19 +750,19 @@ async function seedVectorIndex() {
         \`vector.similarity_function\`: 'cosine'
       }}
     `,
-  )
+    );
 }
 
 async function main() {
-  await bootstrap()
+    await bootstrap();
 
-  await seedAllInterviews()
-  await seedAshesAction()
-  await seedStopChurch()
-  await seedDemoEdges()
-  await seedVectorIndex()
+    await seedAllInterviews();
+    await seedAshesAction();
+    await seedStopChurch();
+    await seedDemoEdges();
+    await seedVectorIndex();
 
-  await neo4jDriver.close()
+    await neo4jDriver.close();
 }
 
-void (await main())
+void (await main());
