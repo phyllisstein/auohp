@@ -1,6 +1,6 @@
-import styled from 'styled-components'
+import styled from "styled-components";
 
 export const ResultsContainer = styled.div`
-  position: fixed;
-  z-index: 1;
-`
+    position: fixed;
+    z-index: 1;
+`;

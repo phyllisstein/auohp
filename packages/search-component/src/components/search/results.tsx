@@ -1,38 +1,38 @@
-import { usePortal } from './use-portal'
-import ReactDOM from 'react-dom'
-import type { ReactPortal, PropsWithChildren } from 'react'
-import { ResultsContainer } from './results-styles'
+import { usePortal } from "./use-portal";
+import ReactDOM from "react-dom";
+import type { ReactPortal, PropsWithChildren } from "react";
+import { ResultsContainer } from "./results-styles";
 
 export interface ResultsProps {
-  left?: number
-  right?: number
-  width?: number
-  height?: number
-  top?: number
-  bottom?: number
+    bottom?: number;
+    height?: number;
+    left?: number;
+    right?: number;
+    top?: number;
+    width?: number;
 }
 
 export function Results({
-  left = 0,
-  right = 0,
-  width = 0,
-  height = 0,
-  top = 0,
-  bottom = 0,
-  children,
+    bottom = 0,
+    children,
+    height = 0,
+    left = 0,
+    right = 0,
+    top = 0,
+    width = 0,
 }: PropsWithChildren<ResultsProps>): ReactPortal {
-  const portal = usePortal()
+    const portal = usePortal();
 
-  if (!portal) {
-    return null
-  }
+    if (!portal) {
+        return null;
+    }
 
-  top = bottom ?? height + top
+    top = bottom ?? height + top;
 
-  return ReactDOM.createPortal(
-    <ResultsContainer style={{ top, left, width }}>
-      { children }
-    </ResultsContainer>,
-    portal,
-  )
+    return ReactDOM.createPortal(
+        <ResultsContainer style={{ left, top, width }}>
+            { children }
+        </ResultsContainer>,
+        portal,
+    );
 }

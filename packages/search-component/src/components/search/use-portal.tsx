@@ -1,22 +1,22 @@
-import { useRef, useEffect, useId } from 'react'
+import { useRef, useEffect, useId } from "react";
 
 export function usePortal() {
-  const portal = useRef<HTMLDivElement>(null)
-  const portalID = useId()
+    const portal = useRef<HTMLDivElement>(null);
+    const portalID = useId();
 
-  useEffect(() => {
-    const currentPortal = portal.current
+    useEffect(() => {
+        const currentPortal = portal.current;
 
-    if (typeof window === 'undefined' || currentPortal) {
-      return
-    }
+        if (typeof window === "undefined" || currentPortal) {
+            return;
+        }
 
-    const portalRoot = document.createElement('div')
-    portalRoot.id = portalID
-    document.body.appendChild(portalRoot)
+        const portalRoot = document.createElement("div");
+        portalRoot.id = portalID;
+        document.body.appendChild(portalRoot);
 
-    portal.current = portalRoot
-  }, [])
+        portal.current = portalRoot;
+    }, []);
 
-  return portal.current
+    return portal.current;
 }
