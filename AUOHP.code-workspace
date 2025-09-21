@@ -1,83 +1,83 @@
 {
-  "folders": [
-    {
-      "name": "▲  auohp",
-      "path": "."
-    },
-    {
-      "name": "🌐 @auohp/caption-editor-app",
-      "path": "packages/caption-editor-app"
-    },
-    {
-      "name": "⚙️ @auohp/scripts",
-      "path": "packages/scripts"
-    },
-    {
-      "name": "🧩 @auohp/search-component",
-      "path": "packages/search-component"
+    "folders": [
+        {
+            "name": "▲  auohp",
+            "path": "."
+        },
+        {
+            "name": "🌐 @auohp/caption-editor-app",
+            "path": "packages/caption-editor-app"
+        },
+        {
+            "name": "⚙️ @auohp/scripts",
+            "path": "packages/scripts"
+        },
+        {
+            "name": "🧩 @auohp/search-component",
+            "path": "packages/search-component"
+        }
+    ],
+    "settings": {
+        "[javascript][typescript][javascriptreact][typescriptreact]": {
+            "editor.codeActionsOnSave": {
+                "source.fixAll.eslint": "always",
+                "source.fixAll.stylelint": "always"
+            }
+        },
+        "editor.defaultFormatter": "dbaeumer.vscode-eslint",
+        "editor.formatOnSave": false,
+        "eslint.format.enable": true,
+        "eslint.lintTask.enable": true,
+        "eslint.validate": [
+            "typescript",
+            "typescriptreact",
+            "javascript",
+            "javascriptreact"
+        ],
+        "eslint.workingDirectories": [{ "mode": "auto"}],
+        "eslint.quiet": true,
+        "monorepoWorkspace.folders.custom": [
+            {
+                "prefix": "🧩 ",
+                "regex": "(component)$"
+            }
+        ],
+        "monorepoWorkspace.folders.prefix.libs": "📦 ",
+        "monorepoWorkspace.folders.prefix.root": "▲  ",
+        "monorepoWorkspace.folders.prefix.apps": "🌐 ",
+        "monorepoWorkspace.folders.prefix.tools": "⚙️ ",
+        "monorepoWorkspace.folders.prefix.unknown": "📁 ",
+        "monorepoWorkspace.folders.regex.apps": "(app|web|api|frontend|client|server|backend|service)s?$",
+        "monorepoWorkspace.folders.regex.libs": "(common|package|lib|private|ui)s?$",
+        "monorepoWorkspace.folders.regex.tools": "(tool|script|util|config)s?$",
+        "stylelint.enable": true,
+        "stylelint.validate": [
+            "css",
+            "less",
+            "postcss",
+            "stylus",
+            "typescript",
+            "typescriptreact"
+        ],
+        "editor.tabSize": 2,
+        "search.exclude": {
+            "**/node_modules": true,
+            "**/.yarn": true
+        },
+        "[packer]": {
+            "editor.defaultFormatter": "szTheory.vscode-packer-powertools"
+        },
+        "[html]": {
+            "editor.defaultFormatter": "vscode.html-language-features"
+        },
+        "[nginx]": {
+            "editor.defaultFormatter": "ahmadalli.vscode-nginx-conf"
+        },
+        "[clojure]": {
+            "editor.defaultFormatter": "betterthantomorrow.calva",
+            "editor.formatOnSave": true,
+            "editor.formatOnPaste": true,
+            "editor.formatOnType": true
+        }
     }
-  ],
-  "settings": {
-    "[javascript][typescript][javascriptreact][typescriptreact]": {
-      "editor.codeActionsOnSave": {
-        "source.fixAll.eslint": "always",
-        "source.fixAll.stylelint": "always"
-      }
-    },
-    "editor.defaultFormatter": "dbaeumer.vscode-eslint",
-    "editor.formatOnSave": false,
-    "eslint.format.enable": true,
-    "eslint.lintTask.enable": true,
-    "eslint.validate": [
-      "typescript",
-      "typescriptreact",
-      "javascript",
-      "javascriptreact"
-    ],
-    "eslint.workingDirectories": [{ "mode": "auto"}],
-    "eslint.quiet": true,
-    "monorepoWorkspace.folders.custom": [
-      {
-        "prefix": "🧩 ",
-        "regex": "(component)$"
-      }
-    ],
-    "monorepoWorkspace.folders.prefix.libs": "📦 ",
-    "monorepoWorkspace.folders.prefix.root": "▲  ",
-    "monorepoWorkspace.folders.prefix.apps": "🌐 ",
-    "monorepoWorkspace.folders.prefix.tools": "⚙️ ",
-    "monorepoWorkspace.folders.prefix.unknown": "📁 ",
-    "monorepoWorkspace.folders.regex.apps": "(app|web|api|frontend|client|server|backend|service)s?$",
-    "monorepoWorkspace.folders.regex.libs": "(common|package|lib|private|ui)s?$",
-    "monorepoWorkspace.folders.regex.tools": "(tool|script|util|config)s?$",
-    "stylelint.enable": true,
-    "stylelint.validate": [
-      "css",
-      "less",
-      "postcss",
-      "stylus",
-      "typescript",
-      "typescriptreact"
-    ],
-    "editor.tabSize": 2,
-    "search.exclude": {
-      "**/node_modules": true,
-      "**/.yarn": true
-    },
-    "[packer]": {
-      "editor.defaultFormatter": "szTheory.vscode-packer-powertools"
-    },
-    "[html]": {
-      "editor.defaultFormatter": "vscode.html-language-features"
-    },
-    "[nginx]": {
-      "editor.defaultFormatter": "ahmadalli.vscode-nginx-conf"
-    },
-    "[clojure]": {
-      "editor.defaultFormatter": "betterthantomorrow.calva",
-      "editor.formatOnSave": true,
-      "editor.formatOnPaste": true,
-      "editor.formatOnType": true
-    }
-  }
 }

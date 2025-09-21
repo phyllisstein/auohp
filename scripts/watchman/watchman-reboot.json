@@ -1,16 +1,16 @@
 [
-  "trigger",
-  "/app",
-  {
-    "name": "watchman-reboot",
-    "expression": [
-      "dirname",
-      "scripts/watchman"
-    ],
-    "command": [
-      "/app/scripts/develop.sh",
-      "watches"
-    ],
-    "append_files": false
-  }
+    "trigger",
+    "/app",
+    {
+        "name": "watchman-reboot",
+        "expression": [
+            "dirname",
+            "scripts/watchman"
+        ],
+        "command": [
+            "/app/scripts/develop.sh",
+            "watches"
+        ],
+        "append_files": false
+    }
 ]
