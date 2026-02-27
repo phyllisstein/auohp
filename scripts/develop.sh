@@ -8,11 +8,11 @@ restart_server() {
     echo "Terminate existing server..."
     pkill -f "yarn.js packages:dev" || true
 
-    echo "Starting development server..."
-    [[ -e "/run/secrets/environment" ]] || { echo "Missing environment secrets." && exit 1; }
-    source /run/secrets/environment && export GSAP_NPM_TOKEN GITHUB_TOKEN FONT_AWESOME_NPM_TOKEN NEO4J_PASSWORD NEO4J_USERNAME NEO4J_URI AURA_INSTANCEID AUTA_INSTANCENAME
-    yarn packages:dev
-    disown
+  echo "Starting development server..."
+  [[ -e "/run/secrets/environment" ]] || { echo "Missing environment secrets." && exit 1; }
+  source /run/secrets/environment && export NEO4J_PASSWORD NEO4J_USERNAME NEO4J_URI AURA_INSTANCEID AUTA_INSTANCENAME
+  yarn packages:dev
+  disown
 }
 
 configure_watches() {
@@ -32,11 +32,11 @@ watch_watchman() {
 }
 
 yarn_install() {
-    [[ -e "/run/secrets/environment" ]] || { echo "Missing environment secrets." && exit 0; }
-    pkill -f "yarn install" || true
-    echo "Running yarn install..."
-    source /run/secrets/environment && export GITHUB_TOKEN NEO4J_PASSWORD NEO4J_USERNAME NEO4J_URI AURA_INSTANCEID AURA_INSTANCENAME
-    yarn install
+  [[ -e "/run/secrets/environment" ]] || { echo "Missing environment secrets." && exit 0; }
+  pkill -f "yarn install" || true
+  echo "Running yarn install..."
+  source /run/secrets/environment && export NEO4J_PASSWORD NEO4J_USERNAME NEO4J_URI AURA_INSTANCEID AUTA_INSTANCENAME
+  yarn install
 }
 
 case $args in
