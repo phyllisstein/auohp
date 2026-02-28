@@ -1,0 +1,10 @@
+{
+    "name": "@auohp/api",
+    "version": "0.0.0",
+    "license": "GPL-3.0-or-later",
+        "author": {
+        "email": "contact@auohp.org",
+        "name": "ACT UP Oral History Project",
+        "url": "https://auohp.org"
+    }
+}
