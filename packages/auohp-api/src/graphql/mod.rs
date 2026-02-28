@@ -1,3 +1,7 @@
+mod interviews;
+
+use interviews::{Interview, Transcript};
+
 use async_graphql::{Context, EmptyMutation, EmptySubscription, Object, Schema};
 
 // AppSchema is a type alias for the fully-parameterized Schema type.
@@ -17,6 +21,20 @@ impl QueryRoot {
     /// Returns "ok". Useful for readiness and liveness probes.
     async fn health(&self, _ctx: &Context<'_>) -> &'static str {
         "ok"
+    }
+
+    /// Lists all interviews in the archive, ordered by date.
+    async fn interviews(&self, ctx: &Context<'_>) -> async_graphql::Result<Vec<Interview>> {
+        interviews::list_interviews(ctx).await
+    }
+
+    /// Returns the full time-ordered transcript for a single interview.
+    async fn interview_transcript(
+        &self,
+        ctx: &Context<'_>,
+        number: i64,
+    ) -> async_graphql::Result<Transcript> {
+        interviews::get_transcript(ctx, number).await
     }
 }
 
