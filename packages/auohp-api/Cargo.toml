@@ -34,3 +34,13 @@ dotenvy = "0.15"
 # Neo4j — neo4rs is the async Bolt client for Neo4j. It manages a connection
 # pool internally, so one Graph handle is shared across the whole server.
 neo4rs = "0.8"
+
+# Serialization — serde is the standard Rust serialization framework.
+# serde_json is used to encode per-word timing data as a JSON string property
+# on Statement nodes in Neo4j.
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# ID generation — nanoid produces short, URL-safe, unique identifiers.
+# Used for node UIDs in Neo4j, matching the existing TypeScript seeder.
+nanoid = "0.4"

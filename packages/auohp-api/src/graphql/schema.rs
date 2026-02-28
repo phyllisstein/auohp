@@ -1,20 +1,13 @@
-use async_graphql::{Context, EmptyMutation, EmptySubscription, Object, Schema};
+use async_graphql::{Context, EmptySubscription, Object, Schema};
 
 use crate::neo4j::Db;
 use super::interviews::{self, Interview, Transcript};
+use super::mutations::MutationRoot;
 
-// AppSchema is a type alias for the fully-parameterized Schema type.
-// Schema<Q, M, S> takes three type parameters: query root, mutation root,
-// and subscription root. Using EmptyMutation / EmptySubscription is the
-// idiomatic way to say "this schema has no mutations or subscriptions yet."
-pub type AppSchema = Schema<QueryRoot, EmptyMutation, EmptySubscription>;
+pub type AppSchema = Schema<QueryRoot, MutationRoot, EmptySubscription>;
 
 pub struct QueryRoot;
 
-// #[Object] generates the GraphQL resolver machinery from the method
-// signatures below. Each async method becomes a GraphQL field; its return
-// type becomes the field's GraphQL type; doc comments become field
-// descriptions in the introspection schema.
 #[Object]
 impl QueryRoot {
     /// Returns "ok". Useful for readiness and liveness probes.
@@ -27,7 +20,8 @@ impl QueryRoot {
         interviews::list_interviews(ctx).await
     }
 
-    /// Returns the full time-ordered transcript for a single interview.
+    /// Returns the full transcript for a single interview, statements ordered
+    /// by the `:NEXT` linked list in Neo4j.
     async fn interview_transcript(
         &self,
         ctx: &Context<'_>,
@@ -37,12 +31,8 @@ impl QueryRoot {
     }
 }
 
-// build_schema() accepts the connection pool and embeds it as schema-level
-// data. Resolvers retrieve it via ctx.data::<Db>() — async-graphql's
-// equivalent of axum's State<T>, but scoped to the GraphQL execution context
-// rather than the HTTP layer.
 pub fn build_schema(db: Db) -> AppSchema {
-    Schema::build(QueryRoot, EmptyMutation, EmptySubscription)
+    Schema::build(QueryRoot, MutationRoot, EmptySubscription)
         .data(db)
         .finish()
 }
