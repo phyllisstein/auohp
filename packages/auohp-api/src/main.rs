@@ -1,24 +1,48 @@
+mod graphql;
+
 use anyhow::Result;
-use axum::{routing::get, Router};
+use async_graphql_axum::{GraphQLRequest, GraphQLResponse};
+use axum::{
+    extract::State,
+    routing::{get, post},
+    Router,
+};
 use tracing::info;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
+// The GraphQL handler receives two arguments:
+//
+//   State(schema)   — axum's dependency-injection mechanism. The schema is
+//                     stored in the Router via .with_state() and extracted
+//                     here with State<T>. The destructuring syntax
+//                     `State(schema)` unwraps the newtype wrapper in one step.
+//
+//   req             — the incoming GraphQL request, deserialized from JSON
+//                     by async-graphql-axum.
+async fn graphql_handler(
+    State(schema): State<graphql::AppSchema>,
+    req: GraphQLRequest,
+) -> GraphQLResponse {
+    schema.execute(req.into_inner()).await.into()
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
-    // Initialize structured logging. The RUST_LOG environment variable controls
-    // which log levels are emitted (e.g. RUST_LOG=debug). If unset, default to
-    // debug-level output from this crate only.
     tracing_subscriber::registry()
         .with(EnvFilter::try_from_default_env().unwrap_or_else(|_| "auohp_api=debug".into()))
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    // Load a .env file if one is present; silently skip if not. The .ok()
-    // call discards the Result — in production there is no .env file, and
-    // that's fine.
     dotenvy::dotenv().ok();
 
-    let app = Router::new().route("/health", get(|| async { "ok" }));
+    let schema = graphql::build_schema();
+
+    let app = Router::new()
+        .route("/health", get(|| async { "ok" }))
+        .route("/graphql", post(graphql_handler))
+        // with_state() makes `schema` available to any handler that
+        // declares a State<AppSchema> parameter.
+        .with_state(schema);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:6060").await?;
     info!("listening on {}", listener.local_addr()?);
@@ -30,8 +54,6 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-// Waits for Ctrl+C before returning, which signals axum to stop accepting
-// new connections and let in-flight requests drain.
 async fn shutdown_signal() {
     tokio::signal::ctrl_c()
         .await
