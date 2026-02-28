@@ -1,4 +1,5 @@
 mod graphql;
+mod neo4j;
 
 use anyhow::Result;
 use async_graphql_axum::{GraphQLRequest, GraphQLResponse};
