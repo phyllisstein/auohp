@@ -36,7 +36,19 @@ async fn main() -> Result<()> {
 
     dotenvy::dotenv().ok();
 
-    let schema = graphql::build_schema();
+    // Read connection parameters from the environment, with the same defaults
+    // used by the TypeScript packages in this monorepo.
+    let neo4j_uri =
+        std::env::var("NEO4J_URI").unwrap_or_else(|_| "neo4j://neo4j:7687".to_string());
+    let neo4j_user =
+        std::env::var("NEO4J_USER").unwrap_or_else(|_| "neo4j".to_string());
+    let neo4j_password =
+        std::env::var("NEO4J_PASSWORD").unwrap_or_else(|_| "auohpauohp".to_string());
+
+    let db = neo4j::connect(&neo4j_uri, &neo4j_user, &neo4j_password).await?;
+    info!("connected to Neo4j at {neo4j_uri}");
+
+    let schema = graphql::build_schema(db);
 
     let app = Router::new()
         .route("/health", get(|| async { "ok" }))

@@ -3,6 +3,7 @@ mod interviews;
 use interviews::{Interview, Transcript};
 
 use async_graphql::{Context, EmptyMutation, EmptySubscription, Object, Schema};
+use crate::neo4j::Db;
 
 // AppSchema is a type alias for the fully-parameterized Schema type.
 // Schema<Q, M, S> takes three type parameters: query root, mutation root,
@@ -38,6 +39,12 @@ impl QueryRoot {
     }
 }
 
-pub fn build_schema() -> AppSchema {
-    Schema::build(QueryRoot, EmptyMutation, EmptySubscription).finish()
+// build_schema() accepts the connection pool and embeds it as schema-level
+// data. Resolvers retrieve it via ctx.data::<Db>() — async-graphql's
+// equivalent of axum's State<T>, but scoped to the GraphQL execution context
+// rather than the HTTP layer.
+pub fn build_schema(db: Db) -> AppSchema {
+    Schema::build(QueryRoot, EmptyMutation, EmptySubscription)
+        .data(db)
+        .finish()
 }
