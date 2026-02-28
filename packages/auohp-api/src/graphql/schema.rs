@@ -1,5 +1,8 @@
+use std::sync::Arc;
+
 use async_graphql::{Context, EmptySubscription, Object, Schema};
 
+use crate::embeddings::Embedder;
 use crate::neo4j::Db;
 use super::interviews::{self, Interview, Transcript};
 use super::mutations::MutationRoot;
@@ -31,8 +34,9 @@ impl QueryRoot {
     }
 }
 
-pub fn build_schema(db: Db) -> AppSchema {
+pub fn build_schema(db: Db, embedder: Arc<Embedder>) -> AppSchema {
     Schema::build(QueryRoot, MutationRoot, EmptySubscription)
         .data(db)
+        .data(embedder)
         .finish()
 }

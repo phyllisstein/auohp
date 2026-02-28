@@ -57,3 +57,8 @@ ort = "=2.0.0-rc.10"
 symphonia = { version = "0.5", features = ["isomp4", "aac", "wav", "pcm"] }
 rubato = "1"
 audioadapter-buffers = "2"
+
+# On-device sentence embeddings — fastembed wraps ONNX sentence transformers
+# (BAAI/bge-small-en-v1.5, 384-dim). Pinned below 5.9 because v5.9+ bumps
+# ort to rc.11, which conflicts with pyannote-rs's rc.10 pin.
+fastembed = { version = ">=5.0, <5.9", default-features = false, features = ["ort-download-binaries", "hf-hub-native-tls"] }

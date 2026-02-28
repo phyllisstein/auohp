@@ -1,3 +1,4 @@
+mod embeddings;
 mod graphql;
 mod neo4j;
 mod transcription;
@@ -49,7 +50,25 @@ async fn main() -> Result<()> {
     let db = neo4j::connect(&neo4j_uri, &neo4j_user, &neo4j_password).await?;
     info!("connected to Neo4j at {neo4j_uri}");
 
-    let schema = graphql::build_schema(db);
+    // Ensure the vector index exists for semantic search over Statement
+    // embeddings. IF NOT EXISTS makes this idempotent across restarts.
+    db.run(neo4rs::query(
+        "CREATE VECTOR INDEX statement_embedding IF NOT EXISTS
+         FOR (s:Statement) ON s.embedding
+         OPTIONS {indexConfig: {
+           `vector.dimensions`: 384,
+           `vector.similarity_function`: 'cosine'
+         }}",
+    ))
+    .await?;
+    info!("ensured statement_embedding vector index (384-dim, cosine)");
+
+    let embedder = std::sync::Arc::new(
+        embeddings::Embedder::new().expect("failed to load embedding model"),
+    );
+    info!("loaded embedding model ({}-dim)", embedder.dimensions());
+
+    let schema = graphql::build_schema(db, embedder);
 
     let app = Router::new()
         .route("/health", get(|| async { "ok" }))

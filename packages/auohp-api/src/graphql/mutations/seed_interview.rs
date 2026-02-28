@@ -1,7 +1,11 @@
+use std::sync::Arc;
+
 use async_graphql::{Context, Enum, InputObject, SimpleObject};
 use neo4rs::{query, BoltMap, BoltString, BoltType};
 use serde::Serialize;
+use tracing::info;
 
+use crate::embeddings::Embedder;
 use crate::neo4j::Db;
 use super::super::interviews::Interview;
 
@@ -111,8 +115,10 @@ fn gql_err(e: impl std::fmt::Display) -> async_graphql::Error {
 }
 
 /// A merged statement ready for seeding — consecutive same-speaker segments
-/// grouped into a single statement.
+/// grouped into a single statement. UIDs are pre-generated so they can be
+/// paired with embedding vectors before being written to Neo4j.
 struct MergedStatement {
+    uid: String,
     speaker_name: String,
     text: String,
     start_time: f64,
@@ -160,6 +166,7 @@ fn group_segments(
             }
         } else {
             statements.push(MergedStatement {
+                uid: nanoid::nanoid!(),
                 speaker_name: mapping.name.clone(),
                 text: segment.text.clone(),
                 start_time: segment.start_time,
@@ -279,7 +286,7 @@ pub async fn seed_interview(
                 };
 
                 bolt_map(vec![
-                    ("uid", BoltType::from(nanoid::nanoid!())),
+                    ("uid", BoltType::from(s.uid.clone())),
                     ("text", BoltType::from(s.text.clone())),
                     ("startTime", BoltType::from(s.start_time)),
                     ("endTime", BoltType::from(s.end_time)),
@@ -330,6 +337,56 @@ pub async fn seed_interview(
             )
             .param("transcriptUid", transcript_uid.clone())
             .param("statements", stmt_params),
+        )
+        .await
+        .map_err(gql_err)?;
+    }
+
+    // ── Phase 2.5: embed statement texts ───────────────────────────────
+    //
+    // Generate vector embeddings for each statement and store them on the
+    // Statement nodes. This runs the ONNX model via spawn_blocking since
+    // fastembed is synchronous and CPU-bound.
+
+    let embedder = ctx.data::<Arc<Embedder>>()?;
+    let texts: Vec<String> = merged.iter().map(|s| s.text.clone()).collect();
+    let uids: Vec<String> = merged.iter().map(|s| s.uid.clone()).collect();
+
+    let vectors = tokio::task::spawn_blocking({
+        let embedder = embedder.clone();
+        move || embedder.embed(&texts)
+    })
+    .await
+    .map_err(gql_err)?
+    .map_err(gql_err)?;
+
+    info!(
+        count = vectors.len(),
+        dims = vectors.first().map(|v| v.len()).unwrap_or(0),
+        "embedded statement texts"
+    );
+
+    // Write embeddings to Neo4j in batches.
+    const EMBED_BATCH: usize = 100;
+    for chunk in uids.iter().zip(vectors.iter()).collect::<Vec<_>>().chunks(EMBED_BATCH) {
+        let items: Vec<BoltType> = chunk
+            .iter()
+            .map(|(uid, vector)| {
+                let vec_bolt: Vec<BoltType> = vector.iter().map(|&v| BoltType::from(v as f64)).collect();
+                bolt_map(vec![
+                    ("uid", BoltType::from(uid.as_str())),
+                    ("vector", BoltType::from(vec_bolt)),
+                ])
+            })
+            .collect();
+
+        db.run(
+            query(
+                "UNWIND $items AS item
+                 MATCH (s:Statement {uid: item.uid})
+                 CALL db.create.setNodeVectorProperty(s, 'embedding', item.vector)",
+            )
+            .param("items", items),
         )
         .await
         .map_err(gql_err)?;
