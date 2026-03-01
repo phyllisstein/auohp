@@ -1,3 +1,4 @@
+mod error;
 mod interviews;
 mod mutations;
 mod schema;

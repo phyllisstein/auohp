@@ -2,6 +2,7 @@ use async_graphql::{Context, SimpleObject};
 use neo4rs::query;
 
 use crate::neo4j::Db;
+use super::error::gql_err;
 
 // Each struct below mirrors one node label in the Neo4j graph. The mapping is
 // deliberately close to the graph model so that schema changes surface as
@@ -56,14 +57,6 @@ pub struct Interview {
     pub interviewee: String,
     /// ISO 8601 date string, e.g. "1995-04-23".
     pub date: String,
-}
-
-// ---------------------------------------------------------------------------
-// Error helper
-// ---------------------------------------------------------------------------
-
-fn gql_err(e: impl std::fmt::Display) -> async_graphql::Error {
-    async_graphql::Error::new(e.to_string())
 }
 
 // ---------------------------------------------------------------------------

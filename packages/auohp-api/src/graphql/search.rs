@@ -12,6 +12,7 @@ use neo4rs::{BoltType, query};
 
 use crate::embeddings::Embedder;
 use crate::neo4j::Db;
+use super::error::gql_err;
 use super::interviews::{Interview, Person, Statement};
 
 // ---------------------------------------------------------------------------
@@ -27,14 +28,6 @@ pub struct SearchHit {
     pub statement: Statement,
     /// The interview this statement belongs to.
     pub interview: Interview,
-}
-
-// ---------------------------------------------------------------------------
-// Error helper (mirrors the pattern in interviews.rs)
-// ---------------------------------------------------------------------------
-
-fn gql_err(e: impl std::fmt::Display) -> async_graphql::Error {
-    async_graphql::Error::new(e.to_string())
 }
 
 // ---------------------------------------------------------------------------

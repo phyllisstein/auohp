@@ -6,6 +6,7 @@ use serde::Serialize;
 use tracing::info;
 
 use crate::embeddings::Embedder;
+use crate::graphql::error::gql_err;
 use crate::neo4j::Db;
 use super::super::interviews::Interview;
 
@@ -109,10 +110,6 @@ pub struct SeedInterviewPayload {
 // ---------------------------------------------------------------------------
 // Resolver
 // ---------------------------------------------------------------------------
-
-fn gql_err(e: impl std::fmt::Display) -> async_graphql::Error {
-    async_graphql::Error::new(e.to_string())
-}
 
 /// A merged statement ready for seeding — consecutive same-speaker segments
 /// grouped into a single statement. UIDs are pre-generated so they can be
