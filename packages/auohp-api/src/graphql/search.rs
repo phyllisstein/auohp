@@ -13,7 +13,7 @@ use neo4rs::{BoltType, query};
 use crate::embeddings::Embedder;
 use crate::neo4j::Db;
 use super::error::gql_err;
-use super::interviews::{Interview, Person, Statement};
+use super::interviews::{Interview, Statement};
 
 // ---------------------------------------------------------------------------
 // Output type
@@ -83,19 +83,8 @@ pub async fn search_statements(
                  OPTIONAL MATCH (i)-[:INTERVIEWED_BY]->(interviewer:Person)
                    WHERE interviewer = p
 
-                 RETURN s.uid            AS statement_uid,
-                        s.text           AS statement_text,
-                        c.startTime      AS start_time,
-                        c.endTime        AS end_time,
-                        s.words          AS words,
-                        p.uid            AS person_uid,
-                        p.name           AS person_name,
-                        interviewer IS NOT NULL AS is_interviewer,
-                        i.uid            AS interview_uid,
-                        i.number         AS interview_number,
-                        i.interviewee    AS interviewee,
-                        toString(i.date) AS interview_date,
-                        score
+                 RETURN i, s, p, c, score,
+                        interviewer IS NOT NULL AS is_interviewer
                  ORDER BY score DESC",
             )
             .param("limit", limit_val)
@@ -107,26 +96,23 @@ pub async fn search_statements(
     let mut hits = Vec::new();
 
     while let Some(row) = stream.next().await.map_err(gql_err)? {
+        let i: neo4rs::Node = row.get("i").map_err(gql_err)?;
+        let s: neo4rs::Node = row.get("s").map_err(gql_err)?;
+        let p: neo4rs::Node = row.get("p").map_err(gql_err)?;
+        let c: neo4rs::Relation = row.get("c").map_err(gql_err)?;
+
         hits.push(SearchHit {
             score: row.get("score").map_err(gql_err)?,
             statement: Statement {
-                uid: row.get("statement_uid").map_err(gql_err)?,
-                text: row.get("statement_text").map_err(gql_err)?,
-                person: Person {
-                    uid: row.get("person_uid").map_err(gql_err)?,
-                    name: row.get("person_name").map_err(gql_err)?,
-                },
+                uid: s.get("uid").map_err(gql_err)?,
+                text: s.get("text").map_err(gql_err)?,
+                person: p.to().map_err(gql_err)?,
                 is_interviewer: row.get("is_interviewer").map_err(gql_err)?,
-                start_time: row.get("start_time").map_err(gql_err)?,
-                end_time: row.get("end_time").map_err(gql_err)?,
-                words: row.get("words").map_err(gql_err)?,
+                start_time: c.get("startTime").map_err(gql_err)?,
+                end_time: c.get("endTime").map_err(gql_err)?,
+                words: s.get("words").map_err(gql_err)?,
             },
-            interview: Interview {
-                uid: row.get("interview_uid").map_err(gql_err)?,
-                number: row.get("interview_number").map_err(gql_err)?,
-                interviewee: row.get("interviewee").map_err(gql_err)?,
-                date: row.get("interview_date").map_err(gql_err)?,
-            },
+            interview: Interview::from_node(&i)?,
         });
     }
 
