@@ -1,5 +1,6 @@
 use async_graphql::{Context, SimpleObject};
 use neo4rs::query;
+use serde::Deserialize;
 
 use crate::neo4j::Db;
 use super::error::gql_err;
@@ -11,7 +12,15 @@ use super::error::gql_err;
 // native concept of a property-bearing edge.
 
 /// Mirrors the (:Person) node.
-#[derive(SimpleObject, Clone)]
+///
+/// Derives `Deserialize` so neo4rs can deserialize a Bolt Node directly into
+/// this struct via `node.to::<Person>()`. The field names (`uid`, `name`)
+/// match the Neo4j property names exactly, so no `#[serde(rename)]` is needed.
+///
+/// This is the idiomatic neo4rs pattern: return whole nodes from Cypher
+/// (`RETURN p`) rather than destructuring properties into arbitrary column
+/// aliases (`RETURN p.uid AS person_uid, p.name AS person_name`).
+#[derive(SimpleObject, Clone, Deserialize)]
 pub struct Person {
     pub uid: String,
     pub name: String,
