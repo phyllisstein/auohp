@@ -26,12 +26,12 @@ download() {
         return
     fi
     echo "  downloading: $(basename "$dest")"
-    local auth_header=""
-    if [ -n "${HF_TOKEN:-}" ]; then
-        auth_header="-H Authorization: Bearer $HF_TOKEN"
-    fi
-    # shellcheck disable=SC2086
-    curl -fL --progress-bar ${auth_header:+-H "Authorization: Bearer $HF_TOKEN"} \
+    # If HF_TOKEN is set, pass it as a Bearer token for gated model access.
+    # ${VAR:+word} is a bash parameter expansion that expands to "word" only
+    # when VAR is set and non-empty — so curl gets no -H flag at all when
+    # there's no token, rather than an empty Authorization header.
+    curl -fL --progress-bar \
+        ${HF_TOKEN:+-H "Authorization: Bearer $HF_TOKEN"} \
         -o "$dest.tmp" "$url"
     mv "$dest.tmp" "$dest"
 }
