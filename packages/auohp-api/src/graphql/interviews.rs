@@ -100,14 +100,11 @@ impl Interview {
 pub async fn list_interviews(ctx: &Context<'_>) -> async_graphql::Result<Vec<Interview>> {
     let db = ctx.data::<Db>()?;
 
-    // RETURN i — returns the whole Interview node, not individual properties.
-    // The Rust deserialization happens in Interview::from_node(), which reads
-    // the node's properties by their real Neo4j names (uid, number, etc.).
     let mut stream = db
         .execute(query(
-            "MATCH (i:Interview)
-             RETURN i
-             ORDER BY i.date ASC",
+            "MATCH (interview:Interview)
+             RETURN interview
+             ORDER BY interview.date ASC",
         ))
         .await
         .map_err(gql_err)?;
@@ -115,10 +112,7 @@ pub async fn list_interviews(ctx: &Context<'_>) -> async_graphql::Result<Vec<Int
     let mut interviews = Vec::new();
 
     while let Some(row) = stream.next().await.map_err(gql_err)? {
-        // row.get::<neo4rs::Node>("i") extracts the Bolt Node from the row.
-        // The "i" here is the Cypher variable name — the only alias in the
-        // entire query, and it matches what the query actually returns.
-        let node: neo4rs::Node = row.get("i").map_err(gql_err)?;
+        let node: neo4rs::Node = row.get("interview").map_err(gql_err)?;
         interviews.push(Interview::from_node(&node)?);
     }
 
@@ -135,38 +129,31 @@ pub async fn get_transcript(
     // The head of the list is the Statement with no inbound :NEXT edge from
     // another Statement in the same Transcript.
     //
-    // RETURN now uses whole entities:
-    //   i  — Interview node
-    //   t  — Transcript node
-    //   s  — Statement node
-    //   p  — Person node (via :SAYS)
-    //   c  — :CONTAINS relationship (carries startTime / endTime)
-    //
-    // The only scalar is `is_interviewer`, a boolean computed from the
-    // graph pattern (does this Person have an :INTERVIEWED_BY edge from
-    // this Interview?). That can't come from any single node or
-    // relationship, so it stays as a column alias.
+    // The only scalar column is `is_interviewer` — a boolean computed from
+    // the graph pattern that can't come from any single node or relationship.
     let mut stream = db
         .execute(
             query(
-                "MATCH (i:Interview {number: $number})-[:HAS_TRANSCRIPT]->(t:Transcript)
+                "MATCH (interview:Interview {number: $number})
+                       -[:HAS_TRANSCRIPT]->(transcript:Transcript)
 
                  // Find the head of the linked list
-                 MATCH (t)-[:CONTAINS]->(head:Statement)
+                 MATCH (transcript)-[:CONTAINS]->(head:Statement)
                  WHERE NOT EXISTS {
-                   MATCH (t)-[:CONTAINS]->(prev:Statement)-[:NEXT]->(head)
+                   MATCH (transcript)-[:CONTAINS]->(prev:Statement)-[:NEXT]->(head)
                  }
 
                  // Walk the :NEXT chain
-                 MATCH path = (head)-[:NEXT*0..]->(s:Statement)
-                 WHERE (t)-[:CONTAINS]->(s)
-                 WITH i, t, s, length(path) AS pos
+                 MATCH path = (head)-[:NEXT*0..]->(statement:Statement)
+                 WHERE (transcript)-[:CONTAINS]->(statement)
+                 WITH interview, transcript, statement, length(path) AS pos
 
-                 MATCH (t)-[c:CONTAINS]->(s)<-[:SAYS]-(p:Person)
-                 OPTIONAL MATCH (i)-[:INTERVIEWED_BY]->(interviewer:Person)
-                   WHERE interviewer = p
+                 MATCH (transcript)-[contains:CONTAINS]->(statement)
+                       <-[:SAYS]-(person:Person)
+                 OPTIONAL MATCH (interview)-[:INTERVIEWED_BY]->(interviewer:Person)
+                   WHERE interviewer = person
 
-                 RETURN i, t, s, p, c,
+                 RETURN interview, transcript, statement, person, contains,
                         interviewer IS NOT NULL AS is_interviewer
                  ORDER BY pos",
             )
@@ -181,32 +168,28 @@ pub async fn get_transcript(
 
     while let Some(row) = stream.next().await.map_err(gql_err)? {
         if interview_opt.is_none() {
-            let i: neo4rs::Node = row.get("i").map_err(gql_err)?;
-            let t: neo4rs::Node = row.get("t").map_err(gql_err)?;
-            interview_opt = Some(Interview::from_node(&i)?);
-            transcript_uid = t.get("uid").map_err(gql_err)?;
+            let node: neo4rs::Node = row.get("interview").map_err(gql_err)?;
+            let t_node: neo4rs::Node = row.get("transcript").map_err(gql_err)?;
+            interview_opt = Some(Interview::from_node(&node)?);
+            transcript_uid = t_node.get("uid").map_err(gql_err)?;
         }
 
-        // Extract the Statement node, Person node, and :CONTAINS relationship.
-        let s: neo4rs::Node = row.get("s").map_err(gql_err)?;
-        let p: neo4rs::Node = row.get("p").map_err(gql_err)?;
-        let c: neo4rs::Relation = row.get("c").map_err(gql_err)?;
-
-        // Person can be deserialized directly — its fields match the node
-        // properties exactly (uid, name).
-        let person: Person = p.to().map_err(gql_err)?;
+        let statement: neo4rs::Node = row.get("statement").map_err(gql_err)?;
+        let person: neo4rs::Node = row.get("person").map_err(gql_err)?;
+        let contains: neo4rs::Relation = row.get("contains").map_err(gql_err)?;
 
         statements.push(Statement {
-            uid: s.get("uid").map_err(gql_err)?,
-            text: s.get("text").map_err(gql_err)?,
-            person,
+            uid: statement.get("uid").map_err(gql_err)?,
+            text: statement.get("text").map_err(gql_err)?,
+            // Person can be deserialized directly — its fields match the
+            // node properties exactly (uid, name).
+            person: person.to().map_err(gql_err)?,
             is_interviewer: row.get("is_interviewer").map_err(gql_err)?,
-            // Timing lives on the :CONTAINS relationship, not the Statement node.
-            // Relation::get() works just like Node::get() — it pulls a property
-            // by name from the relationship's property map.
-            start_time: c.get("startTime").map_err(gql_err)?,
-            end_time: c.get("endTime").map_err(gql_err)?,
-            words: s.get("words").map_err(gql_err)?,
+            // Timing lives on the :CONTAINS relationship, not the Statement
+            // node. Relation::get() works just like Node::get().
+            start_time: contains.get("startTime").map_err(gql_err)?,
+            end_time: contains.get("endTime").map_err(gql_err)?,
+            words: statement.get("words").map_err(gql_err)?,
         });
     }
 

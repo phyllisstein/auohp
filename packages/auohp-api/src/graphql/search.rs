@@ -76,14 +76,15 @@ pub async fn search_statements(
         .execute(
             query(
                 "CALL db.index.vector.queryNodes('statement_embedding', $limit, $vector)
-                 YIELD node AS s, score
+                 YIELD node AS statement, score
 
-                 MATCH (t:Transcript)-[c:CONTAINS]->(s)<-[:SAYS]-(p:Person)
-                 MATCH (i:Interview)-[:HAS_TRANSCRIPT]->(t)
-                 OPTIONAL MATCH (i)-[:INTERVIEWED_BY]->(interviewer:Person)
-                   WHERE interviewer = p
+                 MATCH (transcript:Transcript)-[contains:CONTAINS]->(statement)
+                       <-[:SAYS]-(person:Person)
+                 MATCH (interview:Interview)-[:HAS_TRANSCRIPT]->(transcript)
+                 OPTIONAL MATCH (interview)-[:INTERVIEWED_BY]->(interviewer:Person)
+                   WHERE interviewer = person
 
-                 RETURN i, s, p, c, score,
+                 RETURN interview, statement, person, contains, score,
                         interviewer IS NOT NULL AS is_interviewer
                  ORDER BY score DESC",
             )
@@ -96,23 +97,23 @@ pub async fn search_statements(
     let mut hits = Vec::new();
 
     while let Some(row) = stream.next().await.map_err(gql_err)? {
-        let i: neo4rs::Node = row.get("i").map_err(gql_err)?;
-        let s: neo4rs::Node = row.get("s").map_err(gql_err)?;
-        let p: neo4rs::Node = row.get("p").map_err(gql_err)?;
-        let c: neo4rs::Relation = row.get("c").map_err(gql_err)?;
+        let interview: neo4rs::Node = row.get("interview").map_err(gql_err)?;
+        let statement: neo4rs::Node = row.get("statement").map_err(gql_err)?;
+        let person: neo4rs::Node = row.get("person").map_err(gql_err)?;
+        let contains: neo4rs::Relation = row.get("contains").map_err(gql_err)?;
 
         hits.push(SearchHit {
             score: row.get("score").map_err(gql_err)?,
             statement: Statement {
-                uid: s.get("uid").map_err(gql_err)?,
-                text: s.get("text").map_err(gql_err)?,
-                person: p.to().map_err(gql_err)?,
+                uid: statement.get("uid").map_err(gql_err)?,
+                text: statement.get("text").map_err(gql_err)?,
+                person: person.to().map_err(gql_err)?,
                 is_interviewer: row.get("is_interviewer").map_err(gql_err)?,
-                start_time: c.get("startTime").map_err(gql_err)?,
-                end_time: c.get("endTime").map_err(gql_err)?,
-                words: s.get("words").map_err(gql_err)?,
+                start_time: contains.get("startTime").map_err(gql_err)?,
+                end_time: contains.get("endTime").map_err(gql_err)?,
+                words: statement.get("words").map_err(gql_err)?,
             },
-            interview: Interview::from_node(&i)?,
+            interview: Interview::from_node(&interview)?,
         });
     }
 
