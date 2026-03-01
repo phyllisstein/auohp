@@ -107,37 +107,29 @@ pub async fn get_transcript(
 ) -> async_graphql::Result<Transcript> {
     let db = ctx.data::<Db>()?;
 
-    // Walk the :NEXT linked list to return statements in transcript order.
-    // The head of the list is the Statement with no inbound :NEXT edge from
-    // another Statement in the same Transcript.
+    // Statements are ordered by their startTime on the :CONTAINS relationship,
+    // which records when each statement begins in the recording. This replaces
+    // a previous approach that walked the :NEXT linked list via a variable-
+    // length path pattern ([:NEXT*0..]), which was O(N²) — it materialized
+    // every path from head to every reachable node just to derive ordering.
     //
-    // The only scalar column is `is_interviewer` — a boolean computed from
-    // the graph pattern that can't come from any single node or relationship.
+    // startTime is set from the same source as :NEXT during seeding, and
+    // editorial reordering is not a feature of this archive, so the two are
+    // always equivalent. The startTime approach is simpler (one MATCH, no
+    // head-finding) and survives broken :NEXT chains gracefully.
     let mut stream = db
         .execute(
             query(
                 "MATCH (interview:Interview {number: $number})
                        -[:HAS_TRANSCRIPT]->(transcript:Transcript)
-
-                 // Find the head of the linked list
-                 MATCH (transcript)-[:CONTAINS]->(head:Statement)
-                 WHERE NOT EXISTS {
-                   MATCH (transcript)-[:CONTAINS]->(prev:Statement)-[:NEXT]->(head)
-                 }
-
-                 // Walk the :NEXT chain
-                 MATCH path = (head)-[:NEXT*0..]->(statement:Statement)
-                 WHERE (transcript)-[:CONTAINS]->(statement)
-                 WITH interview, transcript, statement, length(path) AS pos
-
-                 MATCH (transcript)-[contains:CONTAINS]->(statement)
+                       -[contains:CONTAINS]->(statement:Statement)
                        <-[:SAYS]-(person:Person)
                  OPTIONAL MATCH (interview)-[:INTERVIEWED_BY]->(interviewer:Person)
                    WHERE interviewer = person
 
                  RETURN interview, transcript, statement, person, contains,
                         interviewer IS NOT NULL AS is_interviewer
-                 ORDER BY pos",
+                 ORDER BY contains.startTime",
             )
             .param("number", number),
         )
