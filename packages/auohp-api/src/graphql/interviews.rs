@@ -100,13 +100,13 @@ impl Interview {
 pub async fn list_interviews(ctx: &Context<'_>) -> async_graphql::Result<Vec<Interview>> {
     let db = ctx.data::<Db>()?;
 
+    // RETURN i — returns the whole Interview node, not individual properties.
+    // The Rust deserialization happens in Interview::from_node(), which reads
+    // the node's properties by their real Neo4j names (uid, number, etc.).
     let mut stream = db
         .execute(query(
             "MATCH (i:Interview)
-             RETURN i.uid           AS uid,
-                    i.number        AS number,
-                    i.interviewee   AS interviewee,
-                    toString(i.date) AS date
+             RETURN i
              ORDER BY i.date ASC",
         ))
         .await
@@ -115,12 +115,11 @@ pub async fn list_interviews(ctx: &Context<'_>) -> async_graphql::Result<Vec<Int
     let mut interviews = Vec::new();
 
     while let Some(row) = stream.next().await.map_err(gql_err)? {
-        interviews.push(Interview {
-            uid: row.get("uid").map_err(gql_err)?,
-            number: row.get("number").map_err(gql_err)?,
-            interviewee: row.get("interviewee").map_err(gql_err)?,
-            date: row.get("date").map_err(gql_err)?,
-        });
+        // row.get::<neo4rs::Node>("i") extracts the Bolt Node from the row.
+        // The "i" here is the Cypher variable name — the only alias in the
+        // entire query, and it matches what the query actually returns.
+        let node: neo4rs::Node = row.get("i").map_err(gql_err)?;
+        interviews.push(Interview::from_node(&node)?);
     }
 
     Ok(interviews)
