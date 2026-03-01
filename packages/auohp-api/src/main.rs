@@ -36,6 +36,9 @@ async fn main() -> Result<()> {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
+    // In Docker the .env file is mounted as a secret at this path.
+    // In local dev, fall back to a .env file in the working directory.
+    dotenvy::from_path("/run/secrets/environment").ok();
     dotenvy::dotenv().ok();
 
     // Read connection parameters from the environment, with the same defaults
