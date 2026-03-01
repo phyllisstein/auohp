@@ -317,7 +317,14 @@ pub async fn seed_interview(
                  CREATE (t)-[:CONTAINS {startTime: s.startTime, endTime: s.endTime}]->(stmt)
                  CREATE (person)-[:SAYS]->(stmt)
 
-                 // Build the :NEXT linked list
+                 // Build the :NEXT linked list.
+                 // ORDER BY idx is critical here: the MERGE on Person above
+                 // can cause the planner to reorder rows (e.g. grouping
+                 // statements by speaker). Without an explicit sort, collect()
+                 // would gather statements in whatever order the engine
+                 // processed them — scrambling the transcript.
+                 WITH t, prevTail, stmt, idx
+                 ORDER BY idx
                  WITH t, prevTail, collect(stmt) AS stmts
                  FOREACH (i IN range(0, size(stmts) - 2) |
                    FOREACH (a IN [stmts[i]] |
