@@ -36,7 +36,18 @@ impl Embedder {
 
     /// Embed a batch of texts. Returns one `Vec<f32>` per input string.
     pub fn embed(&self, texts: &[String]) -> Result<Vec<Vec<f32>>> {
-        let mut model = self.model.lock().unwrap();
+        // Mutex::lock() returns a Result because the lock can be "poisoned":
+        // if a thread panics while holding the lock, Rust marks the Mutex as
+        // poisoned to signal that the protected data might be in an
+        // inconsistent state.
+        //
+        // The previous code used .unwrap(), which would panic (and crash the
+        // entire server) on a poisoned lock. Instead we use
+        // .unwrap_or_else(|e| e.into_inner()) to recover — the ONNX session
+        // state is actually fine to reuse after a panic since fastembed
+        // doesn't do partial mutation, so we just clear the poison flag and
+        // carry on.
+        let mut model = self.model.lock().unwrap_or_else(|e| e.into_inner());
         model.embed(texts, None).context("embedding failed")
     }
 

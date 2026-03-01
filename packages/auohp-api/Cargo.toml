@@ -15,7 +15,7 @@ axum = "0.8"
 
 # GraphQL — async-graphql is code-driven: you define Rust types and derive the
 # schema from them via macros. async-graphql-axum bridges the two frameworks.
-async-graphql = { version = "7", features = ["tracing"] }
+async-graphql = { version = "7", features = ["tracing", "graphiql", "chrono"] }
 async-graphql-axum = "7"
 
 # Error handling — thiserror generates Error impls for your own types;
@@ -41,6 +41,11 @@ neo4rs = "0.8"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
+# Date handling — chrono is already a transitive dependency (neo4rs uses it
+# internally to deserialize Bolt Date values). Adding it as a direct dep
+# just makes it importable in our code. No new code is compiled.
+chrono = "0.4"
+
 # ID generation — nanoid produces short, URL-safe, unique identifiers.
 # Used for node UIDs in Neo4j, matching the existing TypeScript seeder.
 nanoid = "0.4"
@@ -59,6 +64,9 @@ rubato = "1"
 audioadapter-buffers = "2"
 
 # On-device sentence embeddings — fastembed wraps ONNX sentence transformers
-# (BAAI/bge-small-en-v1.5, 384-dim). Pinned below 5.9 because v5.9+ bumps
-# ort to rc.11, which conflicts with pyannote-rs's rc.10 pin.
-fastembed = { version = ">=5.0, <5.9", default-features = false, features = ["ort-download-binaries", "hf-hub-native-tls"] }
+# (BAAI/bge-small-en-v1.5, 384-dim). Pinned to ~5.8 (allows 5.8.x patches
+# but not 5.9+) because fastembed 5.9 bumps ort to rc.11, which breaks
+# pyannote-rs — its ndarray TensorArrayData trait changed between rc.10
+# and rc.11. The `ort = "=2.0.0-rc.10"` pin above enforces the same
+# constraint from the other direction; this keeps them in sync.
+fastembed = { version = "~5.8", default-features = false, features = ["ort-download-binaries", "hf-hub-native-tls"] }

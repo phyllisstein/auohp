@@ -4,9 +4,11 @@ mod neo4j;
 mod transcription;
 
 use anyhow::Result;
+use async_graphql::http::GraphiQLSource;
 use async_graphql_axum::{GraphQLRequest, GraphQLResponse};
 use axum::{
     extract::State,
+    response::Html,
     routing::{get, post},
     Router,
 };
@@ -75,7 +77,25 @@ async fn main() -> Result<()> {
 
     let app = Router::new()
         .route("/health", get(|| async { "ok" }))
-        .route("/graphql", post(graphql_handler))
+        // GET  /graphql → serves the GraphiQL interactive IDE, so you can
+        //                  explore the schema and test queries from a browser.
+        // POST /graphql → the actual GraphQL execution endpoint.
+        //
+        // GraphiQLSource generates a self-contained HTML page that talks to
+        // the POST endpoint. It's baked into async-graphql behind the
+        // "graphiql" feature flag.
+        .route(
+            "/graphql",
+            get(|| async {
+                Html(
+                    GraphiQLSource::build()
+                        .endpoint("/graphql")
+                        .title("AUOHP GraphQL")
+                        .finish(),
+                )
+            })
+            .post(graphql_handler),
+        )
         // with_state() makes `schema` available to any handler that
         // declares a State<AppSchema> parameter.
         .with_state(schema);
