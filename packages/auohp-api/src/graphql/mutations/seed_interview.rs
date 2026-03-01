@@ -276,7 +276,7 @@ pub async fn seed_interview(
     .await
     .map_err(gql_err)?;
 
-    // ── Phase 2: seed statements + :NEXT chain ──────────────────────────
+    // ── Phase 2: seed statements ───────────────────────────────────────
 
     let merged = group_segments(&input)?;
     let statement_count = merged.len() as i64;
@@ -309,48 +309,23 @@ pub async fn seed_interview(
 
         txn.run(
             query(
-                "MATCH (t:Transcript {uid: $transcriptUid})
+                "MATCH (transcript:Transcript {uid: $transcriptUid})
 
-                 // Find the current tail of the linked list (if any prior batch)
-                 OPTIONAL MATCH (t)-[:CONTAINS]->(existing:Statement)
-                 WHERE NOT (existing)-[:NEXT]->()
-                 WITH t, existing AS prevTail
-
-                 UNWIND range(0, size($statements) - 1) AS idx
-                 WITH t, prevTail, idx, $statements[idx] AS s
+                 UNWIND $statements AS s
 
                  MERGE (person:Person {name: s.speakerName})
                    ON CREATE SET person.uid = s.speakerUid
 
-                 CREATE (stmt:Statement {
+                 CREATE (statement:Statement {
                    uid:   s.uid,
                    text:  s.text,
                    words: s.words
                  })
-                 CREATE (t)-[:CONTAINS {startTime: s.startTime, endTime: s.endTime}]->(stmt)
-                 CREATE (person)-[:SAYS]->(stmt)
-
-                 // Build the :NEXT linked list.
-                 // ORDER BY idx is critical here: the MERGE on Person above
-                 // can cause the planner to reorder rows (e.g. grouping
-                 // statements by speaker). Without an explicit sort, collect()
-                 // would gather statements in whatever order the engine
-                 // processed them — scrambling the transcript.
-                 WITH t, prevTail, stmt, idx
-                 ORDER BY idx
-                 WITH t, prevTail, collect(stmt) AS stmts
-                 FOREACH (i IN range(0, size(stmts) - 2) |
-                   FOREACH (a IN [stmts[i]] |
-                     FOREACH (b IN [stmts[i + 1]] |
-                       CREATE (a)-[:NEXT]->(b)
-                     )
-                   )
-                 )
-
-                 // Link previous batch tail to first new statement
-                 WITH prevTail, stmts
-                 WHERE prevTail IS NOT NULL AND size(stmts) > 0
-                 CREATE (prevTail)-[:NEXT]->(stmts[0])",
+                 CREATE (transcript)-[:CONTAINS {
+                   startTime: s.startTime,
+                   endTime: s.endTime
+                 }]->(statement)
+                 CREATE (person)-[:SAYS]->(statement)",
             )
             .param("transcriptUid", transcript_uid.clone())
             .param("statements", stmt_params),
