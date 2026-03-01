@@ -41,6 +41,11 @@ neo4rs = "0.8"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
+# Date handling — chrono is already a transitive dependency (neo4rs uses it
+# internally to deserialize Bolt Date values). Adding it as a direct dep
+# just makes it importable in our code. No new code is compiled.
+chrono = "0.4"
+
 # ID generation — nanoid produces short, URL-safe, unique identifiers.
 # Used for node UIDs in Neo4j, matching the existing TypeScript seeder.
 nanoid = "0.4"

@@ -1,4 +1,5 @@
 use async_graphql::{Context, SimpleObject};
+use chrono::NaiveDate;
 use neo4rs::query;
 use serde::Deserialize;
 
@@ -66,6 +67,30 @@ pub struct Interview {
     pub interviewee: String,
     /// ISO 8601 date string, e.g. "1995-04-23".
     pub date: String,
+}
+
+impl Interview {
+    /// Construct an Interview from a neo4rs Node.
+    ///
+    /// We can't just `#[derive(Deserialize)]` on Interview because the
+    /// `date` property is stored as a Neo4j Date (a typed temporal value)
+    /// but our GraphQL schema exposes it as a String. neo4rs deserializes
+    /// Bolt Dates into `chrono::NaiveDate`, so we pull it out explicitly
+    /// and format it.
+    ///
+    /// The other three properties (uid, number, interviewee) are extracted
+    /// with `node.get("property_name")` — the same API as Row::get, but
+    /// operating on a Node's properties instead of row columns. The names
+    /// here are the real Neo4j property names, not arbitrary Cypher aliases.
+    pub fn from_node(node: &neo4rs::Node) -> async_graphql::Result<Self> {
+        let date: NaiveDate = node.get("date").map_err(gql_err)?;
+        Ok(Self {
+            uid: node.get("uid").map_err(gql_err)?,
+            number: node.get("number").map_err(gql_err)?,
+            interviewee: node.get("interviewee").map_err(gql_err)?,
+            date: date.to_string(),
+        })
+    }
 }
 
 // ---------------------------------------------------------------------------
