@@ -195,6 +195,19 @@ pub async fn seed_interview(
 ) -> async_graphql::Result<SeedInterviewPayload> {
     let db = ctx.data::<Db>()?;
 
+    // Wrap the entire seed operation in a single Neo4j transaction.
+    //
+    // neo4rs::Txn holds one Bolt connection from the pool for the duration
+    // of the transaction. All writes go through `txn.run()` instead of
+    // `db.run()`, so they share a single server-side transaction context.
+    // If anything fails, dropping `txn` without calling `.commit()` causes
+    // an implicit ROLLBACK — no partial interview gets left behind.
+    //
+    // Rust enforces this at the type level: `txn.commit()` takes ownership
+    // of `self` (it's `fn commit(mut self)`), so the borrow checker won't
+    // let you accidentally use the transaction after committing.
+    let mut txn = db.start_txn().await.map_err(gql_err)?;
+
     let interview_uid = nanoid::nanoid!();
     let transcript_uid = nanoid::nanoid!();
     let interviewee_uid = nanoid::nanoid!();
@@ -221,7 +234,7 @@ pub async fn seed_interview(
         .and_then(|a| a.video_url.clone())
         .unwrap_or_default();
 
-    db.run(
+    txn.run(
         query(
             "MERGE (interviewee:Person {name: $intervieweeName})
                ON CREATE SET interviewee.uid = $intervieweeUid
@@ -294,7 +307,7 @@ pub async fn seed_interview(
             })
             .collect();
 
-        db.run(
+        txn.run(
             query(
                 "MATCH (t:Transcript {uid: $transcriptUid})
 
@@ -384,7 +397,7 @@ pub async fn seed_interview(
             })
             .collect();
 
-        db.run(
+        txn.run(
             query(
                 "UNWIND $items AS item
                  MATCH (s:Statement {uid: item.uid})
@@ -403,7 +416,7 @@ pub async fn seed_interview(
         let has_json = assets.json_caption_url.is_some() || assets.json_caption_text.is_some();
 
         if has_vtt {
-            db.run(
+            txn.run(
                 query(
                     "MATCH (v:Video:Asset {uid: $videoUid})
                      CREATE (vtt:VTT:Caption {uid: $vttUid, url: $vttUrl, text: $vttText})
@@ -419,7 +432,7 @@ pub async fn seed_interview(
         }
 
         if has_json {
-            db.run(
+            txn.run(
                 query(
                     "MATCH (v:Video:Asset {uid: $videoUid})
                      CREATE (json:JSON:Caption {uid: $jsonUid, url: $jsonUrl, text: $jsonText})
@@ -437,6 +450,14 @@ pub async fn seed_interview(
             .map_err(gql_err)?;
         }
     }
+
+    // ── Commit ────────────────────────────────────────────────────────────
+    //
+    // All writes succeeded — commit the transaction. This is the only
+    // point where data becomes visible to other connections. If we never
+    // reach this line (early return, ?, or panic), the Txn is dropped
+    // without committing and Neo4j rolls back automatically.
+    txn.commit().await.map_err(gql_err)?;
 
     // ── Build response ──────────────────────────────────────────────────
 
