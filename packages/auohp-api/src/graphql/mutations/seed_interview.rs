@@ -468,7 +468,7 @@ pub async fn seed_interview(
             uid: interview_uid,
             number: input.number,
             interviewee: input.interviewee,
-            date: input.date,
+            date: input.date.parse().map_err(gql_err)?,
         },
         statement_count,
         speaker_count,

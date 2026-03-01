@@ -113,7 +113,7 @@ pub async fn search_statements(
                 end_time: contains.get("endTime").map_err(gql_err)?,
                 words: statement.get("words").map_err(gql_err)?,
             },
-            interview: Interview::from_node(&interview)?,
+            interview: interview.to().map_err(gql_err)?,
         });
     }
 

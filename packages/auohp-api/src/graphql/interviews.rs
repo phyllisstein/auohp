@@ -3,6 +3,7 @@ use chrono::NaiveDate;
 use neo4rs::query;
 use serde::Deserialize;
 
+
 use crate::neo4j::Db;
 use super::error::gql_err;
 
@@ -60,37 +61,18 @@ pub struct Transcript {
 }
 
 /// Mirrors the (:Interview) node.
-#[derive(SimpleObject, Clone)]
+///
+/// The `date` field is stored as a Neo4j Date and deserialized into
+/// `chrono::NaiveDate`. async-graphql's `"chrono"` feature registers
+/// NaiveDate as a GraphQL scalar that serializes to ISO 8601 strings
+/// ("2003-05-05") — so the GraphQL API still returns a string, but
+/// the Rust code works with a typed date value.
+#[derive(SimpleObject, Clone, Deserialize)]
 pub struct Interview {
     pub uid: String,
     pub number: i64,
     pub interviewee: String,
-    /// ISO 8601 date string, e.g. "1995-04-23".
-    pub date: String,
-}
-
-impl Interview {
-    /// Construct an Interview from a neo4rs Node.
-    ///
-    /// We can't just `#[derive(Deserialize)]` on Interview because the
-    /// `date` property is stored as a Neo4j Date (a typed temporal value)
-    /// but our GraphQL schema exposes it as a String. neo4rs deserializes
-    /// Bolt Dates into `chrono::NaiveDate`, so we pull it out explicitly
-    /// and format it.
-    ///
-    /// The other three properties (uid, number, interviewee) are extracted
-    /// with `node.get("property_name")` — the same API as Row::get, but
-    /// operating on a Node's properties instead of row columns. The names
-    /// here are the real Neo4j property names, not arbitrary Cypher aliases.
-    pub fn from_node(node: &neo4rs::Node) -> async_graphql::Result<Self> {
-        let date: NaiveDate = node.get("date").map_err(gql_err)?;
-        Ok(Self {
-            uid: node.get("uid").map_err(gql_err)?,
-            number: node.get("number").map_err(gql_err)?,
-            interviewee: node.get("interviewee").map_err(gql_err)?,
-            date: date.to_string(),
-        })
-    }
+    pub date: NaiveDate,
 }
 
 // ---------------------------------------------------------------------------
@@ -113,7 +95,7 @@ pub async fn list_interviews(ctx: &Context<'_>) -> async_graphql::Result<Vec<Int
 
     while let Some(row) = stream.next().await.map_err(gql_err)? {
         let node: neo4rs::Node = row.get("interview").map_err(gql_err)?;
-        interviews.push(Interview::from_node(&node)?);
+        interviews.push(node.to().map_err(gql_err)?);
     }
 
     Ok(interviews)
@@ -170,7 +152,7 @@ pub async fn get_transcript(
         if interview_opt.is_none() {
             let node: neo4rs::Node = row.get("interview").map_err(gql_err)?;
             let t_node: neo4rs::Node = row.get("transcript").map_err(gql_err)?;
-            interview_opt = Some(Interview::from_node(&node)?);
+            interview_opt = Some(node.to().map_err(gql_err)?);
             transcript_uid = t_node.get("uid").map_err(gql_err)?;
         }
 
