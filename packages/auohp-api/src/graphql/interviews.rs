@@ -134,6 +134,18 @@ pub async fn get_transcript(
     // Walk the :NEXT linked list to return statements in transcript order.
     // The head of the list is the Statement with no inbound :NEXT edge from
     // another Statement in the same Transcript.
+    //
+    // RETURN now uses whole entities:
+    //   i  — Interview node
+    //   t  — Transcript node
+    //   s  — Statement node
+    //   p  — Person node (via :SAYS)
+    //   c  — :CONTAINS relationship (carries startTime / endTime)
+    //
+    // The only scalar is `is_interviewer`, a boolean computed from the
+    // graph pattern (does this Person have an :INTERVIEWED_BY edge from
+    // this Interview?). That can't come from any single node or
+    // relationship, so it stays as a column alias.
     let mut stream = db
         .execute(
             query(
@@ -154,18 +166,7 @@ pub async fn get_transcript(
                  OPTIONAL MATCH (i)-[:INTERVIEWED_BY]->(interviewer:Person)
                    WHERE interviewer = p
 
-                 RETURN i.uid           AS interview_uid,
-                        i.number        AS interview_number,
-                        i.interviewee   AS interviewee,
-                        toString(i.date) AS interview_date,
-                        t.uid           AS transcript_uid,
-                        s.uid           AS statement_uid,
-                        s.text          AS statement_text,
-                        c.startTime     AS start_time,
-                        c.endTime       AS end_time,
-                        s.words         AS words,
-                        p.uid           AS person_uid,
-                        p.name          AS person_name,
+                 RETURN i, t, s, p, c,
                         interviewer IS NOT NULL AS is_interviewer
                  ORDER BY pos",
             )
@@ -180,26 +181,32 @@ pub async fn get_transcript(
 
     while let Some(row) = stream.next().await.map_err(gql_err)? {
         if interview_opt.is_none() {
-            interview_opt = Some(Interview {
-                uid: row.get("interview_uid").map_err(gql_err)?,
-                number: row.get("interview_number").map_err(gql_err)?,
-                interviewee: row.get("interviewee").map_err(gql_err)?,
-                date: row.get("interview_date").map_err(gql_err)?,
-            });
-            transcript_uid = row.get("transcript_uid").map_err(gql_err)?;
+            let i: neo4rs::Node = row.get("i").map_err(gql_err)?;
+            let t: neo4rs::Node = row.get("t").map_err(gql_err)?;
+            interview_opt = Some(Interview::from_node(&i)?);
+            transcript_uid = t.get("uid").map_err(gql_err)?;
         }
 
+        // Extract the Statement node, Person node, and :CONTAINS relationship.
+        let s: neo4rs::Node = row.get("s").map_err(gql_err)?;
+        let p: neo4rs::Node = row.get("p").map_err(gql_err)?;
+        let c: neo4rs::Relation = row.get("c").map_err(gql_err)?;
+
+        // Person can be deserialized directly — its fields match the node
+        // properties exactly (uid, name).
+        let person: Person = p.to().map_err(gql_err)?;
+
         statements.push(Statement {
-            uid: row.get("statement_uid").map_err(gql_err)?,
-            text: row.get("statement_text").map_err(gql_err)?,
-            person: Person {
-                uid: row.get("person_uid").map_err(gql_err)?,
-                name: row.get("person_name").map_err(gql_err)?,
-            },
+            uid: s.get("uid").map_err(gql_err)?,
+            text: s.get("text").map_err(gql_err)?,
+            person,
             is_interviewer: row.get("is_interviewer").map_err(gql_err)?,
-            start_time: row.get("start_time").map_err(gql_err)?,
-            end_time: row.get("end_time").map_err(gql_err)?,
-            words: row.get("words").map_err(gql_err)?,
+            // Timing lives on the :CONTAINS relationship, not the Statement node.
+            // Relation::get() works just like Node::get() — it pulls a property
+            // by name from the relationship's property map.
+            start_time: c.get("startTime").map_err(gql_err)?,
+            end_time: c.get("endTime").map_err(gql_err)?,
+            words: s.get("words").map_err(gql_err)?,
         });
     }
 
