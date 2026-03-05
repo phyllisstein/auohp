@@ -36,13 +36,13 @@ download() {
     mv "$dest.tmp" "$dest"
 }
 
-# ── Whisper large-v3 (GGML, ~3 GB) ─────────────────────────────────────────
+# ── Whisper ggml-medium (GGML, ~3 GB) ─────────────────────────────────────────
 # whisper-rs uses whisper.cpp's GGML format.
 echo
-echo "==> Whisper large-v3"
+echo "==> Whisper ggml-medium.en-q8_0.bin (GGML)"
 download \
-    "$HF_BASE/ggerganov/whisper.cpp/resolve/main/ggml-large-v3.bin" \
-    "$MODELS_DIR/ggml-large-v3.bin"
+    "$HF_BASE/ggerganov/whisper.cpp/resolve/main/ggml-medium.en-q8_0.bin" \
+    "$MODELS_DIR/ggml-medium.en-q8_0.bin"
 
 # ── pyannote segmentation 3.0 (ONNX, ~17 MB) ────────────────────────────────
 # Requires accepting terms at https://huggingface.co/pyannote/segmentation-3.0
@@ -58,7 +58,7 @@ download \
 echo
 echo "==> wespeaker voxceleb resnet34-LM (ONNX)"
 download \
-    "$HF_BASE/pyannote/wespeaker-voxceleb-resnet34-LM/resolve/main/pytorch_model.onnx" \
+    "$HF_BASE/pyannote/wespeaker-voxceleb-resnet34-LM/resolve/main/pytorch_model.bin" \
     "$MODELS_DIR/wespeaker-voxceleb-resnet34-LM.onnx"
 
 echo

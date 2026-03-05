@@ -20,7 +20,7 @@ pub struct PipelineConfig {
 impl PipelineConfig {
     pub fn from_model_dir(dir: &Path, max_speakers: usize) -> Self {
         Self {
-            whisper_model: dir.join("ggml-large-v3.bin"),
+            whisper_model: dir.join("ggml-medium.en-q8_0.bin"),
             segmentation_model: dir.join("pyannote-segmentation-3.0.onnx"),
             embedding_model: dir.join("wespeaker-voxceleb-resnet34-LM.onnx"),
             max_speakers,

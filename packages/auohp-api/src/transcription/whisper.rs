@@ -25,7 +25,7 @@ pub struct WhisperSegment {
 pub fn load_model(model_path: &Path) -> Result<WhisperContext> {
     let mut ctx_params = WhisperContextParameters::default();
     ctx_params.dtw_parameters.mode = DtwMode::ModelPreset {
-        model_preset: DtwModelPreset::LargeV3,
+        model_preset: DtwModelPreset::MediumEn,
     };
 
     WhisperContext::new_with_params(
