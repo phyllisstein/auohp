@@ -57,9 +57,8 @@ services:
     networks:
       - default
       - nginx-proxy
-    image: neo4j:2026-enterprise
+    image: neo4j:2026.01
     environment:
-      NEO4J_ACCEPT_LICENSE_AGREEMENT: "yes"
       NEO4J_AUTH: neo4j/auohpauohp
       NEO4J_PLUGINS: '["apoc", "genai"]'
       NEO4J_server_default__listen__address: "0.0.0.0"

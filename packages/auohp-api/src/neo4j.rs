@@ -1,6 +1,7 @@
-use anyhow::Result;
+use anyhow::{Context, Result};
 use neo4rs::Graph;
 use std::sync::Arc;
+use std::time::Duration;
 
 // Db is a cloneable, thread-safe handle to the Neo4j connection pool.
 //
@@ -15,11 +16,17 @@ pub type Db = Arc<Graph>;
 
 // Opens a Bolt connection pool to Neo4j and wraps it in an Arc.
 //
-// Graph::new() authenticates immediately on the first connection. If the URI
-// is unreachable or credentials are wrong, it returns an error here, before
-// the HTTP server ever starts — which is exactly what we want: fail fast at
-// startup rather than serving 500s on the first real request.
+// Graph::new() builds the pool configuration but is lazy — it does not open
+// a socket until the first query runs. We follow it with a no-op ping query
+// so that unreachable hosts or bad credentials fail here, before the HTTP
+// server starts, rather than on the first real request.
 pub async fn connect(uri: &str, user: &str, password: &str) -> Result<Db> {
     let graph = Graph::new(uri, user, password).await?;
+    tokio::time::timeout(
+        Duration::from_secs(1),
+        graph.run(neo4rs::query("RETURN 1")),
+    )
+    .await
+    .context("timed out connecting to Neo4j")??;
     Ok(Arc::new(graph))
 }
