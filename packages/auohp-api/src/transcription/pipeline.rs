@@ -22,7 +22,7 @@ impl PipelineConfig {
         Self {
             whisper_model: dir.join("ggml-medium.en-q8_0.bin"),
             segmentation_model: dir.join("pyannote-segmentation-3.0.onnx"),
-            embedding_model: dir.join("wespeaker-voxceleb-resnet34-LM.onnx"),
+            embedding_model: dir.join("wespeaker_en_voxceleb_CAM++.onnx"),
             max_speakers,
         }
     }

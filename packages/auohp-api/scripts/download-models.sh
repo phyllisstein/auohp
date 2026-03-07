@@ -45,21 +45,25 @@ download \
     "$MODELS_DIR/ggml-medium.en-q8_0.bin"
 
 # ── pyannote segmentation 3.0 (ONNX, ~17 MB) ────────────────────────────────
-# Requires accepting terms at https://huggingface.co/pyannote/segmentation-3.0
-# Export HF_TOKEN to authenticate.
+# Use the model exported by pyannote-rs itself (v0.1.0 release asset).
+# This export names its output tensor "output", which is what pyannote-rs 0.3.4
+# hardcodes in segment.rs. The onnx-community HuggingFace export names it
+# "logits" and is NOT compatible with this crate.
 echo
-echo "==> pyannote segmentation-3.0 (ONNX)"
+echo "==> pyannote segmentation-3.0 (ONNX, pyannote-rs release)"
 download \
-    "$HF_BASE/onnx-community/pyannote-segmentation-3.0/resolve/main/onnx/model.onnx" \
+    "https://github.com/thewh1teagle/pyannote-rs/releases/download/v0.1.0/segmentation-3.0.onnx" \
     "$MODELS_DIR/pyannote-segmentation-3.0.onnx"
 
 # ── wespeaker speaker embeddings (ONNX, ~26 MB) ─────────────────────────────
-# VoxCeleb ResNet34-LM embeddings used by pyannote-rs for speaker clustering.
+# CAM++ VoxCeleb embeddings from the pyannote-rs v0.1.0 release.
+# The pyannote HuggingFace repo only has pytorch_model.bin (not ONNX), so we
+# use the pre-exported ONNX asset from the pyannote-rs releases instead.
 echo
-echo "==> wespeaker voxceleb resnet34-LM (ONNX)"
+echo "==> wespeaker voxceleb CAM++ (ONNX, pyannote-rs release)"
 download \
-    "$HF_BASE/pyannote/wespeaker-voxceleb-resnet34-LM/resolve/main/pytorch_model.bin" \
-    "$MODELS_DIR/wespeaker-voxceleb-resnet34-LM.onnx"
+    "https://github.com/thewh1teagle/pyannote-rs/releases/download/v0.1.0/wespeaker_en_voxceleb_CAM%2B%2B.onnx" \
+    "$MODELS_DIR/wespeaker_en_voxceleb_CAM++.onnx"
 
 echo
 echo "Done. All models in $MODELS_DIR"
