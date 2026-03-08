@@ -35,13 +35,12 @@ impl PipelineConfig {
 pub fn run(
     config: &PipelineConfig,
     input_path: &Path,
-    progress: Option<&ProgressTx>,
 ) -> Result<TranscriptionResult> {
-    let decoded = audio::decode_file(input_path, progress)
+    let decoded = audio::decode_file(input_path)
         .with_context(|| format!("failed to decode {}", input_path.display()))?;
 
     let whisper_ctx = whisper::load_model(&config.whisper_model)?;
-    let whisper_segments = whisper::transcribe(&whisper_ctx, &decoded.samples, progress)?;
+    let whisper_segments = whisper::transcribe(&whisper_ctx, &decoded.samples)?;
 
     let samples_i16 = diarize::f32_to_i16(&decoded.samples);
     let diarized = diarize::diarize(
@@ -50,18 +49,9 @@ pub fn run(
         &config.segmentation_model,
         &config.embedding_model,
         config.max_speakers,
-        progress,
     )?;
 
-    if let Some(tx) = progress {
-        let _ = tx.send(ProgressEvent::new(TranscriptionPhase::Assembling, 0.0));
-    }
-
     let segments = merge_whisper_with_diarization(&whisper_segments, &diarized);
-
-    if let Some(tx) = progress {
-        let _ = tx.send(ProgressEvent::new(TranscriptionPhase::Assembling, 1.0));
-    }
 
     let mut speakers: Vec<String> = segments.iter().map(|s| s.speaker.clone()).collect();
     speakers.sort();

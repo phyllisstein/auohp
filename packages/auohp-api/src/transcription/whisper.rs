@@ -11,7 +11,7 @@ use whisper_rs::{
     WhisperContextParameters,
 };
 
-use super::types::{ProgressEvent, ProgressTx, TranscriptionPhase, Word};
+use super::types::Word;
 
 /// A Whisper segment with word-level DTW timestamps.
 pub struct WhisperSegment {
@@ -42,7 +42,6 @@ pub fn load_model(model_path: &Path) -> Result<WhisperContext> {
 pub fn transcribe(
     ctx: &WhisperContext,
     audio: &[f32],
-    progress: Option<&ProgressTx>,
 ) -> Result<Vec<WhisperSegment>> {
     let mut state = ctx.create_state().context("failed to create Whisper state")?;
 
@@ -51,17 +50,6 @@ pub fn transcribe(
     params.set_token_timestamps(true);
     params.set_print_progress(false);
     params.set_print_realtime(false);
-
-    // Bridge progress callback to our broadcast channel.
-    if let Some(tx) = progress {
-        let tx = tx.clone();
-        params.set_progress_callback_safe(move |pct: i32| {
-            let _ = tx.send(ProgressEvent::new(
-                TranscriptionPhase::Transcribing,
-                pct as f32 / 100.0,
-            ));
-        });
-    }
 
     state
         .full(params, audio)

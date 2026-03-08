@@ -36,7 +36,7 @@ fn main() -> Result<()> {
         10,
     );
 
-    let result = transcription::run(&config, std::path::Path::new(&input), None)?;
+    let result = transcription::run(&config, std::path::Path::new(&input))?;
     println!("{}", serde_json::to_string_pretty(&result)?);
 
     Ok(())

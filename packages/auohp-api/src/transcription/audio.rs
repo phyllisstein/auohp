@@ -13,8 +13,6 @@ use symphonia::core::io::MediaSourceStream;
 use symphonia::core::meta::MetadataOptions;
 use symphonia::core::probe::Hint;
 
-use super::types::{ProgressEvent, ProgressTx, TranscriptionPhase};
-
 const WHISPER_SAMPLE_RATE: u32 = 16_000;
 
 /// Decoded audio ready for Whisper: 16 kHz mono f32 samples in [-1.0, 1.0].
@@ -24,7 +22,7 @@ pub struct DecodedAudio {
 }
 
 /// Decode an audio/video file to 16 kHz mono f32.
-pub fn decode_file(path: &std::path::Path, progress: Option<&ProgressTx>) -> Result<DecodedAudio> {
+pub fn decode_file(path: &std::path::Path) -> Result<DecodedAudio> {
     let file = std::fs::File::open(path)
         .with_context(|| format!("failed to open {}", path.display()))?;
 
@@ -64,7 +62,6 @@ pub fn decode_file(path: &std::path::Path, progress: Option<&ProgressTx>) -> Res
         .context("unsupported audio codec")?;
 
     let mut raw_samples: Vec<f32> = Vec::new();
-    let mut packet_count = 0u64;
 
     loop {
         let packet = match format.next_packet() {
@@ -88,17 +85,6 @@ pub fn decode_file(path: &std::path::Path, progress: Option<&ProgressTx>) -> Res
         let mut sample_buf = SampleBuffer::<f32>::new(duration as u64, spec);
         sample_buf.copy_interleaved_ref(decoded);
         raw_samples.extend_from_slice(sample_buf.samples());
-
-        packet_count += 1;
-        if packet_count % 100 == 0 {
-            if let Some(tx) = progress {
-                let _ = tx.send(ProgressEvent::new(TranscriptionPhase::Decoding, 0.5));
-            }
-        }
-    }
-
-    if let Some(tx) = progress {
-        let _ = tx.send(ProgressEvent::new(TranscriptionPhase::Decoding, 1.0));
     }
 
     // Mix down to mono if multi-channel.

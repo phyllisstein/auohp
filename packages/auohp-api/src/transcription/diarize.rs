@@ -9,7 +9,6 @@ use pyannote_rs::{EmbeddingExtractor, EmbeddingManager};
 use std::path::Path;
 use std::time::Instant;
 
-use super::types::{ProgressEvent, ProgressTx, TranscriptionPhase};
 
 /// A diarized speech segment: a time range attributed to a speaker.
 #[derive(Debug, Clone, serde::Serialize)]
@@ -32,7 +31,6 @@ pub fn diarize(
     segmentation_model: &Path,
     embedding_model: &Path,
     max_speakers: usize,
-    progress: Option<&ProgressTx>,
 ) -> Result<Vec<DiarizedSegment>> {
     let seg_path = segmentation_model
         .to_str()
@@ -138,12 +136,6 @@ pub fn diarize(
             end: seg.end,
         });
 
-        if let Some(tx) = progress {
-            let _ = tx.send(ProgressEvent::new(
-                TranscriptionPhase::Diarizing,
-                (i + 1) as f32 / total as f32,
-            ));
-        }
     }
 
     Ok(diarized)
