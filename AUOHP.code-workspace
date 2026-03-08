@@ -5,6 +5,10 @@
             "path": "."
         },
         {
+            "name": "🌐 @auohp/api",
+            "path": "packages/auohp-api"
+        },
+        {
             "name": "🌐 @auohp/caption-editor-app",
             "path": "packages/caption-editor-app"
         },
