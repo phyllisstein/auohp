@@ -28,14 +28,38 @@ services:
       - type: volume
         source: node_modules
         target: /app/node_modules
+  auohp-api:
+    networks:
+      - default
+      - nginx-proxy
+    build:
+      context: .
+      dockerfile: packages/auohp-api/Dockerfile
+    secrets:
+      - source: environment
+        mode: 0440
+    environment:
+      VIRTUAL_HOST_MULTIPORTS: |-
+        api.auohp.here:
+          "/":
+            port: "6060"
+    depends_on: [neo4j]
+    expose:
+      - "6060"
+    volumes:
+      # ONNX model weights (BGE-small, pyannote segmentation, wespeaker).
+      # Downloaded from Hugging Face Hub on first startup; reused thereafter.
+      - type: volume
+        source: auohp_models
+        target: /models
+
   neo4j:
     networks:
       - default
       - nginx-proxy
-    image: neo4j:2026-enterprise
+    image: neo4j:2026.01.4
     environment:
-      NEO4J_ACCEPT_LICENSE_AGREEMENT: "yes"
-      NEO4J_AUTH: neo4j/auohp
+      NEO4J_AUTH: neo4j/auohpauohp
       NEO4J_PLUGINS: '["apoc", "genai"]'
       NEO4J_server_default__listen__address: "0.0.0.0"
       NEO4J_server_jvm_additional: -Dapoc.ttl.enabled=true --add-modules=jdk.incubator.vector
@@ -66,6 +90,7 @@ services:
 volumes:
   graph_data:
   node_modules:
+  auohp_models:
 
 secrets:
   environment:
