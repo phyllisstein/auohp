@@ -25,7 +25,7 @@ impl QueryRoot {
     }
 
     /// Returns the full transcript for a single interview, statements ordered
-    /// by the `:NEXT` linked list in Neo4j.
+    /// by start time (via the `startTime` property on the `:CONTAINS` relationship).
     async fn interview_transcript(
         &self,
         ctx: &Context<'_>,

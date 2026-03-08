@@ -41,17 +41,11 @@ pub fn diarize(
         .to_str()
         .context("embedding model path is not valid UTF-8")?;
 
-    // FIXME: replace eprintln!/println! throughout this module with
-    // `tracing::{debug, warn, error}` once tracing is wired into the
-    // pipeline.  Skipped per-segment errors in particular should be
-    // surfaced as structured warnings so callers can decide whether
-    // a high error rate is worth aborting the job.
-
     // Phase 1: segment audio into speech regions.
-    eprintln!(
-        "[diarize] samples_i16 len={}, sample_rate={}",
-        samples_i16.len(),
-        sample_rate
+    tracing::debug!(
+        samples = samples_i16.len(),
+        sample_rate,
+        "starting diarization"
     );
     let raw_segments: Vec<pyannote_rs::Segment> =
         pyannote_rs::get_segments(samples_i16, sample_rate, seg_path)
@@ -59,7 +53,7 @@ pub fn diarize(
             .filter_map(|r| match r {
                 Ok(seg) => Some(seg),
                 Err(e) => {
-                    eprintln!("[diarize] segment error (skipped): {e}");
+                    tracing::warn!(error = %e, "skipping pyannote segment");
                     None
                 }
             })
@@ -67,7 +61,7 @@ pub fn diarize(
 
     let total = raw_segments.len();
     if total == 0 {
-        eprintln!("No speech segments detected by pyannote-rs.");
+        tracing::warn!("no speech segments detected");
         return Ok(Vec::new());
     }
 
@@ -107,11 +101,11 @@ pub fn diarize(
         // and cause a hard error in compute_fbank, so we skip them here.
         const MIN_SAMPLES: usize = 400;
         if seg.samples.len() < MIN_SAMPLES {
-            eprintln!(
-                "[diarize] segment {} too short ({} samples < {}), skipping",
-                i,
-                seg.samples.len(),
-                MIN_SAMPLES
+            tracing::debug!(
+                segment = i,
+                samples = seg.samples.len(),
+                min = MIN_SAMPLES,
+                "segment too short, skipping"
             );
             continue;
         }
@@ -123,7 +117,7 @@ pub fn diarize(
 
         if embedding.iter().all(|&x| x == 0.0) {
             // Skip silent segments that somehow got through the segmentation model.
-            eprintln!("Warning: segment {} has zero embedding and will be skipped", i);
+            tracing::warn!(segment = i, "segment has zero embedding, skipping");
             continue;
         }
 
