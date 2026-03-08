@@ -33,9 +33,11 @@ async fn graphql_handler(
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    // Tracing goes to stderr so structured logs don't mix with any stdout
+    // output (e.g. health-check scripts that parse the server's stdout).
     tracing_subscriber::registry()
         .with(EnvFilter::try_from_default_env().unwrap_or_else(|_| "auohp_api=debug".into()))
-        .with(tracing_subscriber::fmt::layer())
+        .with(tracing_subscriber::fmt::layer().with_writer(std::io::stderr))
         .init();
 
     // In Docker the .env file is mounted as a secret at this path.

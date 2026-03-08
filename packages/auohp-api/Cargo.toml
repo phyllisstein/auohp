@@ -3,6 +3,14 @@ name = "auohp-api"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+default = []
+# GPU acceleration — enable at build time, not both at once.
+#   cargo build --features metal    (macOS dev, Apple Silicon GPU)
+#   cargo build --features cuda     (production, NVIDIA GPU)
+metal = ["whisper-rs/metal"]
+cuda = ["whisper-rs/cuda", "ort/cuda"]
+
 [dependencies]
 # Async runtime — tokio is the standard async executor for Rust.
 # features = ["full"] enables all tokio sub-crates (net, fs, time, sync, etc.)
