@@ -13,7 +13,7 @@ use neo4rs::{BoltType, query};
 use crate::embeddings::Embedder;
 use crate::neo4j::Db;
 use super::error::gql_err;
-use super::interviews::{Interview, Statement};
+use super::interviews::{Interview, Statement, StatementNode};
 
 // ---------------------------------------------------------------------------
 // Output type
@@ -101,17 +101,18 @@ pub async fn search_statements(
         let statement: neo4rs::Node = row.get("statement").map_err(gql_err)?;
         let person: neo4rs::Node = row.get("person").map_err(gql_err)?;
         let contains: neo4rs::Relation = row.get("contains").map_err(gql_err)?;
+        let sn: StatementNode = statement.to().map_err(gql_err)?;
 
         hits.push(SearchHit {
             score: row.get("score").map_err(gql_err)?,
             statement: Statement {
-                uid: statement.get("uid").map_err(gql_err)?,
-                text: statement.get("text").map_err(gql_err)?,
+                uid: sn.uid,
+                text: sn.text,
                 person: person.to().map_err(gql_err)?,
                 is_interviewer: row.get("is_interviewer").map_err(gql_err)?,
                 start_time: contains.get("startTime").map_err(gql_err)?,
                 end_time: contains.get("endTime").map_err(gql_err)?,
-                words: statement.get("words").map_err(gql_err)?,
+                words: sn.words,
             },
             interview: interview.to().map_err(gql_err)?,
         });

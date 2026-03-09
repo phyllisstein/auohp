@@ -28,6 +28,22 @@ pub struct Person {
     pub name: String,
 }
 
+/// The node-native properties of a (:Statement) node.
+///
+/// Separated from `Statement` because `Statement` mixes node properties with
+/// data from relationships (`:CONTAINS` timing, `:SAYS` speaker), making a
+/// full `Deserialize` derive impossible. This struct covers only what lives on
+/// the node itself. `#[serde(default)]` on `words` means serde substitutes
+/// `None` for absent keys rather than erroring — older transcripts were seeded
+/// without word-level timing, so the property may not exist on the node at all.
+#[derive(Deserialize)]
+pub struct StatementNode {
+    pub uid: String,
+    pub text: String,
+    #[serde(default)]
+    pub words: Option<String>,
+}
+
 /// Mirrors the (:Statement) node, with timing from the `:CONTAINS` edge and
 /// speaker attribution from `:SAYS`.
 #[derive(SimpleObject)]
@@ -151,10 +167,11 @@ pub async fn get_transcript(
         let statement: neo4rs::Node = row.get("statement").map_err(gql_err)?;
         let person: neo4rs::Node = row.get("person").map_err(gql_err)?;
         let contains: neo4rs::Relation = row.get("contains").map_err(gql_err)?;
+        let sn: StatementNode = statement.to().map_err(gql_err)?;
 
         statements.push(Statement {
-            uid: statement.get("uid").map_err(gql_err)?,
-            text: statement.get("text").map_err(gql_err)?,
+            uid: sn.uid,
+            text: sn.text,
             // Person can be deserialized directly — its fields match the
             // node properties exactly (uid, name).
             person: person.to().map_err(gql_err)?,
@@ -163,7 +180,7 @@ pub async fn get_transcript(
             // node. Relation::get() works just like Node::get().
             start_time: contains.get("startTime").map_err(gql_err)?,
             end_time: contains.get("endTime").map_err(gql_err)?,
-            words: statement.get("words").map_err(gql_err)?,
+            words: sn.words,
         });
     }
 
