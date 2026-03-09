@@ -63,7 +63,7 @@
             "typescript",
             "typescriptreact"
         ],
-        "editor.tabSize": 2,
+        "editor.tabSize": 4,
         "search.exclude": {
             "**/node_modules": true,
             "**/.yarn": true
