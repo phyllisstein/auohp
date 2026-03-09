@@ -387,7 +387,7 @@ async fn approach_d_nested_row(graph: &Graph) -> Result<()> {
     println!("APPROACH D: row.to::<NestedRow>() (nested node deserialization)");
     println!("{}", "=".repeat(72));
 
-    // Mix of whole nodes and scalar projections in the RETURN clause.
+    // Mix of whole nodes and scalar projections in the RETURN clause.~
     // The column names must match the struct field names.
     let mut stream = graph
         .execute(query(
@@ -626,6 +626,363 @@ async fn approach_f_map_projection(graph: &Graph) -> Result<()> {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// Approach G: The Relationship Problem — Why Edges Don't Nest Like Nodes
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// In Approach D, we saw that `row.to::<NestedRow>()` can deserialize whole
+// nodes into nested structs. Can we do the same with relationships?
+//
+// The answer is: yes, but with a structural mismatch you need to understand.
+//
+// When neo4rs deserializes a BoltRelation into a user struct via
+// `BoltRelationDeserializer::deserialize_struct`, it calls the same
+// `deserialize_outer_struct` that nodes use. This function:
+//
+//   1. Extracts the relationship's property map (e.g. {startTime: 0.0, endTime: 2.5})
+//   2. Looks at which struct fields the caller declared
+//   3. For each declared field NOT in the property map, creates an
+//      AdditionalData::Element entry pointing back at the BoltRelation itself
+//
+// So if your struct declares a field called `startTime`, that's found in the
+// property map and deserialized normally. But if your struct declares a field
+// called `start_node_id` — that's NOT a property, it's structural metadata
+// on the relationship. The AdditionalData::Element deserializer will try to
+// resolve it by matching against ElementDataKey variants (Id, StartNodeId,
+// EndNodeId, Type, Labels, Properties, etc.)
+//
+// Here's the catch: the struct field name must match a *serde newtype struct
+// name* (like "StartNodeId"), not a snake_case field name. The Element
+// deserializer dispatches on `deserialize_newtype_struct(name, ...)` where
+// `name` comes from the serde-derived code — and serde uses the struct's
+// Rust name as the newtype name. So you need the neo4rs newtype wrappers.
+//
+// Compare with nodes:
+//   - BoltNode has:  id, labels, properties  (3 structural fields)
+//   - BoltRelation:  id, start_node_id, end_node_id, typ, properties  (5 structural fields)
+//
+// Relationships have 2 extra structural fields and a type. When you use
+// `relation.to::<T>()`, the property map is flattened into T's fields, but
+// the structural metadata (id, start/end node IDs, type) requires special
+// neo4rs newtype wrappers to extract.
+//
+// This means a "natural" Rust struct with plain fields can't absorb both
+// property data AND relationship metadata in one shot — you need neo4rs's
+// Id, StartNodeId, EndNodeId, and Type newtypes.
+
+// neo4rs re-exports these from its public API
+use neo4rs::{Id, StartNodeId, EndNodeId, Relation};
+
+/// A struct that deserializes directly from a `:CONTAINS` relationship,
+/// extracting ONLY properties (not structural metadata).
+#[derive(Deserialize, Debug)]
+struct ContainsEdgePropsOnly {
+    #[serde(rename = "startTime")]
+    start_time: f64,
+    #[serde(rename = "endTime")]
+    end_time: f64,
+}
+
+/// A struct that tries to extract structural metadata alongside properties
+/// using neo4rs's newtype wrappers.
+///
+/// The key insight: the struct field names don't matter here — what matters
+/// is the *type*. When serde encounters a field typed `Id`, it calls
+/// `deserialize_newtype_struct("Id", ...)`, and the ElementDataDeserializer
+/// matches the string "Id" to ElementDataKey::Id to extract the structural
+/// id. The field could be called `id`, `rel_id`, or `potato` — serde cares
+/// about the type name, not the field name.
+#[derive(Deserialize, Debug)]
+struct ContainsEdgeWithMeta {
+    #[serde(rename = "startTime")]
+    start_time: f64,
+    #[serde(rename = "endTime")]
+    end_time: f64,
+    // These use neo4rs newtypes. The serde codegen emits:
+    //   deserialize_newtype_struct("Id", visitor)
+    // which the ElementDataDeserializer intercepts and resolves to
+    // the relationship's structural id field.
+    id: Id,
+    start_node: StartNodeId,
+    end_node: EndNodeId,
+}
+
+/// What happens if you try plain fields instead of newtypes?
+#[derive(Deserialize, Debug)]
+struct ContainsEdgeNaive {
+    #[serde(rename = "startTime")]
+    start_time: f64,
+    #[serde(rename = "endTime")]
+    end_time: f64,
+    // This will NOT extract the relationship's internal ID — there's no
+    // "id" key in the property map, and the AdditionalData::Element
+    // deserializer won't resolve a plain u64 field to the structural ID.
+    // It goes through deserialize_any → PropertyMissingButRequired.
+    //
+    // With #[serde(default)], it silently becomes 0.
+    // Without #[serde(default)], it blows up.
+    #[serde(default)]
+    id: u64,
+}
+
+/// Full row that nests both nodes AND a relationship.
+#[derive(Deserialize, Debug)]
+struct FullNestedRow {
+    s: StatementNode,
+    p: PersonNode,
+    c: ContainsEdge,
+    is_interviewer: bool,
+}
+
+async fn approach_g_relationship_nesting(graph: &Graph) -> Result<()> {
+    println!("\n{}", "=".repeat(72));
+    println!("APPROACH G: Relationship Deserialization (the edge problem)");
+    println!("{}", "=".repeat(72));
+
+    // --- G.1: Relation::get (manual property extraction) ---
+    println!("\n  G.1: Relation::get (manual, like the production code does)");
+    {
+        let mut stream = graph
+            .execute(query(
+                "MATCH (t:Transcript)-[c:CONTAINS]->(s:Statement)<-[:SAYS]-(p:Person)
+                 RETURN s, p, c
+                 ORDER BY c.startTime",
+            ))
+            .await?;
+
+        while let Some(row) = stream.next().await? {
+            let s: Node = row.get("s")?;
+            let sn: StatementNode = s.to()?;
+            let c: Relation = row.get("c")?;
+            let start: f64 = c.get("startTime")?;
+            let end: f64 = c.get("endTime")?;
+
+            println!(
+                "    {} @ {:.1}-{:.1}s  (rel id={}, {} -> {})",
+                sn.uid, start, end,
+                c.id(), c.start_node_id(), c.end_node_id()
+            );
+        }
+    }
+
+    // --- G.2: relation.to::<ContainsEdgePropsOnly>() — just properties ---
+    println!("\n  G.2: relation.to::<ContainsEdgePropsOnly>() — properties only, no metadata");
+    {
+        let mut stream = graph
+            .execute(query(
+                "MATCH (t:Transcript)-[c:CONTAINS]->(s:Statement)<-[:SAYS]-(p:Person)
+                 RETURN s, c
+                 ORDER BY c.startTime",
+            ))
+            .await?;
+
+        while let Some(row) = stream.next().await? {
+            let s: Node = row.get("s")?;
+            let sn: StatementNode = s.to()?;
+            let c: Relation = row.get("c")?;
+            let ce: ContainsEdgePropsOnly = c.to()?;
+
+            println!(
+                "    {} @ {:.1}-{:.1}s  (works fine — no structural fields requested)",
+                sn.uid, ce.start_time, ce.end_time,
+            );
+        }
+    }
+
+    // --- G.3: relation.to::<ContainsEdgeWithMeta>() with neo4rs newtypes ---
+    println!("\n  G.3: relation.to::<ContainsEdgeWithMeta>() with neo4rs Id/StartNodeId newtypes");
+    {
+        let mut stream = graph
+            .execute(query(
+                "MATCH (t:Transcript)-[c:CONTAINS]->(s:Statement)<-[:SAYS]-(p:Person)
+                 RETURN s, c
+                 ORDER BY c.startTime",
+            ))
+            .await?;
+
+        while let Some(row) = stream.next().await? {
+            let s: Node = row.get("s")?;
+            let sn: StatementNode = s.to()?;
+            let c: Relation = row.get("c")?;
+            match c.to::<ContainsEdgeWithMeta>() {
+                Ok(ce) => println!(
+                    "    {} @ {:.1}-{:.1}s  id={:?}, start_node={:?}, end_node={:?}",
+                    sn.uid, ce.start_time, ce.end_time,
+                    ce.id, ce.start_node, ce.end_node,
+                ),
+                Err(e) => {
+                    println!("    {} => ERROR: {}", sn.uid, e);
+                    println!("    (neo4rs newtypes must be the type, not wrapped in Option)");
+                }
+            }
+        }
+    }
+
+    // --- G.4: relation.to::<ContainsEdgeNaive>() — what goes wrong ---
+    println!("\n  G.4: relation.to::<ContainsEdgeNaive>() — plain u64 id field");
+    {
+        let mut stream = graph
+            .execute(query(
+                "MATCH (t:Transcript)-[c:CONTAINS]->(s:Statement)<-[:SAYS]-(p:Person)
+                 RETURN s, c
+                 ORDER BY c.startTime LIMIT 1",
+            ))
+            .await?;
+
+        while let Some(row) = stream.next().await? {
+            let c: Relation = row.get("c")?;
+            match c.to::<ContainsEdgeNaive>() {
+                Ok(ce) => println!(
+                    "    @ {:.1}-{:.1}s  id={} (should be {}, got 0 from Default!)",
+                    ce.start_time, ce.end_time, ce.id, c.id()
+                ),
+                Err(e) => println!("    ERROR: {}", e),
+            }
+        }
+    }
+
+    // --- G.4: row.to::<FullNestedRow>() — the whole enchilada ---
+    println!("\n  G.4: row.to::<FullNestedRow>() — nodes + relationship + scalar in one shot");
+    {
+        let mut stream = graph
+            .execute(query(
+                "MATCH (t:Transcript)-[c:CONTAINS]->(s:Statement)<-[:SAYS]-(p:Person)
+                 MATCH (i:Interview)-[:HAS_TRANSCRIPT]->(t)
+                 OPTIONAL MATCH (i)-[:INTERVIEWED_BY]->(interviewer:Person)
+                   WHERE interviewer = p
+                 RETURN s, p, c,
+                        interviewer IS NOT NULL AS is_interviewer
+                 ORDER BY c.startTime",
+            ))
+            .await?;
+
+        while let Some(row) = stream.next().await? {
+            let full: FullNestedRow = row.to()?;
+            println!(
+                "    {} [{}{}] @ {:.1}-{:.1}s => words: {}",
+                full.s.uid,
+                full.p.name,
+                if full.is_interviewer { " (interviewer)" } else { "" },
+                full.c.start_time,
+                full.c.end_time,
+                full.s.words.as_ref().map_or("None", |_| "Some(...)"),
+            );
+        }
+    }
+
+    // Summary:
+    //
+    // Relationships DO nest into row.to() structs — the BoltRelation
+    // deserializer works exactly like BoltNodeDeserializer for properties.
+    // The wrinkle is structural metadata:
+    //
+    //   Node structural:       id, labels         → via Id, Labels newtypes
+    //   Relationship structural: id, start_node_id, end_node_id, typ
+    //                                              → via Id, StartNodeId, EndNodeId, Type newtypes
+    //
+    // If you don't need the structural metadata (just properties), relationships
+    // and nodes deserialize identically. But if you want `c.id()` or
+    // `c.start_node_id()`, you need the neo4rs newtypes — a plain `id: u64`
+    // field won't find it in the property map and will either error or default
+    // to 0.
+    //
+    // The deeper issue: this is a consequence of Bolt's wire format. Bolt nodes
+    // and relationships are not "just maps." They're tagged structures with
+    // separate slots for id, labels/type, and properties. The properties are a
+    // map, but the id and labels/type sit outside it. neo4rs's Deserializer
+    // papers over this with the AdditionalData/ElementData machinery — it
+    // merges the structural fields into the property map during deserialization,
+    // but only if you ask for them with the right newtype names.
+    //
+    // This is the fundamental tension: Rust structs are flat bags of named
+    // fields, but Bolt entities have two *layers* of named data (structural
+    // metadata + properties). The Deserializer bridges them, but the bridge
+    // has rules.
+
+    Ok(())
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Approach H: Cypher Relationship Map Projection — Merging Properties with
+//             Structural Data
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// If Approach F showed that node map projection (`s { .uid, .text }`) converts
+// a BoltNode into a BoltMap with null-normalized keys, can we do the same
+// for relationships? Not quite — Cypher doesn't support `c { .startTime }`
+// syntax on relationships. But we CAN use map construction:
+//
+//   { start: c.startTime, end: c.endTime, id: id(c) }
+//
+// This gives us a BoltMap that merges property data WITH structural metadata,
+// all as plain key-value pairs. No newtypes needed on the Rust side.
+
+#[derive(Deserialize, Debug)]
+struct ContainsFlat {
+    start_time: f64,
+    end_time: f64,
+    rel_id: i64,
+    start_node: i64,
+    end_node: i64,
+}
+
+async fn approach_h_relationship_map_construction(graph: &Graph) -> Result<()> {
+    println!("\n{}", "=".repeat(72));
+    println!("APPROACH H: Cypher Map Construction for Relationships");
+    println!("{}", "=".repeat(72));
+
+    let mut stream = graph
+        .execute(query(
+            "MATCH (t:Transcript)-[c:CONTAINS]->(s:Statement)<-[:SAYS]-(p:Person)
+             RETURN s { .uid, .text, .words } AS s,
+                    p { .name } AS p,
+                    { start_time: c.startTime,
+                      end_time: c.endTime,
+                      rel_id: id(c),
+                      start_node: id(startNode(c)),
+                      end_node: id(endNode(c)) } AS c
+             ORDER BY c.startTime",
+        ))
+        .await?;
+
+    while let Some(row) = stream.next().await? {
+        let sn: StatementNode = row.get("s")?;
+        let pn: PersonNode = row.get("p")?;
+        let ce: ContainsFlat = row.get("c")?;
+
+        println!(
+            "  {} [{}] @ {:.1}-{:.1}s  rel_id={}, {} -> {} => words: {}",
+            sn.uid,
+            pn.name,
+            ce.start_time,
+            ce.end_time,
+            ce.rel_id,
+            ce.start_node,
+            ce.end_node,
+            sn.words.as_ref().map_or("None", |_| "Some(...)"),
+        );
+    }
+
+    // This fully normalizes the deserialization problem:
+    //
+    // + Everything is a BoltMap on the wire. No BoltNode, no BoltRelation.
+    // + Struct field names match map keys. Plain types, no newtypes.
+    // + null-normalization for absent properties on the node side.
+    // + Structural metadata (ids) promoted to map keys on the relationship side.
+    //
+    // - The Cypher query is now doing data modeling work. It's constructing
+    //   the exact shape the Rust struct needs, which makes the query fragile
+    //   and verbose.
+    // - You lose the ability to use neo4rs's graph-aware APIs (c.typ(),
+    //   c.start_node_id(), etc.) because there IS no Relation object.
+    // - This is basically writing a SQL SELECT at that point. If you're going
+    //   to reshape everything in the query, why use a graph database?
+    //   (That's a bit harsh — the graph is still doing the pattern matching
+    //   and traversal. But the result shape is relational.)
+
+    Ok(())
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -691,6 +1048,12 @@ async fn main() -> Result<()> {
     // Approach F: Map projection
     approach_f_map_projection(&graph).await?;
 
+    // Approach G: Relationship deserialization
+    approach_g_relationship_nesting(&graph).await?;
+
+    // Approach H: Cypher map construction for relationships
+    approach_h_relationship_map_construction(&graph).await?;
+
     println!("\n{}", "=".repeat(72));
     println!("SUMMARY");
     println!("{}", "=".repeat(72));
@@ -717,6 +1080,12 @@ async fn main() -> Result<()> {
     );
     println!(
         "  F  s {{{{ .uid, .text, .words }}}}       Works   map projection includes null keys"
+    );
+    println!(
+        "  G  relation.to / row.to w/ edges     Works   newtypes needed for structural metadata"
+    );
+    println!(
+        "  H  Cypher map construction           Works   fully flattened, no newtypes, most SQL-like"
     );
 
     Ok(())
