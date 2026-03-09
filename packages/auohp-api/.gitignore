@@ -1,3 +1,4 @@
+assets/
 models/
 .fastembed_cache/
 tests/output/
