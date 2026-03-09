@@ -23,7 +23,7 @@ pub type Db = Arc<Graph>;
 pub async fn connect(uri: &str, user: &str, password: &str) -> Result<Db> {
     let graph = Graph::new(uri, user, password).await?;
     tokio::time::timeout(
-        Duration::from_secs(1),
+        Duration::from_secs(5),
         graph.run(neo4rs::query("RETURN 1")),
     )
     .await
