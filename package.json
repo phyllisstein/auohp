@@ -65,5 +65,15 @@
         "slate": "^0.112.0",
         "slate-react": "^0.112.0"
     },
-    "packageManager": "yarn@4.10.2"
+    "packageManager": "yarn@4.10.2",
+    "resolutions": {
+        "@stylelint/postcss-css-in-js": "0.38.0",
+        "postcss-html": "1.8.1",
+        "postcss-jsx": "0.36.4",
+        "postcss-safe-parser": "7.0.1",
+        "postcss-scss": "4.0.9",
+        "postcss-styled-components": "0.2.1",
+        "postcss-syntax": "0.36.2",
+        "stylelint-order": "^4.0.0"
+    }
 }
