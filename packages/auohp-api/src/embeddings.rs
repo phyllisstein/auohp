@@ -1,6 +1,6 @@
 //! On-device sentence embeddings via fastembed (ONNX).
 //!
-//! Wraps the BGE-small-en-v1.5 model (384-dim) for generating vector
+//! Wraps the nomic-embed-text-v1.5 model (768-dim) for generating vector
 //! embeddings of transcript text. The ONNX weights are auto-downloaded
 //! from Hugging Face Hub on first use and cached locally.
 
@@ -20,17 +20,24 @@ pub struct Embedder {
 }
 
 impl Embedder {
-    /// Load the BGE-small-en-v1.5 model (384-dim).
+    /// Load the nomic-embed-text-v1.5 model (768-dim).
+    ///
+    /// Nomic's v1.5 is a significant upgrade from BGE-small: it supports
+    /// 8192-token context (vs. 512), produces 768-dim vectors (vs. 384),
+    /// and scores meaningfully higher on MTEB retrieval benchmarks. The
+    /// larger vectors and context window improve search relevance for
+    /// oral-history transcripts, which tend to be long, conversational
+    /// passages.
     pub fn new() -> Result<Self> {
         let model = TextEmbedding::try_new(
-            TextInitOptions::new(EmbeddingModel::BGESmallENV15)
+            TextInitOptions::new(EmbeddingModel::NomicEmbedTextV15)
                 .with_show_download_progress(true),
         )
         .context("failed to load embedding model")?;
 
         Ok(Self {
             model: Mutex::new(model),
-            dimensions: 384,
+            dimensions: 768,
         })
     }
 
@@ -51,7 +58,7 @@ impl Embedder {
         model.embed(texts, None).context("embedding failed")
     }
 
-    /// The dimensionality of the embedding vectors (384 for BGE-small).
+    /// The dimensionality of the embedding vectors (768 for nomic-embed-text-v1.5).
     pub fn dimensions(&self) -> usize {
         self.dimensions
     }

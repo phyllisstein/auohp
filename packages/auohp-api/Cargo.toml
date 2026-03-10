@@ -8,7 +8,7 @@ default = []
 # GPU acceleration — enable at build time, not both at once.
 #   cargo build --features metal    (macOS dev, Apple Silicon GPU)
 #   cargo build --features cuda     (production, NVIDIA GPU)
-metal = ["whisper-rs/metal"]
+metal = ["whisper-rs/metal", "ort/coreml"]
 cuda = ["whisper-rs/cuda", "ort/cuda"]
 
 [dependencies]

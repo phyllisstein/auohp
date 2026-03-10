@@ -9,7 +9,7 @@ use async_graphql_axum::{GraphQLRequest, GraphQLResponse};
 use axum::{
     extract::State,
     response::Html,
-    routing::{get, post},
+    routing::get,
     Router,
 };
 use tracing::info;
@@ -63,12 +63,12 @@ async fn main() -> Result<()> {
         "CREATE VECTOR INDEX statement_embedding IF NOT EXISTS
          FOR (s:Statement) ON s.embedding
          OPTIONS {indexConfig: {
-           `vector.dimensions`: 384,
+           `vector.dimensions`: 768,
            `vector.similarity_function`: 'cosine'
          }}",
     ))
     .await?;
-    info!("ensured statement_embedding vector index (384-dim, cosine)");
+    info!("ensured statement_embedding vector index (768-dim, cosine)");
 
     let embedder = std::sync::Arc::new(
         embeddings::Embedder::new().expect("failed to load embedding model"),

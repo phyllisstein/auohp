@@ -25,7 +25,7 @@ pub struct WhisperSegment {
 pub fn load_model(model_path: &Path) -> Result<WhisperContext> {
     let mut ctx_params = WhisperContextParameters::default();
     ctx_params.dtw_parameters.mode = DtwMode::ModelPreset {
-        model_preset: DtwModelPreset::MediumEn,
+        model_preset: DtwModelPreset::LargeV3Turbo,
     };
 
     WhisperContext::new_with_params(
@@ -46,6 +46,10 @@ pub fn transcribe(
     let mut state = ctx.create_state().context("failed to create Whisper state")?;
 
     let mut params = FullParams::new(SamplingStrategy::Greedy { best_of: 5 });
+    // Force English decoding. large-v3-turbo is a multilingual model, so
+    // without this hint Whisper spends the first ~30s of each file running
+    // language detection. Pinning to "en" skips that probe and also prevents
+    // the decoder from emitting accidental code-switches mid-sentence.
     params.set_language(Some("en"));
     params.set_token_timestamps(true);
     params.set_print_progress(false);
