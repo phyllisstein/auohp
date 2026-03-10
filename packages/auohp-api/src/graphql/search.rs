@@ -1,9 +1,9 @@
 //! Vector search over Statement embeddings.
 //!
-//! `search_statements` embeds the caller's query string on-device (BGE-small,
-//! 384-dim) and queries the `statement_embedding` HNSW index in Neo4j, joining
-//! back to the parent Interview for context. Results are ordered by cosine
-//! similarity descending.
+//! `search_statements` embeds the caller's query string on-device
+//! (nomic-embed-text-v1.5, 768-dim) and queries the `statement_embedding`
+//! HNSW index in Neo4j, joining back to the parent Interview for context.
+//! Results are ordered by cosine similarity descending.
 
 use std::sync::Arc;
 
