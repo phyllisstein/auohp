@@ -3,7 +3,6 @@ use std::sync::Arc;
 use async_graphql::{Context, Enum, InputObject, SimpleObject};
 use neo4rs::{query, BoltMap, BoltString, BoltType};
 use serde::Serialize;
-use tracing::info;
 
 use crate::embeddings::Embedder;
 use crate::graphql::error::gql_err;
@@ -105,6 +104,85 @@ pub struct SeedInterviewPayload {
     pub statement_count: i64,
     pub speaker_count: i64,
     pub transcript_uid: String,
+    /// Always `true`. Embeddings are written by a background task after the
+    /// mutation returns; vector search results for this interview will not be
+    /// available until that task completes.
+    pub embeddings_queued: bool,
+}
+
+// ---------------------------------------------------------------------------
+// Background embedding task
+// ---------------------------------------------------------------------------
+
+/// Embeds `texts` with `embedder` and writes the resulting vectors back to
+/// the matching Statement nodes in Neo4j.
+///
+/// This function is intentionally fire-and-forget: it is spawned with
+/// `tokio::spawn` after the seed transaction commits, so the mutation can
+/// return to the caller immediately. Errors are logged rather than surfaced,
+/// because there is no live caller to receive them.
+///
+/// If the server restarts before this completes, the affected Statement nodes
+/// simply won't have embeddings yet — re-running `seedInterview` for the same
+/// interview will re-embed them (MATCH … SET is idempotent).
+async fn embed_statements(db: Db, embedder: Arc<Embedder>, uids: Vec<String>, texts: Vec<String>) {
+    // spawn_blocking moves the synchronous ONNX inference off the async
+    // executor thread pool so it cannot stall other requests. The closure
+    // captures `embedder` (an Arc clone) and `texts` by move.
+    let vectors = match tokio::task::spawn_blocking({
+        let embedder = embedder.clone();
+        move || embedder.embed(&texts)
+    })
+    .await
+    {
+        Ok(Ok(v)) => v,
+        Ok(Err(e)) => {
+            tracing::error!(error = %e, "embedding failed");
+            return;
+        }
+        Err(e) => {
+            tracing::error!(error = %e, "spawn_blocking panicked during embedding");
+            return;
+        }
+    };
+
+    tracing::info!(
+        count = vectors.len(),
+        dims = vectors.first().map(|v| v.len()).unwrap_or(0),
+        "background task: embedding complete, writing to Neo4j"
+    );
+
+    const EMBED_BATCH: usize = 100;
+    for chunk in uids.iter().zip(vectors.iter()).collect::<Vec<_>>().chunks(EMBED_BATCH) {
+        let items: Vec<BoltType> = chunk
+            .iter()
+            .map(|(uid, vector)| {
+                let vec_bolt: Vec<BoltType> =
+                    vector.iter().map(|&v| BoltType::from(v as f64)).collect();
+                bolt_map(vec![
+                    ("uid", BoltType::from(uid.as_str())),
+                    ("vector", BoltType::from(vec_bolt)),
+                ])
+            })
+            .collect();
+
+        if let Err(e) = db
+            .run(
+                neo4rs::query(
+                    "UNWIND $items AS item
+                     MATCH (s:Statement {uid: item.uid})
+                     CALL db.create.setNodeVectorProperty(s, 'embedding', item.vector)",
+                )
+                .param("items", items),
+            )
+            .await
+        {
+            tracing::error!(error = %e, "failed to write embedding batch to Neo4j");
+            return;
+        }
+    }
+
+    tracing::info!("background task: embeddings written successfully");
 }
 
 // ---------------------------------------------------------------------------
@@ -334,56 +412,6 @@ pub async fn seed_interview(
         .map_err(gql_err)?;
     }
 
-    // ── Phase 2.5: embed statement texts ───────────────────────────────
-    //
-    // Generate vector embeddings for each statement and store them on the
-    // Statement nodes. This runs the ONNX model via spawn_blocking since
-    // fastembed is synchronous and CPU-bound.
-
-    let embedder = ctx.data::<Arc<Embedder>>()?;
-    let texts: Vec<String> = merged.iter().map(|s| s.text.clone()).collect();
-    let uids: Vec<String> = merged.iter().map(|s| s.uid.clone()).collect();
-
-    let vectors = tokio::task::spawn_blocking({
-        let embedder = embedder.clone();
-        move || embedder.embed(&texts)
-    })
-    .await
-    .map_err(gql_err)?
-    .map_err(gql_err)?;
-
-    info!(
-        count = vectors.len(),
-        dims = vectors.first().map(|v| v.len()).unwrap_or(0),
-        "embedded statement texts"
-    );
-
-    // Write embeddings to Neo4j in batches.
-    const EMBED_BATCH: usize = 100;
-    for chunk in uids.iter().zip(vectors.iter()).collect::<Vec<_>>().chunks(EMBED_BATCH) {
-        let items: Vec<BoltType> = chunk
-            .iter()
-            .map(|(uid, vector)| {
-                let vec_bolt: Vec<BoltType> = vector.iter().map(|&v| BoltType::from(v as f64)).collect();
-                bolt_map(vec![
-                    ("uid", BoltType::from(uid.as_str())),
-                    ("vector", BoltType::from(vec_bolt)),
-                ])
-            })
-            .collect();
-
-        txn.run(
-            query(
-                "UNWIND $items AS item
-                 MATCH (s:Statement {uid: item.uid})
-                 CALL db.create.setNodeVectorProperty(s, 'embedding', item.vector)",
-            )
-            .param("items", items),
-        )
-        .await
-        .map_err(gql_err)?;
-    }
-
     // ── Phase 3: attach caption files (optional) ────────────────────────
 
     if let Some(assets) = &input.assets {
@@ -434,6 +462,23 @@ pub async fn seed_interview(
     // without committing and Neo4j rolls back automatically.
     txn.commit().await.map_err(gql_err)?;
 
+    // ── Enqueue background embedding ──────────────────────────────────────
+    //
+    // nomic-embed-text-v1.5 is heavy enough that running it synchronously
+    // would exceed any reasonable HTTP timeout for full-length interviews.
+    // We commit first so the interview is immediately visible, then hand
+    // embedding off to a detached Tokio task.
+    //
+    // `tokio::spawn` returns a `JoinHandle` that we intentionally drop here
+    // (by not binding it). The task continues running in the background
+    // independently of this async frame. Errors are logged inside
+    // `embed_statements`; if the server restarts mid-job, the affected
+    // Statement nodes will simply lack embeddings until the next seed run.
+    let embedder = ctx.data::<Arc<Embedder>>()?.clone();
+    let texts: Vec<String> = merged.iter().map(|s| s.text.clone()).collect();
+    let uids: Vec<String> = merged.iter().map(|s| s.uid.clone()).collect();
+    tokio::spawn(embed_statements(db.clone(), embedder, uids, texts));
+
     // ── Build response ──────────────────────────────────────────────────
 
     let speaker_count = input.speakers.len() as i64;
@@ -448,5 +493,6 @@ pub async fn seed_interview(
         statement_count,
         speaker_count,
         transcript_uid,
+        embeddings_queued: true,
     })
 }
