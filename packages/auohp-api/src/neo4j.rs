@@ -1,5 +1,5 @@
 use anyhow::{Context, Result};
-use neo4rs::Graph;
+use neo4rs::{Graph, ConfigBuilder};
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -20,8 +20,15 @@ pub type Db = Arc<Graph>;
 // a socket until the first query runs. We follow it with a no-op ping query
 // so that unreachable hosts or bad credentials fail here, before the HTTP
 // server starts, rather than on the first real request.
-pub async fn connect(uri: &str, user: &str, password: &str) -> Result<Db> {
-    let graph = Graph::new(uri, user, password).await?;
+pub async fn connect(uri: &str, user: &str, password: &str, database: &str) -> Result<Db> {
+    let config = ConfigBuilder::default()
+        .uri(uri)
+        .user(user)
+        .password(password)
+        .db(database)
+        .build()
+        .unwrap();
+    let graph = Graph::connect(config).await?;
     tokio::time::timeout(
         Duration::from_secs(5),
         graph.run(neo4rs::query("RETURN 1")),

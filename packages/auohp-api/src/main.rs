@@ -52,9 +52,11 @@ async fn main() -> Result<()> {
     let neo4j_user =
         std::env::var("NEO4J_USER").unwrap_or_else(|_| "neo4j".to_string());
     let neo4j_password =
-        std::env::var("NEO4J_PASSWORD").unwrap_or_else(|_| "auohpauohp".to_string());
+        std::env::var("NEO4J_PASSWORD").unwrap_or_else(|_| "neo4j".to_string());
+    let neo4j_database =
+        std::env::var("NEO4J_DATABASE").unwrap_or_else(|_| "neo4j".to_string());
 
-    let db = neo4j::connect(&neo4j_uri, &neo4j_user, &neo4j_password).await?;
+    let db = neo4j::connect(&neo4j_uri, &neo4j_user, &neo4j_password, &neo4j_database).await?;
     info!("connected to Neo4j at {neo4j_uri}");
 
     // Ensure the vector index exists for semantic search over Statement
