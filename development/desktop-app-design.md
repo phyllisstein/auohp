@@ -1,7 +1,7 @@
 # AUOHP Desktop App — Design Document
 
 **Status:** Draft — not yet started
-**Last updated:** 2026-03-09
+**Last updated:** 2026-03-20
 
 ## 1. Goal
 
@@ -164,23 +164,54 @@ Tray updates are driven by `AppHandle::emit("progress", payload)` events from th
 
 ### 4.3 Status popover
 
-A hidden-by-default Tauri window (~320x400px) that shows:
+A hidden-by-default Tauri window (~320×400px) that shows:
 - Current job stage and progress bar
 - Live transcript segments as they arrive
 - Model download progress (first run)
 - Error details
 
-Rendered from a small HTML/JS bundle — not the full webapp.
+This is a **display-only** surface — no interactive controls, no preferences, no forms. The user reads it; they don't operate it. This matters because the popover is a Tauri webview (HTML/CSS rendered by WebKit on macOS), not native AppKit. Interactive controls (text fields, dropdowns, segmented controls) would feel wrong if non-native; a passive status display sidesteps those expectations entirely.
+
+The tray menu itself (section 4.2) is native — Tauri's `tauri::tray::TrayIcon` and `tauri::menu::Menu` delegate to `NSMenu` on macOS, so it's indistinguishable from any other tray app.
+
+To approximate a native macOS popover appearance:
+
+```rust
+let popover = tauri::WebviewWindowBuilder::new(app, "status", url)
+    .title("")
+    .inner_size(320.0, 400.0)
+    .transparent(true)           // allows vibrancy to show through
+    .decorations(false)          // no title bar — looks like a popover, not a window
+    .build()?;
+```
+
+With `transparent: true`, `decorations: false`, and a CSS background of `transparent` over Tauri's `NSVisualEffectView` integration, the popover gets the frosted-glass translucency of a native macOS panel. Combined with the `-apple-system` font stack and `@media (prefers-color-scheme: dark)`, it reads as "system UI" rather than "web page."
 
 ## 5. HTTP API (embedded axum)
 
 ### `GET /health`
 
 ```json
-{ "status": "ok", "version": "0.1.0", "gpu": "metal" }
+{
+  "status": "ok",
+  "version": "0.2.0",
+  "capabilities": ["transcribe", "diarize", "embed"],
+  "backend": "metal",
+  "gpu": { "name": "Apple M2 Pro", "memory_bytes": 17179869184 },
+  "models": {
+    "whisper": "large-v3-turbo-q8",
+    "diarization": "pyannote-segmentation-3.0",
+    "embeddings": "nomic-embed-text-v1.5"
+  }
+}
 ```
 
-The webapp calls this on page load to detect local inference availability.
+The webapp calls this on page load to detect local inference availability. The response uses a **capabilities-based handshake** rather than version comparison — the webapp asks "can you do X?" not "are you version Y?". This decouples the webapp's feature expectations from the desktop app's release cadence: the webapp can gracefully degrade when a capability is absent ("Local GPU available for transcription. Knowledge graph tagging requires app update.") without needing to maintain a version compatibility matrix.
+
+- **`backend`** is determined at compile time via `cfg!(feature = "metal")` — the feature flag is the declaration of which backends were linked. See section 9.1.
+- **`gpu`** is determined at runtime via `metal::Device::system_default()` on macOS (chip name, unified memory budget). Useful for debugging and for the webapp to warn about large files on constrained hardware.
+- **`capabilities`** is derived from which models are actually present on disk — the binary may support embedding but the user hasn't downloaded the nomic model yet.
+- **`models`** reports which model variants are loaded, for observability.
 
 ### `POST /transcribe`
 
@@ -267,8 +298,30 @@ async function findLocalService() {
 
 The desktop app persists job results to disk. Persistence, editing, and search remain remote (Neo4j + cloud API). The local store provides resilience (browser can close mid-transcription) and job history.
 
+### Platform-correct paths
+
+All local storage uses Tauri's `AppHandle::path()` API, which delegates to each platform's standard directory conventions. No dotfile directories in `$HOME`.
+
+```rust
+let data_dir = app.path().app_data_dir()?;   // user data that can't be regenerated
+let cache_dir = app.path().app_cache_dir()?;  // re-downloadable files (models)
+let log_dir = app.path().app_log_dir()?;      // logs
 ```
-~/.auohp/jobs/
+
+| Purpose | macOS | Linux | Windows |
+|---|---|---|---|
+| Job results | `~/Library/Application Support/com.auohp.desktop/` | `~/.local/share/com.auohp.desktop/` | `%APPDATA%\com.auohp.desktop\` |
+| Models (cache) | `~/Library/Caches/com.auohp.desktop/` | `~/.cache/com.auohp.desktop/` | `%LOCALAPPDATA%\com.auohp.desktop\` |
+| Logs | `~/Library/Logs/com.auohp.desktop/` | `~/.local/share/com.auohp.desktop/logs/` | `%APPDATA%\com.auohp.desktop\logs\` |
+
+The subdirectory name (`com.auohp.desktop`) comes from the bundle identifier in `tauri.conf.json`.
+
+**Models go in the cache directory.** They're re-downloadable. macOS may purge `~/Library/Caches/` under storage pressure, which is desirable — the app re-downloads on next use. Job results go in the data directory because the original audio may have been deleted.
+
+### Job storage layout
+
+```
+<app_data_dir>/jobs/
   abc123/
     input.mp4          # or symlink to original
     result.json        # TranscriptionResult, written atomically on completion
@@ -382,6 +435,55 @@ Python's `faster-whisper`, `pyannote.audio`, and `sentence-transformers` call th
 
 Python would win if models needed frequent swapping or lacked ONNX/GGML exports. AUOHP's pipeline is stable.
 
+### GPU backend detection and the build matrix
+
+The hardware acceleration backend is a **compile-time** decision, not a runtime query. The `metal` and `cuda` feature flags in `auohp-api/Cargo.toml` forward to sub-features in dependencies:
+
+```toml
+[features]
+metal = ["whisper-rs/metal", "ort/coreml"]
+cuda = ["whisper-rs/cuda", "ort/cuda"]
+```
+
+This is feature forwarding — the flags don't gate any `#[cfg]` code in the pipeline itself. Their only job is to reach into the dependency tree and flip compile-time switches: `whisper-rs/metal` builds whisper.cpp with `-DWHISPER_METAL=ON` and links `Metal.framework`; `ort/coreml` downloads an ORT binary with the CoreML EP. The pipeline code calls the same `WhisperContext::new_with_params()` regardless — the feature flag is invisible at the API level.
+
+**This means separate binaries per backend.** When built with `--features cuda`, the binary dynamically links against `libcublas` and `libcudart`. If those aren't on the user's machine, the process fails at load time — the OS linker resolves symbols eagerly, before `main()` runs. There's no graceful fallback. A CUDA binary can't run on a non-CUDA machine.
+
+The practical CI build matrix:
+
+| Target | Feature flags | Artifact |
+|---|---|---|
+| `aarch64-apple-darwin` | `metal` | `.dmg` (Apple Silicon) |
+| `x86_64-pc-windows-msvc` | `cuda` | `.msi` (Windows + NVIDIA) |
+| `x86_64-pc-windows-msvc` | (none) | `.msi` (Windows CPU-only) |
+
+For v1 (macOS-only), this is a single build. `tauri-plugin-updater` serves the correct artifact per target triple from the update manifest.
+
+**The `backend` field in `/health`** is determined at compile time:
+
+```rust
+fn gpu_backend() -> &'static str {
+    if cfg!(feature = "metal") { "metal" }
+    else if cfg!(feature = "cuda") { "cuda" }
+    else { "cpu" }
+}
+```
+
+`cfg!` evaluates at compile time and collapses to a `bool` literal — dead branches are eliminated entirely. The binary doesn't contain the string `"cuda"` when built with `metal`.
+
+**The `gpu` field in `/health`** is runtime hardware introspection. On macOS with Metal:
+
+```rust
+fn metal_gpu_info() -> Option<(String, u64)> {
+    let device = metal::Device::system_default()?;
+    let name = device.name().to_string();
+    let vram = device.recommended_max_working_set_size();
+    Some((name, vram))
+}
+```
+
+`Device::system_default()` returns `Option<Device>` — `None` on machines without Metal support, giving detection and degradation in one call.
+
 ### Model files and sizes
 
 | Model | Size | Download mechanism |
@@ -391,16 +493,18 @@ Python would win if models needed frequent swapping or lacked ONNX/GGML exports.
 | `wespeaker_en_voxceleb_CAM++.onnx` | ~80 MB | Bundle in `.dmg` or download |
 | nomic-embed-text-v1.5 (fastembed) | ~270 MB | Automatic via `fastembed` |
 
+**Model files are backend-agnostic.** The same `ggml-large-v3-turbo-q8_0.bin` runs on CPU, Metal, and CUDA — the format describes tensor shapes and quantization; the backend decides how to execute. The same `.onnx` files run on any ORT execution provider. The model cache directory is identical across all platforms and backends.
+
 ### First-run flow
 
-1. App launches → checks `~/.auohp/models/` for expected files.
+1. App launches → checks the cache directory (see section 6) for expected model files.
 2. Missing models trigger the download screen (status popover opens automatically).
 3. Download progress events are emitted on any active WebSocket and displayed in the popover.
 4. Pyannote models (~97 MB combined) could be bundled in the `.dmg` to reduce first-run friction. Whisper model is too large to bundle.
 
 ### Storage management
 
-Status popover shows total model storage and offers "Delete Models" to clear `~/.auohp/models/` and the fastembed HF cache.
+Status popover shows total model storage and offers "Delete Models" to clear the model cache directory and the fastembed HF cache.
 
 ## 10. macOS Distribution
 
@@ -434,9 +538,36 @@ Automate via GitHub Actions with `tauri-apps/tauri-action@v0`. Secrets: `APPLE_C
 </dict>
 ```
 
-### Auto-update
+### Evergreen auto-update
 
-`tauri-plugin-updater` pointed at a GitHub Releases JSON manifest.
+The app uses `tauri-plugin-updater` to stay current silently, approximating Chrome's "always up to date" UX. The user never sees an update prompt or makes an update decision.
+
+**Why full app replacement is the only viable approach on macOS:** A signed and notarized `.app` bundle has its integrity verified by Gatekeeper via a hash of every executable, dylib, and resource inside it. Replacing or modifying any file within the bundle invalidates the code seal — macOS will refuse to launch the app ("damaged app" dialog). Hot-swapping internal binaries, sidecar executables, or bundled dylibs is not possible without re-signing and re-notarizing the entire bundle. `tauri-plugin-updater` handles this correctly: it downloads a complete, pre-signed, pre-notarized `.tar.gz` and replaces the `.app` in `/Applications/`.
+
+**Update flow:**
+
+```
+App launches
+  → Spawn background update check (no UI, no prompt)
+  → If update available:
+      → Download silently to staging area
+      → When download completes:
+          → If idle (no active transcription):
+              → app_handle.restart()  // immediate silent swap
+          → If transcribing:
+              → Set pending_restart flag
+              → When job completes → app_handle.restart()
+```
+
+`AppHandle::restart()` exits the process and relaunches. For a tray app with no visible window, the user sees the tray icon briefly disappear and reappear — that's the entire visible UX.
+
+On the first launch of a new bundle, macOS Gatekeeper re-verifies the code signature against the notarization ticket (~1–3 seconds on Apple Silicon). This is the only perceptible artifact of an update: a slightly slower tray icon appearance on the first post-update launch. For a login-item tray app, this happens during boot when nobody is watching.
+
+**Update source:** The app checks a JSON manifest hosted on GitHub Releases independently on each launch. The webapp is not involved in triggering updates — the app is self-sufficient in staying current. This covers the "never opens the website" user who leaves the tray app running for weeks.
+
+**Model-binary version coupling:** A new app version may require different model formats (e.g., a whisper-rs upgrade that changes the expected GGML format). On first launch after update, the app checks a bundled `models-manifest.json` that maps required model files to expected checksums, and re-downloads any stale models from the cache directory.
+
+**Tray state machine addition:** The state machine (section 4.2) includes an implicit "update pending" state: if an update downloads while a job is running, the restart is deferred until job completion. No additional tray UI is needed — the user doesn't know or care.
 
 ## 11. Scaling Out: Cross-Platform and Server Fallback
 
@@ -485,7 +616,7 @@ The server-side version is the same Rust binary deployed on a GPU instance, with
 | Concurrency | Single job, single user | Job queue with worker pool |
 | GPU | User's hardware | Provisioned instances (T4/A10G) |
 | Cost | Free (user's electricity) | ~$0.50–1.50/GPU-hour |
-| Storage | `~/.auohp/jobs/` on disk | S3/R2 bucket with TTL |
+| Storage | Platform data directory (section 6) | S3/R2 bucket with TTL |
 | Progress | WebSocket via in-process `broadcast::Sender` | Pub/sub (Redis) to fan out across workers |
 
 ### 11.3 What changes for the server deployment
@@ -575,9 +706,9 @@ On `complete`, the webapp fetches `GET /result/{jobId}` from the local service (
 | **2** | Scaffold `packages/auohp-desktop` with Tauri v2. System tray with idle state. Hidden popover window. No server yet. | 0 |
 | **3** | Embed axum in Tauri. Implement `GET /health`. Verify webapp detection. | 2 |
 | **4** | Implement `POST /transcribe`, `GET /ws/{jobId}`, `GET /result/{jobId}`, `POST /cancel/{jobId}`. Wire callbacks → broadcast → WebSocket. | 1, 3 |
-| **5** | Local storage: `~/.auohp/jobs/`, atomic `result.json` writes, job history in popover. | 4 |
+| **5** | Local storage: platform data directory (section 6), atomic `result.json` writes, job history in popover. | 4 |
 | **6** | Tray icon state machine: idle → busy → complete/error. | 4 |
-| **7** | Model download flow: check `~/.auohp/models/`, download via `hf-hub`, emit progress. | 4 |
+| **7** | Model download flow: check cache directory, download via `hf-hub`, emit progress. | 4 |
 | **8** | Webapp integration: GPU badge, upload UI, WS progress display, result handoff to cloud API. | 4 |
 | **9** | macOS code signing, notarization, `.dmg`, GitHub Actions CI. | 6 |
 | **10** | Auto-updater via `tauri-plugin-updater`. | 9 |
@@ -591,3 +722,11 @@ On `complete`, the webapp fetches `GET /result/{jobId}` from the local service (
 3. **Multiple browser tabs:** If caption editor and search component are both open, both discover the local service and show the GPU badge. Only one would initiate transcription. Not a problem.
 
 4. **Embedding migration:** Switching from BGE-small (384-dim) to nomic-embed-text (768-dim) requires dropping and recreating the Neo4j `statement_embedding` vector index, then re-embedding all statements. The `IF NOT EXISTS` guard in `main.rs` will silently keep the old 384-dim index if it already exists — a `DROP INDEX` must run first during migration.
+
+5. **Version skew between webapp and local app.** The capabilities-based `/health` handshake (section 5) handles feature presence, but doesn't cover protocol changes. If the WebSocket event schema evolves (new event types, renamed fields), an old desktop app may misparse events from a newer webapp. Consider versioning the API path (`/v1/transcribe`, `/v2/transcribe`) or including a `protocol_version` field in `/health` for the webapp to negotiate against.
+
+6. **The "never updates" user.** Non-technical users in nonprofit orgs may dismiss update prompts indefinitely — or more likely, the tray app may be force-quit and never relaunched, so the silent update never runs. If the webapp evolves past the minimum supported protocol version, it should stop offering local transcription and show "Please reopen your AUOHP app" rather than silently breaking.
+
+7. **macOS permission re-prompts.** Replacing the `.app` bundle can trigger macOS to re-prompt for permissions (network access, file access) because macOS ties permissions to the code signature hash, which changes with each build. Using a consistent `designated requirement` in code signing mitigates this but doesn't eliminate it across major version bumps.
+
+8. **Update rollback.** `tauri-plugin-updater` has no built-in rollback. If a new version has a regression (Metal crash on older M1, model format incompatibility), the only recovery path is shipping a hotfix. Consider keeping the previous `.app` as `.app.bak` and offering a "Revert to previous version" option — or accept that fast CI turnaround is the mitigation.
