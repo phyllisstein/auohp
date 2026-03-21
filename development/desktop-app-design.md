@@ -7,6 +7,12 @@
 
 Distribute the AUOHP transcription pipeline (Whisper ASR + pyannote diarization + fastembed embeddings) as a **macOS menu bar application** so that non-technical users can run local GPU-accelerated inference without installing Rust, Python, or ONNX toolchains. The app runs in the background, communicates with the cloud-hosted webapp over localhost HTTP/WebSocket, and reports progress through system tray UI.
 
+### Why local inference
+
+The alternative — cloud GPU instances — is both expensive and operationally brittle. A T4 or A10G instance costs $0.50–1.50/GPU-hour, requires cold-start orchestration (spin up, transcode, infer, tear down), and introduces failure modes around spot preemption, upload latency, and queue management. For a nonprofit processing a few interviews per week, the infrastructure overhead dominates the actual compute.
+
+A mid-range M3 MacBook performs inference at roughly comparable speed to a cloud T4 for this workload: Whisper large-v3-turbo on Metal, pyannote diarization and embeddings on CoreML. The user's own hardware is always warm, always available, and free to run. The desktop app eliminates the entire cloud GPU cost center and replaces it with a single binary that runs on machines the organization already owns.
+
 ## 2. Architecture Overview
 
 ```
