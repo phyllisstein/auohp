@@ -383,6 +383,10 @@ pub fn transcribe(
 }
 ```
 
+### Live transcript streaming (mid-term goal)
+
+The segment callback provides a natural source for live text in the status popover: as Whisper finishes each segment, its text replaces the previous line below the progress bar. This gives the user immediate confidence that transcription is working and producing reasonable output — if they glance at the popover for a second or two, they see real words flash by. The `{ "type": "segment" }` WebSocket events (section 5) already carry the text; the popover just needs to display the most recent one.
+
 ### Diarization (per-segment, from outer loop)
 
 The diarization loop in `diarize.rs` already computes `(current_segment, total_segments)` and logs via `tracing::debug!`. Add a callback parameter:
