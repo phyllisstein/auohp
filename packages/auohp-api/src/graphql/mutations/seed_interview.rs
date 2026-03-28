@@ -2,12 +2,12 @@ use std::sync::Arc;
 
 use async_graphql::{Context, Enum, InputObject, SimpleObject};
 use neo4rs::{query, BoltMap, BoltString, BoltType};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
+use super::super::interviews::Interview;
 use crate::embeddings::Embedder;
 use crate::graphql::error::gql_err;
 use crate::neo4j::Db;
-use super::super::interviews::Interview;
 
 /// Build a BoltMap from string-key / BoltType-value pairs.
 fn bolt_map(pairs: Vec<(&str, BoltType)>) -> BoltType {
@@ -34,8 +34,11 @@ pub struct SeedInterviewInput {
     /// Maps diarization labels to person names and roles.
     pub speakers: Vec<SpeakerMappingInput>,
     /// Raw transcript segments from the transcription pipeline.
-    /// The server groups consecutive same-speaker segments into statements.
-    pub segments: Vec<TranscriptSegmentInput>,
+    /// Either `segments_json` or `segments` must be specified.
+    pub segments: Option<Vec<TranscriptSegmentInput>>,
+    /// JSON string of transcript segments.
+    /// Either `segments_json` or `segments` must be specified.
+    pub segments_json: Option<String>,
     /// Optional asset URLs associated with the interview.
     pub assets: Option<InterviewAssetsInput>,
 }
@@ -59,7 +62,7 @@ pub enum SpeakerRole {
 }
 
 /// A single transcript segment from the transcription pipeline.
-#[derive(InputObject)]
+#[derive(InputObject, Deserialize)]
 pub struct TranscriptSegmentInput {
     /// Transcribed text for this segment.
     pub text: String,
@@ -73,8 +76,13 @@ pub struct TranscriptSegmentInput {
     pub words: Option<Vec<WordTimingInput>>,
 }
 
+struct TranscriptSegment {
+    input: TranscriptSegmentInput,
+    uid: String,
+}
+
 /// Word-level timing from the transcription pipeline.
-#[derive(InputObject, Serialize)]
+#[derive(InputObject, Serialize, Deserialize)]
 pub struct WordTimingInput {
     pub word: String,
     pub start: f64,
@@ -153,7 +161,12 @@ async fn embed_statements(db: Db, embedder: Arc<Embedder>, uids: Vec<String>, te
     );
 
     const EMBED_BATCH: usize = 100;
-    for chunk in uids.iter().zip(vectors.iter()).collect::<Vec<_>>().chunks(EMBED_BATCH) {
+    for chunk in uids
+        .iter()
+        .zip(vectors.iter())
+        .collect::<Vec<_>>()
+        .chunks(EMBED_BATCH)
+    {
         let items: Vec<BoltType> = chunk
             .iter()
             .map(|(uid, vector)| {
@@ -167,14 +180,12 @@ async fn embed_statements(db: Db, embedder: Arc<Embedder>, uids: Vec<String>, te
             .collect();
 
         if let Err(e) = db
-            .run(
-                neo4rs::query(
-                    "UNWIND $items AS item
-                     MATCH (s:Statement {uid: item.uid})
+            .run(query!(
+                "UNWIND {items} AS item
+                     MATCH (s:Statement {{uid: item.uid}})
                      CALL db.create.setNodeVectorProperty(s, 'embedding', item.vector)",
-                )
-                .param("items", items),
-            )
+                items = items,
+            ))
             .await
         {
             tracing::error!(error = %e, "failed to write embedding batch to Neo4j");
@@ -188,84 +199,6 @@ async fn embed_statements(db: Db, embedder: Arc<Embedder>, uids: Vec<String>, te
 // ---------------------------------------------------------------------------
 // Resolver
 // ---------------------------------------------------------------------------
-
-/// A merged statement ready for seeding — consecutive same-speaker segments
-/// grouped into a single statement. UIDs are pre-generated so they can be
-/// paired with embedding vectors before being written to Neo4j.
-struct MergedStatement {
-    uid: String,
-    speaker_name: String,
-    text: String,
-    start_time: f64,
-    end_time: f64,
-    words: Vec<WordTimingInput>,
-}
-
-/// Groups consecutive same-speaker segments into statements.
-fn group_segments(
-    input: &SeedInterviewInput,
-) -> async_graphql::Result<Vec<MergedStatement>> {
-    let speaker_map: std::collections::HashMap<&str, &SpeakerMappingInput> = input
-        .speakers
-        .iter()
-        .map(|s| (s.label.as_str(), s))
-        .collect();
-
-    let mut statements: Vec<MergedStatement> = Vec::new();
-
-    for segment in &input.segments {
-        let mapping = speaker_map.get(segment.speaker.as_str()).ok_or_else(|| {
-            async_graphql::Error::new(format!(
-                "speaker label {:?} not found in speaker mappings",
-                segment.speaker
-            ))
-        })?;
-
-        let should_merge = statements
-            .last()
-            .map(|prev| prev.speaker_name == mapping.name)
-            .unwrap_or(false);
-
-        if should_merge {
-            let current = statements.last_mut().unwrap();
-            current.text.push(' ');
-            current.text.push_str(&segment.text);
-            current.end_time = segment.end_time;
-            if let Some(words) = &segment.words {
-                current.words.extend(words.iter().map(|w| WordTimingInput {
-                    word: w.word.clone(),
-                    start: w.start,
-                    end: w.end,
-                    score: w.score,
-                }));
-            }
-        } else {
-            statements.push(MergedStatement {
-                uid: nanoid::nanoid!(),
-                speaker_name: mapping.name.clone(),
-                text: segment.text.clone(),
-                start_time: segment.start_time,
-                end_time: segment.end_time,
-                words: segment
-                    .words
-                    .as_ref()
-                    .map(|ws| {
-                        ws.iter()
-                            .map(|w| WordTimingInput {
-                                word: w.word.clone(),
-                                start: w.start,
-                                end: w.end,
-                                score: w.score,
-                            })
-                            .collect()
-                    })
-                    .unwrap_or_default(),
-            });
-        }
-    }
-
-    Ok(statements)
-}
 
 pub async fn seed_interview(
     ctx: &Context<'_>,
@@ -313,23 +246,23 @@ pub async fn seed_interview(
         .unwrap_or_default();
 
     txn.run(
-        query(
-            "MERGE (interviewee:Person {name: $intervieweeName})
-               ON CREATE SET interviewee.uid = $intervieweeUid
+        query!(
+            "MERGE (interviewee:Person {{name: {intervieweeName}}})
+               ON CREATE SET interviewee.uid = {intervieweeUid}
 
              WITH interviewee
              UNWIND $interviewers AS iv
-             MERGE (interviewer:Person {name: iv.name})
+             MERGE (interviewer:Person {{name: iv.name}})
                ON CREATE SET interviewer.uid = iv.uid
 
              WITH interviewee, collect(interviewer) AS interviewers
-             CREATE (i:Interview {
-               uid: $interviewUid,
-               number: $interviewNumber,
-               date: date($interviewDate),
-               interviewee: $intervieweeName
-             })
-             CREATE (t:Transcript {uid: $transcriptUid})
+             CREATE (i:Interview {{
+               uid: {interviewUid},
+               number: {interviewNumber},
+               date: date({interviewDate}),
+               interviewee: interviewee.name
+             }})
+             CREATE (t:Transcript {{uid: {transcriptUid}}})
              CREATE (i)-[:HAS_TRANSCRIPT]->(t)
              CREATE (i)-[:INTERVIEWS]->(interviewee)
 
@@ -338,76 +271,106 @@ pub async fn seed_interview(
              CREATE (i)-[:INTERVIEWED_BY]->(interviewer)
 
              WITH i
-             CREATE (v:Video:Asset {uid: $videoUid, url: $videoUrl})
+             CREATE (v:Video:Asset {{uid: {videoUid}, url: {videoUrl}}})
              CREATE (i)-[:HAS_ASSET]->(v)",
+            intervieweeName = input.interviewee.clone(),
+            intervieweeUid = interviewee_uid,
+            interviewUid = interview_uid.clone(),
+            interviewNumber = input.number,
+            interviewDate = input.date.clone(),
+            transcriptUid = transcript_uid.clone(),
+            videoUid = video_uid.clone(),
+            videoUrl = video_url,
         )
-        .param("intervieweeName", input.interviewee.clone())
-        .param("intervieweeUid", interviewee_uid)
-        .param("interviewUid", interview_uid.clone())
-        .param("interviewNumber", input.number)
-        .param("interviewDate", input.date.clone())
-        .param("transcriptUid", transcript_uid.clone())
-        .param("interviewers", interviewers)
-        .param("videoUid", video_uid.clone())
-        .param("videoUrl", video_url),
+        .param("interviewers", interviewers),
     )
     .await
     .map_err(gql_err)?;
 
     // ── Phase 2: seed statements ───────────────────────────────────────
 
-    let merged = group_segments(&input)?;
-    let statement_count = merged.len() as i64;
-
     // Batch statements in groups of 100
     const BATCH_SIZE: usize = 100;
-    for batch in merged.chunks(BATCH_SIZE) {
+
+    let segment_ipnuts: Vec<TranscriptSegmentInput> = if let Some(segment_json) =
+        input.segments_json
+    {
+        serde_json::from_str(&segment_json).map_err(|e| async_graphql::Error::new(e.to_string()))
+    } else if let Some(segment_gql) = input.segments {
+        Ok(segment_gql)
+    } else {
+        Err(async_graphql::Error::new(
+            "Either segments or segmentsJson must be provided",
+        ))
+    }?;
+
+    let segments: Vec<TranscriptSegment> = segment_ipnuts
+        .into_iter()
+        .map(|i| TranscriptSegment {
+            input: i,
+            uid: nanoid::nanoid!(),
+        })
+        .collect();
+
+    let speaker_map: std::collections::HashMap<&str, &SpeakerMappingInput> = input
+        .speakers
+        .iter()
+        .map(|s| (s.label.as_str(), s))
+        .collect();
+
+    for batch in segments.chunks(BATCH_SIZE) {
         let stmt_params: Vec<BoltType> = batch
             .iter()
             .map(|s| {
-                let words_json: BoltType = if s.words.is_empty() {
+                let words_json: BoltType = if s.input.words.is_none() {
                     BoltType::Null(neo4rs::BoltNull)
                 } else {
-                    BoltType::from(
-                        serde_json::to_string(&s.words).unwrap_or_default(),
-                    )
+                    BoltType::from(serde_json::to_string(&s.input.words).unwrap_or_default())
                 };
 
-                bolt_map(vec![
-                    ("uid", BoltType::from(s.uid.clone())),
-                    ("text", BoltType::from(s.text.clone())),
-                    ("startTime", BoltType::from(s.start_time)),
-                    ("endTime", BoltType::from(s.end_time)),
+                let segment = &s.input;
+                let uid = &s.uid;
+
+                let mapping = speaker_map.get(segment.speaker.as_str()).ok_or_else(|| {
+                    async_graphql::Error::new(format!(
+                        "Label {:?} does not match any provided speaker",
+                        segment.speaker,
+                    ))
+                })?;
+
+                Ok::<BoltType, async_graphql::Error>(bolt_map(vec![
+                    ("uid", BoltType::from(uid.clone())),
+                    ("text", BoltType::from(segment.text.clone())),
+                    ("startTime", BoltType::from(segment.start_time)),
+                    ("endTime", BoltType::from(segment.end_time)),
                     ("words", words_json),
-                    ("speakerName", BoltType::from(s.speaker_name.clone())),
+                    ("speakerName", BoltType::from(mapping.name.clone())),
                     ("speakerUid", BoltType::from(nanoid::nanoid!())),
-                ])
+                ]))
             })
-            .collect();
+            .collect::<Result<Vec<_>, _>>()?;
 
-        txn.run(
-            query(
-                "MATCH (transcript:Transcript {uid: $transcriptUid})
+        txn.run(query!(
+            "MATCH (transcript:Transcript {{uid: {transcriptUid}}})
 
-                 UNWIND $statements AS s
+                 UNWIND {statements} AS s
 
-                 MERGE (person:Person {name: s.speakerName})
+                 MERGE (person:Person {{name: s.speakerName}})
                    ON CREATE SET person.uid = s.speakerUid
 
-                 CREATE (statement:Statement {
+                 CREATE (statement:Statement {{
                    uid:   s.uid,
                    text:  s.text,
                    words: s.words
-                 })
-                 CREATE (transcript)-[:CONTAINS {
+                 }})
+                 CREATE (transcript)-[:CONTAINS {{
                    startTime: s.startTime,
                    endTime: s.endTime
-                 }]->(statement)
+                 }}]->(statement)
                  CREATE (person)-[:SAYS]->(statement)",
-            )
-            .param("transcriptUid", transcript_uid.clone())
-            .param("statements", stmt_params),
-        )
+            transcriptUid = transcript_uid.clone(),
+            statements = stmt_params,
+        ))
         .await
         .map_err(gql_err)?;
     }
@@ -419,36 +382,29 @@ pub async fn seed_interview(
         let has_json = assets.json_caption_url.is_some() || assets.json_caption_text.is_some();
 
         if has_vtt {
-            txn.run(
-                query(
-                    "MATCH (v:Video:Asset {uid: $videoUid})
-                     CREATE (vtt:VTT:Caption {uid: $vttUid, url: $vttUrl, text: $vttText})
+            txn.run(query!(
+                "MATCH (v:Video:Asset {{uid: {videoUid}}})
+                     CREATE (vtt:VTT:Caption {{uid: {vttUid}, url: {vttUrl}, text: {vttText}}})
                      CREATE (v)-[:HAS_CAPTIONS]->(vtt)",
-                )
-                .param("videoUid", video_uid.clone())
-                .param("vttUid", nanoid::nanoid!())
-                .param("vttUrl", assets.vtt_url.clone().unwrap_or_default())
-                .param("vttText", assets.vtt_text.clone().unwrap_or_default()),
-            )
+                videoUid = video_uid.clone(),
+                vttUid = nanoid::nanoid!(),
+                vttUrl = assets.vtt_url.clone().unwrap_or_default(),
+                vttText = assets.vtt_text.clone().unwrap_or_default(),
+            ))
             .await
             .map_err(gql_err)?;
         }
 
         if has_json {
-            txn.run(
-                query(
-                    "MATCH (v:Video:Asset {uid: $videoUid})
-                     CREATE (json:JSON:Caption {uid: $jsonUid, url: $jsonUrl, text: $jsonText})
+            txn.run(query!(
+                "MATCH (v:Video:Asset {{uid: {videoUid}}})
+                     CREATE (json:JSON:Caption {{uid: {jsonUid}, url: {jsonUrl}, text: {jsonText}}})
                      CREATE (v)-[:HAS_CAPTIONS]->(json)",
-                )
-                .param("videoUid", video_uid)
-                .param("jsonUid", nanoid::nanoid!())
-                .param("jsonUrl", assets.json_caption_url.clone().unwrap_or_default())
-                .param(
-                    "jsonText",
-                    assets.json_caption_text.clone().unwrap_or_default(),
-                ),
-            )
+                videoUid = video_uid,
+                jsonUid = nanoid::nanoid!(),
+                jsonUrl = assets.json_caption_url.clone().unwrap_or_default(),
+                jsonText = assets.json_caption_text.clone().unwrap_or_default(),
+            ))
             .await
             .map_err(gql_err)?;
         }
@@ -475,8 +431,12 @@ pub async fn seed_interview(
     // `embed_statements`; if the server restarts mid-job, the affected
     // Statement nodes will simply lack embeddings until the next seed run.
     let embedder = ctx.data::<Arc<Embedder>>()?.clone();
-    let texts: Vec<String> = merged.iter().map(|s| s.text.clone()).collect();
-    let uids: Vec<String> = merged.iter().map(|s| s.uid.clone()).collect();
+    let texts: Vec<String> = segments
+        .iter()
+        .map(|s| &s.input)
+        .map(|i| i.text.clone())
+        .collect();
+    let uids: Vec<String> = segments.iter().map(|s| s.uid.clone()).collect();
     tokio::spawn(embed_statements(db.clone(), embedder, uids, texts));
 
     // ── Build response ──────────────────────────────────────────────────
@@ -490,7 +450,7 @@ pub async fn seed_interview(
             interviewee: input.interviewee,
             date: input.date.parse().map_err(gql_err)?,
         },
-        statement_count,
+        statement_count: segments.len() as i64,
         speaker_count,
         transcript_uid,
         embeddings_queued: true,

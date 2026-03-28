@@ -1,5 +1,5 @@
 use anyhow::{Context, Result};
-use neo4rs::{Graph, ConfigBuilder};
+use neo4rs::{ConfigBuilder, Graph};
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -28,12 +28,9 @@ pub async fn connect(uri: &str, user: &str, password: &str, database: &str) -> R
         .db(database)
         .build()
         .unwrap();
-    let graph = Graph::connect(config).await?;
-    tokio::time::timeout(
-        Duration::from_secs(5),
-        graph.run(neo4rs::query("RETURN 1")),
-    )
-    .await
-    .context("timed out connecting to Neo4j")??;
+    let graph = Graph::connect(config)?;
+    tokio::time::timeout(Duration::from_secs(5), graph.run(neo4rs::query("RETURN 1")))
+        .await
+        .context("timed out connecting to Neo4j")??;
     Ok(Arc::new(graph))
 }
