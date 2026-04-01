@@ -1,10 +1,3 @@
 [workspace]
 resolver = "2"
 members = ["packages/auohp-api"]
-
-# Fix UB in whisper-rs 0.15.1: set_abort_callback_safe monomorphizes the
-# trampoline for the wrong type (F instead of Box<dyn FnMut() -> bool>),
-# so the abort callback never fires. One-line fix in whisper_params.rs:641.
-# Remove this patch when upstream ships a fix.
-[patch.crates-io]
-whisper-rs = { path = "patches/whisper-rs" }
