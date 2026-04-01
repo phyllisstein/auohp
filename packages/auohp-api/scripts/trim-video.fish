@@ -26,6 +26,6 @@ end
 set max_start (math $duration_int - $clip_length)
 set start (random 0 $max_start)
 
-echo "Duration: {$duration_int}s — trimming from {$start}s to "(math $start + $clip_length)"s"
+echo "Duration: {$duration_int}s---trimming from {$start}s to "(math $start + $clip_length)"s"
 
 ffmpeg -ss $start -i $input -t $clip_length -c copy $output

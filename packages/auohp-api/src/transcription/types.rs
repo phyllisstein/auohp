@@ -8,7 +8,7 @@ pub struct Word {
     pub end: f64,
 }
 
-/// A transcription segment — one contiguous block of speech by one speaker.
+/// A transcription segment---one contiguous block of speech by one speaker.
 #[derive(Debug, Clone, Serialize)]
 pub struct Segment {
     pub speaker: String,

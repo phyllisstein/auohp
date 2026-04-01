@@ -4,9 +4,9 @@
 #
 # Full Rust image (includes cargo, rustc, C toolchain).  Build-time C/C++
 # dependencies:
-#   clang / libclang-dev  — bindgen needs libclang to parse whisper.cpp headers
-#   cmake                 — whisper.cpp CMake build system
-#   libssl-dev / pkg-config — reqwest / hf-hub TLS for model downloads at runtime
+#   clang / libclang-dev ---bindgen needs libclang to parse whisper.cpp headers
+#   cmake                ---whisper.cpp CMake build system
+#   libssl-dev / pkg-config---reqwest / hf-hub TLS for model downloads at runtime
 FROM rust:1.85-bookworm AS builder
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -23,7 +23,7 @@ WORKDIR /build
 #
 # Copy workspace manifests and a stub src/main.rs so cargo can compile all
 # dependencies without the real application source.  This layer is only
-# invalidated when Cargo.lock changes, not when src/ changes — so iterative
+# invalidated when Cargo.lock changes, not when src/ changes---so iterative
 # builds that only touch Rust source skip the expensive native dependency
 # compilations (whisper.cpp, ort runtime, fastembed).
 COPY Cargo.toml Cargo.lock ./
@@ -53,9 +53,9 @@ RUN find target/release -name "libonnxruntime*.so*" -exec cp -P {} /usr/local/li
 # ── Runtime ───────────────────────────────────────────────────────────────────
 FROM debian:bookworm-slim AS runtime
 
-# ca-certificates — needed at runtime when fastembed / pyannote-rs download
+# ca-certificates---needed at runtime when fastembed / pyannote-rs download
 #   ONNX model weights from Hugging Face Hub on first use.
-# libstdc++6 — C++ standard library; whisper-rs links against it.
+# libstdc++6---C++ standard library; whisper-rs links against it.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     libstdc++6 \
@@ -71,8 +71,8 @@ RUN ldconfig
 #
 # HF_HOME redirects the HuggingFace Hub client (used by fastembed and
 # pyannote-rs) to store downloaded ONNX weights under /models, which is
-# mounted as a named Docker volume.  This means the ~200 MB of model files
-# (BGE-small ~33 MB, pyannote segmentation ~17 MB, wespeaker ~130 MB) are
+# mounted as a named Docker volume.  This means the ≈200 MB of model files
+# (BGE-small ≈33 MB, pyannote segmentation ≈17 MB, wespeaker ≈130 MB) are
 # downloaded once and reused across container restarts and image rebuilds.
 ENV HF_HOME=/models
 

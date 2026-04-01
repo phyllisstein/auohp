@@ -17,12 +17,12 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilte
 
 // The GraphQL handler receives two arguments:
 //
-//   State(schema)   — axum's dependency-injection mechanism. The schema is
+//   State(schema)  ---axum's dependency-injection mechanism. The schema is
 //                     stored in the Router via .with_state() and extracted
 //                     here with State<T>. The destructuring syntax
 //                     `State(schema)` unwraps the newtype wrapper in one step.
 //
-//   req             — the incoming GraphQL request, deserialized from JSON
+//   req            ---the incoming GraphQL request, deserialized from JSON
 //                     by async-graphql-axum.
 async fn graphql_handler(
     State(schema): State<graphql::AppSchema>,
@@ -81,9 +81,9 @@ async fn main() -> Result<()> {
 
     let app = Router::new()
         .route("/health", get(|| async { "ok" }))
-        // GET  /graphql → serves the GraphiQL interactive IDE, so you can
+        // GET  /graphql --> serves the GraphiQL interactive IDE, so you can
         //                  explore the schema and test queries from a browser.
-        // POST /graphql → the actual GraphQL execution endpoint.
+        // POST /graphql --> the actual GraphQL execution endpoint.
         //
         // GraphiQLSource generates a self-contained HTML page that talks to
         // the POST endpoint. It's baked into async-graphql behind the

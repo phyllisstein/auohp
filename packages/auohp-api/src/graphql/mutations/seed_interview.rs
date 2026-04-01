@@ -72,7 +72,7 @@ pub struct TranscriptSegmentInput {
     pub end_time: f64,
     /// Diarization speaker label (must match one of the labels in speakers).
     pub speaker: String,
-    /// Per-word timing data. Optional — some segments may lack word alignment.
+    /// Per-word timing data. Optional---some segments may lack word alignment.
     pub words: Option<Vec<WordTimingInput>>,
 }
 
@@ -131,7 +131,7 @@ pub struct SeedInterviewPayload {
 /// because there is no live caller to receive them.
 ///
 /// If the server restarts before this completes, the affected Statement nodes
-/// simply won't have embeddings yet — re-running `seedInterview` for the same
+/// simply won't have embeddings yet---re-running `seedInterview` for the same
 /// interview will re-embed them (MATCH … SET is idempotent).
 async fn embed_statements(db: Db, embedder: Arc<Embedder>, uids: Vec<String>, texts: Vec<String>) {
     // spawn_blocking moves the synchronous ONNX inference off the async
@@ -212,7 +212,7 @@ pub async fn seed_interview(
     // of the transaction. All writes go through `txn.run()` instead of
     // `db.run()`, so they share a single server-side transaction context.
     // If anything fails, dropping `txn` without calling `.commit()` causes
-    // an implicit ROLLBACK — no partial interview gets left behind.
+    // an implicit ROLLBACK---no partial interview gets left behind.
     //
     // Rust enforces this at the type level: `txn.commit()` takes ownership
     // of `self` (it's `fn commit(mut self)`), so the borrow checker won't
@@ -412,7 +412,7 @@ pub async fn seed_interview(
 
     // ── Commit ────────────────────────────────────────────────────────────
     //
-    // All writes succeeded — commit the transaction. This is the only
+    // All writes succeeded---commit the transaction. This is the only
     // point where data becomes visible to other connections. If we never
     // reach this line (early return, ?, or panic), the Txn is dropped
     // without committing and Neo4j rolls back automatically.

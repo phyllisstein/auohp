@@ -28,7 +28,7 @@ download() {
     echo "  downloading: $(basename "$dest")"
     # If HF_TOKEN is set, pass it as a Bearer token for gated model access.
     # ${VAR:+word} is a bash parameter expansion that expands to "word" only
-    # when VAR is set and non-empty — so curl gets no -H flag at all when
+    # when VAR is set and non-empty---so curl gets no -H flag at all when
     # there's no token, rather than an empty Authorization header.
     curl -fL --progress-bar \
         ${HF_TOKEN:+-H "Authorization: Bearer $HF_TOKEN"} \
@@ -47,7 +47,7 @@ download \
     "$HF_BASE/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo-q8_0.bin" \
     "$MODELS_DIR/ggml-large-v3-turbo-q8_0.bin"
 
-# ── pyannote segmentation 3.0 (ONNX, ~17 MB) ────────────────────────────────
+# ── pyannote segmentation 3.0 (ONNX, ≈17 MB) ────────────────────────────────
 # Use the model exported by pyannote-rs itself (v0.1.0 release asset).
 # This export names its output tensor "output", which is what pyannote-rs 0.3.4
 # hardcodes in segment.rs. The onnx-community HuggingFace export names it
@@ -58,7 +58,7 @@ download \
     "https://github.com/thewh1teagle/pyannote-rs/releases/download/v0.1.0/segmentation-3.0.onnx" \
     "$MODELS_DIR/pyannote-segmentation-3.0.onnx"
 
-# ── wespeaker speaker embeddings (ONNX, ~26 MB) ─────────────────────────────
+# ── wespeaker speaker embeddings (ONNX, ≈26 MB) ─────────────────────────────
 # CAM++ VoxCeleb embeddings from the pyannote-rs v0.1.0 release.
 # The pyannote HuggingFace repo only has pytorch_model.bin (not ONNX), so we
 # use the pre-exported ONNX asset from the pyannote-rs releases instead.

@@ -38,8 +38,8 @@ for clip in "${clips[@]}"; do
     $BINARY "$clip" "$MODELS_DIR" \
         > "$out_dir/output.json" \
         2> "$out_dir/trace.log" \
-        && echo "    ok  → $out_dir/output.json" \
-        || echo "    FAILED — see $out_dir/trace.log"
+        && echo "    ok  --> $out_dir/output.json" \
+        || echo "    FAILED---see $out_dir/trace.log"
 done
 
 echo

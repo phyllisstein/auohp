@@ -1,7 +1,7 @@
 //! Audio decoding and resampling.
 //!
 //! Decodes audio from any format symphonia supports (MP4/AAC, WAV, etc.)
-//! and resamples to 16 kHz mono f32 — the format whisper.cpp expects.
+//! and resamples to 16 kHz mono f32---the format whisper.cpp expects.
 
 use anyhow::{Context, Result};
 use audioadapter_buffers::direct::SequentialSliceOfVecs;

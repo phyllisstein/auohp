@@ -1,5 +1,5 @@
-//! Transcription pipeline: orchestrates audio decoding → Whisper ASR →
-//! pyannote diarization → merge into speaker-attributed segments.
+//! Transcription pipeline: orchestrates audio decoding --> Whisper ASR -->
+//! pyannote diarization --> merge into speaker-attributed segments.
 
 use anyhow::{Context, Result};
 use std::path::{Path, PathBuf};

@@ -57,8 +57,8 @@ pub async fn search_statements(
     .next()
     .ok_or_else(|| async_graphql::Error::new("embedding produced no vectors"))?;
 
-    // Convert to BoltType list — Neo4j's vector procedures expect a list of
-    // floats. We widen f32 → f64 here because neo4rs's BoltType::Float wraps
+    // Convert to BoltType list---Neo4j's vector procedures expect a list of
+    // floats. We widen f32 --> f64 here because neo4rs's BoltType::Float wraps
     // f64; the precision lost going back to f32 inside Neo4j is irrelevant.
     let vector_bolt: Vec<BoltType> = vector
         .iter()
