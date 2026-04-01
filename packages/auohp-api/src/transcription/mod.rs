@@ -1,5 +1,6 @@
 mod audio;
 mod diarize;
+mod line_breaking;
 mod pipeline;
 mod types;
 mod whisper;
