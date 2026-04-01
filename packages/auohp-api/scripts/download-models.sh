@@ -36,16 +36,16 @@ download() {
     mv "$dest.tmp" "$dest"
 }
 
-# ── Whisper large-v3-turbo (GGML, ~874 MB) ───────────────────────────────────
-# whisper-rs uses whisper.cpp's GGML format. large-v3-turbo is a distilled
-# model (4 decoder layers instead of 32) that is faster than medium.en on GPU
-# while producing more accurate transcripts. It's multilingual but we force
-# language="en" at inference time for AUOHP's English interviews.
+# ── Whisper large-v3 (GGML, ≈2.9 GB) ───────────────────────
+# whisper-rs uses whisper.cpp's GGML format. large-v3 is the full 32-decoder-
+# layer model (≈1.5B params)---significantly more accurate than the distilled
+# turbo variant (4 layers) for proper nouns, punctuation, and disfluencies.
+# Multilingual, but we force language="en" at inference time.
 echo
-echo "==> Whisper ggml-large-v3-turbo-q8_0.bin (GGML)"
+echo "==> Whisper ggml-large-v3.bin (GGML)"
 download \
-    "$HF_BASE/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo-q8_0.bin" \
-    "$MODELS_DIR/ggml-large-v3-turbo-q8_0.bin"
+    "$HF_BASE/ggerganov/whisper.cpp/resolve/main/ggml-large-v3.bin" \
+    "$MODELS_DIR/ggml-large-v3.bin"
 
 # ── pyannote segmentation 3.0 (ONNX, ≈17 MB) ────────────────────────────────
 # Use the model exported by pyannote-rs itself (v0.1.0 release asset).

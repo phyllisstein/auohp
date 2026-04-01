@@ -1,6 +1,6 @@
 # Cargo aliases for GPU-accelerated builds.
 # Aliases expand as a prefix---you can append flags after them:
-#   cargo metal --release    → cargo build --features metal --release
+#   cargo metal --release    --> cargo build --features metal --release
 [alias]
 metal = "build --features metal"
 metal-run = "run --features metal"

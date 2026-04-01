@@ -258,6 +258,7 @@ dependencies = [
  "chrono",
  "dotenvy",
  "fastembed",
+ "kodama",
  "nanoid",
  "neo4rs",
  "ort",
@@ -1642,6 +1643,12 @@ dependencies = [
  "bindgen 0.69.5",
  "cmake",
 ]
+
+[[package]]
+name = "kodama"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f868feceed4703c842925c14232667c5f29c8059d0354154b2d06ec3bf9daf82"
 
 [[package]]
 name = "lazy_static"
@@ -3958,8 +3965,6 @@ dependencies = [
 [[package]]
 name = "whisper-rs"
 version = "0.15.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "71ea5d2401f30f51d08126a2d133fee4c1955136519d7ac6cf6f5ac0a91e6bc8"
 dependencies = [
  "whisper-rs-sys",
 ]

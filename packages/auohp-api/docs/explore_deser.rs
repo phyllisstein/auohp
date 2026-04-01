@@ -120,7 +120,7 @@ async fn approach_a_cypher_projection(graph: &Graph) -> Result<()> {
     while let Some(row) = stream.next().await? {
         let uid: String = row.get("uid")?;
         let _text: String = row.get("text")?;
-        let words: Option<String> = row.get("words")?; // Works! BoltType::Null → None
+        let words: Option<String> = row.get("words")?; // Works! BoltType::Null --> None
         let speaker: String = row.get("speaker")?;
         let start: f64 = row.get("start_time")?;
 
@@ -506,7 +506,7 @@ async fn approach_e_extension_trait(graph: &Graph) -> Result<()> {
     while let Some(row) = stream.next().await? {
         let s: Node = row.get("s")?;
         let uid: String = s.get("uid")?;
-        let words: Option<String> = s.get_or_default("words")?; // NoSuchProperty → None
+        let words: Option<String> = s.get_or_default("words")?; // NoSuchProperty --> None
 
         let p: Node = row.get("p")?;
         let speaker: String = p.get("name")?;

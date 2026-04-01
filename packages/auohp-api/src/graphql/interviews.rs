@@ -3,9 +3,8 @@ use chrono::NaiveDate;
 use neo4rs::query;
 use serde::Deserialize;
 
-
-use crate::neo4j::Db;
 use super::error::gql_err;
+use crate::neo4j::Db;
 
 // Each struct below mirrors one node label in the Neo4j graph. The mapping is
 // deliberately close to the graph model so that schema changes surface as
@@ -117,10 +116,7 @@ pub async fn list_interviews(ctx: &Context<'_>) -> async_graphql::Result<Vec<Int
     Ok(interviews)
 }
 
-pub async fn get_transcript(
-    ctx: &Context<'_>,
-    number: i64,
-) -> async_graphql::Result<Transcript> {
+pub async fn get_transcript(ctx: &Context<'_>, number: i64) -> async_graphql::Result<Transcript> {
     let db = ctx.data::<Db>()?;
 
     // Statements are ordered by their startTime on the :CONTAINS relationship,
@@ -184,9 +180,8 @@ pub async fn get_transcript(
         });
     }
 
-    let interview = interview_opt.ok_or_else(|| {
-        async_graphql::Error::new(format!("interview #{number} not found"))
-    })?;
+    let interview = interview_opt
+        .ok_or_else(|| async_graphql::Error::new(format!("interview #{number} not found")))?;
 
     Ok(Transcript {
         uid: transcript_uid,

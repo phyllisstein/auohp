@@ -2,6 +2,7 @@
 name = "auohp-api"
 version = "0.1.0"
 edition = "2021"
+default-run = "auohp-api"
 
 [features]
 default = []
@@ -78,3 +79,4 @@ audioadapter-buffers = "2"
 # and rc.11. The `ort = "=2.0.0-rc.10"` pin above enforces the same
 # constraint from the other direction; this keeps them in sync.
 fastembed = { version = "~5.8", default-features = false, features = ["ort-download-binaries", "hf-hub-native-tls"] }
+kodama = "0.3.0"

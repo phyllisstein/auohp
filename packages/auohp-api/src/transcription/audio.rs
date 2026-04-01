@@ -5,7 +5,10 @@
 
 use anyhow::{Context, Result};
 use audioadapter_buffers::direct::SequentialSliceOfVecs;
-use rubato::{Async, FixedAsync, Resampler, SincInterpolationParameters, SincInterpolationType, WindowFunction};
+use rubato::{
+    Async, FixedAsync, Resampler, SincInterpolationParameters, SincInterpolationType,
+    WindowFunction,
+};
 use symphonia::core::audio::SampleBuffer;
 use symphonia::core::codecs::DecoderOptions;
 use symphonia::core::formats::FormatOptions;
@@ -23,8 +26,8 @@ pub struct DecodedAudio {
 
 /// Decode an audio/video file to 16 kHz mono f32.
 pub fn decode_file(path: &std::path::Path) -> Result<DecodedAudio> {
-    let file = std::fs::File::open(path)
-        .with_context(|| format!("failed to open {}", path.display()))?;
+    let file =
+        std::fs::File::open(path).with_context(|| format!("failed to open {}", path.display()))?;
 
     let mss = MediaSourceStream::new(Box::new(file), Default::default());
 
@@ -34,7 +37,12 @@ pub fn decode_file(path: &std::path::Path) -> Result<DecodedAudio> {
     }
 
     let probed = symphonia::default::get_probe()
-        .format(&hint, mss, &FormatOptions::default(), &MetadataOptions::default())
+        .format(
+            &hint,
+            mss,
+            &FormatOptions::default(),
+            &MetadataOptions::default(),
+        )
         .context("unsupported audio format")?;
 
     let mut format = probed.format;
@@ -51,11 +59,7 @@ pub fn decode_file(path: &std::path::Path) -> Result<DecodedAudio> {
         .codec_params
         .sample_rate
         .context("audio track has no sample rate")?;
-    let channels = track
-        .codec_params
-        .channels
-        .map(|c| c.count())
-        .unwrap_or(1);
+    let channels = track.codec_params.channels.map(|c| c.count()).unwrap_or(1);
 
     let mut decoder = symphonia::default::get_codecs()
         .make(&track.codec_params, &DecoderOptions::default())

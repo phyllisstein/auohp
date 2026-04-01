@@ -139,11 +139,11 @@ async function seedInterview({ data, date, interviewee, interviewNumber, jsonCap
                     MATCH (interview:Interview {number: $segment.interviewNumber})-[:HAS_TRANSCRIPT]-> (transcript)
                     MATCH (transcript) -[:INCLUDES_SPEAKER]-> (speaker:Speaker {label: $segment.speaker})
                     CREATE (segmentStatement:Statement {text: $segment.transcription, uid: $segment.statementUID})
-                    CREATE (speaker) -[:SAYS {startTime: $segment.startTime, endTime: $segment.endTime, startTimestamp: $segment.startTimestamp, endTimestamp: $segment.endTimestamp}]-> (segmentStatement)
-                    CREATE (transcript) -[:TRANSCRIBES {startTime: $segment.startTime, endTime: $segment.endTime, startTimestamp: $segment.startTimestamp, endTimestamp: $segment.endTimestamp}]-> (segmentStatement)
+                    CREATE (speaker) -[:SAYS {startTime: $segment.startTime, endTime: $segment.endTime}]-> (segmentStatement)
+                    CREATE (transcript) -[:TRANSCRIBES {startTime: $segment.startTime, endTime: $segment.endTime}]-> (segmentStatement)
                     WITH segmentStatement
                     UNWIND $statementBatch AS chunk
-                    CREATE (segmentStatement) -[:SAYS {startTime: chunk.startTime, endTime: chunk.endTime, startTimestamp: chunk.startTimestamp, endTimestamp: chunk.endTimestamp}]-> (caption:Caption {text: chunk.transcription, uid: chunk.statementUID})
+                    CREATE (segmentStatement) -[:SAYS {startTime: chunk.startTime, endTime: chunk.endTime}]-> (caption:Caption {text: chunk.transcription, uid: chunk.statementUID})
                     RETURN count(caption)
                 `, { segment, statementBatch },
             );
@@ -175,8 +175,6 @@ async function seedInterview({ data, date, interviewee, interviewNumber, jsonCap
         segment.endTimestamp = chunk.endTimestamp;
         segment.endTime = chunk.endTime;
         segment.transcription += ` ${ chunk.transcription }`;
-        segment.words.push(...chunk.words);
-        segment.children.push(...chunk.children);
 
         statementBatch.push({
             ...chunk,
@@ -264,7 +262,7 @@ async function seedAllInterviews() {
     );
 
     jsonCaption = await fs.readFile(
-        path.resolve(__dirname, "../assets/025_lei_chou.captions.json"),
+        path.resolve(__dirname, "../assets/025_lei_chou.json"),
         "utf8",
     );
 
@@ -279,7 +277,7 @@ async function seedAllInterviews() {
         interviewee: "Lei Chou",
         interviewNumber: 25,
         jsonCaption,
-        jsonCaptionURL: "https://dyck.mobi/auohp/025_lei_chou.captions.json",
+        jsonCaptionURL: "https://dyck.mobi/auohp/025_lei_chou.json",
         speakers: {
             interviewee: "SPEAKER_01",
             jim: "SPEAKER_03",
@@ -300,7 +298,7 @@ async function seedAllInterviews() {
     );
 
     jsonCaption = await fs.readFile(
-        path.resolve(__dirname, "../assets/064_vincent_gagliostro.captions.json"),
+        path.resolve(__dirname, "../assets/064_vincent_gagliostro.json"),
         "utf8",
     );
 
@@ -315,7 +313,7 @@ async function seedAllInterviews() {
         interviewee: "Vincent Gagliostro",
         interviewNumber: 64,
         jsonCaption,
-        jsonCaptionURL: "https://dyck.mobi/auohp/064_vincent_gagliostro.captions.json",
+        jsonCaptionURL: "https://dyck.mobi/auohp/064_vincent_gagliostro.json",
         speakers: {
             interviewee: "SPEAKER_00",
             jim: "SPEAKER_01",
@@ -336,7 +334,7 @@ async function seedAllInterviews() {
     );
 
     jsonCaption = await fs.readFile(
-        path.resolve(__dirname, "../assets/082_david_robinson.captions.json"),
+        path.resolve(__dirname, "../assets/082_david_robinson.json"),
         "utf8",
     );
 
@@ -351,7 +349,7 @@ async function seedAllInterviews() {
         interviewee: "David Robinson",
         interviewNumber: 82,
         jsonCaption,
-        jsonCaptionURL: "https://dyck.mobi/auohp/082_david_robinson.captions.json",
+        jsonCaptionURL: "https://dyck.mobi/auohp/082_david_robinson.json",
         speakers: {
             interviewee: "SPEAKER_03",
             jim: "SPEAKER_00",
@@ -372,7 +370,7 @@ async function seedAllInterviews() {
     );
 
     jsonCaption = await fs.readFile(
-        path.resolve(__dirname, "../assets/087_jill_harris.captions.json"),
+        path.resolve(__dirname, "../assets/087_jill_harris.json"),
         "utf8",
     );
 
@@ -387,7 +385,7 @@ async function seedAllInterviews() {
         interviewee: "Jill Harris",
         interviewNumber: 87,
         jsonCaption,
-        jsonCaptionURL: "https://dyck.mobi/auohp/087_jill_harris.captions.json",
+        jsonCaptionURL: "https://dyck.mobi/auohp/087_jill_harris.json",
         speakers: {
             interviewee: "SPEAKER_02",
             jim: "SPEAKER_01",
@@ -408,7 +406,7 @@ async function seedAllInterviews() {
     );
 
     jsonCaption = await fs.readFile(
-        path.resolve(__dirname, "../assets/117_alexis_danzig.captions.json"),
+        path.resolve(__dirname, "../assets/117_alexis_danzig.json"),
         "utf8",
     );
 
@@ -423,7 +421,7 @@ async function seedAllInterviews() {
         interviewee: "Alexis Danzig",
         interviewNumber: 117,
         jsonCaption,
-        jsonCaptionURL: "https://dyck.mobi/auohp/117_alexis_danzig.captions.json",
+        jsonCaptionURL: "https://dyck.mobi/auohp/117_alexis_danzig.json",
         speakers: {
             interviewee: "SPEAKER_01",
             jim: "SPEAKER_00",
@@ -444,7 +442,7 @@ async function seedAllInterviews() {
     );
 
     jsonCaption = await fs.readFile(
-        path.resolve(__dirname, "../assets/119_mary_cotter.captions.json"),
+        path.resolve(__dirname, "../assets/119_mary_cotter.json"),
         "utf8",
     );
 
@@ -459,7 +457,7 @@ async function seedAllInterviews() {
         interviewee: "Mary Cotter",
         interviewNumber: 119,
         jsonCaption,
-        jsonCaptionURL: "https://dyck.mobi/auohp/119_mary_cotter.captions.json",
+        jsonCaptionURL: "https://dyck.mobi/auohp/119_mary_cotter.json",
         speakers: {
             interviewee: "SPEAKER_00",
             jim: "SPEAKER_01",
@@ -536,7 +534,7 @@ async function seedAshesAction() {
     );
 
     jsonCaption = await fs.readFile(
-        path.resolve(__dirname, "../assets/the_ashes_action.captions.json"),
+        path.resolve(__dirname, "../assets/the_ashes_action.json"),
         "utf8",
     );
 
@@ -572,7 +570,7 @@ async function seedAshesAction() {
             jsonCaption,
 
             jsonCaptionUID: nanoid(),
-            jsonCaptionURL: "https://dyck.mobi/auohp/the_ashes_action.captions.json",
+            jsonCaptionURL: "https://dyck.mobi/auohp/the_ashes_action.json",
 
             transcriptUID,
             videoUID,
@@ -614,7 +612,7 @@ async function seedAshesAction() {
                 // language=Cypher
                 `
                     MATCH (transcript {uid: $transcriptUID}) -[:INCLUDES_SPEAKER]-> (speaker:Speaker {label: $speaker})
-                    CREATE (transcript)-[:TRANSCRIBES {startTime: $startTime, endTime: $endTime, startTimestamp: $startTimestamp, endTimestamp: $endTimestamp}]->(statement:Statement {text: $transcription, uid: $statementUID})
+                    CREATE (transcript)-[:TRANSCRIBES {startTime: $startTime, endTime: $endTime}]->(statement:Statement {text: $transcription, uid: $statementUID})
                     CREATE (speaker)-[:SAYS]->(statement)
                     RETURN statement, speaker
                 `, {

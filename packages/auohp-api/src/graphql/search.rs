@@ -8,12 +8,12 @@
 use std::sync::Arc;
 
 use async_graphql::{Context, SimpleObject};
-use neo4rs::{BoltType, query};
+use neo4rs::{query, BoltType};
 
-use crate::embeddings::Embedder;
-use crate::neo4j::Db;
 use super::error::gql_err;
 use super::interviews::{Interview, Statement, StatementNode};
+use crate::embeddings::Embedder;
+use crate::neo4j::Db;
 
 // ---------------------------------------------------------------------------
 // Output type
@@ -51,8 +51,8 @@ pub async fn search_statements(
         move || embedder.embed(&texts)
     })
     .await
-    .map_err(gql_err)?       // JoinError (spawn_blocking panicked)
-    .map_err(gql_err)?       // anyhow::Error from the ONNX model
+    .map_err(gql_err)? // JoinError (spawn_blocking panicked)
+    .map_err(gql_err)? // anyhow::Error from the ONNX model
     .into_iter()
     .next()
     .ok_or_else(|| async_graphql::Error::new("embedding produced no vectors"))?;
@@ -60,10 +60,7 @@ pub async fn search_statements(
     // Convert to BoltType list---Neo4j's vector procedures expect a list of
     // floats. We widen f32 --> f64 here because neo4rs's BoltType::Float wraps
     // f64; the precision lost going back to f32 inside Neo4j is irrelevant.
-    let vector_bolt: Vec<BoltType> = vector
-        .iter()
-        .map(|&v| BoltType::from(v as f64))
-        .collect();
+    let vector_bolt: Vec<BoltType> = vector.iter().map(|&v| BoltType::from(v as f64)).collect();
 
     let limit_val = limit.unwrap_or(15);
 
