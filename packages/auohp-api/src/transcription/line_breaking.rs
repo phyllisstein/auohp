@@ -145,13 +145,13 @@ fn build_items(words: &[Word]) -> Vec<Item> {
         if i > 0 {
             items.push(Item::Glue {
                 width: 1,
-                length: word.start_time - words[i - 1].end_time,
+                length: word.start - words[i - 1].end,
             });
         }
 
         items.push(Item::Box {
             width: word.word.len(),
-            length: word.end_time - word.start_time,
+            length: word.end - word.start,
             word_index: i,
         });
     }
@@ -166,8 +166,8 @@ fn build_captions(break_sequence: &[usize], words: &[Word]) -> Vec<Caption> {
         let start_word = window[0];
         let end_word = window[1];
         let subwords = &words[start_word..end_word];
-        let start_time = subwords.first().unwrap().start_time;
-        let end_time = subwords.last().unwrap().end_time;
+        let start_time = subwords.first().unwrap().start;
+        let end_time = subwords.last().unwrap().end;
 
         captions.push(Caption {
             start_word,

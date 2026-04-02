@@ -112,6 +112,10 @@ pub fn diarize(
             .map_err(|e| anyhow::anyhow!("{e}"))?
             .collect();
 
+        if embedding.iter().any(|x| !x.is_finite()) {
+            tracing::warn!(segment = i, "segment has non-finite embedding, skipping");
+            continue;
+        }
         if embedding.iter().all(|&x| x == 0.0) {
             tracing::warn!(segment = i, "segment has zero embedding, skipping");
             continue;
@@ -235,7 +239,11 @@ fn cosine_distance(a: &[f32], b: &[f32]) -> f64 {
     if denom == 0.0 {
         1.0
     } else {
-        1.0 - (dot / denom)
+        // Clamp to [0.0, 2.0]: cosine similarity is in [-1, 1], so 1 - sim is
+        // in [0, 2].  The clamp catches any floating-point overshoot and
+        // converts residual NaN to 1.0 (maximally distant) rather than
+        // propagating it into the dendrogram.
+        (1.0 - (dot / denom)).clamp(0.0, 2.0)
     }
 }
 

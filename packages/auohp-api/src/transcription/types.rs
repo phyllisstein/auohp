@@ -4,8 +4,8 @@ use serde::Serialize;
 #[derive(Debug, Clone, Serialize, PartialEq)]
 pub struct Word {
     pub word: String,
-    pub start_time: f64,
-    pub end_time: f64,
+    pub start: f64,
+    pub end: f64,
 }
 
 /// A transcription segment---one contiguous block of speech by one speaker.

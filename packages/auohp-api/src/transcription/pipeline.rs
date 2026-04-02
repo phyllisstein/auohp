@@ -4,14 +4,18 @@
 use anyhow::{Context, Result};
 use std::path::{Path, PathBuf};
 
+use super::align;
 use super::audio;
 use super::diarize;
 use super::types::*;
 use super::whisper;
 
 /// Configuration for the transcription pipeline.
+///
+/// Whisper weights are downloaded automatically from HuggingFace Hub (cached
+/// in `~/.cache/huggingface/hub/`), so only the pyannote ONNX models need a
+/// local directory.
 pub struct PipelineConfig {
-    pub whisper_model: PathBuf,
     pub segmentation_model: PathBuf,
     pub embedding_model: PathBuf,
     pub max_speakers: usize,
@@ -20,7 +24,6 @@ pub struct PipelineConfig {
 impl PipelineConfig {
     pub fn from_model_dir(dir: &Path, max_speakers: usize) -> Self {
         Self {
-            whisper_model: dir.join("ggml-large-v3.bin"),
             segmentation_model: dir.join("pyannote-segmentation-3.0.onnx"),
             embedding_model: dir.join("wespeaker_en_voxceleb_CAM++.onnx"),
             max_speakers,
@@ -36,8 +39,14 @@ pub fn run(config: &PipelineConfig, input_path: &Path) -> Result<TranscriptionRe
     let decoded = audio::decode_file(input_path)
         .with_context(|| format!("failed to decode {}", input_path.display()))?;
 
-    let whisper_ctx = whisper::load_model(&config.whisper_model)?;
-    let whisper_segments = whisper::transcribe(&whisper_ctx, &decoded.samples)?;
+    let mut whisper_model = whisper::load_model()?;
+    let mut whisper_segments = whisper::transcribe(&mut whisper_model, &decoded.samples)?;
+
+    // Refine word-level timestamps via wav2vec2 CTC forced alignment.
+    // This replaces the proportional approximation from Whisper's timestamp
+    // tokens with precise character-level alignment (≈20 ms resolution).
+    let mut aligner = align::Aligner::load()?;
+    aligner.refine_segments(&mut whisper_segments, &decoded.samples)?;
 
     let samples_i16 = diarize::f32_to_i16(&decoded.samples);
     let diarized = diarize::diarize(
@@ -69,7 +78,7 @@ fn merge_whisper_with_diarization(
         .iter()
         .flat_map(|ws| &ws.words)
         .map(|word| {
-            let speaker = best_speaker_overlap(word.start_time, word.end_time, diarized);
+            let speaker = best_speaker_overlap(word.start, word.end, diarized);
             (speaker, word.clone())
         })
         .collect();
@@ -91,14 +100,14 @@ fn group_labeled_words(labeled_words: Vec<(String, Word)>) -> Vec<Segment> {
             let current = segments.last_mut().unwrap();
             current.text.push(' ');
             current.text.push_str(&word.word);
-            current.end_time = word.end_time;
+            current.end_time = word.end;
             current.words.push(word);
         } else {
             segments.push(Segment {
                 speaker,
                 text: word.word.clone(),
-                start_time: word.start_time,
-                end_time: word.end_time,
+                start_time: word.start,
+                end_time: word.end,
                 words: vec![word],
             });
         }

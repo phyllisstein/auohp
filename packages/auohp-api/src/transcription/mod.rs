@@ -1,3 +1,4 @@
+mod align;
 mod audio;
 mod diarize;
 mod line_breaking;

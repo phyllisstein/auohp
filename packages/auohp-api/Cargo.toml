@@ -74,18 +74,18 @@ nanoid = "0.4"
 # Transcription --- candle runs Whisper entirely in Rust (no C++ dependency).
 # candle-core is the tensor library, candle-nn provides neural-network layers,
 # and candle-transformers contains the Whisper encoder/decoder model definition
-# plus the mel-spectrogram FFT. Models are downloaded from HuggingFace Hub
+# plus the mel-spectrogram FFT.  Models are downloaded from HuggingFace Hub
 # via hf-hub and loaded from safetensors format.
 #
 # pyannote-rs runs ONNX-exported pyannote models for speaker diarization.
 # symphonia decodes audio from MP4/WAV/etc. containers.
 # rubato resamples to 16 kHz mono as required by Whisper.
-candle-core = { version = "0.10", package = "candle-core" }
-candle-nn = { version = "0.10", package = "candle-nn" }
-candle-transformers = { version = "0.10", package = "candle-transformers" }
+candle-core = "0.10.1"
+candle-nn = "0.10.1"
+candle-transformers = "0.10.1"
 hf-hub = "0.5"
 tokenizers = { version = "0.22", default-features = false }
-rand = "0.8"
+rand = "0.9"
 pyannote-rs = "0.3"
 # Pin ort to rc.10 --- pyannote-rs 0.3.4 depends on this exact version and
 # the ndarray TensorArrayData trait changed in rc.11, breaking compilation.

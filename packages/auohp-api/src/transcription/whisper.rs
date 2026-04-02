@@ -1,15 +1,18 @@
 //! Whisper ASR using candle (pure Rust, no C++ dependency).
 //!
 //! Replaces the whisper-rs (whisper.cpp FFI) backend with HuggingFace's candle
-//! framework.  The entire decode loop is Rust --- no C callback machinery, no
+//! framework.  The entire decode loop is Rust---no C callback machinery, no
 //! abort-callback patches.  Decoder stalls are structurally prevented by the
-//! temperature-fallback loop, which rejects high-compression-ratio (repetitive)
-//! output and retries at a higher temperature.
+//! temperature-fallback loop: if greedy decoding produces repetitive output
+//! (high compression ratio), the decoder retries at a higher temperature,
+//! injecting randomness that breaks the repetition.
 //!
 //! ## Model loading
 //!
 //! Models are downloaded from HuggingFace Hub on first use and cached in
-//! `~/.cache/huggingface/hub/`.  No manual model management is required.
+//! `~/.cache/huggingface/hub/`.  No manual model management is required for
+//! the Whisper weights---only the pyannote ONNX models still need the
+//! `download-models.sh` script.
 //!
 //! ## Word-level timestamps
 //!
@@ -18,15 +21,20 @@
 //! within a segment is approximated by distributing time proportionally across
 //! BPE tokens, then grouping sub-tokens into words via the space-prefix
 //! convention.  Less precise than DTW alignment, but reliable for caption
-//! display.
+//! display and diarization overlap calculations.
 
 use anyhow::{bail, Context as _, Result};
 use candle_core::{Device, IndexOp, Tensor, D};
-use candle_nn::VarBuilder;
-use candle_transformers::models::whisper::{self as m, audio, Config};
-use rand::distributions::Distribution;
+use candle_nn::{
+    ops::{log_softmax, softmax},
+    VarBuilder,
+};
+use rand::distr::weighted::WeightedIndex;
+use rand::distr::Distribution;
 use rand::SeedableRng;
 use tokenizers::Tokenizer;
+
+use candle_transformers::models::whisper::{self as m, audio, Config};
 
 use super::types::Word;
 
@@ -34,11 +42,15 @@ use super::types::Word;
 //
 // Pre-computed 128-bin mel filterbank coefficients, stored as little-endian
 // f32 values.  128 bins × 201 frequency bins × 4 bytes = 102,912 bytes.
-// large-v3 uses 128 mel bins (earlier models used 80).  The file is
-// byte-identical to the one shipped in the candle examples.
-const MEL_FILTERS: &[u8] = include_bytes!("melfilters128.bytes");
+// large-v3 and large-v3-turbo both use 128 mel bins (earlier models used 80).
+// The file is byte-identical to the one shipped in the candle examples.
+const MEL_FILTERS_128: &[u8] = include_bytes!("melfilters128.bytes");
 
 /// A Whisper segment with word-level timestamps.
+///
+/// Each segment corresponds to one (start_timestamp, end_timestamp) pair
+/// emitted by the decoder.  Within a segment, `words` provides approximate
+/// per-word timing derived from the BPE token count.
 pub struct WhisperSegment {
     pub text: String,
     pub start: f64,
@@ -49,14 +61,21 @@ pub struct WhisperSegment {
 // ── Model wrapper ───────────────────────────────────────────────────────────
 //
 // candle-transformers defines the model as a plain struct, not a trait.
-// This enum wraps it so we could add a quantized variant later without
-// changing the call sites.
+// This enum wraps it so we could add a quantized variant later (e.g.
+// m::quantized_model::Whisper from a .gguf file) without changing the
+// Decoder's call sites.
 
 enum ModelVariant {
     Normal(m::model::Whisper),
 }
 
 impl ModelVariant {
+    fn config(&self) -> &Config {
+        match self {
+            Self::Normal(m) => &m.config,
+        }
+    }
+
     fn encoder_forward(&mut self, x: &Tensor, flush: bool) -> candle_core::Result<Tensor> {
         match self {
             Self::Normal(m) => m.encoder.forward(x, flush),
@@ -81,29 +100,455 @@ impl ModelVariant {
     }
 }
 
-// ── Public API ──────────────────────────────────────────────────────────────
+// ── Decoder ─────────────────────────────────────────────────────────────────
+//
+// Ported from candle-examples/examples/whisper/main.rs.  The Decoder owns
+// the model, tokenizer, and RNG state.  It runs the autoregressive decode
+// loop with temperature fallback and timestamp-token rules.
 
-/// Loaded Whisper model, tokenizer, and configuration --- everything needed
-/// to run inference.  Create one via [`load_model`] and reuse across calls.
-pub struct WhisperModel {
+struct Decoder {
     model: ModelVariant,
+    rng: rand::rngs::StdRng,
     tokenizer: Tokenizer,
-    config: Config,
-    device: Device,
-    mel_filters: Vec<f32>,
-
-    // Special token IDs, looked up once at load time.
+    suppress_tokens: Tensor,
     sot_token: u32,
     transcribe_token: u32,
     eot_token: u32,
+    no_speech_token: u32,
     no_timestamps_token: u32,
     language_token: u32,
-    no_speech_tokens: Vec<u32>,
+}
 
-    /// Additive mask applied to logits before sampling.  Suppressed tokens
-    /// get −∞; all others get 0.  `broadcast_add` with the raw logits
-    /// zeroes out the suppressed positions.
-    suppress_tokens: Tensor,
+impl Decoder {
+    fn new(model: ModelVariant, tokenizer: Tokenizer, device: &Device) -> Result<Self> {
+        let no_timestamps_token = token_id(&tokenizer, m::NO_TIMESTAMPS_TOKEN)?;
+
+        // Build the suppress-tokens mask.  The config lists token IDs that the
+        // decoder should never emit (blank tokens, language tokens mid-sequence,
+        // etc.).  We also suppress <|notimestamps|> because we *want* timestamps.
+        //
+        // The mask is an additive tensor: −∞ for suppressed positions, 0
+        // elsewhere.  Adding it to raw logits before softmax is equivalent to
+        // removing those tokens from the vocabulary---branchless and GPU-friendly.
+        let suppress_tokens: Vec<f32> = (0..model.config().vocab_size as u32)
+            .map(|i| {
+                if model.config().suppress_tokens.contains(&i) || i == no_timestamps_token {
+                    f32::NEG_INFINITY
+                } else {
+                    0f32
+                }
+            })
+            .collect();
+        let suppress_tokens = Tensor::new(suppress_tokens.as_slice(), device)?;
+
+        let sot_token = token_id(&tokenizer, m::SOT_TOKEN)?;
+        let transcribe_token = token_id(&tokenizer, m::TRANSCRIBE_TOKEN)?;
+        let eot_token = token_id(&tokenizer, m::EOT_TOKEN)?;
+        let language_token = token_id(&tokenizer, "<|en|>")?;
+
+        // Find any no-speech token the tokenizer knows about.
+        let no_speech_token = m::NO_SPEECH_TOKENS
+            .iter()
+            .find_map(|t| token_id(&tokenizer, t).ok());
+        let no_speech_token = match no_speech_token {
+            Some(n) => n,
+            None => bail!("unable to find any no-speech token in tokenizer"),
+        };
+
+        Ok(Self {
+            model,
+            rng: rand::rngs::StdRng::seed_from_u64(299_792_458),
+            tokenizer,
+            suppress_tokens,
+            sot_token,
+            transcribe_token,
+            eot_token,
+            no_speech_token,
+            no_timestamps_token,
+            language_token,
+        })
+    }
+
+    /// Decode one mel segment at a single temperature.
+    ///
+    /// Returns the raw token sequence (including special/timestamp tokens),
+    /// average log-probability, and no-speech probability.
+    fn decode(&mut self, mel: &Tensor, temperature: f64) -> Result<DecodingResult> {
+        let audio_features = self.model.encoder_forward(mel, true)?;
+        let sample_len = self.model.config().max_target_positions / 2;
+        let mut sum_logprob = 0f64;
+        let mut no_speech_prob = f64::NAN;
+
+        // Initial prompt: [SOT] [<|en|>] [<|transcribe|>]
+        // We omit <|notimestamps|> so the decoder produces timestamp tokens.
+        let mut tokens = vec![self.sot_token, self.language_token, self.transcribe_token];
+
+        for i in 0..sample_len {
+            let tokens_t = Tensor::new(tokens.as_slice(), mel.device())?;
+            let tokens_t = tokens_t.unsqueeze(0)?;
+
+            // flush=true on the first step clears the KV cache from any
+            // previous segment.  Subsequent steps append incrementally.
+            let ys = self
+                .model
+                .decoder_forward(&tokens_t, &audio_features, i == 0)?;
+
+            // On the very first generated token, capture the no-speech
+            // probability by looking at the softmax over the full vocab
+            // at the first decoder position.
+            if i == 0 {
+                let logits = self.model.decoder_final_linear(&ys.i(..1)?)?.i(0)?.i(0)?;
+                no_speech_prob = softmax(&logits, 0)?
+                    .i(self.no_speech_token as usize)?
+                    .to_scalar::<f32>()? as f64;
+            }
+
+            // Take logits for the last token position only.
+            let (_, seq_len, _) = ys.dims3()?;
+            let logits = self
+                .model
+                .decoder_final_linear(&ys.i((..1, seq_len - 1..))?)?
+                .i(0)?
+                .i(0)?;
+
+            // Apply timestamp structural rules (pairing, monotonicity, etc.)
+            let logits = self.apply_timestamp_rules(&logits, &tokens)?;
+
+            // Apply suppress-tokens mask.
+            let logits = logits.broadcast_add(&self.suppress_tokens)?;
+
+            let next_token = if temperature > 0.0 {
+                // Temperature sampling: divide logits by T, softmax, then
+                // draw from the resulting categorical distribution.
+                let probs = softmax(&(&logits / temperature)?, 0)?;
+                let probs_v: Vec<f32> = probs.to_vec1()?;
+                let distr = WeightedIndex::new(&probs_v)?;
+                distr.sample(&mut self.rng) as u32
+            } else {
+                // Greedy: pick the highest-probability token.
+                let logits_v: Vec<f32> = logits.to_vec1()?;
+                logits_v
+                    .iter()
+                    .enumerate()
+                    .max_by(|(_, u), (_, v)| u.total_cmp(v))
+                    .map(|(i, _)| i as u32)
+                    .unwrap()
+            };
+
+            tokens.push(next_token);
+
+            if next_token == self.eot_token
+                || tokens.len() > self.model.config().max_target_positions
+            {
+                break;
+            }
+
+            // Accumulate log-probability for quality scoring.
+            let prob = softmax(&logits, D::Minus1)?
+                .i(next_token as usize)?
+                .to_scalar::<f32>()? as f64;
+            sum_logprob += prob.ln();
+        }
+
+        let avg_logprob = sum_logprob / tokens.len() as f64;
+
+        Ok(DecodingResult {
+            tokens,
+            avg_logprob,
+            no_speech_prob,
+            compression_ratio: f64::NAN,
+        })
+    }
+
+    /// Try decoding at increasing temperatures until quality thresholds are met.
+    ///
+    /// This is Whisper's built-in anti-looping mechanism: at temperature 0
+    /// (greedy), repetitive output has a very high compression ratio, which
+    /// triggers a retry at a higher temperature.  Higher temperatures inject
+    /// randomness that breaks the repetition.
+    fn decode_with_fallback(&mut self, mel: &Tensor) -> Result<DecodingResult> {
+        for (i, &t) in m::TEMPERATURES.iter().enumerate() {
+            let dr = self.decode(mel, t);
+            // On the last temperature, return whatever we got.
+            if i == m::TEMPERATURES.len() - 1 {
+                return dr;
+            }
+            match dr {
+                Ok(dr) => {
+                    let needs_fallback = dr.compression_ratio > m::COMPRESSION_RATIO_THRESHOLD
+                        || dr.avg_logprob < m::LOGPROB_THRESHOLD;
+                    if !needs_fallback || dr.no_speech_prob > m::NO_SPEECH_THRESHOLD {
+                        return Ok(dr);
+                    }
+                }
+                Err(err) => {
+                    eprintln!("Whisper: error at temperature {t}: {err}");
+                }
+            }
+        }
+        unreachable!()
+    }
+
+    /// Enforce timestamp structural rules on logits before sampling.
+    ///
+    /// These four rules are ported directly from the candle example, which in
+    /// turn mirrors OpenAI's Python implementation:
+    ///
+    /// 1. **Pairing**: timestamps must come in (start, end) pairs.  After one
+    ///    timestamp, the next token must be either another timestamp (closing
+    ///    the pair) or EOT.  After two consecutive timestamps, force text.
+    /// 2. **Monotonicity**: timestamp values must not decrease.
+    /// 3. **Force initial**: the first generated token must be a timestamp.
+    /// 4. **Probability-based preference**: if the total probability mass on
+    ///    timestamp tokens exceeds the max text-token probability, force a
+    ///    timestamp.
+    fn apply_timestamp_rules(&self, input_logits: &Tensor, tokens: &[u32]) -> Result<Tensor> {
+        let device = input_logits.device().clone();
+        let timestamp_begin = self.no_timestamps_token + 1;
+        let vocab_size = self.model.config().vocab_size as u32;
+
+        // Sampled tokens start after the prompt: [SOT, lang, task] = 3 tokens.
+        let sample_begin: usize = 3;
+        let sampled_tokens = if tokens.len() > sample_begin {
+            &tokens[sample_begin..]
+        } else {
+            &[]
+        };
+
+        let mut masks = Vec::new();
+        let mut mask_buffer = vec![0.0f32; vocab_size as usize];
+
+        // ── Rule 1: Timestamp pairing ───────────────────────────────────
+        if !sampled_tokens.is_empty() {
+            let last_was_timestamp = sampled_tokens
+                .last()
+                .map(|&t| t >= timestamp_begin)
+                .unwrap_or(false);
+
+            let penultimate_was_timestamp = if sampled_tokens.len() >= 2 {
+                sampled_tokens[sampled_tokens.len() - 2] >= timestamp_begin
+            } else {
+                false
+            };
+
+            if last_was_timestamp {
+                if penultimate_was_timestamp {
+                    // Two timestamps in a row---force non-timestamp (text).
+                    for i in 0..vocab_size {
+                        mask_buffer[i as usize] = if i >= timestamp_begin {
+                            f32::NEG_INFINITY
+                        } else {
+                            0.0
+                        };
+                    }
+                    masks.push(Tensor::new(mask_buffer.as_slice(), &device)?);
+                } else {
+                    // One timestamp---next must be timestamp or EOT.
+                    for i in 0..vocab_size {
+                        mask_buffer[i as usize] = if i < self.eot_token {
+                            f32::NEG_INFINITY
+                        } else {
+                            0.0
+                        };
+                    }
+                    masks.push(Tensor::new(mask_buffer.as_slice(), &device)?);
+                }
+            }
+
+            // ── Rule 2: Monotonicity ────────────────────────────────────
+            let timestamp_tokens: Vec<u32> = sampled_tokens
+                .iter()
+                .filter(|&&t| t >= timestamp_begin)
+                .cloned()
+                .collect();
+
+            if !timestamp_tokens.is_empty() {
+                let timestamp_last = if last_was_timestamp && !penultimate_was_timestamp {
+                    *timestamp_tokens.last().unwrap()
+                } else {
+                    timestamp_tokens.last().unwrap() + 1
+                };
+
+                for i in 0..vocab_size {
+                    mask_buffer[i as usize] = if i >= timestamp_begin && i < timestamp_last {
+                        f32::NEG_INFINITY
+                    } else {
+                        0.0
+                    };
+                }
+                masks.push(Tensor::new(mask_buffer.as_slice(), &device)?);
+            }
+        }
+
+        // ── Rule 3: Force initial timestamp ─────────────────────────────
+        if tokens.len() == sample_begin {
+            for i in 0..vocab_size {
+                mask_buffer[i as usize] = if i < timestamp_begin {
+                    f32::NEG_INFINITY
+                } else {
+                    0.0
+                };
+            }
+            masks.push(Tensor::new(mask_buffer.as_slice(), &device)?);
+        }
+
+        // Apply all constraint masks.
+        let mut logits = input_logits.clone();
+        for mask in masks {
+            logits = logits.broadcast_add(&mask)?;
+        }
+
+        // ── Rule 4: Probability-based timestamp preference ──────────────
+        let log_probs = log_softmax(&logits, 0)?;
+
+        let timestamp_log_probs = log_probs.narrow(
+            0,
+            timestamp_begin as usize,
+            vocab_size as usize - timestamp_begin as usize,
+        )?;
+        let text_log_probs = log_probs.narrow(0, 0, timestamp_begin as usize)?;
+
+        // logsumexp over timestamp tokens (numerically stable).
+        let timestamp_logprob = {
+            let max_val = timestamp_log_probs.max(0)?;
+            let shifted = timestamp_log_probs.broadcast_sub(&max_val)?;
+            let sum_exp = shifted.exp()?.sum(0)?;
+            max_val.broadcast_add(&sum_exp.log()?)?.to_scalar::<f32>()?
+        };
+
+        let max_text_token_logprob: f32 = text_log_probs.max(0)?.to_scalar::<f32>()?;
+
+        if timestamp_logprob > max_text_token_logprob {
+            for i in 0..vocab_size {
+                mask_buffer[i as usize] = if i < timestamp_begin {
+                    f32::NEG_INFINITY
+                } else {
+                    0.0
+                };
+            }
+            logits = logits.broadcast_add(&Tensor::new(mask_buffer.as_slice(), &device)?)?;
+        }
+
+        Ok(logits)
+    }
+
+    /// Process the full mel spectrogram in 30 s chunks, returning timestamped
+    /// segments with word-level timing.
+    fn run(&mut self, mel: &Tensor) -> Result<Vec<WhisperSegment>> {
+        let (_, _, content_frames) = mel.dims3()?;
+        let mut seek = 0;
+        let mut segments = Vec::new();
+
+        while seek < content_frames {
+            let time_offset = (seek * m::HOP_LENGTH) as f64 / m::SAMPLE_RATE as f64;
+            let segment_size = usize::min(content_frames - seek, m::N_FRAMES);
+            let mel_segment = mel.narrow(2, seek, segment_size)?;
+            let segment_duration = (segment_size * m::HOP_LENGTH) as f64 / m::SAMPLE_RATE as f64;
+
+            let dr = self.decode_with_fallback(&mel_segment)?;
+            seek += segment_size;
+
+            // If no speech detected with high confidence, skip this chunk.
+            if dr.no_speech_prob > m::NO_SPEECH_THRESHOLD && dr.avg_logprob < m::LOGPROB_THRESHOLD {
+                eprintln!(
+                    "Whisper: no speech at {:.1}s–{:.1}s, skipping",
+                    time_offset,
+                    time_offset + segment_duration,
+                );
+                continue;
+            }
+
+            // Parse timestamp tokens into segments with word-level timing.
+            let chunk_segments = self.tokens_to_segments(&dr.tokens, time_offset)?;
+            segments.extend(chunk_segments);
+
+            eprintln!(
+                "Whisper: {:.1}s / {:.1}s",
+                seek as f64 * m::HOP_LENGTH as f64 / m::SAMPLE_RATE as f64,
+                content_frames as f64 * m::HOP_LENGTH as f64 / m::SAMPLE_RATE as f64,
+            );
+        }
+
+        Ok(segments)
+    }
+
+    /// Convert the raw decoder token sequence (with timestamp tokens) into
+    /// segments with word-level timing.
+    ///
+    /// Timestamp tokens appear in pairs: `<|t_start|> text... <|t_end|>`.
+    /// Each pair becomes one [`WhisperSegment`].
+    fn tokens_to_segments(&self, tokens: &[u32], time_offset: f64) -> Result<Vec<WhisperSegment>> {
+        let timestamp_begin = self.no_timestamps_token + 1;
+        let mut segments = Vec::new();
+        let mut current_start: Option<f64> = None;
+        let mut current_tokens: Vec<u32> = Vec::new();
+
+        for &token in tokens {
+            if token == self.eot_token || token == self.sot_token {
+                continue;
+            }
+
+            if token >= timestamp_begin {
+                // Timestamp token: value = (token - timestamp_begin) × 0.02 s.
+                let time = (token - timestamp_begin) as f64 * 0.02 + time_offset;
+
+                if let Some(start) = current_start {
+                    if !current_tokens.is_empty() {
+                        // Closing timestamp---flush the segment.
+                        let text = self
+                            .tokenizer
+                            .decode(&current_tokens, true)
+                            .unwrap_or_default();
+                        let trimmed = text.trim().to_string();
+
+                        if !trimmed.is_empty() {
+                            let words =
+                                tokens_to_words(&self.tokenizer, &current_tokens, start, time);
+                            segments.push(WhisperSegment {
+                                text: trimmed,
+                                start,
+                                end: time,
+                                words,
+                            });
+                        }
+                    }
+                    current_tokens.clear();
+                    current_start = None;
+                } else {
+                    // Opening timestamp.
+                    current_start = Some(time);
+                }
+            } else if token < self.no_timestamps_token {
+                // Regular text token.  Special prompt tokens (SOT, language,
+                // task) are handled by the SOT/EOT skip above and by the
+                // no_timestamps_token boundary---they all have IDs above that.
+                current_tokens.push(token);
+            }
+        }
+
+        Ok(segments)
+    }
+}
+
+// ── Intermediate types ──────────────────────────────────────────────────────
+
+struct DecodingResult {
+    tokens: Vec<u32>,
+    avg_logprob: f64,
+    no_speech_prob: f64,
+    compression_ratio: f64,
+}
+
+// ── Public API ──────────────────────────────────────────────────────────────
+
+/// Loaded Whisper model, tokenizer, mel filters, and device---everything
+/// needed to run inference.  Create one via [`load_model`] and pass to
+/// [`transcribe`].
+pub struct WhisperModel {
+    decoder: Decoder,
+    config: Config,
+    device: Device,
+    mel_filters: Vec<f32>,
 }
 
 /// Look up a special token's ID in the tokenizer vocabulary.
@@ -114,7 +559,7 @@ fn token_id(tokenizer: &Tokenizer, token: &str) -> Result<u32> {
     }
 }
 
-/// Load Whisper large-v3 from HuggingFace Hub.
+/// Load Whisper large-v3-turbo from HuggingFace Hub.
 ///
 /// Downloads `config.json`, `tokenizer.json`, and `model.safetensors` on
 /// first call; subsequent calls reuse the cached files in
@@ -124,21 +569,19 @@ fn token_id(tokenizer: &Tokenizer, token: &str) -> Result<u32> {
 /// Without it, inference runs on CPU (still pure Rust, just slower).
 pub fn load_model() -> Result<WhisperModel> {
     // Prefer Metal (Apple Silicon GPU) if the feature is compiled in;
-    // fall back to CPU otherwise.  `Device::new_metal(0)` returns Err
-    // when the feature flag is absent or no Metal device is found.
+    // fall back to CPU otherwise.
     let device = Device::new_metal(0).unwrap_or(Device::Cpu);
-    eprintln!("Whisper: using device {:?}", device);
+    eprintln!("Whisper: using device {device:?}");
 
-    // ── Download model files ────────────────────────────────────────────
-    //
-    // hf_hub::api::sync::Api caches downloads in ~/.cache/huggingface/hub/.
-    // The Api::new() constructor reads HF_TOKEN from the environment for
-    // gated-model access (not needed for openai/whisper-large-v3, which is
-    // public).
+    // hf_hub caches downloads in ~/.cache/huggingface/hub/.  The Api::new()
+    // constructor reads HF_TOKEN from the environment for gated-model access
+    // (not needed for openai/whisper-large-v3-turbo, which is public).
     let api = hf_hub::api::sync::Api::new().context("failed to create HF Hub API")?;
-    let repo = api.model("openai/whisper-large-v3".to_string());
+    let repo = api.model("openai/whisper-large-v3-turbo".to_string());
 
-    let config_path = repo.get("config.json").context("config.json download failed")?;
+    let config_path = repo
+        .get("config.json")
+        .context("config.json download failed")?;
     let tokenizer_path = repo
         .get("tokenizer.json")
         .context("tokenizer.json download failed")?;
@@ -146,7 +589,6 @@ pub fn load_model() -> Result<WhisperModel> {
         .get("model.safetensors")
         .context("model.safetensors download failed")?;
 
-    // ── Config ──────────────────────────────────────────────────────────
     let config: Config = serde_json::from_str(
         &std::fs::read_to_string(&config_path).context("failed to read config.json")?,
     )
@@ -156,13 +598,10 @@ pub fn load_model() -> Result<WhisperModel> {
         config.num_mel_bins, config.encoder_layers, config.decoder_layers,
     );
 
-    // ── Tokenizer ───────────────────────────────────────────────────────
     let tokenizer = Tokenizer::from_file(&tokenizer_path)
         .map_err(|e| anyhow::anyhow!("failed to load tokenizer: {e}"))?;
 
-    // ── Weights ─────────────────────────────────────────────────────────
-    //
-    // Memory-mapping avoids copying the entire 3 GB file into the heap.
+    // Memory-mapping avoids copying the full weights file into the heap.
     // The `unsafe` is well-established candle practice: it's sound as long
     // as the file isn't modified while the model is alive.
     let vb = unsafe {
@@ -173,373 +612,47 @@ pub fn load_model() -> Result<WhisperModel> {
         m::model::Whisper::load(&vb, config.clone()).context("failed to build Whisper model")?;
     eprintln!("Whisper: model loaded");
 
-    // ── Mel filterbank ──────────────────────────────────────────────────
-    let mel_filters = read_f32_le(MEL_FILTERS);
+    // Parse mel filterbank coefficients from the embedded binary blob.
+    assert_eq!(
+        config.num_mel_bins, 128,
+        "only 128-bin mel filterbanks are bundled; got {} bins",
+        config.num_mel_bins,
+    );
+    let mel_filters = read_f32_le(MEL_FILTERS_128);
 
-    // ── Special tokens ──────────────────────────────────────────────────
-    let sot_token = token_id(&tokenizer, m::SOT_TOKEN)?;
-    let transcribe_token = token_id(&tokenizer, m::TRANSCRIBE_TOKEN)?;
-    let eot_token = token_id(&tokenizer, m::EOT_TOKEN)?;
-    let no_timestamps_token = token_id(&tokenizer, m::NO_TIMESTAMPS_TOKEN)?;
-    let language_token = token_id(&tokenizer, "<|en|>")?;
-    let no_speech_tokens: Vec<u32> = m::NO_SPEECH_TOKENS
-        .iter()
-        .filter_map(|t| tokenizer.token_to_id(t))
-        .collect();
-
-    // ── Suppress-tokens mask ────────────────────────────────────────────
-    //
-    // The config lists token IDs that the decoder should never emit (blank
-    // tokens, language tokens mid-sequence, etc.).  We build an additive
-    // mask: −∞ for suppressed positions, 0 elsewhere.  Adding this to the
-    // raw logits before softmax zeroes out the suppressed tokens'
-    // probabilities --- mathematically equivalent to removing them from
-    // the vocabulary, but branchless and GPU-friendly.
-    let suppress_tokens: Vec<f32> = (0..config.vocab_size as u32)
-        .map(|i| {
-            if config.suppress_tokens.contains(&i) {
-                f32::NEG_INFINITY
-            } else {
-                0.0
-            }
-        })
-        .collect();
-    let suppress_tokens = Tensor::new(suppress_tokens.as_slice(), &device)
-        .context("failed to create suppress_tokens tensor")?;
+    let decoder = Decoder::new(ModelVariant::Normal(model), tokenizer, &device)?;
 
     Ok(WhisperModel {
-        model: ModelVariant::Normal(model),
-        tokenizer,
+        decoder,
         config,
         device,
         mel_filters,
-        sot_token,
-        transcribe_token,
-        eot_token,
-        no_timestamps_token,
-        language_token,
-        no_speech_tokens,
-        suppress_tokens,
     })
 }
+
+/// Run Whisper inference on 16 kHz mono f32 PCM and return timestamped
+/// segments with word-level timing.
+pub fn transcribe(model: &mut WhisperModel, samples: &[f32]) -> Result<Vec<WhisperSegment>> {
+    // pcm_to_mel runs a multi-threaded STFT with Hanning window, applies
+    // the mel filterbank, and log-normalises.  Output shape is flat:
+    // (num_mel_bins × n_frames) stored as Vec<f32>.
+    let mel = audio::pcm_to_mel(&model.config, samples, &model.mel_filters);
+    let mel_len = mel.len() / model.config.num_mel_bins;
+    let mel = Tensor::from_vec(mel, (1, model.config.num_mel_bins, mel_len), &model.device)
+        .context("failed to create mel tensor")?;
+
+    eprintln!("Whisper: mel spectrogram shape {:?}", mel.dims());
+
+    model.decoder.run(&mel)
+}
+
+// ── Helpers ─────────────────────────────────────────────────────────────────
 
 /// Parse a byte slice as a sequence of little-endian f32 values.
 fn read_f32_le(data: &[u8]) -> Vec<f32> {
     data.chunks_exact(4)
         .map(|c| f32::from_le_bytes([c[0], c[1], c[2], c[3]]))
         .collect()
-}
-
-// ── Transcription ───────────────────────────────────────────────────────────
-
-/// Run Whisper inference on 16 kHz mono f32 PCM and return timestamped
-/// segments with word-level timing.
-pub fn transcribe(model: &mut WhisperModel, samples: &[f32]) -> Result<Vec<WhisperSegment>> {
-    // ── Mel spectrogram ─────────────────────────────────────────────────
-    //
-    // `pcm_to_mel` runs a multi-threaded STFT with Hanning window, applies
-    // the mel filterbank, and log-normalises.  The output shape is
-    // (num_mel_bins, n_frames) stored as a flat Vec<f32>.
-    let mel = audio::pcm_to_mel(&model.config, samples, &model.mel_filters);
-    let mel_len = mel.len() / model.config.num_mel_bins;
-    let mel = Tensor::from_vec(mel, (1, model.config.num_mel_bins, mel_len), &model.device)
-        .context("failed to create mel tensor")?;
-
-    let mut segments = Vec::new();
-    let mut seek: usize = 0;
-
-    // ── Chunked decoding ────────────────────────────────────────────────
-    //
-    // Whisper processes audio in 30-second chunks (N_FRAMES = 3000 mel
-    // frames at 10 ms per frame).  For each chunk, the encoder produces
-    // a fixed-length feature sequence, and the decoder autoregressively
-    // generates text tokens + timestamp tokens.
-    while seek < mel_len {
-        let chunk_len = usize::min(m::N_FRAMES, mel_len - seek);
-        let mel_segment = mel.narrow(2, seek, chunk_len)?;
-
-        // Pad the last chunk to N_FRAMES so the encoder gets a fixed-size
-        // input.  Padding with zeros corresponds to silence.
-        let mel_segment = if chunk_len < m::N_FRAMES {
-            let padding = Tensor::zeros(
-                (1, model.config.num_mel_bins, m::N_FRAMES - chunk_len),
-                candle_core::DType::F32,
-                &model.device,
-            )?;
-            Tensor::cat(&[&mel_segment, &padding], 2)?
-        } else {
-            mel_segment
-        };
-
-        // Time offset of this chunk's start in the original audio.
-        let segment_offset = (seek * m::HOP_LENGTH) as f64 / m::SAMPLE_RATE as f64;
-
-        let new_segments = decode_segment(model, &mel_segment, segment_offset)?;
-
-        if new_segments.is_empty() {
-            // No speech detected; skip the full 30 s.
-            seek += m::N_FRAMES;
-        } else {
-            // Advance past the last segment's end time.
-            let last_end = new_segments.last().unwrap().end;
-            let new_seek =
-                ((last_end * m::SAMPLE_RATE as f64) / m::HOP_LENGTH as f64).ceil() as usize;
-            seek = if new_seek > seek {
-                new_seek
-            } else {
-                seek + m::N_FRAMES
-            };
-            segments.extend(new_segments);
-        }
-
-        eprintln!(
-            "Whisper: {:.1}s / {:.1}s",
-            seek as f64 * m::HOP_LENGTH as f64 / m::SAMPLE_RATE as f64,
-            mel_len as f64 * m::HOP_LENGTH as f64 / m::SAMPLE_RATE as f64,
-        );
-    }
-
-    Ok(segments)
-}
-
-// ── Decoding internals ──────────────────────────────────────────────────────
-
-/// Intermediate result from a single temperature attempt.
-struct DecodingResult {
-    tokens: Vec<u32>,
-    avg_logprob: f64,
-    no_speech_prob: f64,
-    compression_ratio: f64,
-}
-
-/// Decode one 30 s mel chunk, retrying across temperatures.
-///
-/// The temperature-fallback loop is Whisper's built-in anti-looping
-/// mechanism: at temperature 0 (greedy), repetitive output has a very
-/// high compression ratio, which triggers a retry at a higher temperature.
-/// Higher temperatures inject randomness that breaks the repetition.
-fn decode_segment(
-    model: &mut WhisperModel,
-    mel: &Tensor,
-    time_offset: f64,
-) -> Result<Vec<WhisperSegment>> {
-    let audio_features = model
-        .model
-        .encoder_forward(mel, true)
-        .context("encoder forward failed")?;
-
-    for &temperature in m::TEMPERATURES.iter() {
-        let result = decode_with_temperature(model, &audio_features, temperature)?;
-
-        // If the model is very confident there's no speech, skip.
-        if result.no_speech_prob > m::NO_SPEECH_THRESHOLD {
-            return Ok(Vec::new());
-        }
-
-        // Accept if quality thresholds are met.
-        if result.compression_ratio <= m::COMPRESSION_RATIO_THRESHOLD
-            && result.avg_logprob >= m::LOGPROB_THRESHOLD
-        {
-            return Ok(extract_segments(model, &result.tokens, time_offset));
-        }
-    }
-
-    // All temperatures failed; use the last attempt (temperature 1.0).
-    let result = decode_with_temperature(model, &audio_features, 1.0)?;
-    Ok(extract_segments(model, &result.tokens, time_offset))
-}
-
-/// Run the autoregressive decoder at a single temperature.
-fn decode_with_temperature(
-    model: &mut WhisperModel,
-    audio_features: &Tensor,
-    temperature: f64,
-) -> Result<DecodingResult> {
-    let device = &model.device;
-
-    // Maximum number of tokens to generate per 30 s chunk.
-    // 224 is Whisper's default (max_target_positions / 2 = 448 / 2).
-    let sample_len = model.config.max_target_positions / 2;
-
-    // ── Initial prompt ──────────────────────────────────────────────────
-    //
-    // [SOT] [<|en|>] [<|transcribe|>]
-    //
-    // We omit <|notimestamps|> so the decoder produces timestamp tokens
-    // that give us segment boundaries.
-    let mut tokens: Vec<u32> = vec![
-        model.sot_token,
-        model.language_token,
-        model.transcribe_token,
-    ];
-
-    let mut sum_logprob = 0.0;
-    let mut n_text_tokens = 0u64;
-    let mut no_speech_prob: f64 = 0.0;
-
-    for i in 0..sample_len {
-        let tokens_t = Tensor::new(tokens.as_slice(), device)?.unsqueeze(0)?;
-
-        // `flush = true` on the first step clears the KV cache from any
-        // previous segment.  Subsequent steps append incrementally.
-        let logits = model
-            .model
-            .decoder_forward(&tokens_t, audio_features, i == 0)?;
-
-        // Take logits for the last token position only.
-        let logits = model
-            .model
-            .decoder_final_linear(&logits.i((.., tokens.len() - 1..))?)?;
-        let logits = logits.squeeze(0)?.squeeze(0)?;
-
-        // On the very first generated token (right after the prompt),
-        // capture the no-speech probability.  This is the sum of probs
-        // for <|nocaptions|> and <|nospeech|>.
-        if i == 0 {
-            let probs = candle_nn::ops::softmax(&logits, D::Minus1)?;
-            let probs_vec = probs.to_vec1::<f32>()?;
-            no_speech_prob = model
-                .no_speech_tokens
-                .iter()
-                .map(|&t| probs_vec[t as usize] as f64)
-                .sum();
-        }
-
-        // Apply suppress-tokens mask.
-        let logits = logits.broadcast_add(&model.suppress_tokens)?;
-
-        // ── Token selection ─────────────────────────────────────────────
-        let next_token = if temperature <= 0.0 {
-            // Greedy: pick the highest-probability token.
-            logits.argmax(D::Minus1)?.to_scalar::<u32>()?
-        } else {
-            // Temperature sampling: divide logits by T, softmax, then
-            // draw from the resulting categorical distribution.
-            let scaled = (&logits / temperature)?;
-            let probs = candle_nn::ops::softmax(&scaled, D::Minus1)?;
-            let probs_vec = probs.to_vec1::<f32>()?;
-            sample_from_probs(&probs_vec)?
-        };
-
-        // Track average log-probability of text tokens (not timestamps)
-        // for the quality check.
-        if next_token < model.no_timestamps_token {
-            let log_probs = candle_nn::ops::log_softmax(&logits, D::Minus1)?;
-            let lp = log_probs.i(next_token as usize)?.to_scalar::<f32>()? as f64;
-            sum_logprob += lp;
-            n_text_tokens += 1;
-        }
-
-        tokens.push(next_token);
-
-        if next_token == model.eot_token {
-            break;
-        }
-    }
-
-    let avg_logprob = if n_text_tokens > 0 {
-        sum_logprob / n_text_tokens as f64
-    } else {
-        0.0
-    };
-
-    Ok(DecodingResult {
-        tokens,
-        avg_logprob,
-        no_speech_prob,
-        compression_ratio: compression_ratio(&tokens),
-    })
-}
-
-/// Sample a token index from a probability distribution.
-fn sample_from_probs(probs: &[f32]) -> Result<u32> {
-    let mut rng = rand::rngs::StdRng::from_entropy();
-    let dist = rand::distributions::WeightedIndex::new(probs)
-        .map_err(|e| anyhow::anyhow!("sampling error: {e}"))?;
-    Ok(dist.sample(&mut rng) as u32)
-}
-
-/// Compression ratio: length of text / number of unique bigrams.
-///
-/// Repetitive decoder output (the "looping" failure mode) produces very
-/// high compression ratios because the same token sequences repeat.
-/// Whisper's default threshold is 2.4; anything above triggers a retry
-/// at higher temperature.
-fn compression_ratio(tokens: &[u32]) -> f64 {
-    if tokens.len() < 2 {
-        return 1.0;
-    }
-    let total = tokens.len() - 1;
-    let mut bigrams = std::collections::HashSet::new();
-    for pair in tokens.windows(2) {
-        bigrams.insert((pair[0], pair[1]));
-    }
-    total as f64 / bigrams.len() as f64
-}
-
-// ── Timestamp parsing ───────────────────────────────────────────────────────
-
-/// Convert the raw decoder token sequence into timestamped segments with
-/// word-level timing.
-///
-/// Timestamp tokens appear in pairs: `<|t_start|> text... <|t_end|>`.
-/// Each pair becomes one [`WhisperSegment`].  Within a segment, BPE tokens
-/// are grouped into words by the space-prefix convention and assigned
-/// proportional timestamps.
-fn extract_segments(
-    model: &WhisperModel,
-    tokens: &[u32],
-    time_offset: f64,
-) -> Vec<WhisperSegment> {
-    let timestamp_begin = model.no_timestamps_token + 1;
-    let mut segments = Vec::new();
-    let mut current_start: Option<f64> = None;
-    let mut current_tokens: Vec<u32> = Vec::new();
-
-    for &token in tokens {
-        if token == model.eot_token {
-            break;
-        }
-
-        if token >= timestamp_begin {
-            // Timestamp token: value = (token - timestamp_begin) × 0.02 s.
-            let time = (token - timestamp_begin) as f64 * 0.02 + time_offset;
-
-            if let Some(start) = current_start {
-                if !current_tokens.is_empty() {
-                    // Closing timestamp --- flush the segment.
-                    let text = model
-                        .tokenizer
-                        .decode(&current_tokens, true)
-                        .unwrap_or_default();
-                    let trimmed = text.trim().to_string();
-
-                    if !trimmed.is_empty() {
-                        let words =
-                            tokens_to_words(&model.tokenizer, &current_tokens, start, time);
-                        segments.push(WhisperSegment {
-                            text: trimmed,
-                            start,
-                            end: time,
-                            words,
-                        });
-                    }
-                }
-                current_tokens.clear();
-                current_start = None;
-            } else {
-                // Opening timestamp.
-                current_start = Some(time);
-            }
-        } else if token < model.no_timestamps_token && token < 50257 {
-            // Regular text token.  Special tokens (SOT, language, task)
-            // have IDs ≥ 50257 in the standard Whisper tokenizer and are
-            // skipped.
-            current_tokens.push(token);
-        }
-    }
-
-    segments
 }
 
 /// Group BPE tokens into words with approximate timestamps.
@@ -571,15 +684,14 @@ fn tokens_to_words(
         let t_end = seg_start + (i + 1) as f64 * time_per_token;
 
         // The tokenizer's `decode(..., true)` skips special tokens but
-        // preserves leading spaces.  A leading space signals a word
-        // boundary in BPE.
+        // preserves leading spaces.  A leading space signals a word boundary.
         if token_text.starts_with(' ') {
             // Flush the current word.
             if !current_word.is_empty() {
                 words.push(Word {
                     word: current_word.clone(),
-                    start_time: word_start.unwrap_or(seg_start),
-                    end_time: word_end,
+                    start: word_start.unwrap_or(seg_start),
+                    end: word_end,
                 });
             }
             current_word = token_text.trim().to_string();
@@ -597,8 +709,8 @@ fn tokens_to_words(
     if !current_word.is_empty() {
         words.push(Word {
             word: current_word,
-            start_time: word_start.unwrap_or(seg_start),
-            end_time: word_end,
+            start: word_start.unwrap_or(seg_start),
+            end: word_end,
         });
     }
 
