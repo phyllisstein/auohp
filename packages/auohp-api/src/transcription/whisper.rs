@@ -570,7 +570,7 @@ fn token_id(tokenizer: &Tokenizer, token: &str) -> Result<u32> {
 pub fn load_model() -> Result<WhisperModel> {
     // Prefer Metal (Apple Silicon GPU) if the feature is compiled in;
     // fall back to CPU otherwise.
-    let device = Device::new_metal(0).unwrap_or(Device::Cpu);
+    let device = Device::new_cuda(0).unwrap_or(Device::Cpu);
     eprintln!("Whisper: using device {device:?}");
 
     // hf_hub caches downloads in ~/.cache/huggingface/hub/.  The Api::new()

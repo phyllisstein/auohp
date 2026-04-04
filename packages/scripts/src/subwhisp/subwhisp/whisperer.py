@@ -21,7 +21,7 @@ def align_transcription(transcription, audio):
 
 
 def diarize_audio_file(aligned_result, audio):
-    diarize_model = whisperx.DiarizationPipeline("pyannote/speaker-diarization-3.1", use_auth_token="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", device=device)
+    diarize_model = whisperx.diarize.DiarizationPipeline("pyannote/speaker-diarization-3.1", use_auth_token="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", device=device)
     diarize_segments = diarize_model(audio)
     diarized_result = whisperx.assign_word_speakers(diarize_segments, aligned_result)
     return diarized_result
