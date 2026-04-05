@@ -1,17 +1,21 @@
-//! Transcription pipeline: orchestrates audio decoding → Whisper ASR →
-//! pyannote diarization → merge into speaker-attributed segments.
+//! Transcription pipeline: orchestrates audio decoding --> Whisper ASR -->
+//! pyannote diarization --> merge into speaker-attributed segments.
 
 use anyhow::{Context, Result};
 use std::path::{Path, PathBuf};
 
+use super::align;
 use super::audio;
 use super::diarize;
 use super::types::*;
 use super::whisper;
 
 /// Configuration for the transcription pipeline.
+///
+/// Whisper weights are downloaded automatically from HuggingFace Hub (cached
+/// in `~/.cache/huggingface/hub/`), so only the pyannote ONNX models need a
+/// local directory.
 pub struct PipelineConfig {
-    pub whisper_model: PathBuf,
     pub segmentation_model: PathBuf,
     pub embedding_model: PathBuf,
     pub max_speakers: usize,
@@ -20,7 +24,6 @@ pub struct PipelineConfig {
 impl PipelineConfig {
     pub fn from_model_dir(dir: &Path, max_speakers: usize) -> Self {
         Self {
-            whisper_model: dir.join("ggml-large-v3-turbo-q8_0.bin"),
             segmentation_model: dir.join("pyannote-segmentation-3.0.onnx"),
             embedding_model: dir.join("wespeaker_en_voxceleb_CAM++.onnx"),
             max_speakers,
@@ -32,15 +35,18 @@ impl PipelineConfig {
 ///
 /// This is blocking (Whisper and pyannote are CPU-bound). Call from
 /// `tokio::task::spawn_blocking` to avoid stalling the async runtime.
-pub fn run(
-    config: &PipelineConfig,
-    input_path: &Path,
-) -> Result<TranscriptionResult> {
+pub fn run(config: &PipelineConfig, input_path: &Path) -> Result<TranscriptionResult> {
     let decoded = audio::decode_file(input_path)
         .with_context(|| format!("failed to decode {}", input_path.display()))?;
 
-    let whisper_ctx = whisper::load_model(&config.whisper_model)?;
-    let whisper_segments = whisper::transcribe(&whisper_ctx, &decoded.samples)?;
+    let mut whisper_model = whisper::load_model()?;
+    let mut whisper_segments = whisper::transcribe(&mut whisper_model, &decoded.samples)?;
+
+    // Refine word-level timestamps via wav2vec2 CTC forced alignment.
+    // This replaces the proportional approximation from Whisper's timestamp
+    // tokens with precise character-level alignment (≈20 ms resolution).
+    let mut aligner = align::Aligner::load()?;
+    aligner.refine_segments(&mut whisper_segments, &decoded.samples)?;
 
     let samples_i16 = diarize::f32_to_i16(&decoded.samples);
     let diarized = diarize::diarize(
@@ -60,45 +66,54 @@ pub fn run(
     Ok(TranscriptionResult { segments, speakers })
 }
 
-/// Assign a speaker label to each Whisper segment by maximum temporal overlap
-/// with diarized segments, then merge consecutive same-speaker segments.
+/// Assign a speaker label to each *word* by maximum temporal overlap with
+/// diarized segments, then group consecutive same-speaker words into segments.
 fn merge_whisper_with_diarization(
     whisper_segments: &[whisper::WhisperSegment],
     diarized: &[diarize::DiarizedSegment],
 ) -> Vec<Segment> {
-    let labeled: Vec<Segment> = whisper_segments
+    // Step 1: Flatten all words from every Whisper segment into one stream,
+    // each labeled with the best-matching speaker.
+    let labeled_words: Vec<(String, Word)> = whisper_segments
         .iter()
-        .map(|ws| {
-            let speaker = best_speaker_overlap(ws.start, ws.end, diarized);
-            Segment {
-                speaker,
-                text: ws.text.clone(),
-                start_time: ws.start,
-                end_time: ws.end,
-                words: ws.words.clone(),
-            }
+        .flat_map(|ws| &ws.words)
+        .map(|word| {
+            let speaker = best_speaker_overlap(word.start, word.end, diarized);
+            (speaker, word.clone())
         })
         .collect();
 
-    let mut merged: Vec<Segment> = Vec::new();
-    for seg in labeled {
-        let should_merge = merged
+    // Step 2: Group consecutive same-speaker words into Segments.
+    group_labeled_words(labeled_words)
+}
+
+fn group_labeled_words(labeled_words: Vec<(String, Word)>) -> Vec<Segment> {
+    let mut segments: Vec<Segment> = Vec::new();
+
+    for (speaker, word) in labeled_words {
+        let should_merge = segments
             .last()
-            .map(|prev| prev.speaker == seg.speaker)
+            .map(|prev| prev.speaker == speaker)
             .unwrap_or(false);
 
         if should_merge {
-            let current = merged.last_mut().unwrap();
+            let current = segments.last_mut().unwrap();
             current.text.push(' ');
-            current.text.push_str(&seg.text);
-            current.end_time = seg.end_time;
-            current.words.extend(seg.words);
+            current.text.push_str(&word.word);
+            current.end_time = word.end;
+            current.words.push(word);
         } else {
-            merged.push(seg);
+            segments.push(Segment {
+                speaker,
+                text: word.word.clone(),
+                start_time: word.start,
+                end_time: word.end,
+                words: vec![word],
+            });
         }
     }
 
-    merged
+    segments
 }
 
 fn best_speaker_overlap(start: f64, end: f64, diarized: &[diarize::DiarizedSegment]) -> String {

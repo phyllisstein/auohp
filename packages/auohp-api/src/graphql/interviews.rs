@@ -3,9 +3,8 @@ use chrono::NaiveDate;
 use neo4rs::query;
 use serde::Deserialize;
 
-
-use crate::neo4j::Db;
 use super::error::gql_err;
+use crate::neo4j::Db;
 
 // Each struct below mirrors one node label in the Neo4j graph. The mapping is
 // deliberately close to the graph model so that schema changes surface as
@@ -34,7 +33,7 @@ pub struct Person {
 /// data from relationships (`:CONTAINS` timing, `:SAYS` speaker), making a
 /// full `Deserialize` derive impossible. This struct covers only what lives on
 /// the node itself. `#[serde(default)]` on `words` means serde substitutes
-/// `None` for absent keys rather than erroring — older transcripts were seeded
+/// `None` for absent keys rather than erroring---older transcripts were seeded
 /// without word-level timing, so the property may not exist on the node at all.
 #[derive(Deserialize)]
 pub struct StatementNode {
@@ -81,7 +80,7 @@ pub struct Transcript {
 /// The `date` field is stored as a Neo4j Date and deserialized into
 /// `chrono::NaiveDate`. async-graphql's `"chrono"` feature registers
 /// NaiveDate as a GraphQL scalar that serializes to ISO 8601 strings
-/// ("2003-05-05") — so the GraphQL API still returns a string, but
+/// ("2003-05-05")---so the GraphQL API still returns a string, but
 /// the Rust code works with a typed date value.
 #[derive(SimpleObject, Clone, Deserialize)]
 pub struct Interview {
@@ -92,7 +91,7 @@ pub struct Interview {
 }
 
 // ---------------------------------------------------------------------------
-// Resolver functions — called from QueryRoot in schema.rs.
+// Resolver functions---called from QueryRoot in schema.rs.
 // ---------------------------------------------------------------------------
 
 pub async fn list_interviews(ctx: &Context<'_>) -> async_graphql::Result<Vec<Interview>> {
@@ -117,16 +116,13 @@ pub async fn list_interviews(ctx: &Context<'_>) -> async_graphql::Result<Vec<Int
     Ok(interviews)
 }
 
-pub async fn get_transcript(
-    ctx: &Context<'_>,
-    number: i64,
-) -> async_graphql::Result<Transcript> {
+pub async fn get_transcript(ctx: &Context<'_>, number: i64) -> async_graphql::Result<Transcript> {
     let db = ctx.data::<Db>()?;
 
     // Statements are ordered by their startTime on the :CONTAINS relationship,
     // which records when each statement begins in the recording. This replaces
     // a previous approach that walked the :NEXT linked list via a variable-
-    // length path pattern ([:NEXT*0..]), which was O(N²) — it materialized
+    // length path pattern ([:NEXT*0..]), which was O(N²)---it materialized
     // every path from head to every reachable node just to derive ordering.
     //
     // startTime is set from the same source as :NEXT during seeding, and
@@ -172,7 +168,7 @@ pub async fn get_transcript(
         statements.push(Statement {
             uid: sn.uid,
             text: sn.text,
-            // Person can be deserialized directly — its fields match the
+            // Person can be deserialized directly---its fields match the
             // node properties exactly (uid, name).
             person: person.to().map_err(gql_err)?,
             is_interviewer: row.get("is_interviewer").map_err(gql_err)?,
@@ -184,9 +180,8 @@ pub async fn get_transcript(
         });
     }
 
-    let interview = interview_opt.ok_or_else(|| {
-        async_graphql::Error::new(format!("interview #{number} not found"))
-    })?;
+    let interview = interview_opt
+        .ok_or_else(|| async_graphql::Error::new(format!("interview #{number} not found")))?;
 
     Ok(Transcript {
         uid: transcript_uid,

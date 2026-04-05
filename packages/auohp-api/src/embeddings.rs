@@ -50,7 +50,7 @@ impl Embedder {
         //
         // The previous code used .unwrap(), which would panic (and crash the
         // entire server) on a poisoned lock. Instead we use
-        // .unwrap_or_else(|e| e.into_inner()) to recover — the ONNX session
+        // .unwrap_or_else(|e| e.into_inner()) to recover---the ONNX session
         // state is actually fine to reuse after a panic since fastembed
         // doesn't do partial mutation, so we just clear the poison flag and
         // carry on.

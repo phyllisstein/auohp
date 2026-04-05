@@ -6,23 +6,18 @@ mod transcription;
 use anyhow::Result;
 use async_graphql::http::GraphiQLSource;
 use async_graphql_axum::{GraphQLRequest, GraphQLResponse};
-use axum::{
-    extract::State,
-    response::Html,
-    routing::get,
-    Router,
-};
+use axum::{extract::State, response::Html, routing::get, Router};
 use tracing::info;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
 // The GraphQL handler receives two arguments:
 //
-//   State(schema)   — axum's dependency-injection mechanism. The schema is
+//   State(schema)  ---axum's dependency-injection mechanism. The schema is
 //                     stored in the Router via .with_state() and extracted
 //                     here with State<T>. The destructuring syntax
 //                     `State(schema)` unwraps the newtype wrapper in one step.
 //
-//   req             — the incoming GraphQL request, deserialized from JSON
+//   req            ---the incoming GraphQL request, deserialized from JSON
 //                     by async-graphql-axum.
 async fn graphql_handler(
     State(schema): State<graphql::AppSchema>,
@@ -47,14 +42,10 @@ async fn main() -> Result<()> {
 
     // Read connection parameters from the environment, with the same defaults
     // used by the TypeScript packages in this monorepo.
-    let neo4j_uri =
-        std::env::var("NEO4J_URI").unwrap_or_else(|_| "neo4j://neo4j:7687".to_string());
-    let neo4j_user =
-        std::env::var("NEO4J_USER").unwrap_or_else(|_| "neo4j".to_string());
-    let neo4j_password =
-        std::env::var("NEO4J_PASSWORD").unwrap_or_else(|_| "neo4j".to_string());
-    let neo4j_database =
-        std::env::var("NEO4J_DATABASE").unwrap_or_else(|_| "neo4j".to_string());
+    let neo4j_uri = std::env::var("NEO4J_URI").unwrap_or_else(|_| "neo4j://neo4j:7687".to_string());
+    let neo4j_user = std::env::var("NEO4J_USER").unwrap_or_else(|_| "neo4j".to_string());
+    let neo4j_password = std::env::var("NEO4J_PASSWORD").unwrap_or_else(|_| "neo4j".to_string());
+    let neo4j_database = std::env::var("NEO4J_DATABASE").unwrap_or_else(|_| "neo4j".to_string());
 
     let db = neo4j::connect(&neo4j_uri, &neo4j_user, &neo4j_password, &neo4j_database).await?;
     info!("connected to Neo4j at {neo4j_uri}");
@@ -72,18 +63,17 @@ async fn main() -> Result<()> {
     .await?;
     info!("ensured statement_embedding vector index (768-dim, cosine)");
 
-    let embedder = std::sync::Arc::new(
-        embeddings::Embedder::new().expect("failed to load embedding model"),
-    );
+    let embedder =
+        std::sync::Arc::new(embeddings::Embedder::new().expect("failed to load embedding model"));
     info!("loaded embedding model ({}-dim)", embedder.dimensions());
 
     let schema = graphql::build_schema(db, embedder);
 
     let app = Router::new()
         .route("/health", get(|| async { "ok" }))
-        // GET  /graphql → serves the GraphiQL interactive IDE, so you can
+        // GET  /graphql --> serves the GraphiQL interactive IDE, so you can
         //                  explore the schema and test queries from a browser.
-        // POST /graphql → the actual GraphQL execution endpoint.
+        // POST /graphql --> the actual GraphQL execution endpoint.
         //
         // GraphiQLSource generates a self-contained HTML page that talks to
         // the POST endpoint. It's baked into async-graphql behind the

@@ -28,7 +28,7 @@ download() {
     echo "  downloading: $(basename "$dest")"
     # If HF_TOKEN is set, pass it as a Bearer token for gated model access.
     # ${VAR:+word} is a bash parameter expansion that expands to "word" only
-    # when VAR is set and non-empty — so curl gets no -H flag at all when
+    # when VAR is set and non-empty---so curl gets no -H flag at all when
     # there's no token, rather than an empty Authorization header.
     curl -fL --progress-bar \
         ${HF_TOKEN:+-H "Authorization: Bearer $HF_TOKEN"} \
@@ -36,18 +36,11 @@ download() {
     mv "$dest.tmp" "$dest"
 }
 
-# ── Whisper large-v3-turbo (GGML, ~874 MB) ───────────────────────────────────
-# whisper-rs uses whisper.cpp's GGML format. large-v3-turbo is a distilled
-# model (4 decoder layers instead of 32) that is faster than medium.en on GPU
-# while producing more accurate transcripts. It's multilingual but we force
-# language="en" at inference time for AUOHP's English interviews.
-echo
-echo "==> Whisper ggml-large-v3-turbo-q8_0.bin (GGML)"
-download \
-    "$HF_BASE/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo-q8_0.bin" \
-    "$MODELS_DIR/ggml-large-v3-turbo-q8_0.bin"
+# NOTE: Whisper weights are no longer downloaded here.  The candle backend
+# fetches openai/whisper-large-v3-turbo from HuggingFace Hub automatically
+# on first use and caches them in ~/.cache/huggingface/hub/.
 
-# ── pyannote segmentation 3.0 (ONNX, ~17 MB) ────────────────────────────────
+# ── pyannote segmentation 3.0 (ONNX, ≈17 MB) ────────────────────────────────
 # Use the model exported by pyannote-rs itself (v0.1.0 release asset).
 # This export names its output tensor "output", which is what pyannote-rs 0.3.4
 # hardcodes in segment.rs. The onnx-community HuggingFace export names it
@@ -58,7 +51,7 @@ download \
     "https://github.com/thewh1teagle/pyannote-rs/releases/download/v0.1.0/segmentation-3.0.onnx" \
     "$MODELS_DIR/pyannote-segmentation-3.0.onnx"
 
-# ── wespeaker speaker embeddings (ONNX, ~26 MB) ─────────────────────────────
+# ── wespeaker speaker embeddings (ONNX, ≈26 MB) ─────────────────────────────
 # CAM++ VoxCeleb embeddings from the pyannote-rs v0.1.0 release.
 # The pyannote HuggingFace repo only has pytorch_model.bin (not ONNX), so we
 # use the pre-exported ONNX asset from the pyannote-rs releases instead.
