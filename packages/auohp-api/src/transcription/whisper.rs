@@ -559,7 +559,7 @@ fn token_id(tokenizer: &Tokenizer, token: &str) -> Result<u32> {
     }
 }
 
-/// Load Whisper large-v3-turbo from HuggingFace Hub.
+/// Load Whisper large-v3- from HuggingFace Hub.
 ///
 /// Downloads `config.json`, `tokenizer.json`, and `model.safetensors` on
 /// first call; subsequent calls reuse the cached files in
@@ -575,9 +575,9 @@ pub fn load_model() -> Result<WhisperModel> {
 
     // hf_hub caches downloads in ~/.cache/huggingface/hub/.  The Api::new()
     // constructor reads HF_TOKEN from the environment for gated-model access
-    // (not needed for openai/whisper-large-v3-turbo, which is public).
+    // (not needed for openai/whisper-large-v3, which is public).
     let api = hf_hub::api::sync::Api::new().context("failed to create HF Hub API")?;
-    let repo = api.model("openai/whisper-large-v3-turbo".to_string());
+    let repo = api.model("openai/whisper-large-v3".to_string());
 
     let config_path = repo
         .get("config.json")
