@@ -32,6 +32,7 @@ use candle_nn::{
 use rand::distr::weighted::WeightedIndex;
 use rand::distr::Distribution;
 use rand::SeedableRng;
+use serde::Serialize;
 use tokenizers::Tokenizer;
 
 use candle_transformers::models::whisper::{self as m, audio, Config};
@@ -51,6 +52,7 @@ const MEL_FILTERS_128: &[u8] = include_bytes!("melfilters128.bytes");
 /// Each segment corresponds to one (start_timestamp, end_timestamp) pair
 /// emitted by the decoder.  Within a segment, `words` provides approximate
 /// per-word timing derived from the BPE token count.
+#[derive(Debug, Clone, Serialize)]
 pub struct WhisperSegment {
     pub text: String,
     pub start: f64,
@@ -559,7 +561,7 @@ fn token_id(tokenizer: &Tokenizer, token: &str) -> Result<u32> {
     }
 }
 
-/// Load Whisper large-v3- from HuggingFace Hub.
+/// Load Whisper large-v3 from HuggingFace Hub.
 ///
 /// Downloads `config.json`, `tokenizer.json`, and `model.safetensors` on
 /// first call; subsequent calls reuse the cached files in
@@ -577,7 +579,7 @@ pub fn load_model() -> Result<WhisperModel> {
     // constructor reads HF_TOKEN from the environment for gated-model access
     // (not needed for openai/whisper-large-v3, which is public).
     let api = hf_hub::api::sync::Api::new().context("failed to create HF Hub API")?;
-    let repo = api.model("openai/whisper-large-v3".to_string());
+    let repo = api.model("Systran/faster-whisper-large-v3".to_string());
 
     let config_path = repo
         .get("config.json")

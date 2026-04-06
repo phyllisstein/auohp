@@ -63,7 +63,11 @@ pub fn run(config: &PipelineConfig, input_path: &Path) -> Result<TranscriptionRe
     speakers.sort();
     speakers.dedup();
 
-    Ok(TranscriptionResult { segments, speakers })
+    Ok(TranscriptionResult {
+        whisper_segments,
+        segments,
+        speakers,
+    })
 }
 
 /// Assign a speaker label to each *word* by maximum temporal overlap with
