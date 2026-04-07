@@ -18,10 +18,7 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilte
 
 fn main() -> Result<()> {
     tracing_subscriber::registry()
-        .with(
-            EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "auohp_api=debug".into()),
-        )
+        .with(EnvFilter::try_from_default_env().unwrap_or_else(|_| "auohp_api=debug".into()))
         .with(tracing_subscriber::fmt::layer().with_writer(std::io::stderr))
         .init();
 
@@ -31,10 +28,8 @@ fn main() -> Result<()> {
         .context("usage: transcribe <input_file> [models_dir]")?;
     let models_dir = args.next().unwrap_or_else(|| "models".to_string());
 
-    let config = transcription::PipelineConfig::from_model_dir(
-        std::path::Path::new(&models_dir),
-        10,
-    );
+    let config =
+        transcription::PipelineConfig::from_model_dir(std::path::Path::new(&models_dir), 2);
 
     let result = transcription::run(&config, std::path::Path::new(&input))?;
     println!("{}", serde_json::to_string_pretty(&result)?);
