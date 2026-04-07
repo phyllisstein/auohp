@@ -236,3 +236,14 @@ EOF
 # mkdir -p /mnt/scratch
 # sudo mount /dev/nvme1n1 /mnt/scratch
 # sudo chown ubuntu:ubuntu /mnt/scratch
+
+# Legacy Python
+# sudo add-apt-repository ppa:deadsnakes/ppa
+# sudo apt-get update
+# sudo apt-get install -y python3.10 python3.10-venv python3.10-dev
+
+# uv
+# curl -Ls https://astral.sh/uv/install.sh | sh
+
+# Rust
+# curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- --profile complete -y

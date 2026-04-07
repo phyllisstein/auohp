@@ -37,7 +37,7 @@ download() {
 }
 
 # NOTE: Whisper weights are no longer downloaded here.  The candle backend
-# fetches openai/whisper-large-v3-turbo from HuggingFace Hub automatically
+# fetches openai/whisper-large-v3 from HuggingFace Hub automatically
 # on first use and caches them in ~/.cache/huggingface/hub/.
 
 # ── pyannote segmentation 3.0 (ONNX, ≈17 MB) ────────────────────────────────
