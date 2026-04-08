@@ -119,6 +119,16 @@ fn mix_to_mono(interleaved: &[f32], channels: usize) -> Vec<f32> {
         .collect()
 }
 
+// FIXME: Extracting audio from an MP4 video file contributes to corrupted
+// transcriptions. Passing in a WAV already in 16k `pcm_s16le` bypasses these
+// transformations and yields higher-quality output from Whisper, but deviates
+// from the app's video-centric use case.
+
+// 4096-frame chunks --- large enough to amortise per-call overhead, small
+// enough to fit comfortably in L1/L2 cache.  Must match the `chunk_size`
+// argument passed to `new_sinc` below.
+const RESAMPLE_CHUNK: usize = 4096;
+
 fn resample(samples: &[f32], from_rate: u32, to_rate: u32) -> Result<Vec<f32>> {
     let params = SincInterpolationParameters {
         sinc_len: 256,
@@ -128,19 +138,40 @@ fn resample(samples: &[f32], from_rate: u32, to_rate: u32) -> Result<Vec<f32>> {
         window: WindowFunction::BlackmanHarris2,
     };
 
+    // `Async` with `FixedAsync::Input` expects exactly `chunk_size` input
+    // samples per call.  It keeps a `sinc_len / 2` sample history internally
+    // (the left half of the FIR kernel) so it can correctly stitch boundaries
+    // between chunks --- which is exactly what lets us avoid the one-shot
+    // overread panic.  In streaming mode the history is populated from prior
+    // real audio; in one-shot mode with a single huge chunk, it's zeros and
+    // the right-half lookahead has nowhere to read from.
     let mut resampler = Async::<f32>::new_sinc(
         to_rate as f64 / from_rate as f64,
         2.0,
         &params,
-        samples.len(),
+        RESAMPLE_CHUNK,
         1, // mono
         FixedAsync::Input,
     )?;
 
-    let input = vec![samples.to_vec()];
-    let adapter = SequentialSliceOfVecs::new(&input, 1, samples.len())
-        .map_err(|e| anyhow::anyhow!("adapter error: {e}"))?;
-    let output = resampler.process(&adapter, 0, None)?;
+    let expected = (samples.len() as f64 * to_rate as f64 / from_rate as f64).round() as usize;
+    let mut output = Vec::with_capacity(expected + RESAMPLE_CHUNK);
 
-    Ok(output.take_data())
+    // Feed the audio in RESAMPLE_CHUNK-sized slices, zero-padding the final
+    // partial chunk.  Rubato handles each boundary cleanly via its history buf.
+    for chunk in samples.chunks(RESAMPLE_CHUNK) {
+        let mut buf = chunk.to_vec();
+        buf.resize(RESAMPLE_CHUNK, 0.0); // no-op for full chunks
+
+        let input = vec![buf];
+        let adapter = SequentialSliceOfVecs::new(&input, 1, RESAMPLE_CHUNK)
+            .map_err(|e| anyhow::anyhow!("adapter error: {e}"))?;
+        output.extend_from_slice(&resampler.process(&adapter, 0, None)?.take_data());
+    }
+
+    // Trim to the exact expected length; the last few chunks may produce a
+    // handful of extra samples due to the zero-padded tail.
+    output.truncate(expected.min(output.len()));
+
+    Ok(output)
 }
