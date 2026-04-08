@@ -579,7 +579,7 @@ pub fn load_model() -> Result<WhisperModel> {
     // constructor reads HF_TOKEN from the environment for gated-model access
     // (not needed for openai/whisper-large-v3, which is public).
     let api = hf_hub::api::sync::Api::new().context("failed to create HF Hub API")?;
-    let repo = api.model("Systran/faster-whisper-large-v3".to_string());
+    let repo = api.model("openai/whisper-large-v3".to_string());
 
     let config_path = repo
         .get("config.json")
