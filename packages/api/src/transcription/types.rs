@@ -1,6 +1,6 @@
 use serde::Serialize;
 
-use crate::transcription::whisper::WhisperSegment;
+use crate::transcription::{diarize::DiarizedSegment, whisper::WhisperSegment};
 
 /// A word with its timing from Whisper's DTW alignment.
 #[derive(Debug, Clone, Serialize, PartialEq)]
@@ -24,6 +24,7 @@ pub struct Segment {
 #[derive(Debug, Clone, Serialize)]
 pub struct TranscriptionResult {
     pub segments: Vec<Segment>,
-    pub whisper_segments: Vec<WhisperSegment>,
     pub speakers: Vec<String>,
+    pub whisper_segments: Vec<WhisperSegment>,
+    pub diarized_segments: Vec<DiarizedSegment>,
 }

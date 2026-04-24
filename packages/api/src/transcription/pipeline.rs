@@ -72,6 +72,7 @@ pub fn run(config: &PipelineConfig, input_path: &Path) -> Result<TranscriptionRe
 
     Ok(TranscriptionResult {
         whisper_segments,
+        diarized_segments: diarized,
         segments,
         speakers,
     })
