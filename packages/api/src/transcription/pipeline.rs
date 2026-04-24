@@ -25,7 +25,7 @@ impl PipelineConfig {
     pub fn from_model_dir(dir: &Path, max_speakers: usize) -> Self {
         Self {
             segmentation_model: dir.join("pyannote-segmentation-3.0.onnx"),
-            embedding_model: dir.join("wespeaker_en_voxceleb_CAM++.onnx"),
+            embedding_model: dir.join("wespeaker_en_voxceleb_ECAPA1024.onnx"),
             max_speakers,
         }
     }

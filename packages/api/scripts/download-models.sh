@@ -58,15 +58,17 @@ download \
     "https://github.com/thewh1teagle/pyannote-rs/releases/download/v0.1.0/segmentation-3.0.onnx" \
     "$MODELS_DIR/pyannote-segmentation-3.0.onnx"
 
-# ── wespeaker speaker embeddings (ONNX, ≈26 MB) ─────────────────────────────
-# CAM++ VoxCeleb embeddings from the pyannote-rs v0.1.0 release.
-# The pyannote HuggingFace repo only has pytorch_model.bin (not ONNX), so we
-# use the pre-exported ONNX asset from the pyannote-rs releases instead.
+# ── wespeaker speaker embeddings (ONNX, ≈59 MB) ─────────────────────────────
+# ECAPA-TDNN 1024 trained on VoxCeleb, from the official WeSpeaker HuggingFace
+# org. All WeSpeaker ONNX exports share the same tensor interface ("feats" →
+# "embs"), so this is a drop-in replacement for the CAM++ model that pyannote-rs
+# originally shipped. ECAPA-TDNN 1024 scores meaningfully lower EER on
+# VoxCeleb1 (~3.8%) than CAM++ (~4.5%) or ECAPA-TDNN 512 (~4.3%).
 echo
-echo "==> wespeaker voxceleb CAM++ (ONNX, pyannote-rs release)"
+echo "==> wespeaker voxceleb ECAPA-TDNN 1024 (ONNX, WeSpeaker HuggingFace)"
 download \
-    "https://github.com/thewh1teagle/pyannote-rs/releases/download/v0.1.0/wespeaker_en_voxceleb_CAM%2B%2B.onnx" \
-    "$MODELS_DIR/wespeaker_en_voxceleb_CAM++.onnx"
+    "https://huggingface.co/Wespeaker/wespeaker-voxceleb-ecapa-tdnn1024-LM/resolve/main/voxceleb_ECAPA1024_LM.onnx" \
+    "$MODELS_DIR/wespeaker_en_voxceleb_ECAPA1024.onnx"
 
 echo
 echo "Done. All models in $MODELS_DIR"
