@@ -29,6 +29,13 @@ impl PipelineConfig {
             max_speakers,
         }
     }
+
+    /// Build a config from the `MODELS_DIR` environment variable, falling back
+    /// to `"models"` relative to the working directory if unset.
+    pub fn from_env(max_speakers: usize) -> Self {
+        let dir = std::env::var("MODELS_DIR").unwrap_or_else(|_| "models".to_string());
+        Self::from_model_dir(Path::new(&dir), max_speakers)
+    }
 }
 
 /// Run the full transcription pipeline on an audio/video file.

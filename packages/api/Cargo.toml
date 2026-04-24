@@ -31,6 +31,7 @@ cuda = [
 # features = ["full"] enables all tokio sub-crates (net, fs, time, sync, etc.)
 # so we don't have to add individual features as they're needed.
 tokio = { version = "1", features = ["full"] }
+tokio-retry = "0.3"
 
 # HTTP framework --- axum is built on top of Tower middleware by the Tokio team.
 # It uses type-safe extractors and composes well with the rest of this stack.

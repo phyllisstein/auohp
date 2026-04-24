@@ -1,0 +1,23 @@
+[
+    "trigger",
+    "/app",
+    {
+        "name": "editor-restart",
+        "expression": [
+            "allof",
+            ["dirname", "packages/editor"],
+            ["name",
+                [
+                    ".env",
+                    "tsconfig.json",
+                    "next.config.js"
+                ]
+            ]
+        ],
+        "command": [
+            "/app/scripts/develop.sh",
+            "editor"
+        ],
+        "append_files": false
+    }
+]

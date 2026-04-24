@@ -1,0 +1,26 @@
+[
+    "trigger",
+    "/app",
+    {
+        "name": "api-restart",
+        "expression": [
+            "allof",
+            ["dirname", "packages/api"],
+            ["anyof",
+                ["match", "**/*.rs"],
+                ["name",
+                    [
+                        ".env",
+                        "Cargo.toml",
+                        "Cargo.lock"
+                    ]
+                ]
+            ]
+        ],
+        "command": [
+            "/app/scripts/develop.sh",
+            "api"
+        ],
+        "append_files": false
+    }
+]

@@ -79,6 +79,7 @@ __metadata:
     "@stylelint/postcss-css-in-js": "npm:0.38.0"
     "@stylistic/eslint-plugin": "npm:^5.10.0"
     "@stylistic/stylelint-config": "npm:2.0.0"
+    "@types/react": "npm:19.2.14"
     "@vitest/browser": "npm:^4.0.18"
     "@vitest/coverage-istanbul": "npm:^4.0.18"
     "@vitest/coverage-v8": "npm:^4.0.18"
@@ -4381,6 +4382,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/react@npm:19.2.14":
+  version: 19.2.14
+  resolution: "@types/react@npm:19.2.14"
+  dependencies:
+    csstype: "npm:^3.2.2"
+  checksum: 10/fbff239089ee64b6bd9b00543594db498278b06de527ef1b0f71bb0eb09cc4445a71b5dd3c0d3d0257255c4eed94406be40a74ad4a987ade8a8d5dd65c82bc5f
+  languageName: node
+  linkType: hard
+
 "@types/resolve@npm:1.20.2":
   version: 1.20.2
   resolution: "@types/resolve@npm:1.20.2"
@@ -5651,7 +5661,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"csstype@npm:3.2.3, csstype@npm:^3.2.3":
+"csstype@npm:3.2.3, csstype@npm:^3.2.2, csstype@npm:^3.2.3":
   version: 3.2.3
   resolution: "csstype@npm:3.2.3"
   checksum: 10/ad41baf7e2ffac65ab544d79107bf7cd1a4bb9bab9ac3302f59ab4ba655d5e30942a8ae46e10ba160c6f4ecea464cc95b975ca2fefbdeeacd6ac63f12f99fe1f

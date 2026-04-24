@@ -4,15 +4,25 @@ set -Eeuxo pipefail
 
 args="$*"
 
-restart_server() {
-    echo "Terminate existing server..."
-    pkill -f "yarn.js packages:dev" || true
+restart_editor() {
+    echo "Terminate existing editor..."
+    pkill -f "packages/editor" || true
 
-  echo "Starting development server..."
-  [[ -e "/run/secrets/environment" ]] || { echo "Missing environment secrets." && exit 1; }
-  source /run/secrets/environment && export NEO4J_PASSWORD NEO4J_USERNAME NEO4J_URI AURA_INSTANCEID AUTA_INSTANCENAME
-  yarn packages:dev
-  disown
+    echo "Starting editor development server..."
+    cd /app/packages/editor
+    yarn start:dev &
+    disown
+}
+
+restart_api() {
+    echo "Terminate existing API..."
+    pkill -f "auohp-api" || true
+
+    echo "Starting API development server..."
+    cd /app/packages/api
+    ./scripts/download-models.sh
+    cargo run &
+    disown
 }
 
 configure_watches() {
@@ -32,16 +42,19 @@ watch_watchman() {
 }
 
 yarn_install() {
-  [[ -e "/run/secrets/environment" ]] || { echo "Missing environment secrets." && exit 0; }
-  pkill -f "yarn install" || true
-  echo "Running yarn install..."
-  source /run/secrets/environment && export NEO4J_PASSWORD NEO4J_USERNAME NEO4J_URI AURA_INSTANCEID AUTA_INSTANCENAME
-  yarn install
+    pkill -f "yarn install" || true
+    echo "Running yarn install..."
+    yarn install
 }
 
+
+[[ -e "/run/secrets/environment" ]] || { echo "Missing secret environment file." && exit 0; }
+source /run/secrets/environment && export NEO4J_PASSWORD NEO4J_USERNAME NEO4J_URI NEO4J_DATABASE HF_TOKEN
+
+
 case $args in
-serve)
-    restart_server
+editor)
+    restart_editor
     ;;
 
 watch)
@@ -54,7 +67,11 @@ watches)
 
 yarn)
     yarn_install
-    restart_server
+    restart_editor
+    ;;
+
+api)
+    restart_api
     ;;
 
 *)

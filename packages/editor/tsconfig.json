@@ -1,47 +1,54 @@
 {
-    "compileOnSave": false,
-    "compilerOptions": {
-        "outDir": "./dist",
-        "jsx": "react-jsx",
-        "paths": {
-            "*": [
-                "./src/*",
-                "./vendor/*",
-                "./node_modules/*"
-            ]
-        },
-        "lib": [
-            "dom",
-            "dom.iterable",
-            "esnext"
-        ],
-        "allowJs": true,
-        "strict": false,
-        "forceConsistentCasingInFileNames": true,
-        "noEmit": true,
-        "esModuleInterop": true,
-        "resolveJsonModule": true,
-        "isolatedModules": true,
-        "module": "nodenext",
-        "declaration": true,
-        "removeComments": true,
-        "emitDecoratorMetadata": true,
-        "experimentalDecorators": true,
-        "allowSyntheticDefaultImports": true,
-        "target": "esnext",
-        "incremental": true,
-        "skipLibCheck": true,
-        "moduleResolution": "nodenext"
+  "compileOnSave": false,
+  "compilerOptions": {
+    "outDir": "./dist",
+    "jsx": "react-jsx",
+    "paths": {
+      "*": [
+        "./src/*",
+        "./vendor/*",
+        "./node_modules/*"
+      ]
     },
-    "include": [
-        "./src/**/*.ts",
-        "./src/**/*.tsx",
-        "./src/**/*.d.ts"
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
     ],
-    "exclude": [
-        "node_modules"
-    ],
-    "typeAcquisition": {
-        "enable": true
-    }
+    "allowJs": true,
+    "strict": false,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "module": "nodenext",
+    "declaration": true,
+    "removeComments": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "target": "esnext",
+    "incremental": true,
+    "skipLibCheck": true,
+    "moduleResolution": "nodenext",
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
+  },
+  "include": [
+    "./src/**/*.ts",
+    "./src/**/*.tsx",
+    "./src/**/*.d.ts",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ],
+  "typeAcquisition": {
+    "enable": true
+  }
 }

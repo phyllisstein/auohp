@@ -17,10 +17,14 @@ services:
         search.auohp.here:
           "/":
             port: "4040"
+        api.auohp.here:
+          "/":
+            port: "6060"
     depends_on: [neo4j]
     expose:
       - "3030"
       - "4040"
+      - "6060"
     volumes:
       - type: bind
         source: .
@@ -28,30 +32,15 @@ services:
       - type: volume
         source: node_modules
         target: /app/node_modules
-  auohp-api:
-    networks:
-      - default
-      - nginx-proxy
-    build:
-      context: .
-      dockerfile: packages/auohp-api/Dockerfile
-    secrets:
-      - source: environment
-        mode: 0440
-    environment:
-      VIRTUAL_HOST_MULTIPORTS: |-
-        api.auohp.here:
-          "/":
-            port: "6060"
-    depends_on: [neo4j]
-    expose:
-      - "6060"
-    volumes:
-      # ONNX model weights (BGE-small, pyannote segmentation, wespeaker).
-      # Downloaded from Hugging Face Hub on first startup; reused thereafter.
+      - type: volume
+        source: rust_target
+        target: /app/target
       - type: volume
         source: auohp_models
         target: /models
+      - type: volume
+        source: cargo_registry
+        target: /usr/local/cargo/registry
 
   neo4j:
     networks:
@@ -88,9 +77,11 @@ services:
         target: /data
 
 volumes:
+  auohp_models:
+  cargo_registry:
   graph_data:
   node_modules:
-  auohp_models:
+  rust_target:
 
 secrets:
   environment:

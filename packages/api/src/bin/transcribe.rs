@@ -3,6 +3,8 @@
 //! Usage:
 //!   cargo run --bin transcribe -- <input_file> [models_dir]
 //!
+//! models_dir defaults to $MODELS_DIR, then "./models" if neither is set.
+//!
 //! Writes the TranscriptionResult JSON to stdout; logs go to stderr.
 //! Redirect as needed:
 //!   cargo run --bin transcribe -- clip.mp4 > out.json 2> out.log
@@ -26,10 +28,10 @@ fn main() -> Result<()> {
     let input = args
         .next()
         .context("usage: transcribe <input_file> [models_dir]")?;
-    let models_dir = args.next().unwrap_or_else(|| "models".to_string());
-
-    let config =
-        transcription::PipelineConfig::from_model_dir(std::path::Path::new(&models_dir), 2);
+    let config = match args.next() {
+        Some(dir) => transcription::PipelineConfig::from_model_dir(std::path::Path::new(&dir), 2),
+        None => transcription::PipelineConfig::from_env(2),
+    };
 
     let result = transcription::run(&config, std::path::Path::new(&input))?;
     println!("{}", serde_json::to_string_pretty(&result)?);
