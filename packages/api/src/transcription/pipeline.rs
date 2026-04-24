@@ -95,33 +95,20 @@ fn merge_whisper_with_diarization(
         .collect();
 
     // Step 2: Group consecutive same-speaker words into Segments.
-    group_labeled_words(labeled_words)
+    segment_labeled_words(labeled_words)
 }
 
-fn group_labeled_words(labeled_words: Vec<(String, Word)>) -> Vec<Segment> {
+fn segment_labeled_words(labeled_words: Vec<(String, Word)>) -> Vec<Segment> {
     let mut segments: Vec<Segment> = Vec::new();
 
     for (speaker, word) in labeled_words {
-        let should_merge = segments
-            .last()
-            .map(|prev| prev.speaker == speaker)
-            .unwrap_or(false);
-
-        if should_merge {
-            let current = segments.last_mut().unwrap();
-            current.text.push(' ');
-            current.text.push_str(&word.word);
-            current.end_time = word.end;
-            current.words.push(word);
-        } else {
-            segments.push(Segment {
-                speaker,
-                text: word.word.clone(),
-                start_time: word.start,
-                end_time: word.end,
-                words: vec![word],
-            });
-        }
+        segments.push(Segment {
+            speaker,
+            text: word.word.clone(),
+            start_time: word.start,
+            end_time: word.end,
+            words: vec![word],
+        });
     }
 
     segments
