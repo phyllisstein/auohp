@@ -1,0 +1,952 @@
+ ▐▛███▜▌   Claude Code v2.1.86
+▝▜█████▛▘  Sonnet 4.6 · Claude Pro
+  ▘▘ ▝▝    ~/Code/Personal/auohp/packages/auohp-api
+
+❯ /clear                                                                        
+  ⎿  (no content)
+
+❯ /model                                                                        
+  ⎿  Set model to Opus 4.6
+
+❯ /config 
+  ⎿  Status dialog dismissed
+
+❯ Quality of transcriptions is very low @assets/117_alexis_danzig.json :        
+                                                                                
+- Punctuation is haphazard in representing natural speech, and missing more     
+often than not                                                                  
+- Common proper names, especially ACT UP, are mangled. ACT UP often becomes a   
+verb phrase, but sometimes even stranger: "The date community... Within         
+ACTUPS."                                                                        
+- There are never more than two speakers, let alone nine                        
+- Filler words like "uh" aren't eliminated,  and redundant speech when a        
+speaker is stalling or collecting their thoughts is overrepresented ("Uh...     
+My... My... My... My sense of loss.")                                           
+- Despite the over-diarization, interruptions between speakers are glommed      
+together ("The date community... Within ACTUPS. So can you explain what that    
+community was like?" is clearly the interviewer edging in with a clarification  
+question.)                                                                      
+
+⏺ Let me examine the transcript to understand the scope of these issues.
+
+  Searched for 1 pattern, read 1 file (ctrl+o to expand)
+
+⏺ The assets/ directory doesn't exist locally — the glob hit git-tracked paths
+  that may be in .gitignore or LFS. Let me check the scripts copy instead.
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ Bash(cat /Users/daniel/Code/Personal/auohp/packages/scripts/assets/117_alexis_
+      danzig.json | python3 -c "import json,sys; d=json.load(sys.stdin);
+      speakers=set(s['spea…)
+  ⎿  Statements: 799
+     Speakers (4): ['SPEAKER_00', 'SPEAKER_01', 'SPEAKER_02', 'SPEAKER_NULL
+     ']
+     Time range: 52.9s - 4579.0s
+
+⏺ Let me see some of the problematic areas you mentioned — the ACT UP mangling
+  and over-diarization.
+
+⏺ Bash(cat /Users/daniel/Code/Personal/auohp/packages/scripts/assets/117_alexis_
+      danzig.json | python3 -c "
+      import json, sys…)
+  ⎿  [35] SPEAKER_01 (167.9-176.2): But my mom was very politically active
+     in terms of peace marches on the Upper West Side and being involved as
+      a mom and
+     … +50 lines (ctrl+o to expand)
+
+⏺ Bash(cat /Users/daniel/Code/Personal/auohp/packages/scripts/assets/117_alexis_
+      danzig.json | python3 -c "
+      import json, sys…)
+  ⎿  [97] SPEAKER_01 (441.7-441.9): Um...
+
+⏺ Bash(cat /Users/daniel/Code/Personal/auohp/packages/scripts/assets/117_alexis_
+      danzig.json | python3 -c "
+      import json, sys…)
+  ⎿  [86] SPEAKER_02 (384.9-385.8): But he stayed in New York?
+     [151] SPEAKER_NULL (711.7-711.9): Okay.
+     [371] SPEAKER_02 (1934.1-1934.3): Hennelly.
+
+⏺ Bash(cat /Users/daniel/Code/Personal/auohp/packages/scripts/assets/117_alexis_
+      danzig.json | python3 -c "
+      import json, sys…)
+  ⎿  [303] SPEAKER_01 (1488.4-1498.7): My first actions, I think, were real
+     ly to participate in the Dyke community within ACT UP.
+     [637] SPEAKER_01 (3533.0-3543.6): most of the, I came out of a homosoc
+     … +2 lines (ctrl+o to expand)
+
+⏺ Bash(cat /Users/daniel/Code/Personal/auohp/packages/scripts/assets/117_alexis_
+      danzig.json | python3 -c "
+      import json, sys…)
+  ⎿  [300] SPEAKER_01 (1456.2-1459.3): And I was still living there.
+     [301] SPEAKER_01 (1460.8-1475.6): when I got a call from an ex-boyfrie
+     nd from college talking to me about the strip search arrest, which had
+     … +21 lines (ctrl+o to expand)
+
+⏺ Now I have a clear picture. Let me also check the current subwhisp pipeline to
+   understand what we're working with.
+
+⏺ Bash(cat /Users/daniel/Code/Personal/auohp/packages/scripts/assets/117_alexis_
+      danzig.json | python3 -c "
+      import json, sys…)
+  ⎿  Interrupted · What should Claude do instead?
+
+❯ Subwhisp is no longer in use, see the code in @src/transcription/pipeline.rs  
+and similar                                                                     
+
+⏺ Good — so the transcription pipeline is now in Rust, in auohp-api. I already
+  have pipeline.rs from the system context. Let me explore the rest of the
+  transcription module to understand the full picture.
+
+  Searched for 1 pattern, read 5 files (ctrl+o to expand)
+
+⏺ Now I have the full picture. Here's my assessment:
+
+  ★ Insight ─────────────────────────────────────
+  The issues you're seeing map to specific stages in the pipeline:
+
+  1. Over-diarization (9 speakers → should be 2): The diarize.rs cosine
+  similarity threshold is 0.5 (line 123). This is quite high — meaning two
+  segments from the same speaker need to be quite similar in embedding space to
+  be matched. Voice timbre varies within a single person's speech (whispering
+  vs. emphatic, emotional vs. calm), so a strict threshold fractures one real
+  speaker into multiple phantom speakers. The max_speakers parameter only caps
+  new cluster creation — once at capacity it force-matches, but by then the
+  damage is done.
+  2. Fragmentation / missing punctuation: Whisper's segment boundaries are
+  acoustic, not linguistic. The merge_whisper_with_diarization in pipeline.rs
+  only merges consecutive same-speaker segments (line 87). So when diarization
+  is wrong (assigns the same person two different labels), natural sentences get
+   split at arbitrary points. The old subwhisp JSON you showed has statements
+  like "my my sense of loss into a sense of activity" — a mid-sentence fragment
+  because the speaker label flickered.
+  3. "ACT UP" → verb phrase: This is a Whisper decoding issue. Without domain
+  vocabulary hints, the model picks the most probable BPE token sequence. "act
+  up" as a verb is far more common in Whisper's training data than "ACT UP" as a
+   proper noun. Whisper.cpp supports an initial_prompt parameter that can bias
+  decoding — feeding it "ACT UP, Alexis Danzig, pyannote" etc. would help.
+  4. Filler words / false starts: Whisper faithfully transcribes these. The
+  transcribe() function in whisper.rs doesn't suppress non-speech tokens or
+  filter disfluencies.
+  ─────────────────────────────────────────────────
+
+  These are four fairly independent problems. Here's what I'd propose tackling,
+  roughly in priority order:
+
+  1. Diarization threshold tuning — Lower the 0.5 cosine similarity threshold
+  and/or cap max_speakers to 2 for AUOHP interviews. This is the root cause of
+  fragmentation and over-diarization simultaneously.
+  2. Whisper initial prompt — Pass domain-specific vocabulary ("ACT UP, AIDS, 
+  Alexis Danzig") via params.set_initial_prompt() to bias proper noun
+  recognition.
+  3. Post-processing pass — After merge_whisper_with_diarization, add a step
+  that consolidates tiny adjacent segments, removes pure-filler segments, and
+  re-punctuates. This could be a simple rule-based pass or an LLM cleanup step.
+  4. Filler/disfluency suppression — Either via Whisper's suppress_tokens or as
+  part of post-processing.
+
+  Which of these would you like to dig into first? The diarization threshold is
+  the highest-leverage fix — it would resolve both the phantom speakers and most
+   of the fragmentation in one shot.
+
+✻ Baked for 39s
+
+❯ `merge_whisper_with_diarization` is likely behaving incorrectly as well. The  
+goal is to produce captions for interview videos: the boundaries should reflect 
+ both natural speech and the space/length limits of subtitles. (Consider        
+https://www.bbc.co.uk/accessibility/forproducts/guides/subtitles/ as the gold   
+standard.)                                                                      
+
+⏺ Fetch(https://www.bbc.co.uk/accessibility/forproducts/guides/subtitles/)
+  ⎿  Error: Claude Code is unable to fetch from www.bbc.co.uk
+⏺ Web Search("BBC subtitle guidelines characters per line reading speed timing
+            rules accessibility")
+  ⎿  Did 0 searches in 244ms
+
+⏺ Web Search("subtitle captioning best practices characters per line duration
+            timing line breaks Netflix BBC standard")
+  ⎿  Did 1 search in 12s
+
+⏺ Fetch(https://partnerhelp.netflixstudios.com/hc/en-us/articles/215758617-Timed
+       -Text-Style-Guide-General-Requirements)
+  ⎿  Interrupted · What should Claude do instead?
+
+⏺ Fetch(https://partnerhelp.netflixstudios.com/hc/en-us/articles/217350977-Engli
+       sh-USA-Timed-Text-Style-Guide)
+  ⎿  Interrupted · What should Claude do instead?
+
+❯ `merge_whisper_with_diarization` is likely behaving incorrectly as well. The  
+goal is to produce                                                              
+captions for interview videos: the boundaries should reflect both natural       
+speech and the space/length                                                     
+limits of subtitles. Consider the BBC guidelines                                
+@assets/bbc-subtitle-guidelines.html as the gold standard                       
+
+  Searched for 2 patterns, read 2 files (ctrl+o to expand)
+
+⏺ That's all boilerplate HTML/JS. Let me skip to the actual content.
+
+  Searched for 1 pattern (ctrl+o to expand)
+
+⏺ Let me read the actual content sections, skipping the HTML boilerplate.
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ Bash(python3 -c "
+      from html.parser import HTMLParser…)
+  ⎿  BBC Subtitle Guidelines
+     Close menu
+     OVERVIEW
+     … +317 lines (ctrl+o to expand)
+
+⏺ Bash(python3 -c "
+      from html.parser import HTMLParser…)
+  ⎿  Gaps
+     If there is a pause between two pieces of speech, you may leave a gap
+     between the subtitles - but this must be a minimum of one second, pref
+     … +277 lines (ctrl+o to expand)
+
+⏺ Now let me get the timing section specifically.
+
+⏺ Bash(python3 -c "
+      from html.parser import HTMLParser…)
+  ⎿  Timing
+     ,
+     Identifying speakers
+     … +84 lines (ctrl+o to expand)
+
+⏺ That hit the table of contents mention, not the actual timing section. Let me
+  search more precisely.
+
+⏺ Bash(python3 -c "
+      from html.parser import HTMLParser…)
+  ⎿  Interrupted · What should Claude do instead?
+
+❯ `merge_whisper_with_diarization` is likely behaving incorrectly as well. The  
+goal is to produce                                                              
+captions for interview videos: the boundaries should reflect both natural       
+speech and the space/length                                                     
+limits of subtitles.                                                            
+
+⏺ You're right — let me focus on the actual code problem. Here's what
+  merge_whisper_with_diarization currently does (pipeline.rs:65-102):
+
+  1. Labels each Whisper segment with the best-overlap speaker
+  2. Merges consecutive same-speaker segments by string concatenation
+  3. That's it
+
+  ★ Insight ─────────────────────────────────────
+  The fundamental issue is that this function conflates two unrelated operations
+   — speaker attribution and caption segmentation — and does the second one
+  badly. Whisper's raw segments are acoustic chunks (typically 5-30 seconds of
+  audio), not linguistic units. Merging them by speaker produces even longer
+  blobs of unsegmented text. What we actually need is the opposite direction:
+  after speaker attribution, we need to re-segment the text into caption-sized,
+  linguistically coherent units.
+
+  The word-level DTW timestamps are the key asset here. Each Word has its own
+  start/end time, so we can reflow the text into caption segments at any word
+  boundary — we're not locked to Whisper's acoustic segmentation at all.
+  ─────────────────────────────────────────────────
+
+  From what I extracted from the BBC guidelines, plus standard subtitle
+  conventions, these are the constraints a proper caption segmenter needs to
+  respect:
+
+  ┌──────────────────────┬──────────────────────────────────────────────────┐
+  │      Constraint      │                      Value                       │
+  ├──────────────────────┼──────────────────────────────────────────────────┤
+  │ Max characters per   │ ~37 (broadcast) / ~42 (online proportional)      │
+  │ line                 │                                                  │
+  ├──────────────────────┼──────────────────────────────────────────────────┤
+  │ Max lines per        │ 2                                                │
+  │ subtitle             │                                                  │
+  ├──────────────────────┼──────────────────────────────────────────────────┤
+  │ Break at natural     │ punctuation > clause boundary > phrase boundary  │
+  │ points               │                                                  │
+  ├──────────────────────┼──────────────────────────────────────────────────┤
+  │ Don't split          │ article+noun, preposition+phrase, pronoun+verb,  │
+  │                      │ compound verbs                                   │
+  ├──────────────────────┼──────────────────────────────────────────────────┤
+  │ Min display duration │ ~1 second                                        │
+  ├──────────────────────┼──────────────────────────────────────────────────┤
+  │ Max display duration │ ~7 seconds                                       │
+  ├──────────────────────┼──────────────────────────────────────────────────┤
+  │ Reading speed        │ 160-180 WPM                                      │
+  ├──────────────────────┼──────────────────────────────────────────────────┤
+  │ Min gap between      │ ~1 second (to avoid flicker)                     │
+  │ subtitles            │                                                  │
+  ├──────────────────────┼──────────────────────────────────────────────────┤
+  │ Speaker changes      │ always start a new subtitle                      │
+  └──────────────────────┴──────────────────────────────────────────────────┘
+
+  So the pipeline should really be three phases:
+
+  1. Speaker attribution — label each word (not segment) with a speaker, using
+  the diarization overlap
+  2. Caption segmentation — reflow the speaker-labeled word stream into
+  subtitle-sized units, breaking at linguistic boundaries and respecting
+  character/line limits
+  3. Timing — assign start/end times from word timestamps, respecting min/max
+  duration and gap constraints
+
+  Phase 1 is a mechanical fix to what's already there. Phase 3 is largely
+  derived from the word timestamps. Phase 2 is where the real design decisions 
+  live — it's the part where there are meaningfully different strategies.
+
+  Would you like to plan this out as a refactor of pipeline.rs, or should we dig
+   into the segmentation algorithm design first? The segmentation logic is the
+  interesting part — it's essentially a line-breaking / text-reflow problem
+  (like Knuth-Plass but with temporal constraints on top of spatial ones).
+
+❯ Knuth-Plass first, please, yes, Knuth-Plass.                                  
+
+❯ Knuth-Plass first, please, yes, Knuth-Plass. Don't write code for me, guide   
+me through it.                                                                  
+
+⏺ ★ Insight ─────────────────────────────────────
+  Knuth-Plass is a beautiful fit here because it frames line-breaking as a
+  global optimization problem rather than a greedy one. The classic greedy
+  algorithm (fill each line until it overflows, then break) produces locally
+  acceptable but globally mediocre results — exactly what
+  merge_whisper_with_diarization does now. Knuth-Plass instead considers all 
+  possible breakpoints and finds the sequence of breaks that minimizes a total
+  penalty across the entire paragraph. The key insight is that a slightly loose
+  line here might enable a much better break there.
+
+  For subtitles, this matters even more than for typesetting. A greedy approach
+  might produce a caption that ends mid-phrase, forcing an awkward carryover to
+  the next subtitle. Knuth-Plass can "look ahead" and realize that breaking one
+  word earlier produces two well-formed captions instead of one good and one
+  bad.
+  ─────────────────────────────────────────────────
+
+  The core abstraction
+
+  Knuth-Plass works on three concepts:
+
+  1. Boxes
+
+  The indivisible units of content. In typesetting these are characters or
+  words. For us, each word (from Whisper's DTW output) is a box. A box has a
+  width — in our case, the character count of the word.
+
+  2. Glue
+
+  The stretchable/shrinkable space between boxes. In typesetting, glue is the
+  inter-word space that can stretch or compress to justify a line. For subtitles
+   we don't justify, so our glue is simpler: it's the single space character
+  between words (width 1), but it also carries temporal information — the time
+  gap between consecutive words. A large time gap (a natural pause in speech) is
+   "stretchy" glue: the algorithm should prefer breaking there.
+
+  3. Penalties
+
+  The cost of breaking at a particular point. This is where the linguistic rules
+   live:
+
+  - Breaking after punctuation (period, comma, dash, question mark): low penalty
+   — this is a natural break
+  - Breaking at a clause boundary (after a conjunction, before a subordinate
+  clause): moderate penalty
+  - Breaking between an article and its noun ("the | table"): very high penalty
+  - Breaking between a pronoun and its verb ("she | went"): very high penalty
+  - Breaking at a speaker change: forced break — negative infinity penalty (must
+   break here)
+
+  The algorithm
+
+  The algorithm builds a graph. Each potential breakpoint (each inter-word
+  position) is a node. An edge from node i to node j means "set a caption
+  boundary here, with words i+1 through j forming one subtitle." Each edge has a
+   cost (the "demerits") computed from:
+
+  1. Line badness — how far the line's character count deviates from the ideal
+  width. Too short wastes reading time; too long overflows. Lines exceeding the
+  maximum width get infinite cost (infeasible).
+  2. Break penalty — the linguistic penalty of breaking at position j.
+  3. Temporal fitness — this is our subtitle-specific extension. A caption whose
+   display duration (from first word's start to last word's end) doesn't give
+  the viewer enough reading time at 160-180 WPM gets additional cost. So does a
+  caption that sits on screen for too long.
+
+  The algorithm finds the shortest path from the start of the paragraph to the
+  end — the sequence of breakpoints with minimum total demerits. This is
+  solvable with dynamic programming in O(n²) time worst case, but practically
+  much faster because you can prune: once a line exceeds maximum width, no
+  further words need be considered for that starting breakpoint.
+
+  How it maps to our pipeline
+
+  Word stream (speaker-labeled)
+      │
+      ▼
+  ┌─────────────────────────┐
+  │  Split at speaker changes │  ← forced breaks, produces "paragraphs"
+  │  (one paragraph per turn) │
+  └─────────────────────────┘
+      │
+      ▼
+  ┌─────────────────────────┐
+  │  Knuth-Plass per paragraph │  ← finds optimal caption breaks
+  │  considering:              │
+  │   • char width (≤37/line)  │
+  │   • max 2 lines/caption    │
+  │   • linguistic penalties   │
+  │   • temporal constraints   │
+  └─────────────────────────┘
+      │
+      ▼
+  ┌─────────────────────────┐
+  │  Assign timing from word  │
+  │  DTW timestamps           │
+  └─────────────────────────┘
+      │
+      ▼
+    Vec<Caption>
+
+  Each "paragraph" (one speaker's uninterrupted turn) gets its own Knuth-Plass
+  pass. The algorithm produces a list of breakpoints. Between each pair of
+  consecutive breakpoints, the words form one caption. The caption's timing
+  comes directly from the first and last word's timestamps.
+
+  The two-level break structure
+
+  Here's a subtlety worth understanding: subtitles have two levels of
+  line-breaking. A caption can have up to 2 lines, and each line has a character
+   limit. So within a single caption, there can be a line break (the \n within
+  the subtitle), and between captions, there's a caption break (the boundary
+  between two timed subtitle events).
+
+  Knuth-Plass can handle this elegantly. You run it once to find line breaks
+  (optimizing character width per line), then group consecutive line pairs into
+  captions. Or — more powerfully — you model it as a single pass where each
+  "line" is actually a 2-line caption, and the width constraint is "total
+  characters across both lines, with neither line exceeding 37." The penalty
+  function then considers both the intra-caption line break quality and the
+  inter-caption break quality.
+
+  ★ Insight ─────────────────────────────────────
+  The temporal dimension is what makes this problem genuinely novel compared to
+  Knuth's original. In typesetting, the "cost" of a paragraph is purely spatial.
+   Here, a caption that's spatially perfect (nice line lengths, clean linguistic
+   breaks) can still be temporally bad — if the speaker rushed through those
+  words in 0.3 seconds, the viewer has no time to read them. This means the
+  penalty function needs to balance two competing objectives: spatial quality
+  and temporal quality. That tension is where the interesting engineering lives.
+  ─────────────────────────────────────────────────
+
+  Want to start with the data model (boxes, glue, penalties as Rust types), or
+  with the penalty function design? The penalty function is where your domain
+  knowledge of these interviews matters most — you know what kinds of breaks
+  feel natural in oral history speech.
+
+✻ Cogitated for 42s
+
+❯ /export                                                                       
+  ⎿  Conversation exported to: /Users/daniel/Code/Personal/auohp/packages/auohp-
+     api/2026-03-28-094013-local-command-caveatcaveat-the-messages-below-w.txt
+
+❯ /exit                                                                         
+  ⎿  Goodbye!
+❯ /branch 
+  ⎿  Branched conversation. You are now in the branch.
+     To resume the original: claude -r 7339b15f-c0be-4a01-bf5a-4374822763a4
+
+❯ Tell me more about the graph pattern in Knuth-Plass.                          
+
+⏺ Great question. Let me build this up from first principles.
+
+  The naive view
+
+  Most people first encounter line-breaking as a greedy algorithm: scan left to
+  right, accumulate words, break when the next word would overflow. This is O(n)
+   and produces a solution, but not necessarily a good one. The problem is that
+  a greedy break at position 15 commits you irrevocably — you never reconsider
+  it, even if a slightly earlier break at position 14 would have made the next
+  three lines dramatically better.
+
+  The graph formulation
+
+  Knuth-Plass recasts this as a shortest-path problem on a DAG (directed acyclic
+   graph).
+
+  Nodes represent feasible breakpoints — positions in the text where a break is
+  allowed. For our subtitle problem, every inter-word gap is a candidate
+  breakpoint, plus the very start and very end of the paragraph. Number them 0
+  through n, where 0 is "before the first word" and n is "after the last word."
+
+  Edges represent candidate lines. An edge from node i to node j says: "make a
+  line (or caption) from the words between breakpoints i and j." Not every pair
+  (i, j) gets an edge — only those where the words from i+1 through j actually
+  fit within the line width constraint. If the text overflows, no edge exists.
+
+  Edge weights are the demerits — the cost of that particular line. This is
+  where the quality function lives: how "bad" is a line that uses words i+1
+  through j?
+
+  The solution is the shortest path from node 0 to node n — the sequence of
+  breakpoints that minimizes total demerits across all lines.
+
+  ★ Insight ─────────────────────────────────────
+  This is a DAG (no cycles — breakpoint indices only increase), so shortest-path
+   is solvable with a single left-to-right pass in O(n²) worst case, but
+  practically closer to O(n·m) where m is the average number of words that fit
+  on a line. The DAG structure is why dynamic programming works here: you're
+  computing, for each node j, the minimum total cost to reach j from node 0. And
+   since edges only go forward (i < j), by the time you process j, every
+  predecessor i has already been finalized.
+
+  This is the same structure as Dijkstra on a DAG, but simpler — you don't even
+  need a priority queue. Topological order is numerical order.
+  ─────────────────────────────────────────────────
+
+  The DP recurrence
+
+  For each breakpoint j, you compute:
+
+  cost[j] = min over all valid i < j of:
+      cost[i] + demerits(i, j)
+
+  where demerits(i, j) is the cost of forming a line from words i+1 through j.
+  You also record prev[j] = i (whichever i achieved the minimum), so you can
+  trace back the optimal sequence of breaks.
+
+  The base case is cost[0] = 0 — it costs nothing to be at the start before any
+  words.
+
+  The answer is cost[n], and you reconstruct the breakpoints by chasing prev
+  pointers backward from n to 0.
+
+  What goes into demerits(i, j)?
+
+  This is the heart of the design. Knuth's original formulation uses:
+
+  demerits(i, j) = (1 + badness(i,j) + penalty(j))²
+
+  Badness measures how far the line deviates from the ideal width. Knuth defines
+   it as:
+
+  badness = 100 × |adjustment_ratio|³
+
+  where adjustment_ratio is how much the glue on the line needs to stretch or
+  shrink to fill (or fit within) the target width. A perfectly filled line has
+  badness 0. A line that's slightly loose has moderate badness. A line that's
+  extremely loose has high badness. A line that overflows has infinite badness
+  (no edge).
+
+  Penalty is the cost assigned to the breakpoint at position j itself — it's
+  independent of what line i..j looks like. This is where linguistic quality
+  lives: breaking after a period has penalty 0, breaking between "the" and
+  "table" has penalty 1000, and a forced break (speaker change) has penalty -∞
+  (meaning "you must break here").
+
+  The squaring is key: it makes the cost function superlinear, which means the
+  algorithm strongly prefers distributing badness evenly across lines rather
+  than having one great line and one terrible one. Two lines with badness 50
+  each cost less than one line with badness 0 and one with badness 100.
+
+  ★ Insight ─────────────────────────────────────
+  The squaring is doing something mathematically elegant: it's converting a
+  minimax intuition ("no single line should be terrible") into an additive
+  objective that DP can optimize. Without the squaring, the sum 0 + 100 = 100
+  equals 50 + 50 = 100, so the algorithm has no preference. With squaring, 0² + 
+  100² = 10000 versus 50² + 50² = 5000 — now even distribution is clearly
+  preferred. This is the same trick as using L2 loss instead of L1 loss in
+  regression: it penalizes outliers disproportionately.
+  ─────────────────────────────────────────────────
+
+  Pruning: the active node set
+
+  The O(n²) bound comes from considering all pairs (i, j). But in practice, for
+  any given j, you only need to look back at nodes i where words i+1..j don't
+  overflow the line. Once you've gone far enough back that the text is too wide,
+   no earlier i will work either (since adding more words only makes lines
+  wider). So you maintain an active set of candidate starting nodes and discard
+  ones that have fallen too far behind.
+
+  In Knuth's TeX implementation, this active set is typically 2-5 nodes deep —
+  the algorithm barely looks back at all, making the practical runtime nearly
+  O(n).
+
+  For subtitles: the extension
+
+  For our caption problem, the graph has the same structure, but demerits(i, j)
+  needs to account for temporal constraints too. A candidate caption spanning
+  words i+1 through j has:
+
+  - A spatial cost: do the words fit in ≤2 lines of ≤37 characters?
+  - A temporal cost: does the duration (last word's end time minus first word's
+  start time) give the viewer enough reading time at ~160 WPM? Is it too long
+  (>7 seconds)?
+  - A break quality cost: what's the linguistic penalty of breaking at position
+  j?
+
+  These get combined into a single scalar demerit value. The DP machinery
+  doesn't care what the cost function looks like — it just finds the
+  minimum-cost path through the DAG regardless.
+
+  The penalty function design — how you weight spatial fitness against temporal
+  fitness against linguistic quality — is where the real subtitle-domain
+  engineering happens. The graph structure itself is universal.
+
+  Does this clarify the picture? Want to go deeper on how the active set pruning
+   works, or pivot toward designing the penalty function for our oral history
+  captions?
+
+✻ Brewed for 45s
+
+❯ So the graph would be imagined as a node i with edges to every candidate j    
+
+⏺ Exactly. Let me make it concrete. Say you have 8 words:
+
+  w0   w1   w2   w3   w4   w5   w6   w7
+  "We"  "are" "aiming" "to" "get" "a" "better" "service"
+
+  The breakpoints are the gaps between words (plus the start and end):
+
+  B0  w0  B1  w1  B2  w2  B3  w3  B4  w4  B5  w5  B6  w6  B7  w7  B8
+  ^                                                                    ^
+  start                                                               end
+
+  Node B0 is "before any words." Node B8 is "after all words." The solution is a
+   path from B0 to B8.
+
+  Now, from B0, you try edges to every reachable breakpoint:
+
+  B0 → B1  line: "We"                      (fits, but very short — high badness)
+  B0 → B2  line: "We are"                  (fits, still short)
+  B0 → B3  line: "We are aiming"           (fits, getting closer to ideal width)
+  B0 → B4  line: "We are aiming to"        (fits, good width)
+  B0 → B5  line: "We are aiming to get"    (fits, good width)
+  B0 → B6  line: "We are aiming to get a"  (fits, but break before "better" —
+  penalty?)
+  B0 → B7  line: "We are aiming to get a better"  (maybe overflows 37 chars)
+  B0 → B8  line: all words on one line     (definitely overflows → no edge)
+
+  Then from B1, you do the same thing — try edges to B2, B3, B4, etc. From B2,
+  edges to B3, B4, B5... Every node fans out rightward to every reachable
+  successor.
+
+  B0 ──→ B1 ──→ B2 ──→ B3 ──→ B4 ──→ B5 ──→ B6 ──→ B7 ──→ B8
+   │      │      │      │      │      │      │      │
+   ├─────→├─────→├─────→├─────→├─────→├─────→├─────→│
+   ├──────┼─────→├─────→├─────→├─────→├─────→│      │
+   ├──────┼──────┼─────→├─────→├─────→│      │      │
+   ...   ...    ...    ...    ...
+
+  Every arrow going rightward is one candidate line. The DP pass walks left to
+  right: when you arrive at Bj, you've already computed cost[Bi] for all i < j,
+  so you just pick the cheapest incoming edge:
+
+  cost[j] = min over all i where words i+1..j fit on a line:
+                cost[i] + demerits(i, j)
+
+  ★ Insight ─────────────────────────────────────
+  The crucial thing about this DAG is that it's implicitly constructed. You
+  never build the graph in memory as an adjacency list. Instead, for each node j
+   you're visiting, you scan backward through candidate predecessors i = j-1,
+  j-2, j-3... accumulating the character width as you go. The moment the
+  accumulated width exceeds the max line length, you stop — no earlier i can
+  possibly work. So the "graph" is just a nested loop:
+
+  for j in 1..=n {
+      let mut width = 0;
+      for i in (0..j).rev() {
+          width += len(word[i]) + 1;  // +1 for space
+          if width > MAX_WIDTH { break; }  // pruning!
+          let d = cost[i] + demerits(i, j);
+          if d < cost[j] {
+              cost[j] = d;
+              prev[j] = i;
+          }
+      }
+  }
+
+  That inner loop — scanning backward until overflow — is what limits each
+  node's fan-in to roughly MAX_WIDTH / avg_word_length edges, which is maybe 6-8
+   for subtitle-length lines. So the whole thing runs in O(n · m) where m is
+  that small constant. For a 799-statement interview producing ~10,000 words,
+  this completes in microseconds.
+  ─────────────────────────────────────────────────
+
+  One subtlety for our two-level subtitle structure: each "line" in the
+  Knuth-Plass sense is actually a caption (which can itself contain 1-2 display
+  lines). So when you check "does words i+1..j fit?", you're really asking "can
+  I lay these words out in ≤2 lines of ≤37 characters each?" — which itself is a
+   small inner line-breaking problem. But because captions are so short (rarely
+  more than 10-12 words), you can solve that inner problem greedily without
+  losing quality.
+
+  Want to start building the data model for this? The types are small — Box,
+  Glue, Penalty items in a sequence, plus the DP state.
+
+✻ Cogitated for 31s
+
+❯ Remind me what "DP" refers to.                                                
+
+⏺ Dynamic programming. It's the technique of solving an optimization problem by
+  breaking it into overlapping subproblems and caching their solutions so you
+  never recompute the same thing twice.
+
+  Here the subproblem is: "what's the cheapest way to caption words 0 through
+  j?" The answer for j depends on answers for smaller values of i — that's the
+  overlap. The cost[j] array is the cache.
+
+  ★ Insight ─────────────────────────────────────
+  The name is famously misleading — Richard Bellman chose "dynamic programming"
+  partly because it sounded impressive to funders and was hard to criticize.
+  There's nothing inherently "dynamic" about it. A more honest name would be
+  "table-filling optimization" or "recursive-with-memoization." The key property
+   that makes a problem solvable this way is optimal substructure: the best
+  solution to the whole problem is built from best solutions to subproblems.
+  Here, the optimal captioning of words 0..n necessarily passes through some
+  breakpoint j, and the path up to j must itself be optimal — otherwise you
+  could swap in a cheaper prefix and improve the whole thing.
+  ─────────────────────────────────────────────────
+
+❯ Out of curiosity, how would I know to solve a problem with a dynamic          
+programming approach?                                                           
+
+⏺ The classic test is two properties:
+
+  1. Optimal substructure
+
+  The best solution to the whole problem contains best solutions to subproblems.
+   For Knuth-Plass: if the optimal captioning of 100 words breaks at positions
+  [0, 12, 27, 45, 68, 100], then the captioning of the first 45 words must be
+  [0, 12, 27, 45] — if there were a cheaper way to caption those 45 words, you'd
+   substitute it in and get a cheaper overall solution, contradicting
+  optimality.
+
+  If this property doesn't hold — if the best local choice depends on some
+  global context that isn't captured in the subproblem definition — DP won't
+  work.
+
+  2. Overlapping subproblems
+
+  Different paths through the problem re-ask the same question. When computing
+  cost[50], you examine cost[43], cost[44], cost[45], etc. When computing
+  cost[51], you examine cost[44], cost[45], cost[46]... Those shared lookups of
+  cost[44] and cost[45] are the overlap. Without overlap, you'd just have
+  ordinary recursion (divide-and-conquer) and memoization would buy you nothing.
+
+  The practical smell test
+
+  Before you formally verify those properties, there are patterns that suggest
+  "this might be DP":
+
+  - You're asked for the best/cheapest/shortest/longest something — optimization
+   over a sequence of choices.
+  - The choices are sequential — you make a decision at each step, and future
+  options depend on past decisions only through some compact state, not the full
+   history.
+  - A greedy approach feels wrong — you can construct examples where the locally
+   obvious choice leads to a globally bad outcome. That's exactly our subtitle
+  problem: greedily filling each caption produces one good caption followed by
+  an awkward leftover.
+  - Brute force would enumerate exponentially many combinations, but you notice
+  many of them share prefixes. That redundancy is what DP eliminates.
+
+  ★ Insight ─────────────────────────────────────
+  There's a useful conceptual ladder: greedy (make the best local choice, never
+  reconsider) → dynamic programming (consider all choices, but exploit
+  subproblem structure to avoid exponential blowup) → brute force (consider
+  literally everything). Greedy is O(n) but can be wrong. Brute force is always
+  right but exponential. DP is the sweet spot — correct and polynomial — when
+  the problem structure permits it. The Knuth-Plass breakthrough was recognizing
+   that line-breaking, which everyone had been solving greedily, had exactly the
+   right structure for DP.
+  ─────────────────────────────────────────────────
+
+  For our problem: there are 2^n possible subsets of breakpoints (exponential
+  brute force). But the optimal captioning up to word j depends only on j
+  itself, not on which earlier breakpoints were chosen — that's the compact
+  state. So the DP table has just n entries, each computed by looking back at
+  ~6-8 predecessors. Exponential collapses to linear.
+
+❯ /exit                                                                         
+  ⎿  Bye!
+  ⎿  SessionStart:resume hook error
+
+❯ /config 
+  ⎿  Status dialog dismissed
+
+❯ Let's start on the algorithm. As a reminder: I am learning Rust, and          
+appreciate having language concepts explained to me, especially when surprising 
+ language features are at work under high-level solutions. Moreover, because    
+I'm learning, I prefer that you not write code.                                 
+  ⎿  UserPromptSubmit hook error
+
+⏺ Let me refresh my memory on where the current pipeline code stands.
+
+  Read 2 files (ctrl+o to expand)
+
+⏺ Good. So right now the word stream comes out of Whisper with per-word
+  timestamps, gets labeled by speaker, and then crudely concatenated. We need to
+   replace that concatenation with Knuth-Plass. Let me walk you through building
+   it, piece by piece.
+
+  Step 1: The item stream
+
+  Knuth-Plass operates on a sequence of items — not raw words, but an
+  interleaved stream of boxes, glue, and penalties. The first design decision
+  is: what does that enum look like?
+
+  You need three variants:
+
+  - Box — an indivisible chunk of content. For us, that's one word. It carries a
+   width (the character count) and a reference back to the original Word (so you
+   can recover timestamps later).
+  - Glue — the flexible space between boxes. It carries a width (normally 1, for
+   the space character), plus stretch and shrink values that say how much this
+  space can grow or compress. For subtitles we don't justify text, so
+  stretch/shrink are mainly about temporal flexibility — a long pause between
+  words is "stretchy" glue where the algorithm should prefer to break.
+  - Penalty — an explicit signal about break desirability at this point. It
+  carries a cost (high = avoid breaking here, low/negative = prefer breaking
+  here) and a flagged boolean (Knuth uses this to penalize consecutive
+  hyphenated lines — we'd use it to penalize consecutive short captions).
+
+  ★ Insight ─────────────────────────────────────
+  This is a place where Rust's enums shine versus, say, Java or TypeScript. In
+  those languages you'd probably model this as a base class with three
+  subclasses, or a union type with a discriminator field. Rust's enum is a
+  tagged union — the discriminant tag and the variant data are packed together
+  in a single value, and the compiler guarantees via exhaustive match that you
+  handle all three cases. There's no null, no "forgot to check the type" bug, no
+   vtable indirection. When you match on an Item, the compiler lays out a jump
+  table that dispatches in a single instruction. The data for each variant is
+  accessed by offset from the tag, with zero heap allocation for small payloads.
+   This is why Rust enums are sometimes called "algebraic data types" — the type
+   is literally the sum of its variants (Box + Glue + Penalty), and each variant
+   is a product of its fields.
+  ─────────────────────────────────────────────────
+
+  For the Box variant: you need the word's character width, and enough
+  information to trace back to the original word's timestamps. There are two
+  clean approaches here. You could store an index into the original Vec<Word>
+  (just a usize), or you could store a reference to the Word itself (a &Word
+  with a lifetime). The index approach is simpler — it avoids lifetime
+  annotations — and since you'll always have the original word vec in scope,
+  looking up by index is trivial.
+
+  For Glue: width is 1 (a space). stretch and shrink are where your domain
+  knowledge enters. Knuth's original TeX defaults are stretch = width/2, shrink
+  = width/3. But for subtitles, you might want stretch to be proportional to the
+   temporal gap between the preceding and following words — a 2-second pause in
+  speech is a much more natural break point than a 50-millisecond gap within a
+  fluent phrase.
+
+  For Penalty: the cost is an f64 (or i32 — Knuth used integers, but floats are
+  fine). Two special values: f64::INFINITY means "never break here" (e.g.,
+  between an article and its noun), and f64::NEG_INFINITY means "always break
+  here" (e.g., at a speaker change). The flagged bool is optional — you can add
+  it later if you want to penalize consecutive short captions.
+
+  Step 2: Building the item stream from words
+
+  Before the DP runs, you need a function that takes a &[Word] (one speaker's
+  turn) and produces a Vec<Item>. The logic:
+
+  1. For each word, emit a Box with width = word.word.len().
+  2. Between each pair of consecutive words, emit Glue with width = 1, and
+  stretch/shrink derived from the time gap.
+  3. At certain positions, emit a Penalty item before the glue. This is where
+  linguistic rules live: if the current word is "the" or "a", emit a high
+  penalty (discouraging a break that would separate the article from the next
+  word). If the current word ends with punctuation (period, comma, question
+  mark), emit a low or negative penalty (encouraging a break here).
+
+  ★ Insight ─────────────────────────────────────
+  Notice the ordering: penalty comes before glue in the item stream. This is a
+  subtlety from Knuth's original design. A legal breakpoint occurs at a glue
+  item, but only when preceded by a non-discarded item. A penalty item modifies
+  the cost of breaking at the next glue. If you put the penalty after the glue,
+  it would modify the wrong breakpoint. This sequencing — penalty then glue — is
+   a convention that the DP loop relies on.
+
+  Also note something neat about word.word.len(): this calls len() on a String,
+  which returns the byte count, not the character count. For ASCII English text
+  (which oral history transcripts almost always are), bytes and characters are
+  the same. But if a word contained, say, an em-dash (UTF-8: 3 bytes) or an
+  accented name, len() would overcount. For a production subtitle system you'd
+  want word.word.chars().count() — but that's O(n) per word because UTF-8 is
+  variable-width. For ASCII-dominated text the difference is negligible, but
+  it's good to know why len() and chars().count() differ in Rust: String is
+  guaranteed UTF-8 bytes, not a fixed-width character array.
+  ─────────────────────────────────────────────────
+
+  Step 3: The DP state
+
+  The core DP needs two arrays, both of length num_breakpoints + 1:
+
+  - cost: Vec<f64> — cost[j] is the minimum total demerits to caption everything
+   from the start up through breakpoint j. Initialize cost[0] = 0.0 and
+  everything else to f64::INFINITY.
+  - prev: Vec<usize> — prev[j] records which predecessor breakpoint i achieved
+  the minimum cost at j. You chase these backward to reconstruct the solution.
+
+  The breakpoints map to positions in the item stream. Not every item is a legal
+   breakpoint — only glue items (and forced penalties). So you'd first scan the
+  item stream and collect the indices where breaks are allowed into a
+  Vec<usize>, then the DP iterates over those.
+
+  ★ Insight ─────────────────────────────────────
+  There's a design choice here about what cost and prev are indexed by. You
+  could index by item position in the stream (making the arrays the same length
+  as the item stream), or by breakpoint number (a compressed index over only the
+   legal break positions). The item-position approach wastes some memory on
+  non-breakpoint items but is simpler — you just skip non-breakpoint positions
+  in the loop. The breakpoint-number approach is more compact but requires an
+  extra indirection layer. For subtitle-length texts (hundreds of words, not
+  millions), the simpler approach is fine.
+  ─────────────────────────────────────────────────
+
+  Step 4: The inner loop
+
+  This is the heart of the algorithm. For each breakpoint j, you scan backward
+  through earlier breakpoints i, accumulating the width of items between i and
+  j. For each candidate (i, j) pair where the text fits:
+
+  1. Compute the line width — sum of box widths + glue widths between i and j.
+  2. Compute badness — how far the line width deviates from the ideal. Knuth
+  uses 100 × |adjustment_ratio|³, but for subtitles a simpler quadratic
+  (ideal_width - actual_width)² works fine.
+  3. Compute the penalty at breakpoint j from the penalty item there (if any).
+  4. Compute temporal cost — check whether the caption duration (from first
+  word's start time to last word's end time) gives the viewer enough reading
+  time.
+  5. Combine into demerits: (1 + badness + penalty)² + temporal_cost.
+  6. If cost[i] + demerits < cost[j], update cost[j] and prev[j].
+
+  The backward scan terminates when accumulated width exceeds the maximum (a
+  2-line caption at 37 chars/line = 74 characters total). This is the pruning
+  that keeps it fast.
+
+  Step 5: Reconstructing the breakpoints
+
+  After the DP completes, cost[n] holds the optimal total cost, and prev[n]
+  holds the last internal breakpoint. You walk backward:
+
+  j = n
+  breakpoints = [n]
+  while j != 0:
+      j = prev[j]
+      breakpoints.push(j)
+  breakpoints.reverse()
+
+  This gives you the optimal sequence of breakpoints. Each adjacent pair
+  (breakpoints[k], breakpoints[k+1]) defines one caption's word range.
+
+  ---
+  That's the full skeleton. The design decisions that matter most are:
+
+  1. How to compute the penalty for each inter-word position (the linguistic
+  rules)
+  2. How to blend spatial badness with temporal cost (the weighting)
+  3. How to handle the two-level line structure (line breaks within a caption)
+
+  Which of those do you want to think through next?
+
+✻ Baked for 1m 14s

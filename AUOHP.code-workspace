@@ -6,23 +6,23 @@
         },
         {
             "name": "🌐 @auohp/api",
-            "path": "packages/auohp-api"
+            "path": "packages/api"
         },
         {
             "name": "🌐 @auohp/desktop",
-            "path": "packages/auohp-desktop"
+            "path": "packages/desktop"
         },
         {
-            "name": "🌐 @auohp/caption-editor-app",
-            "path": "packages/caption-editor-app"
-        },
-        {
-            "name": "⚙️ @auohp/scripts",
-            "path": "packages/scripts"
+            "name": "🌐 @auohp/editor",
+            "path": "packages/editor"
         },
         {
             "name": "🧩 @auohp/search-component",
             "path": "packages/search-component"
+        },
+        {
+            "name": "⚙️ @auohp/scripts",
+            "path": "packages/scripts"
         }
     ],
     "settings": {
@@ -44,20 +44,6 @@
         ],
         "eslint.workingDirectories": [{ "mode": "auto"}],
         "eslint.quiet": true,
-        "monorepoWorkspace.folders.custom": [
-            {
-                "prefix": "🧩 ",
-                "regex": "(component)$"
-            }
-        ],
-        "monorepoWorkspace.folders.prefix.libs": "📦 ",
-        "monorepoWorkspace.folders.prefix.root": "▲  ",
-        "monorepoWorkspace.folders.prefix.apps": "🌐 ",
-        "monorepoWorkspace.folders.prefix.tools": "⚙️ ",
-        "monorepoWorkspace.folders.prefix.unknown": "📁 ",
-        "monorepoWorkspace.folders.regex.apps": "(app|web|api|frontend|client|server|backend|service)s?$",
-        "monorepoWorkspace.folders.regex.libs": "(common|package|lib|private|ui)s?$",
-        "monorepoWorkspace.folders.regex.tools": "(tool|script|util|config)s?$",
         "stylelint.enable": true,
         "stylelint.validate": [
             "css",
