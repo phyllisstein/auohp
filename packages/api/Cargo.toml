@@ -105,3 +105,4 @@ audioadapter-buffers = "2"
 # constraint from the other direction; this keeps them in sync.
 fastembed = { version = "~5.8", default-features = false, features = ["ort-download-binaries", "hf-hub-native-tls"] }
 kodama = "0.3.0"
+clap = { version = "4.6.1", features = ["derive"] }
