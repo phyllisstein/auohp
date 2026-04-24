@@ -9,6 +9,10 @@
             "path": "packages/auohp-api"
         },
         {
+            "name": "🌐 @auohp/desktop",
+            "path": "packages/auohp-desktop"
+        },
+        {
             "name": "🌐 @auohp/caption-editor-app",
             "path": "packages/caption-editor-app"
         },

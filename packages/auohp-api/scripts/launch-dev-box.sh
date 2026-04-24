@@ -143,9 +143,10 @@ sudo apt-get install -y \
     clang \
     cmake \
     curl \
+    ffmpeg \
     git \
     gnupg \
-    libssl-dev
+    libssl-dev \
     linux-headers-aws \
     lsb-release \
     pciutils \
@@ -190,7 +191,7 @@ echo "== nvidia-smi =="
 nvidia-smi
 
 if ! command -v cargo >/dev/null 2>&1; then
-    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- --default-toolchain nightly --profile complete -y
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- --profile complete -y
 fi
 
 source "\$HOME/.cargo/env"
