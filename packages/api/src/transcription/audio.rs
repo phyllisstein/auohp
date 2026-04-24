@@ -99,11 +99,15 @@ pub fn decode_file(path: &std::path::Path) -> Result<DecodedAudio> {
     };
 
     // Resample to 16 kHz if needed.
-    let samples = if source_rate != WHISPER_SAMPLE_RATE {
+    let samples_16k = if source_rate != WHISPER_SAMPLE_RATE {
         resample(&mono, source_rate, WHISPER_SAMPLE_RATE)?
     } else {
         mono
     };
+
+    // Neural noise suppression via DeepFilterNet3. Round-trips through 48 kHz
+    // because that's the sample rate the model was trained on.
+    let samples = denoise(samples_16k)?;
 
     Ok(DecodedAudio {
         samples,
@@ -174,4 +178,45 @@ fn resample(samples: &[f32], from_rate: u32, to_rate: u32) -> Result<Vec<f32>> {
     output.truncate(expected.min(output.len()));
 
     Ok(output)
+}
+
+/// DeepFilterNet3's native sample rate.
+const DF_SAMPLE_RATE: u32 = 48_000;
+
+/// Run DeepFilterNet3 neural noise suppression over 16 kHz mono samples,
+/// upsampling to 48 kHz for the model and downsampling the result back.
+fn denoise(samples_16k: Vec<f32>) -> Result<Vec<f32>> {
+    use df::tract::{DfParams, DfTract, RuntimeParams};
+    use ndarray::{Array2, Axis};
+
+    let samples_48k = resample(&samples_16k, WHISPER_SAMPLE_RATE, DF_SAMPLE_RATE)?;
+
+    // DfParams::default() pulls weights from include_bytes!() at build time.
+    let mut model = DfTract::new(DfParams::default(), &RuntimeParams::default_with_ch(1))
+        .context("failed to initialise DeepFilterNet3")?;
+    let hop = model.hop_size;
+    let n = samples_48k.len();
+
+    // [1, n] = mono channel × n samples; tract works in this layout.
+    let noisy = Array2::from_shape_vec((1, n), samples_48k)
+        .context("failed to build noisy frame array")?;
+    let mut enh = Array2::<f32>::zeros((1, n));
+
+    for (ns, en) in noisy
+        .view()
+        .axis_chunks_iter(Axis(1), hop)
+        .zip(enh.view_mut().axis_chunks_iter_mut(Axis(1), hop))
+    {
+        // Drop the trailing partial frame (< 10 ms at 48 kHz, imperceptible).
+        if ns.len_of(Axis(1)) < hop {
+            break;
+        }
+        model.process(ns, en).context("DeepFilterNet frame failed")?;
+    }
+
+    let kept = (n / hop) * hop;
+    let mut enhanced = enh.row(0).to_vec();
+    enhanced.truncate(kept);
+
+    resample(&enhanced, DF_SAMPLE_RATE, WHISPER_SAMPLE_RATE)
 }

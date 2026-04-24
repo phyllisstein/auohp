@@ -106,3 +106,20 @@ audioadapter-buffers = "2"
 fastembed = { version = "~5.8", default-features = false, features = ["ort-download-binaries", "hf-hub-native-tls"] }
 kodama = "0.3.0"
 clap = { version = "4.6.1", features = ["derive"] }
+
+# Speech enhancement --- DeepFilterNet3 neural noise suppression. The inference
+# API (DfTract, DfParams) was never published to crates.io (latest is 0.2.5,
+# DSP utils only), so we pin to a known commit on main. The "default-model"
+# feature embeds DFN3 weights via include_bytes!, so no separate download.
+# DeepFilterNet uses tract (not ort) --- two ONNX runtimes coexist in the
+# binary with no version conflict between them.
+deep_filter = { git = "https://github.com/Rikorose/DeepFilterNet", rev = "d375b2d", default-features = false, features = ["tract", "default-model"] }
+
+# ndarray 0.15 --- required by deep_filter. Also pin tract-* to =0.21.6, the
+# last 0.21.x release that uses ndarray 0.15 (0.21.7 bumped to 0.16, which
+# breaks compilation against deep_filter's own ndarray imports).
+ndarray = "0.15"
+tract-core = "=0.21.4"
+tract-onnx = "=0.21.4"
+tract-hir = "=0.21.4"
+tract-pulse = "=0.21.4"
