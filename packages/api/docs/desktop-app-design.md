@@ -47,22 +47,21 @@ A mid-range M3 MacBook performs inference at roughly comparable speed to a cloud
 
 ## 3. Crate Restructuring (prerequisite)
 
-The transcription pipeline currently lives in `packages/auohp-api/src/transcription/` and is shared with the `transcribe` binary via a `#[path]` hack. This doesn't work across crate boundaries.
+The transcription pipeline currently lives in `packages/auohp-api/src/transcription/`. To use it from `auohp-desktop`, it needs to be exposed as a library crate — Rust does not allow one crate to reach into another crate's source files via `#[path]`.
+
+The approach is a new `packages/auohp-core` workspace member that contains only the pipeline code. `auohp-api` gains a dependency on it; `auohp-desktop` depends on `auohp-core` directly and never sees the server stack.
+
+`transcribe.rs` (`src/bin/transcribe.rs`) is a development convenience tool, not a platform component. It uses a `#[path]` hack today and can continue to do so; it is not a driver for this restructuring.
 
 ### Target layout
 
 ```
-packages/auohp-api/
-├── Cargo.toml          # workspace member
+packages/auohp-core/            # NEW workspace member
+├── Cargo.toml                  # pipeline-only deps: whisper-rs, ort, fastembed, …
 ├── src/
-│   ├── lib.rs          # NEW — re-exports transcription + embeddings as library
-│   ├── main.rs         # axum GraphQL server (unchanged behavior)
-│   └── graphql/        # (unchanged)
-│
-│   # These modules move into lib.rs's module tree:
-│   ├── embeddings.rs
-│   ├── neo4j.rs
-│   └── transcription/
+│   ├── lib.rs                  # pub mod embeddings; pub mod transcription;
+│   ├── embeddings.rs           # moved from auohp-api/src/
+│   └── transcription/          # moved from auohp-api/src/
 │       ├── mod.rs
 │       ├── audio.rs
 │       ├── diarize.rs
@@ -70,18 +69,25 @@ packages/auohp-api/
 │       ├── types.rs
 │       └── whisper.rs
 │
+packages/auohp-api/
+├── Cargo.toml                  # adds auohp-core dep; keeps neo4rs, async-graphql, axum
+├── src/
+│   ├── main.rs                 # axum GraphQL server (unchanged behavior)
+│   ├── neo4j.rs                # stays here — server concern, not pipeline concern
+│   └── graphql/                # (unchanged)
+│
 ├── src/bin/
-│   └── transcribe.rs   # remove #[path] hack, use `auohp_api::transcription::*`
+│   └── transcribe.rs           # devtool — #[path] hack unchanged
 │
 packages/auohp-desktop/
-├── Cargo.toml          # depends on auohp-api (lib), tauri
+├── Cargo.toml                  # depends on auohp-core only — no server stack
 ├── tauri.conf.json
 ├── src/
-│   ├── main.rs         # Tauri entry point + embedded axum
-│   ├── tray.rs         # System tray setup and state machine
-│   ├── server.rs       # axum routes: /health, /transcribe, /ws, /cancel
-│   └── jobs.rs         # Job queue, progress channel, cancellation
-├── ui/                 # Small HTML/CSS status popover (built by Vite or plain)
+│   ├── main.rs                 # Tauri entry point + embedded axum
+│   ├── tray.rs                 # System tray setup and state machine
+│   ├── server.rs               # axum routes: /health, /transcribe, /ws, /cancel
+│   └── jobs.rs                 # Job queue, progress channel, cancellation
+├── ui/                         # Small HTML/CSS status popover (built by Vite or plain)
 │   ├── index.html
 │   └── status.js
 └── icons/
@@ -90,45 +96,59 @@ packages/auohp-desktop/
     └── tray-done.png
 ```
 
-### Why `lib.rs` in `auohp-api` instead of a separate `auohp-core` crate
+### Why `auohp-core` instead of a `[lib]` section in `auohp-api`
 
-The transcription code is tightly coupled to the existing feature flags (`metal`, `cuda`) and dependency pins (`ort = "=2.0.0-rc.10"`, `fastembed ~5.8`). Extracting to a separate crate would mean duplicating those constraints. Adding a `[lib]` section to the existing `Cargo.toml` is simpler — both `main.rs` and `transcribe.rs` become `[[bin]]` targets that depend on the crate's own library, and `auohp-desktop` depends on `auohp-api` as a path dependency with `default-features = false`.
+The simpler-looking alternative — adding `[lib]` to `auohp-api/Cargo.toml` — fails on dependency scope. `default-features = false` only suppresses *optional* dependencies; non-optional ones (`neo4rs`, `async-graphql`, `axum`) compile regardless. `auohp-desktop` would pull in the entire GraphQL server stack even though it never calls any of it.
 
-```toml
-# In packages/auohp-api/Cargo.toml — add:
-[lib]
-name = "auohp_api"
-path = "src/lib.rs"
+A separate `auohp-core` crate is a genuine compile-time boundary: the desktop app's dependency graph contains only inference code.
 
-[[bin]]
-name = "auohp-api"
-path = "src/main.rs"
-
-[[bin]]
-name = "transcribe"
-path = "src/bin/transcribe.rs"
-```
+The concern about "duplicating constraints" (feature flags, pinned deps) doesn't hold up either: the pipeline's feature flags and pins *move* to `auohp-core/Cargo.toml` — they aren't copied. `auohp-api` forwards the flags with one line per feature and drops the inference deps entirely.
 
 ```toml
-# In packages/auohp-desktop/Cargo.toml:
+# packages/auohp-core/Cargo.toml
+[features]
+metal = ["whisper-rs/metal", "ort/coreml"]
+cuda  = ["whisper-rs/cuda",  "ort/cuda"]
+
 [dependencies]
-auohp-api = { path = "../auohp-api", default-features = false }
-tauri = { version = "2", features = ["tray-icon"] }
-# ...
+whisper-rs = "0.15"
+ort        = { version = "=2.0.0-rc.10" }
+fastembed  = "~5.8"
+# … other pipeline-only deps
 ```
+
+```toml
+# packages/auohp-api/Cargo.toml — add:
+[features]
+metal = ["auohp-core/metal"]    # forward; no duplication
+cuda  = ["auohp-core/cuda"]
+
+[dependencies]
+auohp-core = { path = "../auohp-core" }
+# neo4rs, async-graphql, axum remain here
+```
+
+```toml
+# packages/auohp-desktop/Cargo.toml
+[dependencies]
+auohp-core = { path = "../auohp-core", features = ["metal"] }
+tauri = { version = "2", features = ["tray-icon"] }
+# no auohp-api — no Neo4j, no GraphQL, no axum from the server side
+```
+
+A secondary benefit: once `auohp-core` exists, the cloud-hosted GraphQL server (`main.rs`) can also invoke the pipeline directly — running inference server-side without the desktop app as an intermediary. This is a lower-priority design goal and is deferred; see section 11 for the server deployment model.
 
 ### Module visibility changes
 
-Currently `transcription` and `embeddings` are `mod` (private). For `lib.rs`:
+Currently `transcription` and `embeddings` are private `mod` declarations in `auohp-api/src/main.rs`. After extraction:
 
 ```rust
-// src/lib.rs
+// auohp-core/src/lib.rs
 pub mod embeddings;
 pub mod transcription;
-pub mod neo4j;
 ```
 
-`main.rs` and `transcribe.rs` then use `use auohp_api::transcription::{run, PipelineConfig};` etc.
+`auohp-api/src/main.rs` then uses `use auohp_core::transcription::{run, PipelineConfig};` etc. `transcribe.rs` continues to pull modules in via `#[path]` — it does not use the library.
 
 ## 4. Tauri App Structure
 
@@ -583,6 +603,12 @@ On the first launch of a new bundle, macOS Gatekeeper re-verifies the code signa
 
 The initial design targets macOS Apple Silicon with a small user base (~tens of people). This section considers what changes if the code is released as FOSS for other nonprofits and researchers.
 
+### 11.0 GraphQL API inference (future)
+
+The `auohp-core` extraction (section 3) means the cloud-hosted GraphQL server (`main.rs`) can also import and invoke the pipeline — it already depends on `auohp-core`, and inference jobs could be enqueued and driven from a GraphQL mutation rather than the desktop app's HTTP API. This path skips the desktop app entirely: the webapp uploads, the cloud API transcribes, results land in Neo4j directly.
+
+This is deliberately deferred. The local-first model (section 2) is cheaper and simpler for AUOHP's current scale. Server-side inference makes sense when the user base grows beyond what local hardware can serve, or when users lack capable machines. The API contract between the webapp and inference layer (section 5) is the natural seam: the webapp does not care whether the `/transcribe` endpoint is `localhost:34042` or `api.auohp.here`.
+
 ### 11.1 Cross-platform GPU acceleration
 
 The architecture — Tauri menu bar app, embedded axum, localhost WebSocket — is fully cross-platform. The complications are in the inference stack.
@@ -658,7 +684,7 @@ A persistent queue (Redis, PostgreSQL, or an in-memory `VecDeque` for simple dep
 
 ### 11.4 What doesn't change
 
-The `lib.rs` extraction (section 3) already makes the pipeline consumable by any binary. The local and server deployments share the same library crate, the same HTTP API contract, and the same progress event schema. The webapp's only decision is which origin to call:
+The `auohp-core` extraction (section 3) already makes the pipeline consumable by any binary. The local and server deployments share the same library crate, the same HTTP API contract, and the same progress event schema. The webapp's only decision is which origin to call:
 
 ```typescript
 const inferenceOrigin = localPort
@@ -711,8 +737,8 @@ On `complete`, the webapp fetches `GET /result/{jobId}` from the local service (
 
 | Step | Description | Depends on |
 |---|---|---|
-| **0** | Add `[lib]` to `auohp-api/Cargo.toml`, create `lib.rs`, make modules `pub`. Remove `#[path]` hack. Verify both binaries compile. | — |
-| **1** | Add progress/segment callbacks to `whisper::transcribe`, `diarize::diarize`, and `pipeline::run`. Update `transcribe` CLI to print progress to stderr. | 0 |
+| **0** | Create `packages/auohp-core` workspace member. Move `transcription/` and `embeddings.rs` from `auohp-api/src/` into it. Add `auohp-core` dep to `auohp-api` and `auohp-desktop` (stub). Verify both compile. Leave `transcribe.rs` and its `#[path]` hack untouched. | — |
+| **1** | Add progress/segment callbacks to `whisper::transcribe`, `diarize::diarize`, and `pipeline::run`. | 0 |
 | **2** | Scaffold `packages/auohp-desktop` with Tauri v2. System tray with idle state. Hidden popover window. No server yet. | 0 |
 | **3** | Embed axum in Tauri. Implement `GET /health`. Verify webapp detection. | 2 |
 | **4** | Implement `POST /transcribe`, `GET /ws/{jobId}`, `GET /result/{jobId}`, `POST /cancel/{jobId}`. Wire callbacks → broadcast → WebSocket. | 1, 3 |
