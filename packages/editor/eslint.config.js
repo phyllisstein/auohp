@@ -1,45 +1,19 @@
 import stylistic from "@stylistic/eslint-plugin";
-import stylisticTS from "@stylistic/eslint-plugin-ts";
-import parserTS from "@typescript-eslint/parser";
 import tseslint from "typescript-eslint";
-import typescriptESLint from "@typescript-eslint/eslint-plugin";
-import eslint from "@eslint/js";
 import jsxA11y from "eslint-plugin-jsx-a11y";
 import react from "eslint-plugin-react";
 import reactHooks from "eslint-plugin-react-hooks";
+import { defineConfig } from "eslint/config";
+import js from "@eslint/js";
 import globals from "globals";
-import next from "@next/eslint-plugin-next";
 
-export default [
+export default defineConfig(
+    js.configs.recommended,
+    tseslint.configs.recommended,
+    tseslint.configs.recommendedTypeChecked,
+    stylistic.configs.recommended,
     {
-        ignores: ["dist", "node_modules"],
-    },
-    eslint.configs.recommended,
-    stylistic.configs["recommended-flat"],
-    react.configs.flat.recommended,
-    react.configs.flat["jsx-runtime"],
-    {
-        languageOptions: {
-            ecmaVersion: 2024,
-            globals: {
-                ...globals.browser,
-                ...globals.es2020,
-                ...globals.node,
-                ...globals.worker,
-            },
-            sourceType: "module",
-        },
-        plugins: {
-            "@next/next": next,
-            "@stylistic": stylistic,
-            "jsx-a11y": jsxA11y,
-            react,
-            "react-hooks": reactHooks,
-        },
         rules: {
-            ...next.configs.recommended.rules,
-            ...reactHooks.configs.recommended.rules,
-            ...jsxA11y.configs.recommended.rules,
             "@stylistic/arrow-parens": [
                 "warn",
                 "as-needed",
@@ -82,14 +56,6 @@ export default [
                     when: "always",
                 },
             ],
-            "@stylistic/jsx-indent": [
-                "warn",
-                4,
-                {
-                    checkAttributes: true,
-                    indentLogicalExpressions: true,
-                },
-            ],
             "@stylistic/jsx-indent-props": [
                 "warn",
                 4,
@@ -99,16 +65,17 @@ export default [
                 "warn",
                 "prefer-double",
             ],
-            "@stylistic/jsx-sort-props": [
-                "warn",
-                {
-                    callbacksLast: true,
-                    ignoreCase: true,
-                    noSortAlphabetically: true,
-                    reservedFirst: true,
-                    shorthandFirst: true,
-                },
-            ],
+            // FIXME: Use `sort-jsx-props` in eslint-plugin-perfectionist
+            // "@stylistic/jsx-sort-props": [
+            //     "warn",
+            //     {
+            //         callbacksLast: true,
+            //         ignoreCase: true,
+            //         noSortAlphabetically: true,
+            //         reservedFirst: true,
+            //         shorthandFirst: true,
+            //     },
+            // ],
             "@stylistic/jsx-tag-spacing": [
                 "warn",
                 {
@@ -150,7 +117,7 @@ export default [
                 "warn",
                 "double",
                 {
-                    allowTemplateLiterals: true,
+                    allowTemplateLiterals: "always",
                     avoidEscape: true,
                 },
             ],
@@ -164,61 +131,52 @@ export default [
             ],
             "@stylistic/space-before-function-paren": "warn",
             "@stylistic/template-curly-spacing": ["warn", "always"],
-            "no-unused-vars": "warn",
-            "react/prop-types": "off",
-            "react-hooks/exhaustive-deps": [
-                "warn",
-                {
-                    additionalHooks: "(useRecoilCallback|useRecoilTransaction_UNSTABLE)",
-                },
-            ],
+        }
+    },
+    {
+        files: ['**/*.{js,jsx,mjs,cjs,ts,tsx}'],
+        plugins: {
+            react,
+            "react-hooks": reactHooks,
+            "jsx-a11y": jsxA11y,
         },
         settings: {
             react: {
                 version: "detect",
             },
         },
+        languageOptions: {
+            ecmaVersion: 2024,
+            globals: {
+                ...globals.browser,
+                ...globals.es2027,
+                ...globals.worker,
+            },
+            sourceType: "module",
+            parserOptions: {
+                ecmaFeatures: {
+                    jsx: true,
+                },
+            },
+        },
+        rules: {
+            "react-hooks/exhaustive-deps": [
+                "warn",
+                {
+                    additionalHooks: "(useRecoilCallback|useRecoilTransaction_UNSTABLE)",
+                },
+            ],
+            ...react.configs["jsx-runtime"].rules,
+            ...jsxA11y.configs.recommended.rules,
+        },
     },
     {
-        files: [
-            "*.ts",
-            "*.tsx",
-            "**/*.ts",
-            "**/*.tsx",
-            "*.d.ts",
-            "**/*.d.ts",
-        ],
+        files: ['**/*.{ts,tsx}'],
         languageOptions: {
-            parser: parserTS,
             parserOptions: {
                 projectService: true,
                 tsconfigRootDir: import.meta.dirname,
             },
         },
-        plugins: {
-            "@stylistic/ts": stylisticTS,
-            "@typescript-eslint": typescriptESLint,
-        },
-        rules: {
-            ...tseslint.configs.recommendedTypeChecked.rules,
-            ...tseslint.configs.stylisticTypeChecked.rules,
-            "@stylistic/block-spacing": "off",
-            "@stylistic/object-curly-spacing": "off",
-            "@stylistic/ts/block-spacing": ["warn", "always"],
-            "@stylistic/ts/object-curly-spacing": [
-                "warn",
-                "always",
-            ],
-            "@typescript-eslint/no-unused-vars": [
-                "warn",
-                {
-                    args: "after-used",
-                    argsIgnorePattern: "^_",
-                    destructuredArrayIgnorePattern: "^_",
-                    ignoreRestSiblings: true,
-                    varsIgnorePattern: "^_",
-                },
-            ],
-        },
     },
-];
+);

@@ -26,58 +26,11 @@
         }
     ],
     "settings": {
-        "[javascript][typescript][javascriptreact][typescriptreact]": {
-            "editor.codeActionsOnSave": {
-                "source.fixAll.eslint": "always",
-                "source.fixAll.stylelint": "always"
-            }
-        },
-        "editor.defaultFormatter": "dbaeumer.vscode-eslint",
-        "editor.formatOnSave": false,
-        "eslint.format.enable": true,
-        "eslint.lintTask.enable": true,
-        "eslint.validate": [
-            "typescript",
-            "typescriptreact",
-            "javascript",
-            "javascriptreact"
-        ],
-        "eslint.workingDirectories": [{ "mode": "auto"}],
-        "eslint.quiet": true,
-        "stylelint.enable": true,
-        "stylelint.validate": [
-            "css",
-            "less",
-            "postcss",
-            "stylus",
-            "typescript",
-            "typescriptreact"
-        ],
         "editor.tabSize": 4,
         "search.exclude": {
             "**/node_modules": true,
             "**/.yarn": true
         },
-        "[packer]": {
-            "editor.defaultFormatter": "szTheory.vscode-packer-powertools"
-        },
-        "[html]": {
-            "editor.defaultFormatter": "vscode.html-language-features"
-        },
-        "[nginx]": {
-            "editor.defaultFormatter": "ahmadalli.vscode-nginx-conf"
-        },
-        "[clojure]": {
-            "editor.defaultFormatter": "betterthantomorrow.calva",
-            "editor.formatOnSave": true,
-            "editor.formatOnPaste": true,
-            "editor.formatOnType": true
-        },
-        "[rust]": {
-            "editor.defaultFormatter": "rust-lang.rust-analyzer",
-            "editor.formatOnSave": true,
-            "editor.formatOnPaste": true,
-            "editor.formatOnType": true
-        }
+        "eslint.workingDirectories": [{ "mode": "auto"}]
     }
 }

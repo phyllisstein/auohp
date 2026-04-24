@@ -1,3 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["packages/auohp-api"]
+members = [
+    "packages/api",
+    "packages/desktop",
+]

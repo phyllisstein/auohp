@@ -1,15 +1,13 @@
 {
     "compileOnSave": false,
     "compilerOptions": {
-        "baseUrl": "./",
         "outDir": "./dist",
         "jsx": "react-jsx",
         "paths": {
             "*": [
-                "src/*",
-                "vendor/*",
-                "node_modules/*",
-                "*"
+                "./src/*",
+                "./vendor/*",
+                "./node_modules/*"
             ]
         },
         "lib": [
@@ -24,16 +22,16 @@
         "esModuleInterop": true,
         "resolveJsonModule": true,
         "isolatedModules": true,
-        "module": "es2020",
+        "module": "nodenext",
         "declaration": true,
         "removeComments": true,
         "emitDecoratorMetadata": true,
         "experimentalDecorators": true,
         "allowSyntheticDefaultImports": true,
-        "target": "es2020",
+        "target": "esnext",
         "incremental": true,
         "skipLibCheck": true,
-        "moduleResolution": "node"
+        "moduleResolution": "nodenext"
     },
     "include": [
         "./src/**/*.ts",

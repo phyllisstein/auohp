@@ -1,8 +1,10 @@
 [package]
 name = "auohp-api"
-version = "0.1.0"
-edition = "2021"
+version = "0.0.0"
+edition = "2024"
 default-run = "auohp-api"
+license = "GPL-3.0-or-later"
+authors = ["ACT UP New York <contact@auohp.org>"]
 
 [features]
 default = []

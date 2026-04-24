@@ -1,14 +1,13 @@
 {
     "compileOnSave": false,
     "compilerOptions": {
-        "baseUrl": "./",
         "outDir": "./dist",
-        "jsx": "preserve",
+        "jsx": "react-jsx",
         "paths": {
             "*": [
-                "*",
-                "src/*",
-                "node_modules/*"
+                "./src/*",
+                "./vendor/*",
+                "./node_modules/*"
             ]
         },
         "lib": [
@@ -23,30 +22,21 @@
         "esModuleInterop": true,
         "resolveJsonModule": true,
         "isolatedModules": true,
-        "module": "es2020",
+        "module": "nodenext",
+        "declaration": true,
+        "removeComments": true,
         "emitDecoratorMetadata": true,
         "experimentalDecorators": true,
         "allowSyntheticDefaultImports": true,
-        "target": "es2020",
+        "target": "esnext",
         "incremental": true,
         "skipLibCheck": true,
-        "moduleResolution": "node",
-        "plugins": [
-            {
-                "name": "next"
-            },
-        ],
-        "strictNullChecks": false,
-        "noImplicitAny": false
+        "moduleResolution": "nodenext"
     },
     "include": [
         "./src/**/*.ts",
         "./src/**/*.tsx",
-        "./src/**/*.d.ts",
-        "./next-env.d.ts",
-        ".next/types/**/*.ts",
-        "./cql.d.ts",
-        "*.ts"
+        "./src/**/*.d.ts"
     ],
     "exclude": [
         "node_modules"
