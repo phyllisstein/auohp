@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use async_graphql::{Context, Enum, InputObject, SimpleObject};
-use neo4rs::{query, BoltMap, BoltString, BoltType};
+use neo4rs::{BoltMap, BoltString, BoltType, query};
 use serde::{Deserialize, Serialize};
 
 use super::super::interviews::Interview;
@@ -385,7 +385,7 @@ pub async fn seed_interview(
             txn.run(query!(
                 "MATCH (v:Video:Asset {{uid: {videoUid}}})
                      CREATE (vtt:VTT:Caption {{uid: {vttUid}, url: {vttUrl}, text: {vttText}}})
-                     CREATE (v)-[:HAS_CAPTIONS]->(vtt)",
+                     MERGE (v)-[:HAS_CAPTIONS]->(vtt)",
                 videoUid = video_uid.clone(),
                 vttUid = nanoid::nanoid!(),
                 vttUrl = assets.vtt_url.clone().unwrap_or_default(),
@@ -399,8 +399,8 @@ pub async fn seed_interview(
             txn.run(query!(
                 "MATCH (v:Video:Asset {{uid: {videoUid}}})
                      CREATE (json:JSON:Caption {{uid: {jsonUid}, url: {jsonUrl}, text: {jsonText}}})
-                     CREATE (v)-[:HAS_CAPTIONS]->(json)",
-                videoUid = video_uid,
+                     MERGE (v)-[:HAS_CAPTIONS]->(json)",
+                videoUid = video_uid.clone(),
                 jsonUid = nanoid::nanoid!(),
                 jsonUrl = assets.json_caption_url.clone().unwrap_or_default(),
                 jsonText = assets.json_caption_text.clone().unwrap_or_default(),
