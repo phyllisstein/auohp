@@ -85,46 +85,19 @@ fn merge_whisper_with_diarization(
 ) -> Vec<Segment> {
     // Step 1: Flatten all words from every Whisper segment into one stream,
     // each labeled with the best-matching speaker.
-    let labeled_words: Vec<(String, Word)> = whisper_segments
+    whisper_segments
         .iter()
-        .flat_map(|ws| &ws.words)
-        .map(|word| {
-            let speaker = best_speaker_overlap(word.start, word.end, diarized);
-            (speaker, word.clone())
-        })
-        .collect();
-
-    // Step 2: Group consecutive same-speaker words into Segments.
-    group_labeled_words(labeled_words)
-}
-
-fn group_labeled_words(labeled_words: Vec<(String, Word)>) -> Vec<Segment> {
-    let mut segments: Vec<Segment> = Vec::new();
-
-    for (speaker, word) in labeled_words {
-        let should_merge = segments
-            .last()
-            .map(|prev| prev.speaker == speaker)
-            .unwrap_or(false);
-
-        if should_merge {
-            let current = segments.last_mut().unwrap();
-            current.text.push(' ');
-            current.text.push_str(&word.word);
-            current.end_time = word.end;
-            current.words.push(word);
-        } else {
-            segments.push(Segment {
+        .map(|segment| {
+            let speaker = best_speaker_overlap(segment.start, segment.end, diarized);
+            Segment {
                 speaker,
-                text: word.word.clone(),
-                start_time: word.start,
-                end_time: word.end,
-                words: vec![word],
-            });
-        }
-    }
-
-    segments
+                text: segment.text.clone(),
+                start_time: segment.start,
+                end_time: segment.end,
+                words: segment.words.clone(),
+            }
+        })
+        .collect()
 }
 
 fn best_speaker_overlap(start: f64, end: f64, diarized: &[diarize::DiarizedSegment]) -> String {
