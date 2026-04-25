@@ -62,17 +62,7 @@ pub fn diarize(
         rms = format!("{rms:.1}"),
         "starting diarization"
     );
-    let raw_segments: Vec<pyannote_rs::Segment> =
-        pyannote_rs::get_segments(samples_i16, sample_rate, seg_path)
-            .map_err(|e| anyhow::anyhow!("{e}"))?
-            .filter_map(|r| match r {
-                Ok(seg) => Some(seg),
-                Err(e) => {
-                    tracing::warn!(error = %e, "skipping pyannote segment");
-                    None
-                }
-            })
-            .collect();
+    let raw_segments = chunked_get_segments(samples_i16, sample_rate, seg_path)?;
 
     let total = raw_segments.len();
     if total == 0 {
@@ -174,6 +164,71 @@ pub fn diarize(
         .collect();
 
     Ok(diarized)
+}
+
+/// pyannote-rs's `get_segments` iterator terminates as soon as a single
+/// processing window produces zero speech-to-silence transitions, silently
+/// dropping every subsequent window. This is fatal for long inputs where the
+/// first 10 s happen to contain continuous speech: the iterator emits nothing
+/// and we get an empty diarization for the whole file.
+///
+/// Workaround: feed the audio to `get_segments` in chunks short enough that
+/// each one is virtually guaranteed to contain at least one transition. We
+/// then translate each returned `Segment`'s timestamps from chunk-local back
+/// to global timeline coordinates.
+fn chunked_get_segments(
+    samples_i16: &[i16],
+    sample_rate: u32,
+    seg_path: &str,
+) -> Result<Vec<pyannote_rs::Segment>> {
+    /// 30 s per chunk: long enough to amortise ONNX session-run overhead
+    /// (each call wraps ~3 ms of inference per 10 s window), short enough that
+    /// pure-speech chunks are rare in conversational audio.
+    const CHUNK_SECS: usize = 30;
+
+    let chunk_samples = CHUNK_SECS * sample_rate as usize;
+    let mut all_segments = Vec::new();
+
+    for (chunk_idx, chunk) in samples_i16.chunks(chunk_samples).enumerate() {
+        let chunk_offset_secs = (chunk_idx * chunk_samples) as f64 / sample_rate as f64;
+        tracing::debug!(
+            chunk_idx,
+            chunk_offset_secs,
+            chunk_len_samples = chunk.len(),
+            "running pyannote on chunk"
+        );
+
+        let segments_iter = pyannote_rs::get_segments(chunk, sample_rate, seg_path)
+            .map_err(|e| anyhow::anyhow!("{e}"))?;
+
+        let mut chunk_segment_count = 0usize;
+        for result in segments_iter {
+            match result {
+                Ok(mut seg) => {
+                    // Shift chunk-local timestamps onto the global timeline.
+                    // `samples` is unchanged --- those are the actual i16
+                    // bytes we'll later hand to the embedding model.
+                    seg.start += chunk_offset_secs;
+                    seg.end += chunk_offset_secs;
+                    all_segments.push(seg);
+                    chunk_segment_count += 1;
+                }
+                Err(e) => {
+                    tracing::warn!(chunk_idx, error = %e, "skipping pyannote segment");
+                }
+            }
+        }
+
+        tracing::debug!(chunk_idx, segments = chunk_segment_count, "chunk done");
+    }
+
+    tracing::info!(
+        chunks = samples_i16.len().div_ceil(chunk_samples),
+        total_segments = all_segments.len(),
+        "chunked pyannote segmentation complete"
+    );
+
+    Ok(all_segments)
 }
 
 /// Cluster speaker embeddings using hierarchical agglomerative clustering.
