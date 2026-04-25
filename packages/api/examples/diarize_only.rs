@@ -13,7 +13,24 @@ mod audio;
 mod diarize;
 
 use anyhow::Result;
+use clap::Parser;
 use std::path::PathBuf;
+
+#[derive(Parser, Debug)]
+struct Cli {
+    /// Linear gain applied to f32 samples before i16 conversion.
+    /// 1.0 = unchanged; 0.5 = -6 dB; 2.0 = +6 dB (will clip at i16 limits).
+    #[arg(short, long, default_value_t = 1.0)]
+    gain: f32,
+
+    /// Directory containing pyannote-segmentation-3.0.onnx and the wespeaker
+    /// embedding model. Falls back to $MODELS_DIR, then "./models".
+    #[arg(short, long)]
+    models: Option<PathBuf>,
+
+    /// WAV/audio file to diarize.
+    file: PathBuf,
+}
 
 fn main() -> Result<()> {
     tracing_subscriber::fmt()
@@ -24,11 +41,10 @@ fn main() -> Result<()> {
         .with_writer(std::io::stderr)
         .init();
 
-    let mut args = std::env::args().skip(1);
-    let input: PathBuf = args.next().expect("usage: diarize_only <wav> [models_dir]").into();
-    let models_dir: PathBuf = args
-        .next()
-        .map(PathBuf::from)
+    let cli = Cli::parse();
+    let input = cli.file;
+    let models_dir: PathBuf = cli
+        .models
         .or_else(|| std::env::var("MODELS_DIR").ok().map(PathBuf::from))
         .unwrap_or_else(|| PathBuf::from("models"));
 
@@ -44,7 +60,15 @@ fn main() -> Result<()> {
         decoded.samples.len() as f64 / decoded.sample_rate as f64
     );
 
-    let samples_i16 = diarize::f32_to_i16(&decoded.samples);
+    // Apply linear gain in f32 before quantizing to i16 so we have headroom
+    // and a single (cheap, branch-free) clamp at the integer boundary.
+    let scaled: Vec<f32> = if (cli.gain - 1.0).abs() < f32::EPSILON {
+        decoded.samples.clone()
+    } else {
+        eprintln!("applying gain: {:.3}x ({:+.2} dB)", cli.gain, 20.0 * cli.gain.log10());
+        decoded.samples.iter().map(|s| s * cli.gain).collect()
+    };
+    let samples_i16 = diarize::f32_to_i16(&scaled);
     eprintln!("calling pyannote_rs::get_segments directly");
     let raw: Vec<_> = pyannote_rs::get_segments(
         &samples_i16,
