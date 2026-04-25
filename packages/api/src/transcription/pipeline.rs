@@ -70,12 +70,7 @@ pub fn run(config: &PipelineConfig, input_path: &Path) -> Result<TranscriptionRe
     speakers.sort();
     speakers.dedup();
 
-    Ok(TranscriptionResult {
-        whisper_segments,
-        diarized_segments: diarized,
-        segments,
-        speakers,
-    })
+    Ok(TranscriptionResult { segments, speakers })
 }
 
 /// Assign a speaker label to each *word* by maximum temporal overlap with
@@ -131,11 +126,7 @@ fn best_speaker_overlap(start: f64, end: f64, diarized: &[diarize::DiarizedSegme
 /// Whisper interval `[start, end]`. Several reasonable rules exist; the one
 /// you pick shapes how aggressively brief interviewer interjections survive
 /// the merge.
-fn nearest_speaker_fallback(
-    start: f64,
-    end: f64,
-    diarized: &[diarize::DiarizedSegment],
-) -> String {
+fn nearest_speaker_fallback(start: f64, end: f64, diarized: &[diarize::DiarizedSegment]) -> String {
     // Edge distance: nearest gap between the query interval [start, end] and
     // any edge of a diarized segment. Better than midpoint distance for
     // catching brief speakers (a 0.4 s SPEAKER_00 tangent to the query beats

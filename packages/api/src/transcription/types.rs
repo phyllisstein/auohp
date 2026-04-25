@@ -25,6 +25,4 @@ pub struct Segment {
 pub struct TranscriptionResult {
     pub segments: Vec<Segment>,
     pub speakers: Vec<String>,
-    pub whisper_segments: Vec<WhisperSegment>,
-    pub diarized_segments: Vec<DiarizedSegment>,
 }
