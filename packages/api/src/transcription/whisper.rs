@@ -480,32 +480,18 @@ impl Decoder {
             // pair (i.e. the last fully-bounded segment); fall back to any
             // trailing timestamp; finally, if the chunk emitted no usable
             // timestamps at all, step forward a full window to avoid stalling.
-            let raw_advance = last_timestamp_offset_frames(
+            let advance_frames = last_timestamp_offset_frames(
                 &dr.tokens,
                 timestamp_begin,
                 frames_per_timestamp_tick,
+                segment_size,
             );
-            let advance_frames = raw_advance.unwrap_or(segment_size);
             seek += advance_frames.max(1).min(segment_size);
 
-            // Diagnostic: dump every timestamp token in the chunk so we can
-            // see exactly what the model produced.  Remove once the seek
-            // advance is verified.
-            let ts_dump: Vec<f64> = dr
-                .tokens
-                .iter()
-                .filter(|&&t| t >= timestamp_begin)
-                .map(|&t| (t - timestamp_begin) as f64 * 0.02)
-                .collect();
             eprintln!(
-                "Whisper: {:.2}s / {:.2}s | {} tokens, {} ts | advance={:?} → {} frames | ts={:?}",
+                "Whisper: {:.1}s / {:.1}s",
                 seek as f64 * m::HOP_LENGTH as f64 / m::SAMPLE_RATE as f64,
                 content_frames as f64 * m::HOP_LENGTH as f64 / m::SAMPLE_RATE as f64,
-                dr.tokens.len(),
-                ts_dump.len(),
-                raw_advance,
-                advance_frames.max(1).min(segment_size),
-                ts_dump,
             );
         }
 
@@ -747,47 +733,60 @@ fn read_f32_le(data: &[u8]) -> Vec<f32> {
 /// Compute how many mel frames the model actually consumed in a chunk, based
 /// on the trailing timestamp tokens it emitted.
 ///
-/// Two cases, mirroring the openai-whisper reference:
+/// Mirrors openai-whisper's three-way logic, differentiated by the *shape* of
+/// the trailing timestamp tokens rather than their values:
 ///
-/// 1. **Consecutive pair** (`<|t_close|><|t_next_open|>`): the closing
-///    timestamp of the last fully-bounded segment. Advance to that close.
-/// 2. **Single trailing timestamp**: the model never closed its last segment,
-///    but it told us how far it got. Advance to that timestamp.
+/// 1. **Single-timestamp ending** --- last token is a timestamp not preceded
+///    by another timestamp (`...text <|t|>`). The model is signalling "I
+///    didn't break this chunk into multiple bounded segments; just advance a
+///    full window and try again." `t`'s value is *not* used as the advance.
+/// 2. **Consecutive pair ending** --- last two tokens are both timestamps
+///    (`<|t|><|t|>`). The first timestamp of the *last* such pair is the
+///    close of the last fully-bounded segment; advance to it.
+/// 3. **No timestamps** --- malformed output; advance a full window.
 ///
-/// Returns `None` if the chunk produced no usable timestamp at all (caller
-/// should fall back to a full-window advance).
+/// Returning `segment_size` directly (rather than `Option`) folds the caller's
+/// fallback into this function so the call site can just `seek += result`.
 fn last_timestamp_offset_frames(
     tokens: &[u32],
     timestamp_begin: u32,
     frames_per_tick: usize,
-) -> Option<usize> {
-    // Walk pairs of adjacent timestamp tokens; the last such pair marks the
-    // end of the last fully-bounded segment.
+    segment_size: usize,
+) -> usize {
+    let is_ts = |t: u32| t >= timestamp_begin;
+
+    // Single-timestamp ending: locate the last timestamp token. If it isn't
+    // preceded by another timestamp, the model emitted `... text <|t|>` with
+    // no closing junction --- advance a full window per openai-whisper.
+    let last_ts_idx = tokens.iter().rposition(|&t| is_ts(t));
+    if let Some(idx) = last_ts_idx {
+        let preceded_by_ts = idx > 0 && is_ts(tokens[idx - 1]);
+        if !preceded_by_ts {
+            return segment_size;
+        }
+    }
+
+    // Consecutive pair ending: walk windows and keep the last (start, start+1)
+    // adjacent-timestamp pair. The first timestamp of that pair is the close
+    // of the last fully-bounded segment.
     let mut last_pair_close: Option<u32> = None;
     for window in tokens.windows(2) {
-        if window[0] >= timestamp_begin && window[1] >= timestamp_begin {
+        if is_ts(window[0]) && is_ts(window[1]) {
             last_pair_close = Some(window[0]);
         }
     }
 
     if let Some(close_token) = last_pair_close {
         let ticks = (close_token - timestamp_begin) as usize;
-        return Some(ticks * frames_per_tick);
+        if ticks > 0 {
+            return ticks * frames_per_tick;
+        }
+        // Pair value 0 means the only consecutive pair was the chunk's
+        // opening junction `<|0|><|0|>` --- no real close was produced.
+        // Fall through to a full-window advance.
     }
 
-    // No paired close: use the last single timestamp, if any.
-    let last_ts = tokens
-        .iter()
-        .rev()
-        .copied()
-        .find(|&t| t >= timestamp_begin)?;
-
-    let ticks = (last_ts - timestamp_begin) as usize;
-    if ticks == 0 {
-        // A bare `<|0.00|>` tells us nothing useful; let the caller stride.
-        return None;
-    }
-    Some(ticks * frames_per_tick)
+    segment_size
 }
 
 /// Group BPE tokens into words with approximate timestamps.
