@@ -436,8 +436,19 @@ impl Decoder {
 
     /// Process the full mel spectrogram in 30 s chunks, returning timestamped
     /// segments with word-level timing.
+    ///
+    /// Critically, `seek` advances by the position of the *last* timestamp token
+    /// the model actually emitted, not by the full chunk size. Whisper often
+    /// only consumes part of a 30 s window before deciding it's done, and
+    /// blindly advancing by `segment_size` accumulates drift proportional to
+    /// the per-chunk underrun. Mirrors the reference openai-whisper loop.
     fn run(&mut self, mel: &Tensor) -> Result<Vec<WhisperSegment>> {
         let (_, _, content_frames) = mel.dims3()?;
+        let timestamp_begin = self.no_timestamps_token + 1;
+        // Each timestamp tick is 0.02 s; one mel frame is HOP_LENGTH/SAMPLE_RATE
+        // = 0.01 s. So one timestamp tick covers exactly two mel frames.
+        let frames_per_timestamp_tick: usize = 2;
+
         let mut seek = 0;
         let mut segments = Vec::new();
 
@@ -448,7 +459,6 @@ impl Decoder {
             let segment_duration = (segment_size * m::HOP_LENGTH) as f64 / m::SAMPLE_RATE as f64;
 
             let dr = self.decode_with_fallback(&mel_segment)?;
-            seek += segment_size;
 
             // If no speech detected with high confidence, skip this chunk.
             if dr.no_speech_prob > m::NO_SPEECH_THRESHOLD && dr.avg_logprob < m::LOGPROB_THRESHOLD {
@@ -457,12 +467,26 @@ impl Decoder {
                     time_offset,
                     time_offset + segment_duration,
                 );
+                seek += segment_size;
                 continue;
             }
 
             // Parse timestamp tokens into segments with word-level timing.
             let chunk_segments = self.tokens_to_segments(&dr.tokens, time_offset)?;
             segments.extend(chunk_segments);
+
+            // Advance `seek` to the position of the model's last reported
+            // timestamp. Prefer the closing timestamp of the final consecutive
+            // pair (i.e. the last fully-bounded segment); fall back to any
+            // trailing timestamp; finally, if the chunk emitted no usable
+            // timestamps at all, step forward a full window to avoid stalling.
+            let advance_frames = last_timestamp_offset_frames(
+                &dr.tokens,
+                timestamp_begin,
+                frames_per_timestamp_tick,
+            )
+            .unwrap_or(segment_size);
+            seek += advance_frames.max(1).min(segment_size);
 
             eprintln!(
                 "Whisper: {:.1}s / {:.1}s",
@@ -655,6 +679,52 @@ fn read_f32_le(data: &[u8]) -> Vec<f32> {
     data.chunks_exact(4)
         .map(|c| f32::from_le_bytes([c[0], c[1], c[2], c[3]]))
         .collect()
+}
+
+/// Compute how many mel frames the model actually consumed in a chunk, based
+/// on the trailing timestamp tokens it emitted.
+///
+/// Two cases, mirroring the openai-whisper reference:
+///
+/// 1. **Consecutive pair** (`<|t_close|><|t_next_open|>`): the closing
+///    timestamp of the last fully-bounded segment. Advance to that close.
+/// 2. **Single trailing timestamp**: the model never closed its last segment,
+///    but it told us how far it got. Advance to that timestamp.
+///
+/// Returns `None` if the chunk produced no usable timestamp at all (caller
+/// should fall back to a full-window advance).
+fn last_timestamp_offset_frames(
+    tokens: &[u32],
+    timestamp_begin: u32,
+    frames_per_tick: usize,
+) -> Option<usize> {
+    // Walk pairs of adjacent timestamp tokens; the last such pair marks the
+    // end of the last fully-bounded segment.
+    let mut last_pair_close: Option<u32> = None;
+    for window in tokens.windows(2) {
+        if window[0] >= timestamp_begin && window[1] >= timestamp_begin {
+            last_pair_close = Some(window[0]);
+        }
+    }
+
+    if let Some(close_token) = last_pair_close {
+        let ticks = (close_token - timestamp_begin) as usize;
+        return Some(ticks * frames_per_tick);
+    }
+
+    // No paired close: use the last single timestamp, if any.
+    let last_ts = tokens
+        .iter()
+        .rev()
+        .copied()
+        .find(|&t| t >= timestamp_begin)?;
+
+    let ticks = (last_ts - timestamp_begin) as usize;
+    if ticks == 0 {
+        // A bare `<|0.00|>` tells us nothing useful; let the caller stride.
+        return None;
+    }
+    Some(ticks * frames_per_tick)
 }
 
 /// Group BPE tokens into words with approximate timestamps.
