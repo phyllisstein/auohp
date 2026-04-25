@@ -62,6 +62,18 @@ pub fn diarize(
         rms = format!("{rms:.1}"),
         "starting diarization"
     );
+    // FIXME(segmentation): `chunked_get_segments` is a workaround for a bug
+    // in `pyannote_rs::get_segments`'s iterator that drops every window after
+    // the first one with no speech-to-silence transitions. The chunking
+    // limits the blast radius to a single 30 s slice, but the bug recurses
+    // *inside* each chunk: roughly half of the chunks on real interview
+    // audio still emit zero segments. The result is severe under-segmentation
+    // (~22 segments per 5 min instead of ~200--400), which collapses speaker
+    // clustering downstream and produces single-speaker transcripts.
+    //
+    // Replace with a native `ort` segmenter per
+    // `docs/native-segmentation-design.md`. This is REQUIRED, not optional ---
+    // the current pipeline does not produce usable speaker labels.
     let raw_segments = chunked_get_segments(samples_i16, sample_rate, seg_path)?;
 
     let total = raw_segments.len();
@@ -166,16 +178,29 @@ pub fn diarize(
     Ok(diarized)
 }
 
+/// **DEPRECATED. Replace with the native `ort` segmenter described in
+/// `docs/native-segmentation-design.md`.**
+///
 /// pyannote-rs's `get_segments` iterator terminates as soon as a single
 /// processing window produces zero speech-to-silence transitions, silently
-/// dropping every subsequent window. This is fatal for long inputs where the
-/// first 10 s happen to contain continuous speech: the iterator emits nothing
-/// and we get an empty diarization for the whole file.
+/// dropping every subsequent window. For long inputs where the first 10 s
+/// is continuous speech, the iterator emits nothing for the whole file.
 ///
-/// Workaround: feed the audio to `get_segments` in chunks short enough that
-/// each one is virtually guaranteed to contain at least one transition. We
-/// then translate each returned `Segment`'s timestamps from chunk-local back
-/// to global timeline coordinates.
+/// This function chunks the input into 30 s slices and runs `get_segments`
+/// per chunk in the hope that each chunk contains at least one transition.
+/// In practice the bug *recurses inside each chunk* --- on real interview
+/// audio, roughly half of the chunks still emit zero segments. We get
+/// ~22 segments per 5 min where pyannote should produce 200--400.
+///
+/// The downstream effect is that speaker clustering operates on a tiny,
+/// non-representative sample of the audio, collapses to one cluster, and
+/// the merge step in `pipeline.rs` correctly reports "we have no speaker
+/// information for ~95% of this file" by labelling everything as the
+/// dominant cluster. The transcript is unusable.
+///
+/// Do not extend this function. The chunking strategy cannot be made to
+/// work; the underlying iterator bug recurses at any granularity. Replace
+/// the entire segmentation surface per the design doc.
 fn chunked_get_segments(
     samples_i16: &[i16],
     sample_rate: u32,
