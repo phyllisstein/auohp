@@ -501,55 +501,104 @@ impl Decoder {
     /// Convert the raw decoder token sequence (with timestamp tokens) into
     /// segments with word-level timing.
     ///
-    /// Timestamp tokens appear in pairs: `<|t_start|> text... <|t_end|>`.
-    /// Each pair becomes one [`WhisperSegment`].
+    /// Whisper's timestamp protocol, enforced by the rule-1 mask in
+    /// `apply_timestamp_rules`: after one timestamp the next sample must be
+    /// another timestamp (or EOT), and after two consecutive timestamps text
+    /// is forced.  So legal output is
+    /// `T T text+ T T text+ ... T (T|EOT)` --- every segment boundary is a
+    /// *pair* of timestamp tokens at the same value (close-of-previous =
+    /// open-of-next).
+    ///
+    /// We therefore slice on the timestamp-token positions: each segment runs
+    /// from one timestamp (or junction) to the next.  When two adjacent
+    /// tokens are both timestamps we treat them as a single junction, using
+    /// the first of the pair as the boundary value.  This mirrors the
+    /// `consecutive` slicing in openai-whisper's `transcribe.py`.
+    ///
+    /// Why not the previous state-machine?  It misreads paired junctions:
+    /// `<|t0|><|t0|>` was consumed as "open then close-with-no-text," which
+    /// silently dropped `current_start` and orphaned the segment's text into
+    /// the *next* junction --- producing zero-width segments whose text was
+    /// shifted one boundary forward.
     fn tokens_to_segments(&self, tokens: &[u32], time_offset: f64) -> Result<Vec<WhisperSegment>> {
         let timestamp_begin = self.no_timestamps_token + 1;
-        let mut segments = Vec::new();
-        let mut current_start: Option<f64> = None;
-        let mut current_tokens: Vec<u32> = Vec::new();
+        let is_ts = |t: u32| t >= timestamp_begin;
+        let ts_value = |t: u32| (t - timestamp_begin) as f64 * 0.02 + time_offset;
+        // Text tokens are everything below `no_timestamps_token` minus the
+        // structural specials.  Language and task tokens fall through here
+        // and decode to empty strings via the BPE decoder, so we don't need
+        // a hardcoded list.
+        let is_text = |t: u32| {
+            t < self.no_timestamps_token && t != self.sot_token && t != self.eot_token
+        };
 
-        for &token in tokens {
-            if token == self.eot_token || token == self.sot_token {
+        let mut segments = Vec::new();
+        let mut i = 0;
+
+        while i < tokens.len() {
+            // Advance to the next opening timestamp, skipping prompt tokens.
+            if !is_ts(tokens[i]) {
+                i += 1;
                 continue;
             }
 
-            if token >= timestamp_begin {
-                // Timestamp token: value = (token - timestamp_begin) × 0.02 s.
-                let time = (token - timestamp_begin) as f64 * 0.02 + time_offset;
+            let start_time = ts_value(tokens[i]);
 
-                if let Some(start) = current_start {
-                    if !current_tokens.is_empty() {
-                        // Closing timestamp---flush the segment.
-                        let text = self
-                            .tokenizer
-                            .decode(&current_tokens, true)
-                            .unwrap_or_default();
-                        let trimmed = text.trim().to_string();
-
-                        if !trimmed.is_empty() {
-                            let words =
-                                tokens_to_words(&self.tokenizer, &current_tokens, start, time);
-                            segments.push(WhisperSegment {
-                                text: trimmed,
-                                start,
-                                end: time,
-                                words,
-                            });
-                        }
-                    }
-                    current_tokens.clear();
-                    current_start = None;
-                } else {
-                    // Opening timestamp.
-                    current_start = Some(time);
-                }
-            } else if token < self.no_timestamps_token {
-                // Regular text token.  Special prompt tokens (SOT, language,
-                // task) are handled by the SOT/EOT skip above and by the
-                // no_timestamps_token boundary---they all have IDs above that.
-                current_tokens.push(token);
+            // Walk over any consecutive timestamp tokens at the junction.
+            // This collapses the `T T` pair into a single boundary; if the
+            // model emitted only a lone `T` here (legal at SOT under rule 3),
+            // `j` stays at `i` and we fall through to the text scan below.
+            let mut j = i;
+            while j + 1 < tokens.len() && is_ts(tokens[j + 1]) {
+                j += 1;
             }
+
+            let text_start = j + 1;
+            let mut text_end = text_start;
+            while text_end < tokens.len() && !is_ts(tokens[text_end]) {
+                text_end += 1;
+            }
+
+            if text_end >= tokens.len() {
+                // No closing timestamp --- the chunk's last segment is
+                // unbounded.  Skip it; the seek-advance logic in `run` will
+                // re-process this audio in the next chunk where it stands a
+                // chance of being closed.
+                break;
+            }
+
+            let end_time = ts_value(tokens[text_end]);
+
+            // Filter prompt/special tokens out of the text range; only true
+            // text tokens get fed to the BPE decoder and word grouper.
+            let text_tokens: Vec<u32> = tokens[text_start..text_end]
+                .iter()
+                .copied()
+                .filter(|&t| is_text(t))
+                .collect();
+
+            if !text_tokens.is_empty() && end_time > start_time {
+                let text = self
+                    .tokenizer
+                    .decode(&text_tokens, true)
+                    .unwrap_or_default();
+                let trimmed = text.trim().to_string();
+
+                if !trimmed.is_empty() {
+                    let words =
+                        tokens_to_words(&self.tokenizer, &text_tokens, start_time, end_time);
+                    segments.push(WhisperSegment {
+                        text: trimmed,
+                        start: start_time,
+                        end: end_time,
+                        words,
+                    });
+                }
+            }
+
+            // Resume scanning at the closing timestamp; it's also the open
+            // of the next junction, so the outer loop will pick it up.
+            i = text_end;
         }
 
         Ok(segments)
