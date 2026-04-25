@@ -41,9 +41,10 @@ pub fn diarize(
         .context("embedding model path is not valid UTF-8")?;
 
     // Phase 1: segment audio into speech regions.
-    tracing::debug!(
+    tracing::info!(
         samples = samples_i16.len(),
         sample_rate,
+        duration_secs = samples_i16.len() as f64 / sample_rate as f64,
         "starting diarization"
     );
     let raw_segments: Vec<pyannote_rs::Segment> =
@@ -70,6 +71,9 @@ pub fn diarize(
 
     // Each entry pairs a segment's time range with its speaker embedding.
     let mut segment_embeddings: Vec<(f64, f64, Vec<f32>)> = Vec::with_capacity(total);
+    let mut skipped_short = 0usize;
+    let mut skipped_nonfinite = 0usize;
+    let mut skipped_zero = 0usize;
     let started_at = Instant::now();
 
     for (i, seg) in raw_segments.iter().enumerate() {
@@ -98,6 +102,7 @@ pub fn diarize(
         // and cause a hard error in compute_fbank, so we skip them here.
         const MIN_SAMPLES: usize = 400;
         if seg.samples.len() < MIN_SAMPLES {
+            skipped_short += 1;
             tracing::debug!(
                 segment = i,
                 samples = seg.samples.len(),
@@ -113,10 +118,12 @@ pub fn diarize(
             .collect();
 
         if embedding.iter().any(|x| !x.is_finite()) {
+            skipped_nonfinite += 1;
             tracing::warn!(segment = i, "segment has non-finite embedding, skipping");
             continue;
         }
         if embedding.iter().all(|&x| x == 0.0) {
+            skipped_zero += 1;
             tracing::warn!(segment = i, "segment has zero embedding, skipping");
             continue;
         }
@@ -125,6 +132,14 @@ pub fn diarize(
     }
 
     let n = segment_embeddings.len();
+    tracing::info!(
+        raw_segments = total,
+        kept = n,
+        skipped_short,
+        skipped_nonfinite,
+        skipped_zero,
+        "diarization phase 2 complete"
+    );
     if n == 0 {
         return Ok(Vec::new());
     }
