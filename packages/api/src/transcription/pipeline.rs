@@ -4,7 +4,6 @@
 use anyhow::{Context, Result};
 use std::path::{Path, PathBuf};
 
-#[allow(unused_imports)]
 use super::align;
 use super::audio;
 use super::diarize;
@@ -48,12 +47,13 @@ pub fn run(config: &PipelineConfig, input_path: &Path) -> Result<TranscriptionRe
         .with_context(|| format!("failed to decode {}", input_path.display()))?;
 
     let mut whisper_model = whisper::load_model()?;
-    let whisper_segments = whisper::transcribe(&mut whisper_model, &decoded.samples)?;
+    let mut whisper_segments = whisper::transcribe(&mut whisper_model, &decoded.samples)?;
 
-    // Aligner stubbed out to test whether its ort::Session creation poisons
-    // the global ONNX Runtime environment for pyannote-rs's later session.
-    // let mut aligner = align::Aligner::load()?;
-    // aligner.refine_segments(&mut whisper_segments, &decoded.samples)?;
+    // Refine word-level timestamps via wav2vec2 CTC forced alignment.
+    // This replaces the proportional approximation from Whisper's timestamp
+    // tokens with precise character-level alignment (≈20 ms resolution).
+    let mut aligner = align::Aligner::load()?;
+    aligner.refine_segments(&mut whisper_segments, &decoded.samples)?;
 
     let samples_i16 = diarize::f32_to_i16(&decoded.samples);
     let diarized = diarize::diarize(
