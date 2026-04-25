@@ -102,13 +102,51 @@ fn merge_whisper_with_diarization(
 }
 
 fn best_speaker_overlap(start: f64, end: f64, diarized: &[diarize::DiarizedSegment]) -> String {
-    diarized
+    // Primary: pick the diarized segment with the largest *positive* temporal
+    // overlap with [start, end]. Filtering out zero-overlap candidates is
+    // critical---without it, zero-width Whisper segments (start == end) tie
+    // every diarized segment at 0.0 and `max_by` silently returns the last
+    // one (typically SPEAKER_01), discarding genuine SPEAKER_00/SPEAKER_02
+    // hits in the diarization output.
+    let best = diarized
         .iter()
-        .map(|d| {
+        .filter_map(|d| {
             let overlap = (end.min(d.end) - start.max(d.start)).max(0.0);
-            (overlap, &d.speaker)
+            (overlap > 0.0).then_some((overlap, &d.speaker))
         })
         .max_by(|a, b| a.0.total_cmp(&b.0))
-        .map(|(_, speaker)| speaker.clone())
+        .map(|(_, speaker)| speaker.clone());
+
+    if let Some(speaker) = best {
+        return speaker;
+    }
+
+    // Fallback: no diarized segment overlaps [start, end] (common for the
+    // zero-width Whisper segments produced when the aligner can't refine an
+    // interval). Pick a "nearest" diarized segment by some rule of thumb.
+    nearest_speaker_fallback(start, end, diarized)
+}
+
+/// Choose a speaker label when no diarized segment temporally overlaps the
+/// Whisper interval `[start, end]`. Several reasonable rules exist; the one
+/// you pick shapes how aggressively brief interviewer interjections survive
+/// the merge.
+fn nearest_speaker_fallback(
+    start: f64,
+    end: f64,
+    diarized: &[diarize::DiarizedSegment],
+) -> String {
+    // Edge distance: nearest gap between the query interval [start, end] and
+    // any edge of a diarized segment. Better than midpoint distance for
+    // catching brief speakers (a 0.4 s SPEAKER_00 tangent to the query beats
+    // a 30 s SPEAKER_01 whose midpoint happens to be closer overall).
+    diarized
+        .iter()
+        .min_by(|a, b| {
+            let a_dist = (a.end - start).abs().min((end - a.start).abs());
+            let b_dist = (b.end - start).abs().min((end - b.start).abs());
+            a_dist.total_cmp(&b_dist)
+        })
+        .map(|d| d.speaker.clone())
         .unwrap_or_else(|| "SPEAKER_00".to_string())
 }
