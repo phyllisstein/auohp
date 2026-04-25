@@ -480,18 +480,32 @@ impl Decoder {
             // pair (i.e. the last fully-bounded segment); fall back to any
             // trailing timestamp; finally, if the chunk emitted no usable
             // timestamps at all, step forward a full window to avoid stalling.
-            let advance_frames = last_timestamp_offset_frames(
+            let raw_advance = last_timestamp_offset_frames(
                 &dr.tokens,
                 timestamp_begin,
                 frames_per_timestamp_tick,
-            )
-            .unwrap_or(segment_size);
+            );
+            let advance_frames = raw_advance.unwrap_or(segment_size);
             seek += advance_frames.max(1).min(segment_size);
 
+            // Diagnostic: dump every timestamp token in the chunk so we can
+            // see exactly what the model produced.  Remove once the seek
+            // advance is verified.
+            let ts_dump: Vec<f64> = dr
+                .tokens
+                .iter()
+                .filter(|&&t| t >= timestamp_begin)
+                .map(|&t| (t - timestamp_begin) as f64 * 0.02)
+                .collect();
             eprintln!(
-                "Whisper: {:.1}s / {:.1}s",
+                "Whisper: {:.2}s / {:.2}s | {} tokens, {} ts | advance={:?} → {} frames | ts={:?}",
                 seek as f64 * m::HOP_LENGTH as f64 / m::SAMPLE_RATE as f64,
                 content_frames as f64 * m::HOP_LENGTH as f64 / m::SAMPLE_RATE as f64,
+                dr.tokens.len(),
+                ts_dump.len(),
+                raw_advance,
+                advance_frames.max(1).min(segment_size),
+                ts_dump,
             );
         }
 
