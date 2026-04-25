@@ -41,10 +41,25 @@ pub fn diarize(
         .context("embedding model path is not valid UTF-8")?;
 
     // Phase 1: segment audio into speech regions.
+    //
+    // Sanity-check the audio buffer first: a peak amplitude near zero or an
+    // RMS that suggests a silent signal points at the decoder/resampler
+    // rather than at pyannote.
+    let peak = samples_i16.iter().copied().map(i16::abs).max().unwrap_or(0);
+    let sum_sq: f64 = samples_i16
+        .iter()
+        .map(|&s| {
+            let f = s as f64;
+            f * f
+        })
+        .sum();
+    let rms = (sum_sq / samples_i16.len().max(1) as f64).sqrt();
     tracing::info!(
         samples = samples_i16.len(),
         sample_rate,
         duration_secs = samples_i16.len() as f64 / sample_rate as f64,
+        peak,
+        rms = format!("{rms:.1}"),
         "starting diarization"
     );
     let raw_segments: Vec<pyannote_rs::Segment> =
