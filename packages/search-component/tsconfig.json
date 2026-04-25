@@ -31,13 +31,16 @@
         "target": "esnext",
         "incremental": true,
         "skipLibCheck": true,
-        "moduleResolution": "nodenext"
+        "moduleResolution": "nodenext",
+        "checkJs": false
     },
     "include": [
         "./src/**/*.ts",
         "./src/**/*.tsx",
         "./src/**/*.d.ts",
-        "./vite-env.d.ts"
+        "./vite-env.d.ts",
+        "*.js",
+        "*.ts"
     ],
     "exclude": [
         "node_modules"

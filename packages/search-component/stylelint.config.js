@@ -5,11 +5,11 @@ const config = {
     overrides: [
         {
             customSyntax: "postcss-scss",
-            files: ["./src/**/*.scss"],
+            files: ["*.scss"],
         },
         {
             customSyntax: "@stylelint/postcss-css-in-js",
-            files: ["./src/**/*.ts", "./src/**/*.tsx"],
+            files: ["*.ts", "*.tsx"],
         },
     ],
     plugins: [

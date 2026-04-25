@@ -1,4 +1,5 @@
 import { defineConfig } from "vitest/config";
+import { playwright } from "@vitest/browser-playwright";
 
 export default defineConfig({
     server: {
@@ -9,10 +10,7 @@ export default defineConfig({
     },
     test: {
         browser: {
-            enabled: false,
-            headless: true,
-            name: "chromium",
-            provider: "playwright",
+            provider: playwright(),
         },
         environment: "jsdom",
         exclude: ["node_modules", "dist", "public"],

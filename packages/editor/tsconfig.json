@@ -32,6 +32,7 @@
     "incremental": true,
     "skipLibCheck": true,
     "moduleResolution": "nodenext",
+    "checkJs": false,
     "plugins": [
       {
         "name": "next"
@@ -43,7 +44,9 @@
     "./src/**/*.tsx",
     "./src/**/*.d.ts",
     ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts"
+    ".next/dev/types/**/*.ts",
+    "*.js",
+    "*.ts"
   ],
   "exclude": [
     "node_modules"
