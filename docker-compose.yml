@@ -9,7 +9,7 @@ services:
       - source: environment
         mode: 0440
     environment:
-      HTTPS_METHOD: noredirect
+      RUST_LOG: auohp_api=debug,transcribe=debug
       VIRTUAL_HOST_MULTIPORTS: |-
         editor.auohp.here:
           "/":
@@ -46,7 +46,7 @@ services:
     networks:
       - default
       - nginx-proxy
-    image: neo4j:2026.01.4
+    image: neo4j:2026.04.0
     environment:
       NEO4J_AUTH: neo4j/auohpauohp
       NEO4J_PLUGINS: '["apoc", "genai"]'
