@@ -8,7 +8,7 @@
 use std::sync::Arc;
 
 use async_graphql::{Context, SimpleObject};
-use neo4rs::{query, BoltType};
+use neo4rs::{BoltType, query};
 
 use super::error::gql_err;
 use super::interviews::{Interview, Statement, StatementNode};
@@ -47,7 +47,7 @@ pub async fn search_statements(
     // ── Embed query text (CPU-bound: run off the async executor) ──────────────
     let vector: Vec<f32> = tokio::task::spawn_blocking({
         let embedder = embedder.clone();
-        let texts = vec![query_text];
+        let texts = vec![query_text.clone()];
         move || embedder.embed(&texts)
     })
     .await
@@ -56,6 +56,13 @@ pub async fn search_statements(
     .into_iter()
     .next()
     .ok_or_else(|| async_graphql::Error::new("embedding produced no vectors"))?;
+
+    tracing::debug!(
+        query_text,
+        dims = vector.len(),
+        vec = serde_json::to_string(&vector).unwrap(),
+        "performing vector search"
+    );
 
     // Convert to BoltType list---Neo4j's vector procedures expect a list of
     // floats. We widen f32 --> f64 here because neo4rs's BoltType::Float wraps
