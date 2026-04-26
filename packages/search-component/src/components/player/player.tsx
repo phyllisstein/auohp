@@ -1,8 +1,6 @@
 import queryString from "query-string";
 import { useEffect, useRef } from "react";
 
-import { useNeo4jVideo } from "hooks/interviews";
-
 import "./player.scss";
 
 interface PlayerProps {
@@ -11,7 +9,6 @@ interface PlayerProps {
 
 export function Player({ url }: PlayerProps) {
     const player = useRef<HTMLVideoElement>(null);
-    const video = useNeo4jVideo(url);
     const hasSetTimestamp = useRef<boolean>(false);
 
     useEffect(() => {
@@ -26,7 +23,7 @@ export function Player({ url }: PlayerProps) {
             const localStorageTimestamp = localStorage.getItem("last-timestamp");
 
             currentPlayer.currentTime
-        = typeof parsedURL.query.timestamp === "string"
+                = typeof parsedURL.query.timestamp === "string"
                     ? Number.parseFloat(parsedURL.query.timestamp)
                     : localStorageTimestamp !== null
                         ? Number.parseFloat(localStorageTimestamp)
@@ -67,10 +64,6 @@ export function Player({ url }: PlayerProps) {
 
     return (
         <div className="player-container">
-            <video ref={ player } controls playsInline crossOrigin="anonymous">
-                { video && <source src={ video.video.url } type="video/mp4" /> }
-                { video && <track default kind="subtitles" src={ video.vtt.url } srcLang="en" /> }
-            </video>
         </div>
     );
 }
