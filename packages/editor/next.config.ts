@@ -4,9 +4,6 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-/**
-  * @type {import('next').NextConfig}
-  */
 export default {
     allowedDevOrigins: ["*.auohp.here", "localhost:3000", "127.0.0.1:3000"],
     compiler: {
