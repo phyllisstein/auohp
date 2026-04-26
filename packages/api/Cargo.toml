@@ -36,6 +36,9 @@ tokio-retry = "0.3"
 # HTTP framework --- axum is built on top of Tower middleware by the Tokio team.
 # It uses type-safe extractors and composes well with the rest of this stack.
 axum = "0.8"
+tower = { version = "0.5.3" }
+tower-http = { version = "0.6.8", features = ["trace", "cors"] }
+http = "1.4.0"
 
 # GraphQL --- async-graphql is code-driven: you define Rust types and derive the
 # schema from them via macros. async-graphql-axum bridges the two frameworks.

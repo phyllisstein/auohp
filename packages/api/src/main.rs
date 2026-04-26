@@ -6,9 +6,14 @@ mod transcription;
 use anyhow::Result;
 use async_graphql::http::GraphiQLSource;
 use async_graphql_axum::{GraphQLRequest, GraphQLResponse};
-use axum::{extract::State, response::Html, routing::get, Router};
+use axum::{Router, extract::State, response::Html, routing::get};
+use http::Method;
+use tower_http::{
+    cors::{Any, CorsLayer},
+    trace::TraceLayer,
+};
 use tracing::info;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
+use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 
 // The GraphQL handler receives two arguments:
 //
@@ -92,7 +97,16 @@ async fn main() -> Result<()> {
         )
         // with_state() makes `schema` available to any handler that
         // declares a State<AppSchema> parameter.
-        .with_state(schema);
+        .with_state(schema)
+        .layer(
+            CorsLayer::new()
+                // allow `GET` and `POST` when accessing the resource
+                .allow_methods([Method::GET, Method::POST])
+                // allow requests from any origin
+                .allow_origin(Any)
+                .allow_headers(Any),
+        )
+        .layer(TraceLayer::new_for_http());
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:6060").await?;
     info!("listening on {}", listener.local_addr()?);
