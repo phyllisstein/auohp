@@ -1,38 +1,50 @@
-import { type Neo4jResult, isDocumentary, isInterview, isBroadsheet, useNeo4jTranscript } from "hooks/interviews";
-import { debounce } from "lodash-es";
 import queryString from "query-string";
-import { type ChangeEvent, useEffect, useRef, useState, useTransition } from "react";
-import { SearchContainer, SearchInput, SearchResult, SearchResults, ResultImage, ResultMatch, ResultSource, ResultTimestamp } from "./search-styles";
+import { useEffect, useRef, useState } from "react";
+import { SearchContainer, SearchResult, SearchResults, ResultMatch, ResultSource, ResultTimestamp } from "./search-styles";
 import { Results } from "./results";
 import deepEqual from "fast-deep-equal";
+import { gql } from "@apollo/client";
+import { useLazyQuery } from "@apollo/client/react";
+import { SearchInput } from "./input";
+
+const SEARCH_QUERY = gql`
+    query SearchStatements($search: String!) {
+        searchStatements(
+            query: $search
+            limit: 5
+        ) {
+            score
+            interview {
+                number
+                uid
+            }
+            statement {
+                uid
+                text
+                startTime
+                endTime
+                person {
+                    name
+                }
+            }
+        }
+    }
+`;
 
 
 export function Search() {
-    const [search, setSearch] = useState<string>("");
-    const [searchTransitioning, searchTransition] = useTransition();
     const searchBox = useRef<HTMLInputElement>(null);
     const [boxRect, setBoxRect] = useState<DOMRect | null>(null);
+    const [executeSearch, searchQuery] = useLazyQuery(SEARCH_QUERY);
 
-    const handleSearch = debounce((e: ChangeEvent<HTMLInputElement>) => {
-        searchTransition(() => {
-            setSearch(e.target.value);
-        });
-    }, 500);
-
-    const handleResultClick = (result: Neo4jResult) => {
-        const url = isDocumentary(result.artefact)
-            ? `/${ result.artefact.properties.slug }`
-            : isInterview(result.artefact)
-                ? `/${ result.artefact.properties.number }`
-                : "";
-
-        if (!url) return;
+    const handleResultClick = result => {
+        const url = `/${ result.interview.number }`;
 
         const nextURL = queryString.stringifyUrl({
             query: {
-                timestamp: result.meta.properties.startTime,
+                timestamp: result.statement.startTime,
             },
-            url,
+            url: url,
         });
 
         window.location.href = nextURL;
@@ -47,35 +59,23 @@ export function Search() {
         }
     });
 
-    const neo4jResults = useNeo4jTranscript(search);
-
     return (
         <SearchContainer className="search-container">
-            <SearchInput ref={ searchBox } type="search" onChange={ handleSearch } />
+            <SearchInput
+                ref={ searchBox }
+                type="search"
+                // FIXME: Should be a deferred value or transition
+                onChange={ e => executeSearch({ variables: { search: e.target.value } }) } />
             <Results { ...boxRect }>
                 <SearchResults>
                     {
-                        !searchTransitioning && neo4jResults.map(result => (
-                            <SearchResult key={ `${ result.meta.properties.startTime }-${ result.artefact.properties.uid }` } onClick={ () => handleResultClick(result) }>
-                                {
-                                    isBroadsheet(result.artefact)
-                                        ? <ResultImage src={ result.asset.properties.url } />
-                                        : <ResultMatch>{ result.statement.properties.text }</ResultMatch>
-                                }
+                        searchQuery.data?.searchStatements.map(hit => (
+                            <SearchResult key={ `${ hit.statement.startTime }-${ hit.statement.uid }` } onClick={ () => handleResultClick(hit) }>
+                                <ResultMatch>{ hit.statement.text }</ResultMatch>
                                 <ResultSource>
-                                    <strong>
-                                        {
-                                            isDocumentary(result.artefact)
-                                                ? result.artefact.properties.title
-                                                : isInterview(result.artefact)
-                                                    ? result.person.properties.name
-                                                    : isBroadsheet(result.artefact)
-                                                        ? result.artefact.properties.title
-                                                        : ""
-                                        }
-                                    </strong>
+                                    <strong>{ hit.statement.person.name }</strong>
                                 </ResultSource>
-                                <ResultTimestamp>{ result.meta.properties.startTimestamp }</ResultTimestamp>
+                                <ResultTimestamp>{ hit.statement.startTime }</ResultTimestamp>
                             </SearchResult>
                         ))
                     }

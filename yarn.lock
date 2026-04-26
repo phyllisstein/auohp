@@ -22,6 +22,37 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@apollo/client@npm:^4.1.9":
+  version: 4.1.9
+  resolution: "@apollo/client@npm:4.1.9"
+  dependencies:
+    "@graphql-typed-document-node/core": "npm:^3.1.1"
+    "@wry/caches": "npm:^1.0.0"
+    "@wry/equality": "npm:^0.5.6"
+    "@wry/trie": "npm:^0.5.0"
+    graphql-tag: "npm:^2.12.6"
+    optimism: "npm:^0.18.0"
+    tslib: "npm:^2.3.0"
+  peerDependencies:
+    graphql: ^16.0.0
+    graphql-ws: ^5.5.5 || ^6.0.3
+    react: ^17.0.0 || ^18.0.0 || >=19.0.0-rc
+    react-dom: ^17.0.0 || ^18.0.0 || >=19.0.0-rc
+    rxjs: ^7.3.0
+    subscriptions-transport-ws: ^0.9.0 || ^0.11.0
+  peerDependenciesMeta:
+    graphql-ws:
+      optional: true
+    react:
+      optional: true
+    react-dom:
+      optional: true
+    subscriptions-transport-ws:
+      optional: true
+  checksum: 10/d4e787d33787f974a474ac4a6ce0543e6ba8233f560cf216bdc5251166c860e8d5dcbe18fb3aba561bceaa640e58f3a258396416938b846c3fe74d1cb0b344e0
+  languageName: node
+  linkType: hard
+
 "@asamuzakjp/css-color@npm:^5.1.5":
   version: 5.1.11
   resolution: "@asamuzakjp/css-color@npm:5.1.11"
@@ -162,6 +193,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@auohp/search-component@workspace:packages/search-component"
   dependencies:
+    "@apollo/client": "npm:^4.1.9"
     "@eslint/js": "npm:^10.0.1"
     "@rollup/plugin-node-resolve": "npm:^16.0.3"
     "@stylelint/postcss-css-in-js": "npm:0.38.0"
@@ -174,9 +206,8 @@ __metadata:
     eslint-plugin-react: "npm:^7.37.5"
     eslint-plugin-react-hooks: "npm:^7.1.1"
     fast-deep-equal: "npm:^3.1.3"
-    fuzzbunny: "npm:^1.0.1"
     globals: "npm:^17.5.0"
-    neo4j-driver: "npm:^6.0.1"
+    graphql: "npm:^16.13.2"
     postcss: "npm:8.4.49"
     postcss-html: "npm:1.8.1"
     postcss-jsx: "npm:0.36.4"
@@ -185,8 +216,9 @@ __metadata:
     postcss-styled-components: "npm:0.2.1"
     postcss-syntax: "npm:0.36.2"
     query-string: "npm:^9.3.1"
-    react: "npm:^19.2.5"
-    react-dom: "npm:^19.2.5"
+    react: "npm:^19.0.0"
+    react-dom: "npm:^19.0.0"
+    rxjs: "npm:^7.8.2"
     sass: "npm:^1.99.0"
     stylelint: "npm:16.12.0"
     stylelint-config-rational-order: "https://github.com/phyllisstein/stylelint-config-rational-order.git#empty-line-threshold"
@@ -1977,6 +2009,15 @@ __metadata:
     "@noble/hashes":
       optional: true
   checksum: 10/d18519341c354356b65b9ac64b8166880972d122feff4038a92c0e2d2c8579794429117a2bc636bca584e7bf2fdad6d27f0874b2647d4a866c125843497ef193
+  languageName: node
+  linkType: hard
+
+"@graphql-typed-document-node/core@npm:^3.1.1":
+  version: 3.2.0
+  resolution: "@graphql-typed-document-node/core@npm:3.2.0"
+  peerDependencies:
+    graphql: ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0
+  checksum: 10/fa44443accd28c8cf4cb96aaaf39d144a22e8b091b13366843f4e97d19c7bfeaf609ce3c7603a4aeffe385081eaf8ea245d078633a7324c11c5ec4b2011bb76d
   languageName: node
   linkType: hard
 
@@ -4163,6 +4204,42 @@ __metadata:
     convert-source-map: "npm:^2.0.0"
     tinyrainbow: "npm:^3.1.0"
   checksum: 10/4f75a2df6f910578a361ae92eb92a2b6921f50cc748994f3b2e5900d0ae687b6683f33b090dedf9b96eaca23bac117817d9448a4a333c7a96b94ee767399f18c
+  languageName: node
+  linkType: hard
+
+"@wry/caches@npm:^1.0.0":
+  version: 1.0.1
+  resolution: "@wry/caches@npm:1.0.1"
+  dependencies:
+    tslib: "npm:^2.3.0"
+  checksum: 10/055f592ee52b5fd9aa86e274e54e4a8b2650f619000bf6f61880ce14aaf47eb2ab34f3ada2eab964fe8b2f19bf8097ecacddcea4638fcc64c3d3a0a512aaa07c
+  languageName: node
+  linkType: hard
+
+"@wry/context@npm:^0.7.0":
+  version: 0.7.4
+  resolution: "@wry/context@npm:0.7.4"
+  dependencies:
+    tslib: "npm:^2.3.0"
+  checksum: 10/70d648949a97a035b2be2d6ddb716d4162113e850ab2c4c86331b2da94a7e826204080ce04eee2a95665bd3a0b245bf2ea3aae9adfa57b004ae0d2d49bdb5c8f
+  languageName: node
+  linkType: hard
+
+"@wry/equality@npm:^0.5.6":
+  version: 0.5.7
+  resolution: "@wry/equality@npm:0.5.7"
+  dependencies:
+    tslib: "npm:^2.3.0"
+  checksum: 10/69dccf33c0c41fd7ec5550f5703b857c6484a949412ad747001da941270ea436648c3ab988a2091765304249585ac30c7b417fad8be9a7ce19c1221f71548e35
+  languageName: node
+  linkType: hard
+
+"@wry/trie@npm:^0.5.0":
+  version: 0.5.0
+  resolution: "@wry/trie@npm:0.5.0"
+  dependencies:
+    tslib: "npm:^2.3.0"
+  checksum: 10/578a08f3a96256c9b163230337183d9511fd775bdfe147a30561ccaacedc9ce33b9731ee6e591bb1f5f53e41b26789e519b47dff5100c7bf4e1cd2df3062f797
   languageName: node
   linkType: hard
 
@@ -6477,13 +6554,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fuzzbunny@npm:^1.0.1":
-  version: 1.0.1
-  resolution: "fuzzbunny@npm:1.0.1"
-  checksum: 10/49c88dbb347dfd5668c8e89bca8b0b507254594d2b1039a7ceb3ba7314e2be8ba6568a44b697d3410ff6c228f911d3e643844e8f1813aadc6fdf5428e48cfedd
-  languageName: node
-  linkType: hard
-
 "gauge@npm:^4.0.3":
   version: 4.0.4
   resolution: "gauge@npm:4.0.4"
@@ -6755,6 +6825,24 @@ __metadata:
   version: 4.2.11
   resolution: "graceful-fs@npm:4.2.11"
   checksum: 10/bf152d0ed1dc159239db1ba1f74fdbc40cb02f626770dcd5815c427ce0688c2635a06ed69af364396da4636d0408fcf7d4afdf7881724c3307e46aff30ca49e2
+  languageName: node
+  linkType: hard
+
+"graphql-tag@npm:^2.12.6":
+  version: 2.12.6
+  resolution: "graphql-tag@npm:2.12.6"
+  dependencies:
+    tslib: "npm:^2.1.0"
+  peerDependencies:
+    graphql: ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0
+  checksum: 10/23a2bc1d3fbeae86444204e0ac08522e09dc369559ba75768e47421a7321b59f352fb5b2c9a5c37d3cf6de890dca4e5ac47e740c7cc622e728572ecaa649089e
+  languageName: node
+  linkType: hard
+
+"graphql@npm:^16.13.2":
+  version: 16.13.2
+  resolution: "graphql@npm:16.13.2"
+  checksum: 10/9ede86f0a7227d47a41e2076e0132839f66fbd14899abfd818d7de2ab81076ee249c8788ad42243367d68a027a8763cc4c7be2e441ccfb03a8549490c7b66c2f
   languageName: node
   linkType: hard
 
@@ -8268,28 +8356,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"neo4j-driver-bolt-connection@npm:6.0.1":
-  version: 6.0.1
-  resolution: "neo4j-driver-bolt-connection@npm:6.0.1"
-  dependencies:
-    buffer: "npm:^6.0.3"
-    neo4j-driver-core: "npm:6.0.1"
-    string_decoder: "npm:^1.3.0"
-  checksum: 10/7d7541146190840a78190b513dcb22cbc521f73895d35957af1eb88b88ad4a47507d107b6c95f9aca2a91b102e7578cd49874d69e1a558fdbbac8bf0e56e0fcd
-  languageName: node
-  linkType: hard
-
 "neo4j-driver-core@npm:5.27.0":
   version: 5.27.0
   resolution: "neo4j-driver-core@npm:5.27.0"
   checksum: 10/ab41a71590dab0ff680fb8d4eac6da9989d2d868417523fc98c256e79a75c3ad4fe8bbb4533e804dfa5e2ac45f5db288283c2c5799778a23b0efe854045b21e8
-  languageName: node
-  linkType: hard
-
-"neo4j-driver-core@npm:6.0.1":
-  version: 6.0.1
-  resolution: "neo4j-driver-core@npm:6.0.1"
-  checksum: 10/89b47ad848f8559b783bcef11b78936c08d36da3ef4194d469a03acdf7cc1fa15be88bd80b0251a2f6b93193caefb97f8d9c92de2b5eae822d17abb498fed673
   languageName: node
   linkType: hard
 
@@ -8301,17 +8371,6 @@ __metadata:
     neo4j-driver-core: "npm:5.27.0"
     rxjs: "npm:^7.8.1"
   checksum: 10/9d7ce1a462de1841c5eb718458b2fd4d9cf363e3dce44cd5aa1faf18d2db2231080a4bebefffb362cf586a27f9dcc4fbd9c3a92e918142ef0fd1f9278a05ff05
-  languageName: node
-  linkType: hard
-
-"neo4j-driver@npm:^6.0.1":
-  version: 6.0.1
-  resolution: "neo4j-driver@npm:6.0.1"
-  dependencies:
-    neo4j-driver-bolt-connection: "npm:6.0.1"
-    neo4j-driver-core: "npm:6.0.1"
-    rxjs: "npm:^7.8.2"
-  checksum: 10/3461d05ed7a707ea849f86e391bea14bf88d85fe329597900523124439ff5d11db0c8e9a6471a003d9617a9c39ffcc7ca2dc9a6bd6337e76a9060be800a193ec
   languageName: node
   linkType: hard
 
@@ -8563,6 +8622,18 @@ __metadata:
   dependencies:
     wrappy: "npm:1"
   checksum: 10/cd0a88501333edd640d95f0d2700fbde6bff20b3d4d9bdc521bdd31af0656b5706570d6c6afe532045a20bb8dc0849f8332d6f2a416e0ba6d3d3b98806c7db68
+  languageName: node
+  linkType: hard
+
+"optimism@npm:^0.18.0":
+  version: 0.18.1
+  resolution: "optimism@npm:0.18.1"
+  dependencies:
+    "@wry/caches": "npm:^1.0.0"
+    "@wry/context": "npm:^0.7.0"
+    "@wry/trie": "npm:^0.5.0"
+    tslib: "npm:^2.3.0"
+  checksum: 10/d805f5995d61a417d4fd49a923749db1aa310d1ae8de084ec3a5f589f8b185d9a41b7b4422d33ee75ce43115c264e14bca086f8be2bb182c76448ad08997213a
   languageName: node
   linkType: hard
 
@@ -9121,7 +9192,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-dom@npm:^19.2.5":
+"react-dom@npm:^19.0.0, react-dom@npm:^19.2.5":
   version: 19.2.5
   resolution: "react-dom@npm:19.2.5"
   dependencies:
@@ -9139,7 +9210,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react@npm:^19.2.5":
+"react@npm:^19.0.0, react@npm:^19.2.5":
   version: 19.2.5
   resolution: "react@npm:19.2.5"
   checksum: 10/1c3c7ffecb90b7f89a5c3ef635e6811f3a84600097f203b918150cb7e6b0a52915e858e5b4c82317a520dffccfa46ee4819ccf92c59c5b2d6c25cffe258dd20c
@@ -10610,6 +10681,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"tslib@npm:^2.3.0, tslib@npm:^2.8.1":
+  version: 2.8.1
+  resolution: "tslib@npm:2.8.1"
+  checksum: 10/3e2e043d5c2316461cb54e5c7fe02c30ef6dccb3384717ca22ae5c6b5bc95232a6241df19c622d9c73b809bea33b187f6dbc73030963e29950c2141bc32a79f7
+  languageName: node
+  linkType: hard
+
 "tslib@npm:^2.4.0, tslib@npm:^2.6.2":
   version: 2.6.2
   resolution: "tslib@npm:2.6.2"
@@ -10621,13 +10699,6 @@ __metadata:
   version: 2.8.0
   resolution: "tslib@npm:2.8.0"
   checksum: 10/1bc7c43937477059b4d26f2dbde7e49ef0fb4f38f3014e0603eaea76d6a885742c8b1762af45949145e5e7408a736d20ded949da99dabc8ccba1fc5531d2d927
-  languageName: node
-  linkType: hard
-
-"tslib@npm:^2.8.1":
-  version: 2.8.1
-  resolution: "tslib@npm:2.8.1"
-  checksum: 10/3e2e043d5c2316461cb54e5c7fe02c30ef6dccb3384717ca22ae5c6b5bc95232a6241df19c622d9c73b809bea33b187f6dbc73030963e29950c2141bc32a79f7
   languageName: node
   linkType: hard
 

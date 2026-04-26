@@ -4,15 +4,6 @@ export const SearchContainer = styled.div`
     position: relative;
 `;
 
-export const SearchInput = styled.input`
-    padding: 0.5em;
-
-    font-size: 1.5em;
-
-    border: none;
-    border-bottom: 1px solid black;
-`;
-
 export const SearchResults = styled.ul`
     position: absolute;
     z-index: 1;
@@ -46,9 +37,9 @@ export const ResultMatch = styled.div`
 export const ResultImage = styled.img`
     grid-row: 1 / 1;
     grid-column: 1 / 2;
-    padding: 0.5em;
     width: 100px;
     height: 100px;
+    padding: 0.5em;
     object-fit: cover;
 `;
 
