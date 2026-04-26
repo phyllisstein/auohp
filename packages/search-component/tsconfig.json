@@ -31,7 +31,7 @@
         "target": "esnext",
         "incremental": true,
         "skipLibCheck": true,
-        "moduleResolution": "nodenext",
+        "moduleResolution": "node",
         "checkJs": false
     },
     "include": [
