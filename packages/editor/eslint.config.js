@@ -10,7 +10,6 @@ import globals from "globals";
 export default defineConfig(
     js.configs.recommended,
     tseslint.configs.recommended,
-    tseslint.configs.recommendedTypeChecked,
     stylistic.configs.recommended,
     {
         rules: {
@@ -131,10 +130,10 @@ export default defineConfig(
             ],
             "@stylistic/space-before-function-paren": "warn",
             "@stylistic/template-curly-spacing": ["warn", "always"],
-        }
+        },
     },
     {
-        files: ['**/*.{js,jsx,mjs,cjs,ts,tsx}'],
+        files: ["**/*.{js,jsx,mjs,cjs,ts,tsx}"],
         plugins: {
             react,
             "react-hooks": reactHooks,
@@ -168,14 +167,6 @@ export default defineConfig(
             ],
             ...react.configs["jsx-runtime"].rules,
             ...jsxA11y.configs.recommended.rules,
-        },
-    },
-    {
-        languageOptions: {
-            parserOptions: {
-                projectService: true,
-                tsconfigRootDir: import.meta.dirname,
-            },
         },
     },
 );
