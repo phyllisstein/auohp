@@ -26,7 +26,7 @@ const __dirname = path.dirname(__filename);
 
 const {
     NEO4J_PASSWORD = "auohpauohp",
-    NEO4J_URI = "bolt+s://bolt.auohp.here:443",
+    NEO4J_URI = "bolt+s://bolt.auohp.localhost:443",
     NEO4J_USERNAME = "neo4j",
 } = process.env;
 

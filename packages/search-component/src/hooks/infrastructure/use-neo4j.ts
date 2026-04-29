@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 const {
     VITE_NEO4J_PASSWORD: NEO4J_PASSWORD = "auohpauohp",
-    VITE_NEO4J_URI: NEO4J_URI = "bolt+s://bolt.auohp.here:443",
+    VITE_NEO4J_URI: NEO4J_URI = "bolt+s://bolt.auohp.localhost:443",
     VITE_NEO4J_USERNAME: NEO4J_USERNAME = "neo4j",
 } = import.meta.env;
 
