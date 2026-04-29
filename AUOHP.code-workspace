@@ -30,7 +30,6 @@
         "search.exclude": {
             "**/node_modules": true,
             "**/.yarn": true
-        },
-        "eslint.workingDirectories": [{ "mode": "auto"}]
+        }
     }
 }
