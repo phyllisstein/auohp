@@ -10,7 +10,8 @@
     "packageManager": "yarn@4.0.2",
     "type": "module",
     "scripts": {
-        "start:dev": "vite"
+        "dev": "vite dev",
+        "search:dev": "vite dev"
     },
     "devDependencies": {
         "@eslint/js": "^10.0.1",
