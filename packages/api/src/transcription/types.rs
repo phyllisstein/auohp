@@ -1,6 +1,6 @@
 use serde::Serialize;
 
-use crate::transcription::{diarize::DiarizedSegment, whisper::WhisperSegment};
+use crate::transcription::whisper::WhisperSegment;
 
 /// A word with its timing from Whisper's DTW alignment.
 #[derive(Debug, Clone, Serialize, PartialEq)]
@@ -10,10 +10,13 @@ pub struct Word {
     pub end: f64,
 }
 
-/// A transcription segment---one contiguous block of speech by one speaker.
+/// A transcription segment---one contiguous block of speech from Whisper.
+///
+/// `speaker` is always `None` coming out of the pipeline; it will be filled in
+/// by the user through the manual labeling UI.
 #[derive(Debug, Clone, Serialize)]
 pub struct Segment {
-    pub speaker: String,
+    pub speaker: Option<String>,
     pub text: String,
     pub start_time: f64,
     pub end_time: f64,
@@ -24,7 +27,5 @@ pub struct Segment {
 #[derive(Debug, Clone, Serialize)]
 pub struct TranscriptionResult {
     pub segments: Vec<Segment>,
-    pub speakers: Vec<String>,
     pub whisper_segments: Vec<WhisperSegment>,
-    pub diarized_segments: Vec<DiarizedSegment>,
 }
