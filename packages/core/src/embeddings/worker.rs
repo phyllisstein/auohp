@@ -83,6 +83,11 @@ impl EmbedderHandle {
         //      `Result<EmbedResult, RecvError>`. Map the `RecvError` to
         //      `anyhow!` the same way, then use `?` to unwrap the outer
         //      Result, leaving the inner `EmbedResult` as the return value.
-        todo!()
+
+        let (tx, rx) = oneshot::channel();
+        let request = EmbedRequest { texts, reply: tx };
+        self.tx.send(request);
+
+        let res = rx.await.map_err(|e| anyhow!(e))?
     }
 }
