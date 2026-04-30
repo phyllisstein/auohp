@@ -1,0 +1,20 @@
+{
+    "$schema": "https://schema.tauri.app/config/2",
+    "productName": "auohp-desktop",
+    "version": "0.0.0",
+    "identifier": "com.auohp.desktop",
+    "app": {
+        "withGlobalTauri": true,
+        "windows": [],
+        "security": {
+            "csp": null
+        }
+    },
+    "bundle": {
+        "active": true,
+        "targets": "all",
+        "icon": [
+            "icons/tray-icon.png"
+        ]
+    }
+}
