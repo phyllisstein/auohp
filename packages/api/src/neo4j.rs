@@ -33,7 +33,7 @@ pub async fn connect(uri: &str, user: &str, password: &str, database: &str) -> R
         .build()
         .unwrap();
 
-    let graph = Graph::connect(config)?;
+    let graph = Arc::new(Graph::connect(config)?);
 
     // ExponentialBackoff::from_millis(500) produces a strategy iterator that
     // yields 500ms, 1000ms, 2000ms, ... delays between attempts. .take(10)
@@ -42,15 +42,27 @@ pub async fn connect(uri: &str, user: &str, password: &str, database: &str) -> R
     // Retry::spawn re-invokes the closure on each failure; it only stops when
     // the closure returns Ok or the strategy iterator is exhausted.
     let strategy = ExponentialBackoff::from_millis(500).take(10);
+    let mut attempt = 0usize;
 
-    Retry::spawn(strategy, || async {
-        graph
-            .run(neo4rs::query("RETURN 1"))
-            .await
-            .map_err(|e| anyhow::anyhow!(e))
+    Retry::spawn(strategy, || {
+        attempt += 1;
+        let attempt = attempt;
+        let graph = Arc::clone(&graph);
+
+        async move {
+            tracing::info!(uri, attempt, "connecting to neo4j");
+
+            graph.run(neo4rs::query("RETURN 1")).await.map_err(|e| {
+                tracing::warn!(error = e.to_string(), "connection failed");
+
+                anyhow::anyhow!(e)
+            })
+        }
     })
     .await
-    .context("failed to connect to Neo4j after retries")?;
+    .context("failed to connect to Neo4j")?;
 
-    Ok(Arc::new(graph))
+    tracing::info!(attempt, uri, "connection succeeded");
+
+    Ok(graph)
 }
