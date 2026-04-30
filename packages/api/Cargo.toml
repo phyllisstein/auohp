@@ -80,7 +80,6 @@ nanoid = "0.4"
 # plus the mel-spectrogram FFT.  Models are downloaded from HuggingFace Hub
 # via hf-hub and loaded from safetensors format.
 #
-# pyannote-rs runs ONNX-exported pyannote models for speaker diarization.
 # symphonia decodes audio from MP4/WAV/etc. containers.
 # rubato resamples to 16 kHz mono as required by Whisper.
 candle-core = "0.10.1"
@@ -89,20 +88,13 @@ candle-transformers = "0.10.1"
 hf-hub = "0.5"
 tokenizers = { version = "0.22", default-features = false }
 rand = "0.9"
-pyannote-rs = "0.3"
-# Pin ort to rc.10 --- pyannote-rs 0.3.4 depends on this exact version and
-# the ndarray TensorArrayData trait changed in rc.11, breaking compilation.
+# ort provides the ONNX Runtime session API used by the wav2vec2 aligner.
 ort = "=2.0.0-rc.10"
 symphonia = { version = "0.5", features = ["isomp4", "aac", "wav", "pcm"] }
 rubato = "1"
 audioadapter-buffers = "2"
 
 # On-device sentence embeddings --- fastembed wraps ONNX sentence transformers
-# (BAAI/bge-small-en-v1.5, 384-dim). Pinned to ~5.8 (allows 5.8.x patches
-# but not 5.9+) because fastembed 5.9 bumps ort to rc.11, which breaks
-# pyannote-rs --- its ndarray TensorArrayData trait changed between rc.10
-# and rc.11. The `ort = "=2.0.0-rc.10"` pin above enforces the same
-# constraint from the other direction; this keeps them in sync.
+# (BAAI/bge-small-en-v1.5, 384-dim).
 fastembed = { version = "~5.8", default-features = false, features = ["ort-download-binaries", "hf-hub-native-tls"] }
-kodama = "0.3.0"
 clap = { version = "4.6.1", features = ["derive"] }

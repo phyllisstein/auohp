@@ -32,7 +32,8 @@ pub struct SeedInterviewInput {
     /// Display name for the interviewee (e.g. "Lei Chou").
     pub interviewee: String,
     /// Maps diarization labels to person names and roles.
-    pub speakers: Vec<SpeakerMappingInput>,
+    /// Optional --- omit when speaker labels are not yet assigned.
+    pub speakers: Option<Vec<SpeakerMappingInput>>,
     /// Raw transcript segments from the transcription pipeline.
     /// Either `segments_json` or `segments` must be specified.
     pub segments: Option<Vec<TranscriptSegmentInput>>,
@@ -70,8 +71,8 @@ pub struct TranscriptSegmentInput {
     pub start_time: f64,
     /// End time in seconds.
     pub end_time: f64,
-    /// Diarization speaker label (must match one of the labels in speakers).
-    pub speaker: String,
+    /// Speaker label (e.g. "SPEAKER_00"). Optional --- omit when not yet assigned.
+    pub speaker: Option<String>,
     /// Per-word timing data. Optional---some segments may lack word alignment.
     pub words: Option<Vec<WordTimingInput>>,
 }
@@ -228,6 +229,8 @@ pub async fn seed_interview(
     // Build interviewer params for UNWIND
     let interviewers: Vec<BoltType> = input
         .speakers
+        .as_deref()
+        .unwrap_or(&[])
         .iter()
         .filter(|s| s.role == SpeakerRole::Interviewer)
         .map(|s| {
@@ -314,6 +317,8 @@ pub async fn seed_interview(
 
     let speaker_map: std::collections::HashMap<&str, &SpeakerMappingInput> = input
         .speakers
+        .as_deref()
+        .unwrap_or(&[])
         .iter()
         .map(|s| (s.label.as_str(), s))
         .collect();
@@ -331,12 +336,21 @@ pub async fn seed_interview(
                 let segment = &s.input;
                 let uid = &s.uid;
 
-                let mapping = speaker_map.get(segment.speaker.as_str()).ok_or_else(|| {
-                    async_graphql::Error::new(format!(
-                        "Label {:?} does not match any provided speaker",
-                        segment.speaker,
-                    ))
-                })?;
+                // Resolve the speaker label to a name if a mapping exists.
+                // speakerName is null when no label is provided or the label
+                // has no mapping --- the Cypher filters those rows out before
+                // creating the Person / SAYS edge.
+                let (speaker_name, speaker_uid): (BoltType, BoltType) =
+                    match segment.speaker.as_deref().and_then(|l| speaker_map.get(l)) {
+                        Some(mapping) => (
+                            BoltType::from(mapping.name.clone()),
+                            BoltType::from(nanoid::nanoid!()),
+                        ),
+                        None => (
+                            BoltType::Null(neo4rs::BoltNull),
+                            BoltType::Null(neo4rs::BoltNull),
+                        ),
+                    };
 
                 Ok::<BoltType, async_graphql::Error>(bolt_map(vec![
                     ("uid", BoltType::from(uid.clone())),
@@ -344,8 +358,8 @@ pub async fn seed_interview(
                     ("startTime", BoltType::from(segment.start_time)),
                     ("endTime", BoltType::from(segment.end_time)),
                     ("words", words_json),
-                    ("speakerName", BoltType::from(mapping.name.clone())),
-                    ("speakerUid", BoltType::from(nanoid::nanoid!())),
+                    ("speakerName", speaker_name),
+                    ("speakerUid", speaker_uid),
                 ]))
             })
             .collect::<Result<Vec<_>, _>>()?;
@@ -354,9 +368,6 @@ pub async fn seed_interview(
             "MATCH (transcript:Transcript {{uid: {transcriptUid}}})
 
                  UNWIND {statements} AS s
-
-                 MERGE (person:Person {{name: s.speakerName}})
-                   ON CREATE SET person.uid = s.speakerUid
 
                  CREATE (statement:Statement {{
                    uid:   s.uid,
@@ -367,6 +378,11 @@ pub async fn seed_interview(
                    startTime: s.startTime,
                    endTime: s.endTime
                  }}]->(statement)
+
+                 WITH s, statement
+                 WHERE s.speakerName IS NOT NULL
+                 MERGE (person:Person {{name: s.speakerName}})
+                   ON CREATE SET person.uid = s.speakerUid
                  CREATE (person)-[:SAYS]->(statement)",
             transcriptUid = transcript_uid.clone(),
             statements = stmt_params,
@@ -441,7 +457,7 @@ pub async fn seed_interview(
 
     // ── Build response ──────────────────────────────────────────────────
 
-    let speaker_count = input.speakers.len() as i64;
+    let speaker_count = input.speakers.as_deref().unwrap_or(&[]).len() as i64;
 
     Ok(SeedInterviewPayload {
         interview: Interview {
