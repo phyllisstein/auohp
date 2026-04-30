@@ -5,3 +5,12 @@ edition = "2024"
 default-run = "auohp-desktop"
 license = "GPL-3.0-or-later"
 authors = ["ACT UP New York <contact@auohp.org>"]
+
+[dependencies]
+auohp-core = { path = "../core" }
+tauri = { version = "2", features = ["tray-icon"] }
+
+# Error handling --- thiserror generates Error impls for your own types;
+# anyhow provides a flexible Result<T, anyhow::Error> for application code.
+anyhow = "1"
+thiserror = "2"

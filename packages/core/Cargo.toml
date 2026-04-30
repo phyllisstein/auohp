@@ -1,0 +1,77 @@
+[package]
+name = "auohp-core"
+version = "0.0.0"
+edition = "2024"
+license = "GPL-3.0-or-later"
+authors = ["ACT UP New York <contact@auohp.org>"]
+
+[features]
+default = []
+# GPU acceleration --- enable at build time, not both at once.
+#   cargo build --features metal    (macOS dev, Apple Silicon GPU)
+#   cargo build --features cuda     (production, NVIDIA GPU)
+#
+# candle-core/metal enables Metal GPU compute for tensor operations.
+# candle-*/accelerate enables Apple's Accelerate framework (vecLib BLAS)
+# for fast CPU matrix multiply --- used as a fallback when an op doesn't
+# have a Metal kernel, and for the mel spectrogram FFT.
+metal = [
+    "candle-core/metal", "candle-nn/metal",
+    "candle-core/accelerate", "candle-nn/accelerate", "candle-transformers/accelerate",
+    "ort/coreml",
+]
+cuda = [
+    "candle-core/cuda", "candle-nn/cuda", "candle-transformers/cuda",
+    "ort/cuda",
+]
+
+[dependencies]
+# Error handling --- thiserror generates Error impls for your own types;
+# anyhow provides a flexible Result<T, anyhow::Error> for application code.
+anyhow = "1"
+thiserror = "2"
+
+# Transcription --- candle runs Whisper entirely in Rust (no C++ dependency).
+# candle-core is the tensor library, candle-nn provides neural-network layers,
+# and candle-transformers contains the Whisper encoder/decoder model definition
+# plus the mel-spectrogram FFT.  Models are downloaded from HuggingFace Hub
+# via hf-hub and loaded from safetensors format.
+#
+# pyannote-rs runs ONNX-exported pyannote models for speaker diarization.
+# symphonia decodes audio from MP4/WAV/etc. containers.
+# rubato resamples to 16 kHz mono as required by Whisper.
+candle-core = "0.10.1"
+candle-nn = "0.10.1"
+candle-transformers = "0.10.1"
+hf-hub = "0.5"
+tokenizers = { version = "0.22", default-features = false }
+rand = "0.9"
+pyannote-rs = "0.3"
+# Pin ort to rc.10 --- pyannote-rs 0.3.4 depends on this exact version and
+# the ndarray TensorArrayData trait changed in rc.11, breaking compilation.
+ort = "=2.0.0-rc.10"
+symphonia = { version = "0.5", features = ["isomp4", "aac", "wav", "pcm"] }
+rubato = "1"
+audioadapter-buffers = "2"
+
+# On-device sentence embeddings --- fastembed wraps ONNX sentence transformers
+# (BAAI/bge-small-en-v1.5, 384-dim). Pinned to ~5.8 (allows 5.8.x patches
+# but not 5.9+) because fastembed 5.9 bumps ort to rc.11, which breaks
+# pyannote-rs --- its ndarray TensorArrayData trait changed between rc.10
+# and rc.11. The `ort = "=2.0.0-rc.10"` pin above enforces the same
+# constraint from the other direction; this keeps them in sync.
+fastembed = { version = "~5.8", default-features = false, features = ["ort-download-binaries", "hf-hub-native-tls"] }
+kodama = "0.3.0"
+
+# Structured logging --- tracing instruments async code; tracing-subscriber
+# formats and emits those events (to stdout, to files, etc.)
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Serialization --- serde is the standard Rust serialization framework.
+# serde_json is used to encode per-word timing data as a JSON string property
+# on Statement nodes in Neo4j.
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+clap = { version = "4.6.1", features = ["derive"] }
