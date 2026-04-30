@@ -41,7 +41,7 @@ pub async fn connect(uri: &str, user: &str, password: &str, database: &str) -> R
     //
     // Retry::spawn re-invokes the closure on each failure; it only stops when
     // the closure returns Ok or the strategy iterator is exhausted.
-    let strategy = ExponentialBackoff::from_millis(500).take(10);
+    let strategy = ExponentialBackoff::from_millis(2).factor(500).take(10);
     let mut attempt = 0usize;
 
     Retry::spawn(strategy, || {
