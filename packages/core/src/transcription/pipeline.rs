@@ -40,8 +40,5 @@ pub fn run(input_path: &Path) -> Result<TranscriptionResult> {
         })
         .collect();
 
-    Ok(TranscriptionResult {
-        whisper_segments,
-        segments,
-    })
+    Ok(TranscriptionResult { segments })
 }

@@ -248,6 +248,12 @@ pub async fn seed_interview(
         .and_then(|a| a.video_url.clone())
         .unwrap_or_default();
 
+    tracing::info!(
+        interview_uid,
+        transcript_uid,
+        interviewee = input.interviewee.clone(),
+        "creating new interview nodes"
+    );
     txn.run(
         query!(
             "MERGE (interviewee:Person {{name: {intervieweeName}}})
@@ -290,12 +296,19 @@ pub async fn seed_interview(
     .await
     .map_err(gql_err)?;
 
+    tracing::info!(
+        interview_uid,
+        transcript_uid,
+        interviewee = input.interviewee.clone(),
+        "interview nodes created"
+    );
+
     // ── Phase 2: seed statements ───────────────────────────────────────
 
     // Batch statements in groups of 100
     const BATCH_SIZE: usize = 100;
 
-    let segment_ipnuts: Vec<TranscriptSegmentInput> = if let Some(segment_json) =
+    let segment_inputs: Vec<TranscriptSegmentInput> = if let Some(segment_json) =
         input.segments_json
     {
         serde_json::from_str(&segment_json).map_err(|e| async_graphql::Error::new(e.to_string()))
@@ -307,7 +320,7 @@ pub async fn seed_interview(
         ))
     }?;
 
-    let segments: Vec<TranscriptSegment> = segment_ipnuts
+    let segments: Vec<TranscriptSegment> = segment_inputs
         .into_iter()
         .map(|i| TranscriptSegment {
             input: i,
@@ -432,7 +445,19 @@ pub async fn seed_interview(
     // point where data becomes visible to other connections. If we never
     // reach this line (early return, ?, or panic), the Txn is dropped
     // without committing and Neo4j rolls back automatically.
+    tracing::info!(
+        interview_uid,
+        transcript_uid,
+        interviewee = input.interviewee.clone(),
+        "committing transation..."
+    );
     txn.commit().await.map_err(gql_err)?;
+    tracing::info!(
+        interview_uid,
+        transcript_uid,
+        interviewee = input.interviewee.clone(),
+        "transaction successfully committed"
+    );
 
     // ── Enqueue background embedding ──────────────────────────────────────
     //
