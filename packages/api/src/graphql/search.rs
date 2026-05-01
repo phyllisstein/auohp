@@ -72,18 +72,24 @@ pub async fn search_statements(
     let mut stream = db
         .execute(
             query(
-                "CALL db.index.vector.queryNodes('statement_embedding', $limit, $vector)
-                 YIELD node AS statement, score
+                "
+                    MATCH (statement:Statement)
+                    SEARCH statement IN (
+                        VECTOR INDEX statement_embedding
+                        FOR $vector
+                        LIMIT $limit
+                    )
 
-                 MATCH (transcript:Transcript)-[contains:CONTAINS]->(statement)
-                       <-[:SAYS]-(person:Person)
-                 MATCH (interview:Interview)-[:HAS_TRANSCRIPT]->(transcript)
-                 OPTIONAL MATCH (interview)-[:INTERVIEWED_BY]->(interviewer:Person)
-                   WHERE interviewer = person
+                    MATCH (transcript:Transcript)-[contains:CONTAINS]->(statement)
+                        <-[:SAYS]-(person:Person)
+                    MATCH (interview:Interview)-[:HAS_TRANSCRIPT]->(transcript)
+                    OPTIONAL MATCH (interview)-[:INTERVIEWED_BY]->(interviewer:Person)
+                    WHERE interviewer = person
 
-                 RETURN interview, statement, person, contains, score,
-                        interviewer IS NOT NULL AS is_interviewer
-                 ORDER BY score DESC",
+                    RETURN interview, statement, person, contains, score,
+                            interviewer IS NOT NULL AS is_interviewer
+                    ORDER BY score DESC
+                ",
             )
             .param("limit", limit_val)
             .param("vector", vector_bolt),
