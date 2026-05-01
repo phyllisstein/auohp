@@ -134,6 +134,10 @@ pub struct SeedInterviewPayload {
 /// If the server restarts before this completes, the affected Statement nodes
 /// simply won't have embeddings yet---re-running `seedInterview` for the same
 /// interview will re-embed them (MATCH … SET is idempotent).
+///
+/// FIXME: The only reason each item has a UID at present is to support this
+/// method. Without this, a UID would be overkill. It would be ideal to match
+/// statements some other way
 async fn embed_statements(db: Db, embedder: Arc<Embedder>, uids: Vec<String>, texts: Vec<String>) {
     // spawn_blocking moves the synchronous ONNX inference off the async
     // executor thread pool so it cannot stall other requests. The closure
@@ -185,7 +189,7 @@ async fn embed_statements(db: Db, embedder: Arc<Embedder>, uids: Vec<String>, te
                 "
                     UNWIND {items} AS item
                     MATCH (s:Statement {{uid: item.uid}})
-                    SET s.embedding = vector(item.vector, 768, FLOAT64)
+                    CALL db.create.setNodeVectorProperty(s, 'embedding', item.vector)
                 ",
                 items = items,
             ))
@@ -334,6 +338,7 @@ pub async fn seed_interview(
                     };
 
                 Ok::<BoltType, async_graphql::Error>(bolt_map(vec![
+                    ("uid", BoltType::from(s.uid.clone())),
                     ("text", BoltType::from(segment.text.clone())),
                     ("startTime", BoltType::from(segment.start_time)),
                     ("endTime", BoltType::from(segment.end_time)),
@@ -351,6 +356,7 @@ pub async fn seed_interview(
                 UNWIND {statements} AS s
 
                 CREATE (statement:Statement {{
+                    uid: s.uid,
                     text: s.text,
                     words: s.words
                  }})
