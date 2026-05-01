@@ -28,7 +28,7 @@ struct Cli {
 
 fn main() -> Result<()> {
     tracing_subscriber::registry()
-        .with(EnvFilter::try_from_default_env().unwrap_or_else(|_| "transcribe=debug".into()))
+        .with(EnvFilter::try_from_default_env().unwrap_or_else(|_| "auohp_core=debug".into()))
         .with(tracing_subscriber::fmt::layer().with_writer(std::io::stderr))
         .init();
 
