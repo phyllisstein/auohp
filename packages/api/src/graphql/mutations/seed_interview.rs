@@ -182,9 +182,11 @@ async fn embed_statements(db: Db, embedder: Arc<Embedder>, uids: Vec<String>, te
 
         if let Err(e) = db
             .run(query!(
-                "UNWIND {items} AS item
-                     MATCH (s:Statement {{uid: item.uid}})
-                     CALL db.create.setNodeVectorProperty(s, 'embedding', item.vector)",
+                "
+                    UNWIND {items} AS item
+                    MATCH (s:Statement {{uid: item.uid}})
+                    SET s.embedding = vector(item.vector, 768, FLOAT64)
+                ",
                 items = items,
             ))
             .await
@@ -226,21 +228,6 @@ pub async fn seed_interview(
 
     // ── Phase 1: interview scaffold ──────────────────────────────────────
 
-    // Build interviewer params for UNWIND
-    let interviewers: Vec<BoltType> = input
-        .speakers
-        .as_deref()
-        .unwrap_or(&[])
-        .iter()
-        .filter(|s| s.role == SpeakerRole::Interviewer)
-        .map(|s| {
-            bolt_map(vec![
-                ("name", BoltType::from(s.name.clone())),
-                ("uid", BoltType::from(nanoid::nanoid!())),
-            ])
-        })
-        .collect();
-
     let video_uid = nanoid::nanoid!();
     let video_url = input
         .assets
@@ -254,45 +241,36 @@ pub async fn seed_interview(
         interviewee = input.interviewee.clone(),
         "creating new interview nodes"
     );
-    txn.run(
-        query!(
-            "MERGE (interviewee:Person {{name: {intervieweeName}}})
-               ON CREATE SET interviewee.uid = {intervieweeUid}
+    txn.run(query!(
+        "
+                MERGE (interviewee:Person {{name: {intervieweeName}}})
+                    ON CREATE SET interviewee.uid = {intervieweeUid}
 
-             WITH interviewee
-             UNWIND $interviewers AS iv
-             MERGE (interviewer:Person {{name: iv.name}})
-               ON CREATE SET interviewer.uid = iv.uid
+                CREATE
+                    (interview:Interview
+                        {{
+                            uid: {interviewUid},
+                            number: {interviewNumber},
+                            date: date({interviewDate}),
+                            interviewee: interviewee.name
+                        }}) -[:HAS_TRANSCRIPT]->(transcript:Transcript {{uid: {transcriptUid}}})
+                MERGE (interview)-[:INTERVIEWS]->(interviewee)
 
-             WITH interviewee, collect(interviewer) AS interviewers
-             CREATE (i:Interview {{
-               uid: {interviewUid},
-               number: {interviewNumber},
-               date: date({interviewDate}),
-               interviewee: interviewee.name
-             }})
-             CREATE (t:Transcript {{uid: {transcriptUid}}})
-             CREATE (i)-[:HAS_TRANSCRIPT]->(t)
-             CREATE (i)-[:INTERVIEWS]->(interviewee)
+                WITH interview, interviewers
+                UNWIND interviewers AS interviewer
+                MERGE (interviewer)-[:INTERVIEWS]->(interviewee)
+                MERGE (interviewee)-[:INTERVIEWED_BY]->(interviewer)
 
-             WITH i, interviewers
-             UNWIND interviewers AS interviewer
-             CREATE (i)-[:INTERVIEWED_BY]->(interviewer)
-
-             WITH i
-             CREATE (v:Video:Asset {{uid: {videoUid}, url: {videoUrl}}})
-             CREATE (i)-[:HAS_ASSET]->(v)",
-            intervieweeName = input.interviewee.clone(),
-            intervieweeUid = interviewee_uid,
-            interviewUid = interview_uid.clone(),
-            interviewNumber = input.number,
-            interviewDate = input.date.clone(),
-            transcriptUid = transcript_uid.clone(),
-            videoUid = video_uid.clone(),
-            videoUrl = video_url,
-        )
-        .param("interviewers", interviewers),
-    )
+                MERGE (interview)-[:INTERVIEWS]->(interviewee)
+                MERGE (interview)-[:INTERVIEWED_BY]->(interviewer)
+            ",
+        intervieweeName = input.interviewee.clone(),
+        intervieweeUid = interviewee_uid,
+        interviewUid = interview_uid.clone(),
+        interviewNumber = input.number,
+        interviewDate = input.date.clone(),
+        transcriptUid = transcript_uid.clone()
+    ))
     .await
     .map_err(gql_err)?;
 
@@ -347,12 +325,10 @@ pub async fn seed_interview(
                 };
 
                 let segment = &s.input;
-                let uid = &s.uid;
 
-                // Resolve the speaker label to a name if a mapping exists.
-                // speakerName is null when no label is provided or the label
-                // has no mapping --- the Cypher filters those rows out before
-                // creating the Person / SAYS edge.
+                // Resolve the speaker label to a name if a mapping exists. In
+                // the absence of a specific mapping, assume the speaker is the
+                // interviewee.
                 let (speaker_name, speaker_uid): (BoltType, BoltType) =
                     match segment.speaker.as_deref().and_then(|l| speaker_map.get(l)) {
                         Some(mapping) => (
@@ -360,13 +336,12 @@ pub async fn seed_interview(
                             BoltType::from(nanoid::nanoid!()),
                         ),
                         None => (
-                            BoltType::Null(neo4rs::BoltNull),
-                            BoltType::Null(neo4rs::BoltNull),
+                            BoltType::from(input.interviewee.clone()),
+                            BoltType::from(interview_uid.clone()),
                         ),
                     };
 
                 Ok::<BoltType, async_graphql::Error>(bolt_map(vec![
-                    ("uid", BoltType::from(uid.clone())),
                     ("text", BoltType::from(segment.text.clone())),
                     ("startTime", BoltType::from(segment.start_time)),
                     ("endTime", BoltType::from(segment.end_time)),
@@ -378,15 +353,16 @@ pub async fn seed_interview(
             .collect::<Result<Vec<_>, _>>()?;
 
         txn.run(query!(
-            "MATCH (transcript:Transcript {{uid: {transcriptUid}}})
+            "
+                MATCH (transcript:Transcript {{uid: {transcriptUid}}})
 
-                 UNWIND {statements} AS s
+                UNWIND {statements} AS s
 
-                 CREATE (statement:Statement {{
-                   uid:   s.uid,
-                   text:  s.text,
-                   words: s.words
+                CREATE (statement:Statement {{
+                    text: s.text,
+                    words: s.words
                  }})
+
                  CREATE (transcript)-[:CONTAINS {{
                    startTime: s.startTime,
                    endTime: s.endTime
@@ -396,7 +372,8 @@ pub async fn seed_interview(
                  WHERE s.speakerName IS NOT NULL
                  MERGE (person:Person {{name: s.speakerName}})
                    ON CREATE SET person.uid = s.speakerUid
-                 CREATE (person)-[:SAYS]->(statement)",
+                 CREATE (person)-[:SAYS]->(statement)
+            ",
             transcriptUid = transcript_uid.clone(),
             statements = stmt_params,
         ))
