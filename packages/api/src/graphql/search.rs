@@ -8,12 +8,12 @@
 use std::sync::Arc;
 
 use async_graphql::{Context, SimpleObject};
-use neo4rs::{query, BoltType};
+use neo4rs::{BoltType, query};
 
 use super::error::gql_err;
 use super::interviews::{Interview, Statement, StatementNode};
-use crate::embeddings::Embedder;
 use crate::neo4j::Db;
+use auohp_core::embeddings::Embedder;
 
 // ---------------------------------------------------------------------------
 // Output type

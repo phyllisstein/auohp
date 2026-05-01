@@ -5,9 +5,9 @@ use neo4rs::{BoltMap, BoltString, BoltType, query};
 use serde::{Deserialize, Serialize};
 
 use super::super::interviews::Interview;
-use crate::embeddings::Embedder;
 use crate::graphql::error::gql_err;
 use crate::neo4j::Db;
+use auohp_core::embeddings::Embedder;
 
 /// Build a BoltMap from string-key / BoltType-value pairs.
 fn bolt_map(pairs: Vec<(&str, BoltType)>) -> BoltType {
