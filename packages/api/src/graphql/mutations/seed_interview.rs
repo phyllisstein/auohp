@@ -255,14 +255,6 @@ pub async fn seed_interview(
                             interviewee: interviewee.name
                         }}) -[:HAS_TRANSCRIPT]->(transcript:Transcript {{uid: {transcriptUid}}})
                 MERGE (interview)-[:INTERVIEWS]->(interviewee)
-
-                WITH interview, interviewers
-                UNWIND interviewers AS interviewer
-                MERGE (interviewer)-[:INTERVIEWS]->(interviewee)
-                MERGE (interviewee)-[:INTERVIEWED_BY]->(interviewer)
-
-                MERGE (interview)-[:INTERVIEWS]->(interviewee)
-                MERGE (interview)-[:INTERVIEWED_BY]->(interviewer)
             ",
         intervieweeName = input.interviewee.clone(),
         intervieweeUid = interviewee_uid,
