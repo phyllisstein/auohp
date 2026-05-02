@@ -75,3 +75,8 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
 clap = { version = "4.6.1", features = ["derive"] }
+
+# Async runtime --- tokio is the standard async executor for Rust.
+# features = ["full"] enables all tokio sub-crates (net, fs, time, sync, etc.)
+# so we don't have to add individual features as they're needed.
+tokio = { version = "1", features = ["full"] }

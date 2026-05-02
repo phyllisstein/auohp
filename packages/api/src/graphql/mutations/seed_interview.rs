@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use super::super::interviews::Interview;
 use crate::graphql::error::gql_err;
 use crate::neo4j::Db;
-use auohp_core::embeddings::Embedder;
+use auohp_core::embeddings::EmbedderHandle;
 
 /// Build a BoltMap from string-key / BoltType-value pairs.
 fn bolt_map(pairs: Vec<(&str, BoltType)>) -> BoltType {
@@ -138,23 +138,20 @@ pub struct SeedInterviewPayload {
 /// FIXME: The only reason each item has a UID at present is to support this
 /// method. Without this, a UID would be overkill. It would be ideal to match
 /// statements some other way
-async fn embed_statements(db: Db, embedder: Arc<Embedder>, uids: Vec<String>, texts: Vec<String>) {
+async fn embed_statements(
+    db: Db,
+    embedder: Arc<EmbedderHandle>,
+    uids: Vec<String>,
+    texts: Vec<String>,
+) {
     // spawn_blocking moves the synchronous ONNX inference off the async
     // executor thread pool so it cannot stall other requests. The closure
     // captures `embedder` (an Arc clone) and `texts` by move.
-    let vectors = match tokio::task::spawn_blocking({
-        let embedder = embedder.clone();
-        move || embedder.embed(&texts)
-    })
-    .await
-    {
-        Ok(Ok(v)) => v,
-        Ok(Err(e)) => {
-            tracing::error!(error = %e, "embedding failed");
-            return;
-        }
+    let embedder = embedder.clone();
+    let vectors = match embedder.embed(texts).await {
+        Ok(v) => v,
         Err(e) => {
-            tracing::error!(error = %e, "spawn_blocking panicked during embedding");
+            tracing::error!(error = %e, "embedding failed");
             return;
         }
     };
@@ -446,7 +443,7 @@ pub async fn seed_interview(
     // independently of this async frame. Errors are logged inside
     // `embed_statements`; if the server restarts mid-job, the affected
     // Statement nodes will simply lack embeddings until the next seed run.
-    let embedder = ctx.data::<Arc<Embedder>>()?.clone();
+    let embedder = ctx.data::<Arc<EmbedderHandle>>()?.clone();
     let texts: Vec<String> = segments
         .iter()
         .map(|s| &s.input)

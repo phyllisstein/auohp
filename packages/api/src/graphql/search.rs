@@ -40,20 +40,17 @@ pub async fn search_statements(
     limit: Option<i64>,
 ) -> async_graphql::Result<Vec<SearchHit>> {
     let db = ctx.data::<Db>()?;
-    let embedder = ctx.data::<Arc<Embedder>>()?;
+    let embedder = ctx.data::<Arc<EmbedderHandle>>()?;
 
+    let texts = vec![query_text];
     // ── Embed query text (CPU-bound: run off the async executor) ──────────────
-    let vector: Vec<f32> = tokio::task::spawn_blocking({
-        let embedder = embedder.clone();
-        let texts = vec![query_text];
-        move || embedder.embed(&texts)
-    })
-    .await
-    .map_err(gql_err)? // JoinError (spawn_blocking panicked)
-    .map_err(gql_err)? // anyhow::Error from the ONNX model
-    .into_iter()
-    .next()
-    .ok_or_else(|| async_graphql::Error::new("embedding produced no vectors"))?;
+    let vector: Vec<f32> = embedder
+        .embed(texts)
+        .await
+        .map_err(gql_err)?
+        .into_iter()
+        .next()
+        .ok_or_else(|| async_graphql::Error::new("embedding produced no vectors"))?;
 
     // Convert to BoltType list---Neo4j's vector procedures expect a list of
     // floats. We widen f32 --> f64 here because neo4rs's BoltType::Float wraps

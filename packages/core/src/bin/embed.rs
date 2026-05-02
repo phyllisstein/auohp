@@ -5,7 +5,7 @@
 //!
 //! Writes the embedded vector to stdout; logs go to stderr.
 
-#[path = "../embeddings.rs"]
+#[path = "../embeddings/mod.rs"]
 mod embeddings;
 
 use anyhow::Result;

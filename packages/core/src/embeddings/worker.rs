@@ -9,7 +9,7 @@
 use anyhow::anyhow;
 use tokio::sync::{mpsc, oneshot};
 
-use super::Embedder;
+use super::embedder::Embedder;
 
 /// The return type of `EmbedderHandle::embed`. One `Vec<f32>` per input text.
 pub type EmbedResult = anyhow::Result<Vec<Vec<f32>>>;
@@ -72,22 +72,10 @@ impl EmbedderHandle {
     /// Sends the request to the worker thread and waits for the result.
     /// Returns an error if the worker has stopped or if ONNX inference fails.
     pub async fn embed(&self, texts: Vec<String>) -> EmbedResult {
-        // TODO(human): implement this method.
-        //
-        // Steps:
-        //   1. Call `oneshot::channel()` to create a (Sender, Receiver) pair.
-        //   2. Build an `EmbedRequest { texts, reply: <sender> }` and send it
-        //      through `self.tx`. If the channel is closed (worker died), the
-        //      send returns Err --- map it to an `anyhow!` error and use `?`.
-        //   3. Await the receiver. `reply_rx.await` returns
-        //      `Result<EmbedResult, RecvError>`. Map the `RecvError` to
-        //      `anyhow!` the same way, then use `?` to unwrap the outer
-        //      Result, leaving the inner `EmbedResult` as the return value.
-
         let (tx, rx) = oneshot::channel();
         let request = EmbedRequest { texts, reply: tx };
-        self.tx.send(request);
+        self.tx.send(request).await.map_err(|e| anyhow!("{e}"))?;
 
-        let res = rx.await.map_err(|e| anyhow!(e))?
+        rx.await.map_err(|e| anyhow!("{e}"))?
     }
 }

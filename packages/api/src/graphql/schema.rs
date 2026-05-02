@@ -6,7 +6,7 @@ use super::interviews::{self, Interview, Transcript};
 use super::mutations::MutationRoot;
 use super::search::{self, SearchHit};
 use crate::neo4j::Db;
-use auohp_core::embeddings::Embedder;
+use auohp_core::embeddings::EmbedderHandle;
 
 pub type AppSchema = Schema<QueryRoot, MutationRoot, EmptySubscription>;
 
@@ -49,7 +49,7 @@ impl QueryRoot {
     }
 }
 
-pub fn build_schema(db: Db, embedder: Arc<Embedder>) -> AppSchema {
+pub fn build_schema(db: Db, embedder: Arc<EmbedderHandle>) -> AppSchema {
     Schema::build(QueryRoot, MutationRoot, EmptySubscription)
         .data(db)
         .data(embedder)
