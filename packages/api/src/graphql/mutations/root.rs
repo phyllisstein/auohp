@@ -1,5 +1,6 @@
-use async_graphql::{Context, Object};
+use super::add_asset::{self, AddAssetInput, AddAssetPayload};
 use super::seed_interview::{self, SeedInterviewInput, SeedInterviewPayload};
+use async_graphql::{Context, Object};
 
 pub struct MutationRoot;
 
@@ -14,5 +15,13 @@ impl MutationRoot {
         input: SeedInterviewInput,
     ) -> async_graphql::Result<SeedInterviewPayload> {
         seed_interview::seed_interview(ctx, input).await
+    }
+
+    async fn add_asset(
+        &self,
+        ctx: &Context<'_>,
+        input: AddAssetInput,
+    ) -> async_graphql::Result<AddAssetPayload> {
+        add_asset::add_asset(ctx, input).await
     }
 }

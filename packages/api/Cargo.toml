@@ -67,4 +67,4 @@ chrono = "0.4"
 
 # ID generation --- nanoid produces short, URL-safe, unique identifiers.
 # Used for node UIDs in Neo4j, matching the existing TypeScript seeder.
-nanoid = "0.4"
+nanoid = "0.5"
