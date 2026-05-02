@@ -43,6 +43,12 @@ pub struct StatementNode {
     pub words: Option<String>,
 }
 
+#[derive(Deserialize)]
+pub struct StatementMeta {
+    pub start_time: f64,
+    pub end_time: f64,
+}
+
 /// Mirrors the (:Statement) node, with timing from the `:CONTAINS` edge and
 /// speaker attribution from `:SAYS`.
 #[derive(SimpleObject)]

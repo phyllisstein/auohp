@@ -13,7 +13,7 @@ use neo4rs::{BoltType, query};
 use super::error::gql_err;
 use super::interviews::{Interview, Statement, StatementNode};
 use crate::neo4j::Db;
-use auohp_core::embeddings::EmbedderHandle;
+use auohp_core::EmbedderHandle;
 
 // ---------------------------------------------------------------------------
 // Output type
