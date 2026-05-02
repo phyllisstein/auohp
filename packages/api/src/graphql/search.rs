@@ -13,7 +13,7 @@ use neo4rs::{BoltType, query};
 use super::error::gql_err;
 use super::interviews::{Interview, Statement, StatementNode};
 use crate::neo4j::Db;
-use auohp_core::embeddings::Embedder;
+use auohp_core::embeddings::EmbedderHandle;
 
 // ---------------------------------------------------------------------------
 // Output type
@@ -22,8 +22,6 @@ use auohp_core::embeddings::Embedder;
 /// A single hit from a vector similarity search over Statement nodes.
 #[derive(SimpleObject)]
 pub struct SearchHit {
-    /// Cosine similarity score in [0, 1]. Higher is more similar.
-    pub score: f64,
     /// The matching statement, with speaker and timing.
     pub statement: Statement,
     /// The interview this statement belongs to.
@@ -83,12 +81,8 @@ pub async fn search_statements(
                     MATCH (transcript:Transcript)-[contains:CONTAINS]->(statement)
                         <-[:SAYS]-(person:Person)
                     MATCH (interview:Interview)-[:HAS_TRANSCRIPT]->(transcript)
-                    OPTIONAL MATCH (interview)-[:INTERVIEWED_BY]->(interviewer:Person)
-                    WHERE interviewer = person
 
-                    RETURN interview, statement, person, contains, score,
-                            interviewer IS NOT NULL AS is_interviewer
-                    ORDER BY score DESC
+                    RETURN interview, statement, person, contains
                 ",
             )
             .param("limit", limit_val)
@@ -107,12 +101,9 @@ pub async fn search_statements(
         let sn: StatementNode = statement.to().map_err(gql_err)?;
 
         hits.push(SearchHit {
-            score: row.get("score").map_err(gql_err)?,
             statement: Statement {
-                uid: sn.uid,
                 text: sn.text,
                 person: person.to().map_err(gql_err)?,
-                is_interviewer: row.get("is_interviewer").map_err(gql_err)?,
                 start_time: contains.get("startTime").map_err(gql_err)?,
                 end_time: contains.get("endTime").map_err(gql_err)?,
                 words: sn.words,
