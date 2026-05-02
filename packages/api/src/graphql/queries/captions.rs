@@ -62,11 +62,12 @@ pub async fn get_captions(
 
         let start_timestamp = to_timestamp(&start);
         let end_timestamp = to_timestamp(&end);
+        let text = sn.text.clone();
 
-        vtts.push(format!("{start_timestamp} --> {end_timestamp}\n{sn.text}"))
+        vtts.push(format!("{start_timestamp} --> {end_timestamp}\n{text}"))
     }
 
-    let vtt = vtts.join("\n".into());
+    let vtt = vtts.join("\n");
 
     Ok(Caption { vtt })
 }
