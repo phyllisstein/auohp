@@ -39,7 +39,7 @@ pub async fn get_captions(
                 (int:Interview {{number: {interviewNumber}}})-[:HAS_TRANSCRIPT]->
                 (:Transcript)-[meta:CONTAINS]->
                 (statement:Statement)
-            RETURN statement, meta AS statementMeta
+            RETURN statement, meta.startTime as startTime, meta.endTime as endTime
             ORDER BY meta.startTime ASCENDING
             LIMIT 25
         ",
@@ -54,11 +54,11 @@ pub async fn get_captions(
         let statement: neo4rs::Node = row.get("statement").map_err(gql_err)?;
         let sn: StatementNode = statement.to().map_err(gql_err)?;
 
-        let statement_meta: neo4rs::Relation = row.get("statementMeta").map_err(gql_err)?;
-        let mn: StatementMeta = statement_meta.to().map_err(gql_err)?;
+        let start_time: neo4rs::BoltFloat = row.get("startTime").map_err(gql_err)?;
+        let end_time: neo4rs::BoltFloat = row.get("endTime").map_err(gql_err)?;
 
-        let start = TimeDelta::milliseconds((mn.start_time * 1_000.0) as i64);
-        let end = TimeDelta::milliseconds((mn.end_time * 1_000.0) as i64);
+        let start = TimeDelta::milliseconds((start_time.value * 1_000.0) as i64);
+        let end = TimeDelta::milliseconds((end_time.value * 1_000.0) as i64);
 
         let start_timestamp = to_timestamp(&start);
         let end_timestamp = to_timestamp(&end);
