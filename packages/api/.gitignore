@@ -1,5 +1,5 @@
 assets/
-models/
+/models/
 .fastembed_cache/
 tests/output/
 tests/clips/
