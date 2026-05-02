@@ -82,13 +82,12 @@ pub async fn add_asset(
     // no interview, we get back nothing and return 404 rather than a bogus
     // empty-uid asset.
     let asset: Asset = match create_stream.single(&mut txn).await {
-        Ok(row) => row.get::<neo4rs::Node>("asset").map_err(internal).and_then(
-            |node| node.to::<Asset>().map_err(internal),
-        )?,
+        Ok(row) => row
+            .get::<neo4rs::Node>("asset")
+            .map_err(internal)
+            .and_then(|node| node.to::<Asset>().map_err(internal))?,
         Err(_) => {
-            return Err(AppError::NotFound(format!(
-                "interview #{number} not found"
-            )));
+            return Err(AppError::NotFound(format!("interview #{number} not found")));
         }
     };
 

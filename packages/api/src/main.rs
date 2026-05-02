@@ -7,7 +7,10 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use auohp_core::embeddings::EmbedderHandle;
-use axum::{Router, routing::{get, post}};
+use axum::{
+    Router,
+    routing::{get, post},
+};
 use tracing::info;
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -95,11 +98,20 @@ async fn main() -> Result<()> {
         // Interviews
         .route("/interviews", get(handlers::interviews::list_interviews))
         .route("/interviews", post(handlers::interviews::seed_interview))
-        .route("/interviews/:number", get(handlers::interviews::get_transcript))
+        .route(
+            "/interviews/{number}",
+            get(handlers::interviews::get_transcript),
+        )
         // Assets
-        .route("/interviews/:number/assets", post(handlers::assets::add_asset))
+        .route(
+            "/interviews/{number}/assets",
+            post(handlers::assets::add_asset),
+        )
         // Captions
-        .route("/interviews/:number/captions", get(handlers::captions::get_captions))
+        .route(
+            "/interviews/{number}/captions",
+            get(handlers::captions::get_captions),
+        )
         // Search
         .route("/search", get(handlers::search::search_statements))
         // with_state makes `state` available to any handler that declares

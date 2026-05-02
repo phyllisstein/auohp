@@ -21,11 +21,11 @@ fn to_timestamp(&t: &TimeDelta) -> String {
     let mut ts = t;
 
     let hours = ts.num_hours();
-    ts = ts - TimeDelta::hours(hours);
+    ts -= TimeDelta::hours(hours);
     let minutes = ts.num_minutes();
-    ts = ts - TimeDelta::minutes(minutes);
+    ts -= TimeDelta::minutes(minutes);
     let seconds = ts.num_seconds();
-    ts = ts - TimeDelta::seconds(seconds);
+    ts -= TimeDelta::seconds(seconds);
     let ms = ts.num_milliseconds();
 
     format!("{hours:02}:{minutes:02}:{seconds:02}.{ms:03}")
@@ -79,10 +79,7 @@ pub async fn get_captions(
     // Return plain text with the VTT MIME type. axum's default JSON
     // serialization would double-encode this string; using a raw `Response`
     // with an explicit `Content-Type` header avoids that.
-    Ok((
-        [(header::CONTENT_TYPE, "text/vtt; charset=utf-8")],
-        vtt,
-    ))
+    Ok(([(header::CONTENT_TYPE, "text/vtt; charset=utf-8")], vtt))
 }
 
 #[cfg(test)]
