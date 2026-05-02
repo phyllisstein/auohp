@@ -83,11 +83,27 @@ pub async fn search_statements(
                         LIMIT $limit
                     )
 
-                    MATCH (transcript:Transcript)-[contains:CONTAINS]->(statement)
-                        <-[:SAYS]-(person:Person)
-                    MATCH (interview:Interview)-[:HAS_TRANSCRIPT]->(transcript)
+                    MATCH (interview:Interview)-[:HAS_TRANSCRIPT]->
+                        (transcript:Transcript)-[contains:CONTAINS]->
+                        (statement)<-[:SAYS]-(person:Person)
 
-                    RETURN interview, statement, person, contains
+                    OPTIONAL CALL (transcript, contains) {
+                        MATCH (prevStatement:Statement)<-[c:CONTAINS]-(transcript)
+                            WHERE c.endTime < contains.startTime
+                        ORDER BY c.endTime DESCENDING
+                        LIMIT 1
+                        RETURN prevStatement
+                    }
+
+                    OPTIONAL CALL (transcript, contains) {
+                        MATCH (nextStatement:Statement)<-[c:CONTAINS]-(transcript)
+                            WHERE c.startTime > contains.endTime
+                        ORDER BY c.startTime ASCENDING
+                        LIMIT 1
+                        RETURN nextStatement
+                    }
+
+                    RETURN interview, statement, person, contains, prevStatement, nextStatement
                 ",
             )
             .param("limit", limit_val)
