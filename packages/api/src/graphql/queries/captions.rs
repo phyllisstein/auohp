@@ -38,7 +38,7 @@ pub async fn get_captions(
             MATCH
                 (int:Interview {{number: {interviewNumber}}})-[:HAS_TRANSCRIPT]->
                 (:Transcript)-[meta:CONTAINS]->
-                (s:Statement)
+                (statement:Statement)
             RETURN statement, meta AS statementMeta
             ORDER BY meta.startTime ASCENDING
             LIMIT 25
