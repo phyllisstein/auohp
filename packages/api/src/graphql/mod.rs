@@ -1,6 +1,7 @@
 mod error;
 mod interviews;
 mod mutations;
+mod queries;
 mod schema;
 mod search;
 
