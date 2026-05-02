@@ -4,7 +4,7 @@ mod neo4j;
 use anyhow::Result;
 use async_graphql::http::GraphiQLSource;
 use async_graphql_axum::{GraphQLRequest, GraphQLResponse};
-use auohp_core::embeddings;
+use auohp_core::embeddings::{Embedder, EmbedderHandle};
 use axum::{Router, extract::State, response::Html, routing::get};
 use tracing::info;
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
@@ -63,11 +63,11 @@ async fn main() -> Result<()> {
     .await?;
     info!("ensured statement_embedding vector index (768-dim, cosine)");
 
-    let embedder =
-        std::sync::Arc::new(embeddings::Embedder::new().expect("failed to load embedding model"));
-    info!("loaded embedding model ({}-dim)", embedder.dimensions());
+    let embedder = Embedder::new().expect("failed to load embedding model");
+    info!("loaded embedding model ({}-dim)", &embedder.dimensions());
+    let embed_handler = std::sync::Arc::new(EmbedderHandle::new(embedder));
 
-    let schema = graphql::build_schema(db, embedder);
+    let schema = graphql::build_schema(db, embed_handler);
 
     let app = Router::new()
         .route("/health", get(|| async { "ok" }))

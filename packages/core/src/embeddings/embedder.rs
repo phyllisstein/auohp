@@ -3,19 +3,26 @@
 //! Wraps the nomic-embed-text-v1.5 model (768-dim) for generating vector
 //! embeddings of transcript text. The ONNX weights are auto-downloaded
 //! from Hugging Face Hub on first use and cached locally.
+//!
+//! Public API surface:
+//!   - `Embedder`        --- owns and drives the ONNX session directly.
+//!   - `EmbedderHandle`  --- async handle backed by a background worker thread;
+//!                           use this in request handlers so ONNX inference never
+//!                           blocks the async executor.
+//!   - `EmbedResult`     --- type alias for the return type of `embed()`.
 
 use anyhow::{Context, Result};
 use fastembed::{EmbeddingModel, TextEmbedding, TextInitOptions};
-use std::sync::Mutex;
 
-/// Shared embedding model handle.
+/// Drives the ONNX embedding session directly.
 ///
-/// `TextEmbedding::embed` takes `&mut self` (the ONNX session is not
-/// thread-safe), so we wrap it in a `Mutex`. Embedding is CPU-bound —
-/// callers should use `tokio::task::spawn_blocking` and concurrent
-/// requests simply queue on the lock.
+/// `TextEmbedding::embed` takes `&mut self` because the ONNX session mutates
+/// internal state across calls, so `Embedder::embed` must also take `&mut self`.
+/// You cannot call it from two threads at once. For concurrent access use
+/// `EmbedderHandle`, which serializes requests through a dedicated blocking
+/// thread so the async executor is never stalled.
 pub struct Embedder {
-    model: Mutex<TextEmbedding>,
+    model: TextEmbedding,
     dimensions: usize,
 }
 
@@ -36,26 +43,18 @@ impl Embedder {
         .context("failed to load embedding model")?;
 
         Ok(Self {
-            model: Mutex::new(model),
+            model,
             dimensions: 768,
         })
     }
 
     /// Embed a batch of texts. Returns one `Vec<f32>` per input string.
-    pub fn embed(&self, texts: &[String]) -> Result<Vec<Vec<f32>>> {
-        // Mutex::lock() returns a Result because the lock can be "poisoned":
-        // if a thread panics while holding the lock, Rust marks the Mutex as
-        // poisoned to signal that the protected data might be in an
-        // inconsistent state.
-        //
-        // The previous code used .unwrap(), which would panic (and crash the
-        // entire server) on a poisoned lock. Instead we use
-        // .unwrap_or_else(|e| e.into_inner()) to recover---the ONNX session
-        // state is actually fine to reuse after a panic since fastembed
-        // doesn't do partial mutation, so we just clear the poison flag and
-        // carry on.
-        let mut model = self.model.lock().unwrap_or_else(|e| e.into_inner());
-        model.embed(texts, None).context("embedding failed")
+    ///
+    /// Takes `&mut self` because the ONNX session is stateful. Callers that
+    /// need to share the embedder across async tasks should go through
+    /// `EmbedderHandle` rather than wrapping this in a `Mutex` themselves.
+    pub fn embed(&mut self, texts: &[String]) -> Result<Vec<Vec<f32>>> {
+        self.model.embed(texts, None).context("embedding failed")
     }
 
     /// The dimensionality of the embedding vectors (768 for nomic-embed-text-v1.5).

@@ -5,7 +5,7 @@
 //!
 //! Writes the embedded vector to stdout; logs go to stderr.
 
-#[path = "../embeddings.rs"]
+#[path = "../embeddings/mod.rs"]
 mod embeddings;
 
 use anyhow::Result;
@@ -26,7 +26,7 @@ fn main() -> Result<()> {
 
     let cli = Cli::parse();
 
-    let embedder = if let Ok(embedder) = embeddings::Embedder::new() {
+    let mut embedder = if let Ok(embedder) = embeddings::Embedder::new() {
         embedder
     } else {
         panic!("Could not create embedder");
