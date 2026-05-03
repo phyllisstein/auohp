@@ -1,3 +1,5 @@
+use rustls::crypto::{CryptoProvider, aws_lc_rs};
+
 mod error;
 mod handlers;
 mod models;
@@ -43,6 +45,9 @@ pub struct AppState {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    CryptoProvider::install_default(aws_lc_rs::default_provider())
+        .map_err(|_| anyhow::anyhow!("default crypto provider already installed"))?;
+
     // Tracing goes to stderr so structured logs don't mix with any stdout
     // output (e.g. health-check scripts that parse the server's stdout).
     tracing_subscriber::registry()
