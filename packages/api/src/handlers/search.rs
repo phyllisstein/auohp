@@ -127,7 +127,6 @@ pub async fn search_statements(
                 person: person.to().map_err(internal)?,
                 start_time: contains.get("startTime").map_err(internal)?,
                 end_time: contains.get("endTime").map_err(internal)?,
-                words: sn.words,
             },
             interview: interview.to().map_err(internal)?,
         });

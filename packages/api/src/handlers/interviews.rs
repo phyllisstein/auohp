@@ -103,7 +103,6 @@ pub async fn get_transcript(
             person: person.to().map_err(internal)?,
             start_time: contains.get("startTime").map_err(internal)?,
             end_time: contains.get("endTime").map_err(internal)?,
-            words: sn.words,
         });
     }
 

@@ -42,8 +42,6 @@ pub struct Person {
 pub struct StatementNode {
     pub uid: String,
     pub text: String,
-    #[serde(default)]
-    pub words: Option<String>,
 }
 
 /// Mirrors the (:Statement) node, with timing from the `:CONTAINS` edge and
@@ -56,10 +54,6 @@ pub struct Statement {
     /// Seconds from start of recording. Null for non-media statements.
     pub start_time: Option<f64>,
     pub end_time: Option<f64>,
-    /// Per-word timing data as a JSON string, e.g.
-    /// `[{"word":"the","start":1.23,"end":1.45}, ...]`.
-    /// Null if the transcription pipeline did not produce word-level timing.
-    pub words: Option<String>,
 }
 
 /// Mirrors the (:Interview) node.
