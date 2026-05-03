@@ -327,11 +327,15 @@ impl Decoder {
                 .map(|&t| t >= timestamp_begin)
                 .unwrap_or(false);
 
-            let penultimate_was_timestamp = if sampled_tokens.len() >= 2 {
-                sampled_tokens[sampled_tokens.len() - 2] >= timestamp_begin
-            } else {
-                false
-            };
+            // When fewer than two tokens have been sampled, treat the
+            // (non-existent) penultimate as a timestamp.  This mirrors
+            // OpenAI's reference (`len(seq) < 2 or seq[-2] >= ts_begin`)
+            // and is what makes Rule 1 force *text* immediately after the
+            // first timestamp, producing the expected `<|t_start|> text
+            // <|t_end|>` segment shape.  Defaulting to `false` instead
+            // collapses every segment's start and end to the same value.
+            let penultimate_was_timestamp = sampled_tokens.len() < 2
+                || sampled_tokens[sampled_tokens.len() - 2] >= timestamp_begin;
 
             if last_was_timestamp {
                 if penultimate_was_timestamp {
