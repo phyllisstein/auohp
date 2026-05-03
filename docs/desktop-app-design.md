@@ -225,9 +225,9 @@ With `transparent: true`, `decorations: false`, and a CSS background of `transpa
   "backend": "metal",
   "gpu": { "name": "Apple M2 Pro", "memory_bytes": 17179869184 },
   "models": {
-    "whisper": "large-v3-turbo-q8",
-    "diarization": "pyannote-segmentation-3.0",
-    "embeddings": "nomic-embed-text-v1.5"
+    "whisper": "large-v3".into(),
+    "diarization": "pyannote-segmentation-3.0".into(),
+    "embeddings": "wespeaker-voxceleb-ecapa-tdnn1024".into(),
   }
 }
 ```

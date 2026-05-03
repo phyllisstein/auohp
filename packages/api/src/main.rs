@@ -69,6 +69,7 @@ async fn main() -> Result<()> {
     // embeddings. IF NOT EXISTS (implicit in CREATE VECTOR INDEX ... IF NOT
     // EXISTS) makes this idempotent across restarts.
     db.run(neo4rs::query(
+        // language=Cypher
         "CREATE VECTOR INDEX statement_embedding IF NOT EXISTS
          FOR (s:Statement) ON s.embedding
          OPTIONS {indexConfig: {

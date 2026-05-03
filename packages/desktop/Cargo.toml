@@ -6,6 +6,25 @@ default-run = "auohp-desktop"
 license = "GPL-3.0-or-later"
 authors = ["ACT UP New York <contact@auohp.org>"]
 
+[features]
+default = []
+# GPU acceleration --- enable at build time, not both at once.
+#   cargo build --features metal    (macOS dev, Apple Silicon GPU)
+#   cargo build --features cuda     (production, NVIDIA GPU)
+#
+# candle-core/metal enables Metal GPU compute for tensor operations.
+# candle-*/accelerate enables Apple's Accelerate framework (vecLib BLAS)
+# for fast CPU matrix multiply --- used as a fallback when an op doesn't
+# have a Metal kernel, and for the mel spectrogram FFT.
+metal = ["auohp-core/metal"]
+cuda = ["auohp-core/cuda"]
+
+[build-dependencies]
+# Error handling --- thiserror generates Error impls for your own types;
+# anyhow provides a flexible Result<T, anyhow::Error> for application code.
+thiserror = "2"
+tauri-build = "2"
+
 [dependencies]
 anyhow = "1"
 axum = "0.8"
@@ -21,9 +40,14 @@ reqwest = { version = "0.13", features = ["json"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
+# Serialization --- serde is the standard Rust serialization framework.
+# serde_json is used to encode per-word timing data as a JSON string property
+# on Statement nodes in Neo4j.
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
 
-[build-dependencies]
-# Error handling --- thiserror generates Error impls for your own types;
-# anyhow provides a flexible Result<T, anyhow::Error> for application code.
-thiserror = "2"
-tauri-build = "2"
+# Bindings to the Metal framework. Used for extracting GPU metadata at runtime
+# on Apple Silicon devices.
+metal = "0.33"
+sysinfo = "0.38"
+machine-info = "1"

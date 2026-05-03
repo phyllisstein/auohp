@@ -62,6 +62,7 @@ pub async fn add_asset(
     let mut create_stream = txn
         .execute(
             query(
+                // language=Cypher
                 "
                 MATCH (interview:Interview {number: $number})
                 MERGE (asset:$([ 'Asset', $nodeLabel ]) {uri: $uri, kind: $nodeLabel})
