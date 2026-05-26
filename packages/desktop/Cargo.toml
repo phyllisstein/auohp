@@ -34,6 +34,13 @@ tauri-plugin-opener = "2"
 tauri-plugin-shell = "2"
 tokio = { version = "1", features = ["full"] }
 reqwest = { version = "0.13", features = ["json"] }
+tokio-util = "0.7"
+
+# Bridges a tokio broadcast::Receiver into a Stream for axum SSE responses.
+tokio-stream = { version = "0.1", features = ["sync"] }
+
+# Typed errors for the registry/worker boundaries (anyhow elsewhere).
+thiserror = "2"
 
 # Structured logging --- tracing instruments async code; tracing-subscriber
 # formats and emits those events (to stdout, to files, etc.)
@@ -51,3 +58,12 @@ serde_json = "1"
 metal = "0.33"
 sysinfo = "0.38"
 machine-info = "1"
+
+# ID generation --- nanoid produces short, URL-safe, unique identifiers.
+# Used for node UIDs in Neo4j, matching the existing TypeScript seeder.
+nanoid = "0.5"
+
+tauri-plugin-deep-link = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-fs = "2"
+tauri-plugin-single-instance = "2"

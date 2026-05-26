@@ -16,13 +16,20 @@ default = []
 # for fast CPU matrix multiply --- used as a fallback when an op doesn't
 # have a Metal kernel, and for the mel spectrogram FFT.
 metal = [
-    "candle-core/metal", "candle-nn/metal",
-    "candle-core/accelerate", "candle-nn/accelerate", "candle-transformers/accelerate",
+    "candle-core/metal",
+    "candle-nn/metal",
+    "candle-core/accelerate",
+    "candle-nn/accelerate",
+    "candle-transformers/accelerate",
     "ort/coreml",
+    "whisper-rs/metal",
 ]
 cuda = [
-    "candle-core/cuda", "candle-nn/cuda", "candle-transformers/cuda",
+    "candle-core/cuda",
+    "candle-nn/cuda",
+    "candle-transformers/cuda",
     "ort/cuda",
+    "whisper-rs/cuda",
 ]
 
 [dependencies]
@@ -60,7 +67,10 @@ audioadapter-buffers = "2"
 # pyannote-rs --- its ndarray TensorArrayData trait changed between rc.10
 # and rc.11. The `ort = "=2.0.0-rc.10"` pin above enforces the same
 # constraint from the other direction; this keeps them in sync.
-fastembed = { version = "~5.8", default-features = false, features = ["ort-download-binaries", "hf-hub-native-tls"] }
+fastembed = { version = "~5.8", default-features = false, features = [
+    "ort-download-binaries",
+    "hf-hub-native-tls",
+] }
 kodama = "0.3.0"
 
 # Structured logging --- tracing instruments async code; tracing-subscriber
@@ -80,3 +90,5 @@ clap = { version = "4.6.1", features = ["derive"] }
 # features = ["full"] enables all tokio sub-crates (net, fs, time, sync, etc.)
 # so we don't have to add individual features as they're needed.
 tokio = { version = "1", features = ["full"] }
+
+whisper-rs = "0.16"
