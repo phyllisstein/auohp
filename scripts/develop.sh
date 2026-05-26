@@ -79,6 +79,7 @@ watches)
 yarn)
     yarn_install
     restart_editor
+    restart_search
     ;;
 
 api)

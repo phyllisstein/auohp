@@ -1,47 +1,31 @@
 use rustls::crypto::{CryptoProvider, aws_lc_rs};
 
-mod error;
-mod handlers;
-mod models;
+mod graphql;
 mod neo4j;
 
-use std::sync::Arc;
-
 use anyhow::Result;
-use auohp_core::embeddings::EmbedderHandle;
-use axum::{
-    Router,
-    routing::{get, post},
-};
+use async_graphql::http::GraphiQLSource;
+use async_graphql_axum::{GraphQLRequest, GraphQLResponse};
+use auohp_core::embeddings::{Embedder, EmbedderHandle};
+use axum::{Router, extract::State, response::Html, routing::get};
 use tracing::info;
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 
-// ---------------------------------------------------------------------------
-// Shared application state
-// ---------------------------------------------------------------------------
-
-// `AppState` is cloned into every request handler via axum's `State<T>`
-// extractor. Both fields are `Arc`-wrapped so that cloning the state gives
-// each handler a cheap reference to the same underlying resource --- no
-// allocation, no copying, just an atomic counter bump.
+// The GraphQL handler receives two arguments:
 //
-// `#[derive(Clone)]` on a struct that contains only `Arc<_>` fields is
-// idiomatic Rust: it clones the arcs (increments refcounts), not the
-// resources behind them.
-#[derive(Clone)]
-pub struct AppState {
-    /// Neo4j connection pool. `Arc<Graph>` is cheaply cloneable; the pool
-    /// itself is managed inside `Graph`.
-    pub db: neo4j::Db,
-    /// Embedding model handle. The inner `Embedder` is wrapped in a `Mutex`
-    /// because the ONNX session is not `Send + Sync`. `Arc` lets all handlers
-    /// share a single model instance.
-    pub embedder: Arc<EmbedderHandle>,
+//   State(schema)  ---axum's dependency-injection mechanism. The schema is
+//                     stored in the Router via .with_state() and extracted
+//                     here with State<T>. The destructuring syntax
+//                     `State(schema)` unwraps the newtype wrapper in one step.
+//
+//   req            ---the incoming GraphQL request, deserialized from JSON
+//                     by async-graphql-axum.
+async fn graphql_handler(
+    State(schema): State<graphql::AppSchema>,
+    req: GraphQLRequest,
+) -> GraphQLResponse {
+    schema.execute(req.into_inner()).await.into()
 }
-
-// ---------------------------------------------------------------------------
-// Entry point
-// ---------------------------------------------------------------------------
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -71,8 +55,8 @@ async fn main() -> Result<()> {
     info!("connected to Neo4j at {neo4j_uri}");
 
     // Ensure the vector index exists for semantic search over Statement
-    // embeddings. IF NOT EXISTS (implicit in CREATE VECTOR INDEX ... IF NOT
-    // EXISTS) makes this idempotent across restarts.
+    // embeddings. IF NOT EXISTS makes this idempotent across restarts.
+
     db.run(neo4rs::query(
         "CREATE VECTOR INDEX statement_embedding IF NOT EXISTS
          FOR (s:Statement) ON s.embedding
@@ -84,44 +68,36 @@ async fn main() -> Result<()> {
     .await?;
     info!("ensured statement_embedding vector index (768-dim, cosine)");
 
-    let embedder = auohp_core::embeddings::Embedder::new().expect("failed to load embedding model");
+    let embedder = Embedder::new().expect("failed to load embedding model");
     info!("loaded embedding model ({}-dim)", &embedder.dimensions());
-    let embed_handler = Arc::new(EmbedderHandle::new(embedder));
+    let embed_handler = std::sync::Arc::new(EmbedderHandle::new(embedder));
 
-    let state = AppState {
-        db,
-        embedder: embed_handler,
-    };
-
-    // ── Route table ─────────────────────────────────────────────────────────
-    //
-    // Routes are grouped by resource. Each handler module owns its own
-    // request/response types; `AppState` is injected via `with_state`.
+    let schema = graphql::build_schema(db, embed_handler);
 
     let app = Router::new()
         .route("/health", get(|| async { "ok" }))
-        // Interviews
-        .route("/interviews", get(handlers::interviews::list_interviews))
-        .route("/interviews", post(handlers::interviews::seed_interview))
+        // GET  /graphql --> serves the GraphiQL interactive IDE, so you can
+        //                  explore the schema and test queries from a browser.
+        // POST /graphql --> the actual GraphQL execution endpoint.
+        //
+        // GraphiQLSource generates a self-contained HTML page that talks to
+        // the POST endpoint. It's baked into async-graphql behind the
+        // "graphiql" feature flag.
         .route(
-            "/interviews/{number}",
-            get(handlers::interviews::get_transcript),
+            "/graphql",
+            get(|| async {
+                Html(
+                    GraphiQLSource::build()
+                        .endpoint("/graphql")
+                        .title("AUOHP GraphQL")
+                        .finish(),
+                )
+            })
+            .post(graphql_handler),
         )
-        // Assets
-        .route(
-            "/interviews/{number}/assets",
-            post(handlers::assets::add_asset),
-        )
-        // Captions
-        .route(
-            "/interviews/{number}/captions",
-            get(handlers::captions::get_captions),
-        )
-        // Search
-        .route("/search", get(handlers::search::search_statements))
-        // with_state makes `state` available to any handler that declares
-        // `State<AppState>` as a parameter.
-        .with_state(state);
+        // with_state() makes `schema` available to any handler that
+        // declares a State<AppSchema> parameter.
+        .with_state(schema);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:6060").await?;
     info!("listening on {}", listener.local_addr()?);
