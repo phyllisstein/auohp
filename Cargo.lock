@@ -351,6 +351,7 @@ dependencies = [
  "axum",
  "chrono",
  "dotenvy",
+ "http",
  "nanoid",
  "neo4rs",
  "rustls",
@@ -359,6 +360,8 @@ dependencies = [
  "thiserror 2.0.18",
  "tokio",
  "tokio-retry",
+ "tower",
+ "tower-http",
  "tracing",
  "tracing-subscriber",
 ]
@@ -386,8 +389,6 @@ dependencies = [
  "thiserror 2.0.18",
  "tokenizers",
  "tokio",
- "tower",
- "tower-http",
  "tracing",
  "tracing-subscriber",
 ]
