@@ -1,11 +1,11 @@
 import queryString from "query-string";
 import { useEffect, useRef, useState } from "react";
-import { SearchContainer, SearchResult, SearchResults, ResultMatch, ResultSource, ResultTimestamp } from "./search-styles";
+import { SearchContainer, SearchResult, SearchResults, ResultMatch, ResultSource, ResultTimestamp, SearchInput } from "./search-styles";
 import { Results } from "./results";
 import deepEqual from "fast-deep-equal";
 import { gql } from "@apollo/client";
 import { useLazyQuery } from "@apollo/client/react";
-import { SearchInput } from "./input";
+
 
 const SEARCH_QUERY = gql`
     query SearchStatements($search: String!) {
@@ -28,6 +28,19 @@ const SEARCH_QUERY = gql`
         }
     }
 `;
+
+
+const formatTimestamp = (timestamp: number) =>
+    Temporal.Duration.from({ seconds: Math.round(timestamp) })
+        .round({
+            largestUnit: "hours",
+            smallestUnit: "seconds",
+        })
+        .toLocaleString("en-US", {
+            style: "digital",
+            hoursDisplay: "auto",
+            hours: "numeric",
+        });
 
 
 export function Search() {
@@ -70,10 +83,8 @@ export function Search() {
                         searchQuery.data?.searchStatements.map(hit => (
                             <SearchResult key={ `${ hit.statement.startTime }-${ hit.statement.uid }` } onClick={ () => handleResultClick(hit) }>
                                 <ResultMatch>{ hit.statement.text }</ResultMatch>
-                                <ResultSource>
-                                    <strong>{ hit.statement.person.name }</strong>
-                                </ResultSource>
-                                <ResultTimestamp>{ hit.statement.startTime }</ResultTimestamp>
+                                <ResultSource>{ hit.statement.person.name }</ResultSource>
+                                <ResultTimestamp>{ formatTimestamp(hit.statement.startTime) }</ResultTimestamp>
                             </SearchResult>
                         ))
                     }
