@@ -2,11 +2,12 @@ use std::sync::Arc;
 
 use async_graphql::{Context, EmptySubscription, Object, Schema};
 
-use crate::embeddings::Embedder;
-use crate::neo4j::Db;
 use super::interviews::{self, Interview, Transcript};
 use super::mutations::MutationRoot;
+use super::queries::captions::{self, Caption};
 use super::search::{self, SearchHit};
+use crate::neo4j::Db;
+use auohp_core::embeddings::EmbedderHandle;
 
 pub type AppSchema = Schema<QueryRoot, MutationRoot, EmptySubscription>;
 
@@ -40,16 +41,24 @@ impl QueryRoot {
     async fn search_statements(
         &self,
         ctx: &Context<'_>,
-        #[graphql(desc = "Natural-language query to embed and search for.")]
-        query: String,
-        #[graphql(desc = "Maximum number of results to return. Defaults to 15.")]
-        limit: Option<i64>,
+        #[graphql(desc = "Natural-language query to embed and search for.")] query: String,
+        #[graphql(desc = "Maximum number of results to return. Defaults to 15.")] limit: Option<
+            i64,
+        >,
     ) -> async_graphql::Result<Vec<SearchHit>> {
         search::search_statements(ctx, query, limit).await
     }
+
+    async fn captions(
+        &self,
+        ctx: &Context<'_>,
+        #[graphql(desc = "Public-facing numerical label for each interview")] interview_number: i64,
+    ) -> async_graphql::Result<Caption> {
+        captions::get_captions(ctx, interview_number).await
+    }
 }
 
-pub fn build_schema(db: Db, embedder: Arc<Embedder>) -> AppSchema {
+pub fn build_schema(db: Db, embedder: Arc<EmbedderHandle>) -> AppSchema {
     Schema::build(QueryRoot, MutationRoot, EmptySubscription)
         .data(db)
         .data(embedder)

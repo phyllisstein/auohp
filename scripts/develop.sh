@@ -6,11 +6,19 @@ args="$*"
 
 restart_editor() {
     echo "Terminate existing editor..."
-    pkill -f "packages/editor" || true
+    pkill -f "editor:dev" || true
 
     echo "Starting editor development server..."
-    cd /app/packages/editor
-    yarn start:dev &
+    yarn editor:dev &
+    disown
+}
+
+restart_search() {
+    echo "Terminate existing search component server..."
+    pkill -f "search:dev" || true
+
+    echo "Starting search component development server..."
+    yarn search:dev &
     disown
 }
 
@@ -19,9 +27,8 @@ restart_api() {
     pkill -f "auohp-api" || true
 
     echo "Starting API development server..."
-    cd /app/packages/api
-    ./scripts/download-models.sh
-    cargo run &
+    ./packages/api/scripts/download-models.sh
+    cargo run --package auohp-api --bin auohp-api &
     disown
 }
 
@@ -57,6 +64,10 @@ editor)
     restart_editor
     ;;
 
+search)
+    restart_search
+    ;;
+
 watch)
     watch_watchman
     ;;
@@ -68,6 +79,7 @@ watches)
 yarn)
     yarn_install
     restart_editor
+    restart_search
     ;;
 
 api)

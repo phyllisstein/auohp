@@ -43,17 +43,19 @@ pub struct StatementNode {
     pub words: Option<String>,
 }
 
+#[derive(Deserialize)]
+pub struct StatementMeta {
+    pub start_time: f64,
+    pub end_time: f64,
+}
+
 /// Mirrors the (:Statement) node, with timing from the `:CONTAINS` edge and
 /// speaker attribution from `:SAYS`.
 #[derive(SimpleObject)]
 pub struct Statement {
-    pub uid: String,
     pub text: String,
     /// The person who said this (via `:SAYS`).
     pub person: Person,
-    /// Whether this person was an interviewer in this interview (derived from
-    /// the `:INTERVIEWED_BY` edge on the Interview node).
-    pub is_interviewer: bool,
     /// Seconds from start of recording. Null for non-media statements
     /// (e.g. broadsheet text).
     pub start_time: Option<f64>,
@@ -139,8 +141,7 @@ pub async fn get_transcript(ctx: &Context<'_>, number: i64) -> async_graphql::Re
                  OPTIONAL MATCH (interview)-[:INTERVIEWED_BY]->(interviewer:Person)
                    WHERE interviewer = person
 
-                 RETURN interview, transcript, statement, person, contains,
-                        interviewer IS NOT NULL AS is_interviewer
+                 RETURN interview, transcript, statement, person, contains
                  ORDER BY contains.startTime",
             )
             .param("number", number),
@@ -166,12 +167,10 @@ pub async fn get_transcript(ctx: &Context<'_>, number: i64) -> async_graphql::Re
         let sn: StatementNode = statement.to().map_err(gql_err)?;
 
         statements.push(Statement {
-            uid: sn.uid,
             text: sn.text,
             // Person can be deserialized directly---its fields match the
             // node properties exactly (uid, name).
             person: person.to().map_err(gql_err)?,
-            is_interviewer: row.get("is_interviewer").map_err(gql_err)?,
             // Timing lives on the :CONTAINS relationship, not the Statement
             // node. Relation::get() works just like Node::get().
             start_time: contains.get("startTime").map_err(gql_err)?,

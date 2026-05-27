@@ -12,8 +12,8 @@ use neo4rs::{BoltType, query};
 
 use super::error::gql_err;
 use super::interviews::{Interview, Statement, StatementNode};
-use crate::embeddings::Embedder;
 use crate::neo4j::Db;
+use auohp_core::EmbedderHandle;
 
 // ---------------------------------------------------------------------------
 // Output type
@@ -22,8 +22,6 @@ use crate::neo4j::Db;
 /// A single hit from a vector similarity search over Statement nodes.
 #[derive(SimpleObject)]
 pub struct SearchHit {
-    /// Cosine similarity score in [0, 1]. Higher is more similar.
-    pub score: f64,
     /// The matching statement, with speaker and timing.
     pub statement: Statement,
     /// The interview this statement belongs to.
@@ -42,20 +40,17 @@ pub async fn search_statements(
     limit: Option<i64>,
 ) -> async_graphql::Result<Vec<SearchHit>> {
     let db = ctx.data::<Db>()?;
-    let embedder = ctx.data::<Arc<Embedder>>()?;
+    let embedder = ctx.data::<Arc<EmbedderHandle>>()?;
 
+    let texts = vec![query_text];
     // ── Embed query text (CPU-bound: run off the async executor) ──────────────
-    let vector: Vec<f32> = tokio::task::spawn_blocking({
-        let embedder = embedder.clone();
-        let texts = vec![query_text.clone()];
-        move || embedder.embed(&texts)
-    })
-    .await
-    .map_err(gql_err)? // JoinError (spawn_blocking panicked)
-    .map_err(gql_err)? // anyhow::Error from the ONNX model
-    .into_iter()
-    .next()
-    .ok_or_else(|| async_graphql::Error::new("embedding produced no vectors"))?;
+    let vector: Vec<f32> = embedder
+        .embed(texts)
+        .await
+        .map_err(gql_err)?
+        .into_iter()
+        .next()
+        .ok_or_else(|| async_graphql::Error::new("embedding produced no vectors"))?;
 
     // Convert to BoltType list---Neo4j's vector procedures expect a list of
     // floats. We widen f32 --> f64 here because neo4rs's BoltType::Float wraps
@@ -72,18 +67,20 @@ pub async fn search_statements(
     let mut stream = db
         .execute(
             query(
-                "CALL db.index.vector.queryNodes('statement_embedding', $limit, $vector)
-                 YIELD node AS statement, score
+                "
+                    MATCH (statement:Statement)
+                    SEARCH statement IN (
+                        VECTOR INDEX statement_embedding
+                        FOR $vector
+                        LIMIT $limit
+                    )
 
-                 MATCH (transcript:Transcript)-[contains:CONTAINS]->(statement)
-                       <-[:SAYS]-(person:Person)
-                 MATCH (interview:Interview)-[:HAS_TRANSCRIPT]->(transcript)
-                 OPTIONAL MATCH (interview)-[:INTERVIEWED_BY]->(interviewer:Person)
-                   WHERE interviewer = person
+                    MATCH (transcript:Transcript)-[contains:CONTAINS]->(statement)
+                        <-[:SAYS]-(person:Person)
+                    MATCH (interview:Interview)-[:HAS_TRANSCRIPT]->(transcript)
 
-                 RETURN interview, statement, person, contains, score,
-                        interviewer IS NOT NULL AS is_interviewer
-                 ORDER BY score DESC",
+                    RETURN interview, statement, person, contains
+                ",
             )
             .param("limit", limit_val)
             .param("vector", vector_bolt),
@@ -101,12 +98,9 @@ pub async fn search_statements(
         let sn: StatementNode = statement.to().map_err(gql_err)?;
 
         hits.push(SearchHit {
-            score: row.get("score").map_err(gql_err)?,
             statement: Statement {
-                uid: sn.uid,
                 text: sn.text,
                 person: person.to().map_err(gql_err)?,
-                is_interviewer: row.get("is_interviewer").map_err(gql_err)?,
                 start_time: contains.get("startTime").map_err(gql_err)?,
                 end_time: contains.get("endTime").map_err(gql_err)?,
                 words: sn.words,

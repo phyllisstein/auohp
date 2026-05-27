@@ -1,11 +1,12 @@
-mod embeddings;
+use rustls::crypto::{CryptoProvider, aws_lc_rs};
+
 mod graphql;
 mod neo4j;
-mod transcription;
 
 use anyhow::Result;
 use async_graphql::http::GraphiQLSource;
 use async_graphql_axum::{GraphQLRequest, GraphQLResponse};
+use auohp_core::embeddings::{Embedder, EmbedderHandle};
 use axum::{Router, extract::State, response::Html, routing::get};
 use http::Method;
 use tower_http::{
@@ -33,6 +34,9 @@ async fn graphql_handler(
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    CryptoProvider::install_default(aws_lc_rs::default_provider())
+        .map_err(|_| anyhow::anyhow!("default crypto provider already installed"))?;
+
     // Tracing goes to stderr so structured logs don't mix with any stdout
     // output (e.g. health-check scripts that parse the server's stdout).
     tracing_subscriber::registry()
@@ -48,7 +52,7 @@ async fn main() -> Result<()> {
     // Read connection parameters from the environment, with the same defaults
     // used by the TypeScript packages in this monorepo.
     let neo4j_uri = std::env::var("NEO4J_URI").unwrap_or_else(|_| "neo4j://neo4j:7687".to_string());
-    let neo4j_user = std::env::var("NEO4J_USER").unwrap_or_else(|_| "neo4j".to_string());
+    let neo4j_user = std::env::var("NEO4J_USERNAME").unwrap_or_else(|_| "neo4j".to_string());
     let neo4j_password = std::env::var("NEO4J_PASSWORD").unwrap_or_else(|_| "neo4j".to_string());
     let neo4j_database = std::env::var("NEO4J_DATABASE").unwrap_or_else(|_| "neo4j".to_string());
 
@@ -57,6 +61,7 @@ async fn main() -> Result<()> {
 
     // Ensure the vector index exists for semantic search over Statement
     // embeddings. IF NOT EXISTS makes this idempotent across restarts.
+
     db.run(neo4rs::query(
         "CREATE VECTOR INDEX statement_embedding IF NOT EXISTS
          FOR (s:Statement) ON s.embedding
@@ -68,11 +73,11 @@ async fn main() -> Result<()> {
     .await?;
     info!("ensured statement_embedding vector index (768-dim, cosine)");
 
-    let embedder =
-        std::sync::Arc::new(embeddings::Embedder::new().expect("failed to load embedding model"));
-    info!("loaded embedding model ({}-dim)", embedder.dimensions());
+    let embedder = Embedder::new().expect("failed to load embedding model");
+    info!("loaded embedding model ({}-dim)", &embedder.dimensions());
+    let embed_handler = std::sync::Arc::new(EmbedderHandle::new(embedder));
 
-    let schema = graphql::build_schema(db, embedder);
+    let schema = graphql::build_schema(db, embed_handler);
 
     let app = Router::new()
         .route("/health", get(|| async { "ok" }))

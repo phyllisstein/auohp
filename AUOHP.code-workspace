@@ -5,19 +5,23 @@
             "path": "."
         },
         {
+            "name": "💿 @auohp/core",
+            "path": "packages/core"
+        },
+        {
             "name": "🌐 @auohp/api",
             "path": "packages/api"
         },
         {
-            "name": "🌐 @auohp/desktop",
+            "name": "🖥️ @auohp/desktop",
             "path": "packages/desktop"
         },
         {
-            "name": "🌐 @auohp/editor",
+            "name": "✏️ @auohp/editor",
             "path": "packages/editor"
         },
         {
-            "name": "🧩 @auohp/search-component",
+            "name": "🕵️ @auohp/search-component",
             "path": "packages/search-component"
         },
         {
@@ -30,7 +34,6 @@
         "search.exclude": {
             "**/node_modules": true,
             "**/.yarn": true
-        },
-        "eslint.workingDirectories": [{ "mode": "auto"}]
+        }
     }
 }

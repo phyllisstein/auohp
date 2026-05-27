@@ -5,9 +5,9 @@ use neo4rs::{BoltMap, BoltString, BoltType, query};
 use serde::{Deserialize, Serialize};
 
 use super::super::interviews::Interview;
-use crate::embeddings::Embedder;
 use crate::graphql::error::gql_err;
 use crate::neo4j::Db;
+use auohp_core::embeddings::EmbedderHandle;
 
 /// Build a BoltMap from string-key / BoltType-value pairs.
 fn bolt_map(pairs: Vec<(&str, BoltType)>) -> BoltType {
@@ -32,7 +32,8 @@ pub struct SeedInterviewInput {
     /// Display name for the interviewee (e.g. "Lei Chou").
     pub interviewee: String,
     /// Maps diarization labels to person names and roles.
-    pub speakers: Vec<SpeakerMappingInput>,
+    /// Optional --- omit when speaker labels are not yet assigned.
+    pub speakers: Option<Vec<SpeakerMappingInput>>,
     /// Raw transcript segments from the transcription pipeline.
     /// Either `segments_json` or `segments` must be specified.
     pub segments: Option<Vec<TranscriptSegmentInput>>,
@@ -70,8 +71,8 @@ pub struct TranscriptSegmentInput {
     pub start_time: f64,
     /// End time in seconds.
     pub end_time: f64,
-    /// Diarization speaker label (must match one of the labels in speakers).
-    pub speaker: String,
+    /// Speaker label (e.g. "SPEAKER_00"). Optional --- omit when not yet assigned.
+    pub speaker: Option<String>,
     /// Per-word timing data. Optional---some segments may lack word alignment.
     pub words: Option<Vec<WordTimingInput>>,
 }
@@ -133,23 +134,24 @@ pub struct SeedInterviewPayload {
 /// If the server restarts before this completes, the affected Statement nodes
 /// simply won't have embeddings yet---re-running `seedInterview` for the same
 /// interview will re-embed them (MATCH … SET is idempotent).
-async fn embed_statements(db: Db, embedder: Arc<Embedder>, uids: Vec<String>, texts: Vec<String>) {
+///
+/// FIXME: The only reason each item has a UID at present is to support this
+/// method. Without this, a UID would be overkill. It would be ideal to match
+/// statements some other way
+async fn embed_statements(
+    db: Db,
+    embedder: Arc<EmbedderHandle>,
+    uids: Vec<String>,
+    texts: Vec<String>,
+) {
     // spawn_blocking moves the synchronous ONNX inference off the async
     // executor thread pool so it cannot stall other requests. The closure
     // captures `embedder` (an Arc clone) and `texts` by move.
-    let vectors = match tokio::task::spawn_blocking({
-        let embedder = embedder.clone();
-        move || embedder.embed(&texts)
-    })
-    .await
-    {
-        Ok(Ok(v)) => v,
-        Ok(Err(e)) => {
-            tracing::error!(error = %e, "embedding failed");
-            return;
-        }
+    let embedder = embedder.clone();
+    let vectors = match embedder.embed(texts).await {
+        Ok(v) => v,
         Err(e) => {
-            tracing::error!(error = %e, "spawn_blocking panicked during embedding");
+            tracing::error!(error = %e, "embedding failed");
             return;
         }
     };
@@ -181,9 +183,11 @@ async fn embed_statements(db: Db, embedder: Arc<Embedder>, uids: Vec<String>, te
 
         if let Err(e) = db
             .run(query!(
-                "UNWIND {items} AS item
-                     MATCH (s:Statement {{uid: item.uid}})
-                     CALL db.create.setNodeVectorProperty(s, 'embedding', item.vector)",
+                "
+                    UNWIND {items} AS item
+                    MATCH (s:Statement {{uid: item.uid}})
+                    CALL db.create.setNodeVectorProperty(s, 'embedding', item.vector)
+                ",
                 items = items,
             ))
             .await
@@ -225,19 +229,6 @@ pub async fn seed_interview(
 
     // ── Phase 1: interview scaffold ──────────────────────────────────────
 
-    // Build interviewer params for UNWIND
-    let interviewers: Vec<BoltType> = input
-        .speakers
-        .iter()
-        .filter(|s| s.role == SpeakerRole::Interviewer)
-        .map(|s| {
-            bolt_map(vec![
-                ("name", BoltType::from(s.name.clone())),
-                ("uid", BoltType::from(nanoid::nanoid!())),
-            ])
-        })
-        .collect();
-
     let video_uid = nanoid::nanoid!();
     let video_url = input
         .assets
@@ -245,54 +236,50 @@ pub async fn seed_interview(
         .and_then(|a| a.video_url.clone())
         .unwrap_or_default();
 
-    txn.run(
-        query!(
-            "MERGE (interviewee:Person {{name: {intervieweeName}}})
-               ON CREATE SET interviewee.uid = {intervieweeUid}
+    tracing::info!(
+        interview_uid,
+        transcript_uid,
+        interviewee = input.interviewee.clone(),
+        "creating new interview nodes"
+    );
+    txn.run(query!(
+        "
+                MERGE (interviewee:Person {{name: {intervieweeName}}})
+                    ON CREATE SET interviewee.uid = {intervieweeUid}
 
-             WITH interviewee
-             UNWIND $interviewers AS iv
-             MERGE (interviewer:Person {{name: iv.name}})
-               ON CREATE SET interviewer.uid = iv.uid
-
-             WITH interviewee, collect(interviewer) AS interviewers
-             CREATE (i:Interview {{
-               uid: {interviewUid},
-               number: {interviewNumber},
-               date: date({interviewDate}),
-               interviewee: interviewee.name
-             }})
-             CREATE (t:Transcript {{uid: {transcriptUid}}})
-             CREATE (i)-[:HAS_TRANSCRIPT]->(t)
-             CREATE (i)-[:INTERVIEWS]->(interviewee)
-
-             WITH i, interviewers
-             UNWIND interviewers AS interviewer
-             CREATE (i)-[:INTERVIEWED_BY]->(interviewer)
-
-             WITH i
-             CREATE (v:Video:Asset {{uid: {videoUid}, url: {videoUrl}}})
-             CREATE (i)-[:HAS_ASSET]->(v)",
-            intervieweeName = input.interviewee.clone(),
-            intervieweeUid = interviewee_uid,
-            interviewUid = interview_uid.clone(),
-            interviewNumber = input.number,
-            interviewDate = input.date.clone(),
-            transcriptUid = transcript_uid.clone(),
-            videoUid = video_uid.clone(),
-            videoUrl = video_url,
-        )
-        .param("interviewers", interviewers),
-    )
+                CREATE
+                    (interview:Interview
+                        {{
+                            uid: {interviewUid},
+                            number: {interviewNumber},
+                            date: date({interviewDate}),
+                            interviewee: interviewee.name
+                        }}) -[:HAS_TRANSCRIPT]->(transcript:Transcript {{uid: {transcriptUid}}})
+                MERGE (interview)-[:INTERVIEWS]->(interviewee)
+            ",
+        intervieweeName = input.interviewee.clone(),
+        intervieweeUid = interviewee_uid,
+        interviewUid = interview_uid.clone(),
+        interviewNumber = input.number,
+        interviewDate = input.date.clone(),
+        transcriptUid = transcript_uid.clone()
+    ))
     .await
     .map_err(gql_err)?;
+
+    tracing::info!(
+        interview_uid,
+        transcript_uid,
+        interviewee = input.interviewee.clone(),
+        "interview nodes created"
+    );
 
     // ── Phase 2: seed statements ───────────────────────────────────────
 
     // Batch statements in groups of 100
     const BATCH_SIZE: usize = 100;
 
-    let segment_ipnuts: Vec<TranscriptSegmentInput> = if let Some(segment_json) =
+    let segment_inputs: Vec<TranscriptSegmentInput> = if let Some(segment_json) =
         input.segments_json
     {
         serde_json::from_str(&segment_json).map_err(|e| async_graphql::Error::new(e.to_string()))
@@ -304,7 +291,7 @@ pub async fn seed_interview(
         ))
     }?;
 
-    let segments: Vec<TranscriptSegment> = segment_ipnuts
+    let segments: Vec<TranscriptSegment> = segment_inputs
         .into_iter()
         .map(|i| TranscriptSegment {
             input: i,
@@ -314,6 +301,8 @@ pub async fn seed_interview(
 
     let speaker_map: std::collections::HashMap<&str, &SpeakerMappingInput> = input
         .speakers
+        .as_deref()
+        .unwrap_or(&[])
         .iter()
         .map(|s| (s.label.as_str(), s))
         .collect();
@@ -329,45 +318,57 @@ pub async fn seed_interview(
                 };
 
                 let segment = &s.input;
-                let uid = &s.uid;
 
-                let mapping = speaker_map.get(segment.speaker.as_str()).ok_or_else(|| {
-                    async_graphql::Error::new(format!(
-                        "Label {:?} does not match any provided speaker",
-                        segment.speaker,
-                    ))
-                })?;
+                // Resolve the speaker label to a name if a mapping exists. In
+                // the absence of a specific mapping, assume the speaker is the
+                // interviewee.
+                let (speaker_name, speaker_uid): (BoltType, BoltType) =
+                    match segment.speaker.as_deref().and_then(|l| speaker_map.get(l)) {
+                        Some(mapping) => (
+                            BoltType::from(mapping.name.clone()),
+                            BoltType::from(nanoid::nanoid!()),
+                        ),
+                        None => (
+                            BoltType::from(input.interviewee.clone()),
+                            BoltType::from(interview_uid.clone()),
+                        ),
+                    };
 
                 Ok::<BoltType, async_graphql::Error>(bolt_map(vec![
-                    ("uid", BoltType::from(uid.clone())),
+                    ("uid", BoltType::from(s.uid.clone())),
                     ("text", BoltType::from(segment.text.clone())),
                     ("startTime", BoltType::from(segment.start_time)),
                     ("endTime", BoltType::from(segment.end_time)),
                     ("words", words_json),
-                    ("speakerName", BoltType::from(mapping.name.clone())),
-                    ("speakerUid", BoltType::from(nanoid::nanoid!())),
+                    ("speakerName", speaker_name),
+                    ("speakerUid", speaker_uid),
                 ]))
             })
             .collect::<Result<Vec<_>, _>>()?;
 
         txn.run(query!(
-            "MATCH (transcript:Transcript {{uid: {transcriptUid}}})
+            "
+                MATCH (transcript:Transcript {{uid: {transcriptUid}}})
 
-                 UNWIND {statements} AS s
+                UNWIND {statements} AS s
 
-                 MERGE (person:Person {{name: s.speakerName}})
-                   ON CREATE SET person.uid = s.speakerUid
-
-                 CREATE (statement:Statement {{
-                   uid:   s.uid,
-                   text:  s.text,
-                   words: s.words
+                CREATE (statement:Statement {{
+                    uid: s.uid,
+                    text: s.text,
+                    words: s.words
                  }})
+
                  CREATE (transcript)-[:CONTAINS {{
                    startTime: s.startTime,
                    endTime: s.endTime
                  }}]->(statement)
-                 CREATE (person)-[:SAYS]->(statement)",
+
+                 WITH s, statement
+                 WHERE s.speakerName IS NOT NULL
+                 MERGE (person:Person {{name: s.speakerName}})
+                   ON CREATE SET person.uid = s.speakerUid
+                 CREATE (person)-[:SAYS]->(statement)
+            ",
             transcriptUid = transcript_uid.clone(),
             statements = stmt_params,
         ))
@@ -416,7 +417,19 @@ pub async fn seed_interview(
     // point where data becomes visible to other connections. If we never
     // reach this line (early return, ?, or panic), the Txn is dropped
     // without committing and Neo4j rolls back automatically.
+    tracing::info!(
+        interview_uid,
+        transcript_uid,
+        interviewee = input.interviewee.clone(),
+        "committing transation..."
+    );
     txn.commit().await.map_err(gql_err)?;
+    tracing::info!(
+        interview_uid,
+        transcript_uid,
+        interviewee = input.interviewee.clone(),
+        "transaction successfully committed"
+    );
 
     // ── Enqueue background embedding ──────────────────────────────────────
     //
@@ -430,7 +443,7 @@ pub async fn seed_interview(
     // independently of this async frame. Errors are logged inside
     // `embed_statements`; if the server restarts mid-job, the affected
     // Statement nodes will simply lack embeddings until the next seed run.
-    let embedder = ctx.data::<Arc<Embedder>>()?.clone();
+    let embedder = ctx.data::<Arc<EmbedderHandle>>()?.clone();
     let texts: Vec<String> = segments
         .iter()
         .map(|s| &s.input)
@@ -441,7 +454,7 @@ pub async fn seed_interview(
 
     // ── Build response ──────────────────────────────────────────────────
 
-    let speaker_count = input.speakers.len() as i64;
+    let speaker_count = input.speakers.as_deref().unwrap_or(&[]).len() as i64;
 
     Ok(SeedInterviewPayload {
         interview: Interview {

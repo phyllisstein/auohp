@@ -1,0 +1,23 @@
+[
+    "trigger",
+    "/app",
+    {
+        "name": "search-restart",
+        "expression": [
+            "allof",
+            ["dirname", "packages/search-component"],
+            ["name",
+                [
+                    ".env",
+                    "tsconfig.json",
+                    "next.config.js"
+                ]
+            ]
+        ],
+        "command": [
+            "/app/scripts/develop.sh",
+            "search"
+        ],
+        "append_files": false
+    }
+]

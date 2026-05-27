@@ -1,3 +1,4 @@
+mod add_asset;
 mod root;
 mod seed_interview;
 

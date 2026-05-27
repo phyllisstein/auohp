@@ -8,6 +8,14 @@ import js from "@eslint/js";
 import globals from "globals";
 
 export default defineConfig(
+    {
+        languageOptions: {
+            parserOptions: {
+                projectService: true,
+                tsconfigRootDir: import.meta.dirname,
+            },
+        },
+    },
     js.configs.recommended,
     tseslint.configs.recommended,
     stylistic.configs.recommended,

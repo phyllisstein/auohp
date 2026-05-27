@@ -1,11 +1,6 @@
-import path from "path";
-import { fileURLToPath } from "url";
+import type { NextConfig } from "next";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-export default {
-    allowedDevOrigins: ["*.auohp.here", "localhost:3000", "127.0.0.1:3000"],
+const config: NextConfig = {
     compiler: {
         styledComponents: {
             displayName: true,
@@ -14,23 +9,6 @@ export default {
             ssr: true,
         },
     },
-    serverRuntimeConfig: {
-        host: "0.0.0.0",
-    },
-    webpack(config, { dev }) {
-        config.resolve.enforceExtension = false;
-        config.resolve.modules = [
-            path.resolve(__dirname, "src"),
-            path.resolve(__dirname, "vendor"),
-            "node_modules",
-            ...config.resolve.modules,
-        ];
-
-        config.module.rules.push({
-            test: /\.(cql|cypher)$/,
-            type: "asset/source",
-        });
-
-        return config;
-    },
 };
+
+export default config;
