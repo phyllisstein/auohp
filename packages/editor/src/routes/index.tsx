@@ -1,36 +1,41 @@
-"use client";
-
-import { $getRoot, $getSelection } from "lexical";
-import { useEffect } from "react";
-
+import { createFileRoute } from "@tanstack/react-router";
 import { AutoFocusPlugin } from "@lexical/react/LexicalAutoFocusPlugin";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
-import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
-import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
+import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
+import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
+
+export const Route = createFileRoute("/")({
+    component: Page,
+    ssr: false,
+    beforeLoad: () => {
+        import("@spectrum-web-components/theme/sp-theme.js");
+        import("@spectrum-web-components/theme/src/themes.js");
+        import("@spectrum-web-components/theme/theme-light.js");
+        import("@spectrum-web-components/theme/scale-large.js");
+        import("@spectrum-web-components/button/sp-button.js");
+        import("@spectrum-web-components/badge/sp-badge.js");
+    },
+});
 
 const theme = {};
 
-function onError(error) {
+function onError(error: Error) {
     console.error(error);
 }
 
-export default function Page() {
+function Page() {
     const initialConfig = {
         namespace: "MyEditor",
-        theme,
         onError,
+        theme,
     };
+
 
     return (
         <>
-            <button className=" spectrum-Button spectrum-Button--fill spectrum-Button--accent spectrum-Button--sizeM " id="button-ajge1">
-
-                <span className="spectrum-Button-label">Edit</span>
-
-
-            </button>
+            <sp-button onClick={ () => console.log("Button clicked") }>Try me</sp-button>
             <LexicalComposer initialConfig={ initialConfig }>
                 <RichTextPlugin
                     contentEditable={ (
