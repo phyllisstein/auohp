@@ -1,4 +1,3 @@
-import _ from "lodash";
 import { getValueAndUnit } from "polished";
 import { css } from "styled-components";
 
@@ -13,8 +12,8 @@ const BASELINE = {
     MAISON_MONO: 0.195,
     PRAGMATAPRO: 0.1196,
 };
+const round = (n: number) => parseFloat(n.toFixed(2));
 
-const round = _.partial(_.round, _.partial.placeholder, 2);
 
 const getBaselineCorrection = ({
     baseline,

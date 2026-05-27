@@ -1,4 +1,3 @@
-import * as R from "ramda";
 import { css } from "styled-components";
 
 import { css as animationCSS, AnimationDuration } from "./animation";
@@ -93,9 +92,8 @@ const BLACK = {
     UMBRA: "hsla(215, 9%, 15%, 20%)",
 };
 
-const clampLevel = R.clamp(1, 25);
-
-const dropSpread = R.pipe(R.split(" "), R.dropLast(1), R.join(" "));
+const clampLevel = (val: number) => Math.max(1, Math.min(25, val));
+const dropSpread = (val: string) => val.split(" ").slice(0, -1).join(" ");
 
 export function box(level = 1) {
     level = clampLevel(level);
