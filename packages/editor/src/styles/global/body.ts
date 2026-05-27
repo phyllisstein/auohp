@@ -1,5 +1,3 @@
-"use client";
-
 import { createGlobalStyle } from "styled-components";
 
 export const Body = createGlobalStyle`
@@ -28,10 +26,5 @@ export const Body = createGlobalStyle`
         font-variant-ligatures: common-ligatures;
         font-variant-numeric: lining-nums proportional-nums;
         text-rendering: geometricPrecision;
-    }
-
-    body {
-        color: ${ ({ theme }) => theme.palette.rgb.gray900 };
-        background-color: ${ ({ theme }) => theme.palette.rgb.gray200 } !important;
     }
 `;
