@@ -25,8 +25,6 @@ export function StyledComponentsRegistry({ children }: { children: ReactNode }) 
     const innerComponents = (
         <RecoilRoot>
             <ThemeProvider theme={ theme }>
-                <Preflight />
-                <Body />
                 <AdobeClean />
 
                 { children }

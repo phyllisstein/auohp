@@ -1,34 +1,47 @@
-export default async function Page() {
-    async function listInterviews() {
-        "use server";
+"use client";
 
-        return fetch("http://127.0.0.1:3030/api/interviews")
-            .then(async response => {
-                if (!response.ok) {
-                    console.error(response);
-                    throw new Error("Failed to fetch interviews");
-                }
-                const json = await response.json();
-                return json;
-            })
-            .catch(console.error);
-    }
+import { $getRoot, $getSelection } from "lexical";
+import { useEffect } from "react";
 
-    const interviews = await listInterviews();
+import { AutoFocusPlugin } from "@lexical/react/LexicalAutoFocusPlugin";
+import { LexicalComposer } from "@lexical/react/LexicalComposer";
+import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
+import { ContentEditable } from "@lexical/react/LexicalContentEditable";
+import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
+import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 
-    if (!Array.isArray(interviews)) {
-        return null;
-    }
+const theme = {};
+
+function onError(error) {
+    console.error(error);
+}
+
+export default function Page() {
+    const initialConfig = {
+        namespace: "MyEditor",
+        theme,
+        onError,
+    };
 
     return (
-        <div>
-            <ul>
-                { interviews.map(interview => (
-                    <li key={ interview.uid }>
-                        <a href={ `/transcript/${ interview.number }` }>{ interview.date } – { interview.interviewee }</a>
-                    </li>
-                )) }
-            </ul>
-        </div>
+        <>
+            <button className=" spectrum-Button spectrum-Button--fill spectrum-Button--accent spectrum-Button--sizeM " id="button-ajge1">
+
+                <span className="spectrum-Button-label">Edit</span>
+
+
+            </button>
+            <LexicalComposer initialConfig={ initialConfig }>
+                <RichTextPlugin
+                    contentEditable={ (
+                        <ContentEditable
+                            aria-placeholder="Enter some text..."
+                            placeholder={ <div>Enter some text...</div> } />
+                    ) }
+                    ErrorBoundary={ LexicalErrorBoundary } />
+                <HistoryPlugin />
+                <AutoFocusPlugin />
+            </LexicalComposer>
+        </>
     );
 }
