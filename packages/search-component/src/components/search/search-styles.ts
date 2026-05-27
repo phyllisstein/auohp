@@ -2,6 +2,7 @@ import styled from "styled-components";
 
 export const SearchContainer = styled.div`
     position: relative;
+    font-family: system-ui, sans-serif;
 `;
 
 export const SearchResults = styled.ul`
@@ -48,6 +49,7 @@ export const ResultSource = styled.div`
     grid-column: 1/2;
     padding: 0.5em;
 
+    font-weight: 600;
     font-size: 0.8em;
 `;
 
@@ -57,5 +59,15 @@ export const ResultTimestamp = styled.div`
     padding: 0.5em;
 
     color: grey;
+    font-weight: 600;
     font-size: 0.8em;
+`;
+
+export const SearchInput = styled.input`
+    padding: 0.5em;
+
+    font-size: 1.5em;
+
+    border: none;
+    border-bottom: 1px solid black;
 `;
