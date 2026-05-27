@@ -13,13 +13,11 @@ const SEARCH_QUERY = gql`
             query: $search
             limit: 5
         ) {
-            score
             interview {
                 number
                 uid
             }
             statement {
-                uid
                 text
                 startTime
                 endTime
