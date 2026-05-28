@@ -19,7 +19,6 @@ cuda = [
     "ort/cuda",
     "whisper-rs/cuda",
     "fastembed/cuda",
-    "fastembed/cudnn",
 ]
 
 [dependencies]
