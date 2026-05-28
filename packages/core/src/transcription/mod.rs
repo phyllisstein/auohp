@@ -1,4 +1,3 @@
-mod align;
 mod audio;
 mod line_breaking;
 mod pipeline;

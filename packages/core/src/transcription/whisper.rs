@@ -3,30 +3,36 @@
 //! whisper.cpp handles the full decode loop---mel spectrogram, encoder,
 //! autoregressive decoder, and timestamp extraction---in highly optimised C++.
 //! This module is a thin Rust wrapper that:
-//!   1. Loads the ggml model from a caller-supplied path.
+//!   1. Loads the ggml Whisper model and silero VAD model from caller-supplied paths.
 //!   2. Feeds 16 kHz mono f32 PCM to the decoder.
 //!   3. Harvests timestamped segments and per-token DTW timing, then groups
 //!      tokens into words using the BPE space-prefix convention.
 //!
 //! ## Model management
 //!
-//! The ggml model file (`ggml-large-v3.bin`) is downloaded once by
-//! `scripts/download-models.sh` into `$MODELS_DIR` (default `/opt/auohp/models`).
-//! The pipeline resolves that path and passes it here---no network I/O happens
-//! at inference time.
+//! Both ggml files are downloaded once by `scripts/download-models.sh` into
+//! `$MODELS_DIR` (default `/opt/auohp/models`).  The pipeline resolves paths
+//! and passes them here---no network I/O at inference time.
+//!
+//! ## Voice Activity Detection
+//!
+//! whisper.cpp's built-in silero VAD pre-segments the audio before handing it
+//! to Whisper.  For the Q&A interview pattern (short question / long answer)
+//! this prevents Whisper from stitching unrelated speech into a single segment.
+//! `WhisperVadParams::set_max_speech_duration` caps long answers at a hard
+//! ceiling by forcing a segment break at the nearest silence boundary.
 //!
 //! ## Word-level timestamps
 //!
-//! When `set_token_timestamps(true)` is set, whisper.cpp runs Dynamic Time
+//! `set_token_timestamps(true)` enables DTW: whisper.cpp runs Dynamic Time
 //! Warping over its cross-attention heads to pin each BPE token to a
 //! centisecond-resolution `(t0, t1)` frame range.  This module converts those
-//! centiseconds to seconds and groups consecutive tokens into words.  The
-//! per-word timing is later refined by the wav2vec2 CTC aligner in `align.rs`.
+//! centiseconds to seconds and groups consecutive tokens into words.
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use anyhow::{Context as _, Result};
-use whisper_rs::{FullParams, SamplingStrategy, WhisperContext, WhisperContextParameters};
+use whisper_rs::{FullParams, SamplingStrategy, WhisperContext, WhisperContextParameters, WhisperVadParams};
 
 use super::types::Word;
 
@@ -47,16 +53,20 @@ pub struct WhisperSegment {
 /// Loaded Whisper model, ready for repeated inference calls.
 pub struct WhisperModel {
     ctx: WhisperContext,
+    /// Path to the silero VAD ggml model, stored here so `transcribe` can
+    /// reference it without an extra parameter on every call.
+    vad_model_path: PathBuf,
 }
 
 // ── Public API ───────────────────────────────────────────────────────────────
 
 /// Load the Whisper ggml model from `model_path`.
 ///
-/// The file must already exist---use `scripts/download-models.sh` to
-/// fetch it.  The pipeline resolves the path from `$MODELS_DIR` before
-/// calling this function.
-pub fn load_model(model_path: &Path) -> Result<WhisperModel> {
+/// Both files must already exist---use `scripts/download-models.sh` to
+/// fetch them.  The pipeline resolves paths from `$MODELS_DIR` before
+/// calling this function.  `vad_model_path` is stored in the returned
+/// `WhisperModel` and referenced on every `transcribe` call.
+pub fn load_model(model_path: &Path, vad_model_path: &Path) -> Result<WhisperModel> {
     eprintln!("Whisper: loading model from {}", model_path.display());
 
     // WhisperContextParameters::default() already sets use_gpu based on whether
@@ -70,16 +80,24 @@ pub fn load_model(model_path: &Path) -> Result<WhisperModel> {
         .context("failed to load Whisper model")?;
 
     eprintln!("Whisper: model loaded");
-    Ok(WhisperModel { ctx })
+    Ok(WhisperModel { ctx, vad_model_path: vad_model_path.to_path_buf() })
 }
 
 /// Run Whisper inference on 16 kHz mono f32 PCM and return timestamped
-/// segments with approximate word-level timing.
+/// segments with word-level timing.
 pub fn transcribe(model: &mut WhisperModel, samples: &[f32]) -> Result<Vec<WhisperSegment>> {
     let mut state = model
         .ctx
         .create_state()
         .context("failed to create Whisper state")?;
+
+    // to_str() borrows from model.vad_model_path, which lives for the
+    // duration of this call.  We bind it before constructing `params` so the
+    // borrow lifetime unambiguously covers `params`'s use.
+    let vad_path_str = model
+        .vad_model_path
+        .to_str()
+        .context("VAD model path is not valid UTF-8")?;
 
     let mut params = FullParams::new(SamplingStrategy::Greedy { best_of: 1 });
     params.set_language(Some("en"));
@@ -91,6 +109,19 @@ pub fn transcribe(model: &mut WhisperModel, samples: &[f32]) -> Result<Vec<Whisp
     // frame range via Dynamic Time Warping on the cross-attention heads.
     // Costlier than pure greedy decode but required for word-level timing.
     params.set_token_timestamps(true);
+
+    // VAD: silero pre-segments the audio before handing it to Whisper,
+    // preventing unrelated speech from merging into one segment.
+    // set_vad_model_path MUST be called before enable_vad --- the FFI wrapper
+    // checks for a null pointer and panics otherwise.
+    params.set_vad_model_path(Some(vad_path_str));
+    params.enable_vad(true);
+    // Cap speech segments at 60 s.  whisper.cpp will split at the nearest
+    // silence of ≥98 ms, so long answers get broken at natural pause points
+    // rather than at arbitrary frame boundaries.
+    let mut vad_params = WhisperVadParams::new();
+    vad_params.set_max_speech_duration(60.0);
+    params.set_vad_params(vad_params);
 
     eprintln!("Whisper: running inference on {} samples", samples.len());
     state

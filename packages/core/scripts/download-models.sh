@@ -1,14 +1,12 @@
 #!/usr/bin/env bash
-# Download ML models required by the auohp-api transcription pipeline.
+# Download ML models required by the auohp-core transcription pipeline.
 #
 # Usage:
 #   ./download-models.sh                   # installs to /opt/auohp/models
 #   MODELS_DIR=~/auohp/models ./download-models.sh
 #   ./download-models.sh ~/auohp/models
 #
-# Gated models (pyannote segmentation) require a Hugging Face token with
-# accepted terms at https://huggingface.co/pyannote/segmentation-3.0
-# Export HF_TOKEN before running, or the download will be rejected.
+# All models are public; no HuggingFace token is required.
 
 set -euo pipefail
 
@@ -47,28 +45,30 @@ download \
     "$HF_BASE/ggerganov/whisper.cpp/resolve/main/ggml-large-v3.bin" \
     "$MODELS_DIR/ggml-large-v3.bin"
 
-# ── pyannote segmentation 3.0 (ONNX, ≈17 MB) ────────────────────────────────
-# Use the model exported by pyannote-rs itself (v0.1.0 release asset).
-# This export names its output tensor "output", which is what pyannote-rs 0.3.4
-# hardcodes in segment.rs. The onnx-community HuggingFace export names it
-# "logits" and is NOT compatible with this crate.
+# ── silero-vad v6.2.0 (GGML, ≈2 MB) ─────────────────────────────────────────
+# Used by whisper.cpp's built-in VAD to pre-segment audio before ASR.
+# whisper.cpp feeds each detected speech segment to Whisper independently,
+# preventing unrelated speech from merging into one segment.  Critical for
+# the Q&A interview pattern (short question / very long answer).
 echo
-echo "==> pyannote segmentation-3.0 (ONNX, pyannote-rs release)"
+echo "==> silero-vad v6.2.0 (GGML)"
 download \
-    "https://github.com/thewh1teagle/pyannote-rs/releases/download/v0.1.0/segmentation-3.0.onnx" \
-    "$MODELS_DIR/pyannote-segmentation-3.0.onnx"
+    "$HF_BASE/ggml-org/whisper-vad/resolve/main/ggml-silero-v6.2.0.bin" \
+    "$MODELS_DIR/ggml-silero-v6.2.0.bin"
 
-# ── wespeaker speaker embeddings (ONNX, ≈59 MB) ─────────────────────────────
-# ECAPA-TDNN 1024 trained on VoxCeleb, from the official WeSpeaker HuggingFace
-# org. All WeSpeaker ONNX exports share the same tensor interface ("feats" →
-# "embs"), so this is a drop-in replacement for the CAM++ model that pyannote-rs
-# originally shipped. ECAPA-TDNN 1024 scores meaningfully lower EER on
-# VoxCeleb1 (~3.8%) than CAM++ (~4.5%) or ECAPA-TDNN 512 (~4.3%).
+# ── nomic-embed-text-v1.5 (ONNX, ≈275 MB) ───────────────────────────────────
+# Sentence embedding model used by the search indexer.  fastembed loads it
+# via UserDefinedEmbeddingModel (five flat files), so we download them here
+# rather than relying on fastembed's HuggingFace Hub auto-download.
+NOMIC_DIR="$MODELS_DIR/nomic-embed-text-v1.5"
+mkdir -p "$NOMIC_DIR"
 echo
-echo "==> wespeaker voxceleb ECAPA-TDNN 1024 (ONNX, WeSpeaker HuggingFace)"
-download \
-    "https://huggingface.co/Wespeaker/wespeaker-voxceleb-ecapa-tdnn1024-LM/resolve/main/voxceleb_ECAPA1024_LM.onnx" \
-    "$MODELS_DIR/wespeaker_en_voxceleb_ECAPA1024.onnx"
+echo "==> nomic-embed-text-v1.5 (ONNX)"
+download "$HF_BASE/nomic-ai/nomic-embed-text-v1.5/resolve/main/onnx/model.onnx"              "$NOMIC_DIR/model.onnx"
+download "$HF_BASE/nomic-ai/nomic-embed-text-v1.5/resolve/main/tokenizer.json"               "$NOMIC_DIR/tokenizer.json"
+download "$HF_BASE/nomic-ai/nomic-embed-text-v1.5/resolve/main/tokenizer_config.json"        "$NOMIC_DIR/tokenizer_config.json"
+download "$HF_BASE/nomic-ai/nomic-embed-text-v1.5/resolve/main/config.json"                  "$NOMIC_DIR/config.json"
+download "$HF_BASE/nomic-ai/nomic-embed-text-v1.5/resolve/main/special_tokens_map.json"      "$NOMIC_DIR/special_tokens_map.json"
 
 echo
 echo "Done. All models in $MODELS_DIR"
