@@ -10,19 +10,17 @@ default = []
 # GPU acceleration --- enable at build time, not both at once.
 #   cargo build --features metal    (macOS dev, Apple Silicon GPU)
 #   cargo build --features cuda     (production, NVIDIA GPU)
-#
-# candle-core/metal enables Metal GPU compute for tensor operations.
-# candle-*/accelerate enables Apple's Accelerate framework (vecLib BLAS)
-# for fast CPU matrix multiply --- used as a fallback when an op doesn't
-# have a Metal kernel, and for the mel spectrogram FFT.
 metal = [
-    "candle-core/metal", "candle-nn/metal",
-    "candle-core/accelerate", "candle-nn/accelerate", "candle-transformers/accelerate",
     "ort/coreml",
+    "whisper-rs/metal",
+    "fastembed/metal",
+    "pyannote-rs/coreml",
 ]
 cuda = [
-    "candle-core/cuda", "candle-nn/cuda", "candle-transformers/cuda",
     "ort/cuda",
+    "whisper-rs/cuda",
+    "fastembed/cuda",
+    "fastembed/cudnn",
 ]
 
 [dependencies]
@@ -31,21 +29,13 @@ cuda = [
 anyhow = "1"
 thiserror = "2"
 
-# Transcription --- candle runs Whisper entirely in Rust (no C++ dependency).
-# candle-core is the tensor library, candle-nn provides neural-network layers,
-# and candle-transformers contains the Whisper encoder/decoder model definition
-# plus the mel-spectrogram FFT.  Models are downloaded from HuggingFace Hub
-# via hf-hub and loaded from safetensors format.
+# Transcription --- whisper-rs wraps whisper.cpp (C++ FFI) for Whisper ASR.
+# Models are downloaded from HuggingFace Hub via hf-hub in ggml format.
 #
 # pyannote-rs runs ONNX-exported pyannote models for speaker diarization.
 # symphonia decodes audio from MP4/WAV/etc. containers.
 # rubato resamples to 16 kHz mono as required by Whisper.
-candle-core = "0.10.1"
-candle-nn = "0.10.1"
-candle-transformers = "0.10.1"
 hf-hub = "0.5"
-tokenizers = { version = "0.22", default-features = false }
-rand = "0.9"
 pyannote-rs = "0.3"
 # Pin ort to rc.10 --- pyannote-rs 0.3.4 depends on this exact version and
 # the ndarray TensorArrayData trait changed in rc.11, breaking compilation.
@@ -80,3 +70,4 @@ clap = { version = "4.6.1", features = ["derive"] }
 # features = ["full"] enables all tokio sub-crates (net, fs, time, sync, etc.)
 # so we don't have to add individual features as they're needed.
 tokio = { version = "1", features = ["full"] }
+whisper-rs = "0.16.0"

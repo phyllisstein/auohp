@@ -2,12 +2,15 @@
 //! wav2vec2 forced alignment into word-timed segments.
 
 use anyhow::{Context, Result};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use super::align;
 use super::audio;
 use super::types::*;
 use super::whisper;
+
+const WHISPER_MODEL_FILE: &str = "ggml-large-v3.bin";
+const DEFAULT_MODELS_DIR: &str = "/opt/auohp/models";
 
 /// Run the transcription pipeline on an audio/video file.
 ///
@@ -20,7 +23,10 @@ pub fn run(input_path: &Path) -> Result<TranscriptionResult> {
     let decoded = audio::decode_file(input_path)
         .with_context(|| format!("failed to decode {}", input_path.display()))?;
 
-    let mut whisper_model = whisper::load_model()?;
+    // Resolve model path from $MODELS_DIR, matching scripts/download-models.sh.
+    let models_dir = std::env::var("MODELS_DIR").unwrap_or_else(|_| DEFAULT_MODELS_DIR.to_string());
+    let model_path: PathBuf = [&models_dir, WHISPER_MODEL_FILE].iter().collect();
+    let mut whisper_model = whisper::load_model(&model_path)?;
     let mut whisper_segments = whisper::transcribe(&mut whisper_model, &decoded.samples)?;
 
     // Refine word-level timestamps via wav2vec2 CTC forced alignment.

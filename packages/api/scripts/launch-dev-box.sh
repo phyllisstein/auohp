@@ -160,7 +160,7 @@ sudo dpkg -i cuda-keyring_1.1-1_all.deb
 rm -f cuda-keyring_1.1-1_all.deb
 
 sudo apt-get update
-sudo apt-get install -y cuda-toolkit-12-6 nvidia-driver-570-server
+sudo apt-get install -y cuda-toolkit-12-6 nvidia-driver-570-server libcudnn9-cuda-12 libcudnn9-dev-cuda-12
 
 # Make the chosen toolkit easy to find in fresh login shells.
 grep -q cuda-12.6 ~/.bashrc || cat >> ~/.bashrc <<EOF
