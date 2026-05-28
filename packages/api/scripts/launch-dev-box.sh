@@ -133,7 +133,7 @@ echo "Giving cloud-init and SSH a few extra seconds to settle..."
 sleep 15
 wait_for_ssh
 
-echo "Stage 1: install OS packages, CUDA 12.6 toolkit, and NVIDIA server driver."
+echo "Stage 1: install OS packages, CUDA 13.0 toolkit, and NVIDIA server driver."
 ssh_box bash -s <<EOF
 set -euo pipefail
 
@@ -146,21 +146,25 @@ sudo apt-get install -y \
     ffmpeg \
     git \
     gnupg \
+    libglib2.0-dev \
+    libgtk-3-dev \
+    libjavascriptcoregtk-4.1-dev \
+    libsoup-3.0-dev \
     libssl-dev \
+    libwebkit2gtk-4.1-dev \
     linux-headers-aws \
     lsb-release \
     pciutils \
     pkg-config \
     wget
 
-# Install the NVIDIA CUDA apt repo. We pin to 12.6 because CUDA 13 rejected the
-# compute_50 target emitted by whisper.cpp's default architecture matrix.
-wget -q https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb
+# Install the NVIDIA CUDA apt repo.
+wget -q wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/cuda-keyring_1.1-1_all.deb
 sudo dpkg -i cuda-keyring_1.1-1_all.deb
 rm -f cuda-keyring_1.1-1_all.deb
 
 sudo apt-get update
-sudo apt-get install -y cuda-toolkit-12-6 nvidia-driver-570-server libcudnn9-cuda-12 libcudnn9-dev-cuda-12
+sudo apt-get install -y cuda-toolkit-12-6 nvidia-driver-570-server
 
 # Make the chosen toolkit easy to find in fresh login shells.
 grep -q cuda-12.6 ~/.bashrc || cat >> ~/.bashrc <<EOF
@@ -231,12 +235,13 @@ Terminate when you are done for good:
 EOF
 
 # Ephemeral storage
-# lsblk -o NAME,SIZE,MODEL,SERIAL
-# sudo nvme id-ctrl /dev/nvme1n1 | grep -i "Amazon EC2 NVMe Instance Storage"
-# sudo mkfs.ext4 -E lazy_itable_init=0,lazy_journal_init=0 /dev/nvme1n1
-# sudo mkdir -p /scratch
-# sudo mount /dev/nvme1n1 /scratch
-# sudo chown ubuntu:ubuntu /scratch
+lsblk -o NAME,SIZE,MODEL,SERIAL
+sudo nvme id-ctrl /dev/nvme1n1 | grep -i "Amazon EC2 NVMe Instance Storage"
+sudo mkfs.ext4 -E lazy_itable_init=0,lazy_journal_init=0 /dev/nvme1n1
+sudo mkdir -p /scratch
+sudo mount /dev/nvme1n1 /scratch
+sudo chown ubuntu:ubuntu /scratch
+mkdir /scratch/models /scratch/in /scratch/out /scratch/logs
 
 # Legacy Python
 # sudo add-apt-repository ppa:deadsnakes/ppa
