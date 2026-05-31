@@ -32,7 +32,10 @@
 use std::path::{Path, PathBuf};
 
 use anyhow::{Context as _, Result};
-use whisper_rs::{FullParams, SamplingStrategy, WhisperContext, WhisperContextParameters, WhisperVadParams};
+use whisper_rs::{
+    DtwMode, DtwModelPreset, DtwParameters, FullParams, SamplingStrategy, WhisperContext,
+    WhisperContextParameters, WhisperVadParams,
+};
 
 use super::types::Word;
 
@@ -75,12 +78,22 @@ pub fn load_model(model_path: &Path, vad_model_path: &Path) -> Result<WhisperMod
     let mut ctx_params = WhisperContextParameters::default();
     ctx_params.use_gpu(true);
 
+    ctx_params.dtw_parameters(DtwParameters {
+        mode: DtwMode::ModelPreset {
+            model_preset: DtwModelPreset::LargeV3,
+        },
+        dtw_mem_size: 1024 * 1024 * 128,
+    });
+
     // new_with_params accepts any P: AsRef<Path>.
     let ctx = WhisperContext::new_with_params(model_path, ctx_params)
         .context("failed to load Whisper model")?;
 
     eprintln!("Whisper: model loaded");
-    Ok(WhisperModel { ctx, vad_model_path: vad_model_path.to_path_buf() })
+    Ok(WhisperModel {
+        ctx,
+        vad_model_path: vad_model_path.to_path_buf(),
+    })
 }
 
 /// Run Whisper inference on 16 kHz mono f32 PCM and return timestamped
@@ -118,7 +131,7 @@ pub fn transcribe(model: &mut WhisperModel, samples: &[f32]) -> Result<Vec<Whisp
     params.enable_vad(true);
     // Cap speech segments at 60 s.  whisper.cpp will split at the nearest
     // silence of ≥98 ms, so long answers get broken at natural pause points
-    // rather than at arbitrary frame boundaries.
+    // rather t han at arbitrary frame boundaries.
     let mut vad_params = WhisperVadParams::new();
     vad_params.set_max_speech_duration(60.0);
     params.set_vad_params(vad_params);
@@ -137,16 +150,27 @@ pub fn transcribe(model: &mut WhisperModel, samples: &[f32]) -> Result<Vec<Whisp
         // get_segment returns Option<WhisperSegment<'_>>, borrowing from `state`.
         // Since i < n_segs, this is always Some --- the .context() turns the
         // Option into a Result for the ? operator.
-        let seg = state.get_segment(i).context("segment index out of bounds")?;
+        let seg = state
+            .get_segment(i)
+            .context("segment index out of bounds")?;
 
-        let text = seg.to_str().context("failed to read segment text")?.trim().to_string();
+        let text = seg
+            .to_str()
+            .context("failed to read segment text")?
+            .trim()
+            .to_string();
 
         // Timestamps from whisper.cpp are in centiseconds (1/100 s).
         let start = seg.start_timestamp() as f64 / 100.0;
         let end = seg.end_timestamp() as f64 / 100.0;
 
         let words = collect_words(&seg, start)?;
-        segments.push(WhisperSegment { text, start, end, words });
+        segments.push(WhisperSegment {
+            text,
+            start,
+            end,
+            words,
+        });
     }
 
     Ok(segments)
@@ -167,10 +191,7 @@ pub fn transcribe(model: &mut WhisperModel, samples: &[f32]) -> Result<Vec<Whisp
 ///
 /// The parameter type uses `whisper_rs::WhisperSegment<'_>` (fully qualified)
 /// to avoid a name collision with our own public `WhisperSegment` struct.
-fn collect_words(
-    seg: &whisper_rs::WhisperSegment<'_>,
-    seg_start: f64,
-) -> Result<Vec<Word>> {
+fn collect_words(seg: &whisper_rs::WhisperSegment<'_>, seg_start: f64) -> Result<Vec<Word>> {
     // n_tokens is a bare c_int --- no Result.
     let n_tokens = seg.n_tokens();
 
