@@ -19,7 +19,7 @@ function RootComponent() {
             </head>
             <body>
                 <Body />
-                <sp-theme color="light" scale="large" system="spectrum">
+                <sp-theme color="light" scale="medium" system="spectrum">
                     <main className="spectrum-Body spectrum-Body--sizeXL">
                         <Outlet />
                     </main>
