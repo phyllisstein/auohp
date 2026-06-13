@@ -1,3 +1,4 @@
+use std::iter::zip;
 use std::sync::Arc;
 
 use async_graphql::{Context, Enum, InputObject, SimpleObject};
@@ -83,7 +84,7 @@ struct TranscriptSegment {
 }
 
 /// Word-level timing from the transcription pipeline.
-#[derive(InputObject, Serialize, Deserialize)]
+#[derive(InputObject, Serialize, Deserialize, Clone)]
 pub struct WordTimingInput {
     pub word: String,
     pub start: f64,
@@ -143,40 +144,48 @@ async fn embed_statements(
     embedder: Arc<EmbedderHandle>,
     uids: Vec<String>,
     texts: Vec<String>,
+    word_json: Vec<String>,
 ) {
     // spawn_blocking moves the synchronous ONNX inference off the async
     // executor thread pool so it cannot stall other requests. The closure
     // captures `embedder` (an Arc clone) and `texts` by move.
     let embedder = embedder.clone();
-    let vectors = match embedder.embed(texts).await {
+    let text_vectors = match embedder.embed(texts).await {
         Ok(v) => v,
         Err(e) => {
-            tracing::error!(error = %e, "embedding failed");
+            tracing::error!(error = %e, "text embedding failed");
+            return;
+        }
+    };
+    let word_vectors = match embedder.embed(word_json).await {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!(error = %e, "word embedding failed");
             return;
         }
     };
 
     tracing::info!(
-        count = vectors.len(),
-        dims = vectors.first().map(|v| v.len()).unwrap_or(0),
-        "background task: embedding complete, writing to Neo4j"
+        count = text_vectors.len(),
+        dims = text_vectors.first().map(|v| v.len()).unwrap_or(0),
+        "background task: text embedding complete, writing to Neo4j"
     );
 
+    let collected_vectors = zip(text_vectors.iter(), word_vectors.iter());
     const EMBED_BATCH: usize = 100;
-    for chunk in uids
-        .iter()
-        .zip(vectors.iter())
-        .collect::<Vec<_>>()
-        .chunks(EMBED_BATCH)
-    {
+    for chunk in uids.iter().collect::<Vec<_>>().chunks(EMBED_BATCH) {
         let items: Vec<BoltType> = chunk
             .iter()
+            .zip(collected_vectors.clone())
             .map(|(uid, vector)| {
-                let vec_bolt: Vec<BoltType> =
-                    vector.iter().map(|&v| BoltType::from(v as f64)).collect();
+                let text_vec_bolt: Vec<BoltType> =
+                    vector.0.iter().map(|&v| BoltType::from(v as f64)).collect();
+                let word_vec_bolt: Vec<BoltType> =
+                    vector.1.iter().map(|&v| BoltType::from(v as f64)).collect();
                 bolt_map(vec![
                     ("uid", BoltType::from(uid.as_str())),
-                    ("vector", BoltType::from(vec_bolt)),
+                    ("textVector", BoltType::from(text_vec_bolt)),
+                    ("wordVector", BoltType::from(word_vec_bolt)),
                 ])
             })
             .collect();
@@ -186,7 +195,8 @@ async fn embed_statements(
                 "
                     UNWIND {items} AS item
                     MATCH (s:Statement {{uid: item.uid}})
-                    CALL db.create.setNodeVectorProperty(s, 'embedding', item.vector)
+                    CALL db.create.setNodeVectorProperty(s, 'embedding', item.textVector)
+                    CALL db.create.setNodeVectorProperty(s, 'wordEmbedding', item.wordVector)
                 ",
                 items = items,
             ))
@@ -449,8 +459,22 @@ pub async fn seed_interview(
         .map(|s| &s.input)
         .map(|i| i.text.clone())
         .collect();
+    let word_json = segments
+        .iter()
+        .map(|s| &s.input)
+        .map(|i| i.words.clone())
+        .filter(|w| w.is_some())
+        .flat_map(|o| o.unwrap())
+        .map(|w| w.word)
+        .collect();
     let uids: Vec<String> = segments.iter().map(|s| s.uid.clone()).collect();
-    tokio::spawn(embed_statements(db.clone(), embedder, uids, texts));
+    tokio::spawn(embed_statements(
+        db.clone(),
+        embedder,
+        uids,
+        texts,
+        word_json,
+    ));
 
     // ── Build response ──────────────────────────────────────────────────
 

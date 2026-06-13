@@ -2,6 +2,7 @@ use rustls::crypto::{CryptoProvider, aws_lc_rs};
 
 mod graphql;
 mod neo4j;
+mod uid;
 
 use anyhow::Result;
 use async_graphql::http::GraphiQLSource;
@@ -77,6 +78,17 @@ async fn main() -> Result<()> {
     ))
     .await?;
     info!("ensured statement_embedding vector index (768-dim, cosine)");
+
+    db.run(neo4rs::query(
+        "CREATE VECTOR INDEX word_json_embedding IF NOT EXISTS
+         FOR (s:Statement) ON s.wordEmbedding
+         OPTIONS {indexConfig: {
+           `vector.dimensions`: 768,
+           `vector.similarity_function`: 'cosine'
+         }}",
+    ))
+    .await?;
+    info!("ensured word_json_embedding vector index (768-dim, cosine)");
 
     let embedder = Embedder::new().expect("failed to load embedding model");
     info!("loaded embedding model ({}-dim)", &embedder.dimensions());
