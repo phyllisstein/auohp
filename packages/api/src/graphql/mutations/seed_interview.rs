@@ -431,7 +431,7 @@ pub async fn seed_interview(
         interview_uid,
         transcript_uid,
         interviewee = input.interviewee.clone(),
-        "committing transation..."
+        "committing transaction..."
     );
     txn.commit().await.map_err(gql_err)?;
     tracing::info!(
