@@ -1,7 +1,7 @@
 //! Vector search over Statement embeddings.
 //!
 //! `search_statements` embeds the caller's query string on-device
-//! (nomic-embed-text-v1.5, 768-dim) and queries the `statement_embedding`
+//! (nomic-embed-text-v1.5, 768-dim) and queries the `statementEmbedding`
 //! HNSW index in Neo4j, joining back to the parent Interview for context.
 //! Results are ordered by cosine similarity descending.
 
@@ -70,7 +70,7 @@ pub async fn search_statements(
                 "
                     MATCH (statement:Statement)
                     SEARCH statement IN (
-                        VECTOR INDEX statement_embedding
+                        VECTOR INDEX statementEmbedding
                         FOR $vector
                         LIMIT $limit
                     )

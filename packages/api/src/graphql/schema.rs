@@ -35,9 +35,10 @@ impl QueryRoot {
         interviews::get_transcript(ctx, number).await
     }
 
-    /// Semantic search over Statement text via the `statement_embedding` vector
+    /// Semantic search over Statement text via the `statementEmbedding` vector
     /// index. Returns up to `limit` hits (default 15) ranked by cosine
-    /// similarity, each carrying the matching statement and its parent interview.
+    /// similarity, each carrying the matching statement and its parent
+    /// interview.
     async fn search_statements(
         &self,
         ctx: &Context<'_>,
