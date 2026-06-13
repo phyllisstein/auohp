@@ -103,6 +103,7 @@ __metadata:
     "@stylistic/eslint-plugin": "npm:^5.10.0"
     "@stylistic/stylelint-config": "npm:2.0.0"
     "@tanstack/react-router": "npm:^1.170.9"
+    "@tanstack/react-router-devtools": "npm:^1.167.0"
     "@tanstack/react-start": "npm:^1.168.16"
     "@types/react": "npm:19.2.14"
     "@vitejs/plugin-react": "npm:^6.0.1"
@@ -4643,6 +4644,23 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@tanstack/react-router-devtools@npm:^1.167.0":
+  version: 1.167.0
+  resolution: "@tanstack/react-router-devtools@npm:1.167.0"
+  dependencies:
+    "@tanstack/router-devtools-core": "npm:1.168.0"
+  peerDependencies:
+    "@tanstack/react-router": ^1.170.0
+    "@tanstack/router-core": ^1.170.0
+    react: ">=18.0.0 || >=19.0.0"
+    react-dom: ">=18.0.0 || >=19.0.0"
+  peerDependenciesMeta:
+    "@tanstack/router-core":
+      optional: true
+  checksum: 10/7df338cb5425fdf50203039170604f5599428ee898293b9ccccc7fbfd3a0d2c4ba78e7c5af9c78996c48208962ab0a749f8b4d313dc75c247c1f18804f7e6796
+  languageName: node
+  linkType: hard
+
 "@tanstack/react-router@npm:1.170.9, @tanstack/react-router@npm:^1.170.9":
   version: 1.170.9
   resolution: "@tanstack/react-router@npm:1.170.9"
@@ -4770,6 +4788,22 @@ __metadata:
     seroval: "npm:^1.5.4"
     seroval-plugins: "npm:^1.5.4"
   checksum: 10/1e04ce0f097176a95a0458c1c58e5062df729bd619979f542cce5174de348fe86004b83b89f3a6ffb60eeb56d4d577f998ab5adc2516279eb8f5f31959a132de
+  languageName: node
+  linkType: hard
+
+"@tanstack/router-devtools-core@npm:1.168.0":
+  version: 1.168.0
+  resolution: "@tanstack/router-devtools-core@npm:1.168.0"
+  dependencies:
+    clsx: "npm:^2.1.1"
+    goober: "npm:^2.1.16"
+  peerDependencies:
+    "@tanstack/router-core": ^1.170.0
+    csstype: ^3.0.10
+  peerDependenciesMeta:
+    csstype:
+      optional: true
+  checksum: 10/63e808aeb8f22fc67c28bbfbe6921cc8004f8f533d924df881b4a82416ec9baf27472c34b751de75ea809a6e42405ecb76df1cbed904313af475379727ea4f87
   languageName: node
   linkType: hard
 
@@ -6045,6 +6079,13 @@ __metadata:
   version: 2.2.0
   resolution: "clean-stack@npm:2.2.0"
   checksum: 10/2ac8cd2b2f5ec986a3c743935ec85b07bc174d5421a5efc8017e1f146a1cf5f781ae962618f416352103b32c9cd7e203276e8c28241bbe946160cab16149fb68
+  languageName: node
+  linkType: hard
+
+"clsx@npm:^2.1.1":
+  version: 2.1.1
+  resolution: "clsx@npm:2.1.1"
+  checksum: 10/cdfb57fa6c7649bbff98d9028c2f0de2f91c86f551179541cf784b1cfdc1562dcb951955f46d54d930a3879931a980e32a46b598acaea274728dbe068deca919
   languageName: node
   linkType: hard
 
@@ -7872,6 +7913,15 @@ __metadata:
   version: 0.1.4
   resolution: "globjoin@npm:0.1.4"
   checksum: 10/1e7e0f145f6572134e999b5511767698c8196e891f50db76a25189c897f355aec1b7e62f9eeaa0626db55460353470ac6bec4aa118beb710e4543037e705647a
+  languageName: node
+  linkType: hard
+
+"goober@npm:^2.1.16":
+  version: 2.1.19
+  resolution: "goober@npm:2.1.19"
+  peerDependencies:
+    csstype: ^3.0.10
+  checksum: 10/1390b08f6e2468d63e463e74e50d734b9cfd2280bf1ecf04878c666f48b8a5aac2d5c4b517b4d15fc46d32a98948f386b5fcde60799f8884351b01dc7658465f
   languageName: node
   linkType: hard
 
@@ -11545,7 +11595,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tslib@npm:^2.0.3, tslib@npm:^2.3.0, tslib@npm:^2.8.0, tslib@npm:^2.8.1":
+"tslib@npm:^2.0.3, tslib@npm:^2.3.0, tslib@npm:^2.8.1":
   version: 2.8.1
   resolution: "tslib@npm:2.8.1"
   checksum: 10/3e2e043d5c2316461cb54e5c7fe02c30ef6dccb3384717ca22ae5c6b5bc95232a6241df19c622d9c73b809bea33b187f6dbc73030963e29950c2141bc32a79f7
@@ -11563,6 +11613,13 @@ __metadata:
   version: 2.6.2
   resolution: "tslib@npm:2.6.2"
   checksum: 10/bd26c22d36736513980091a1e356378e8b662ded04204453d353a7f34a4c21ed0afc59b5f90719d4ba756e581a162ecbf93118dc9c6be5acf70aa309188166ca
+  languageName: node
+  linkType: hard
+
+"tslib@npm:^2.8.0":
+  version: 2.8.0
+  resolution: "tslib@npm:2.8.0"
+  checksum: 10/1bc7c43937477059b4d26f2dbde7e49ef0fb4f38f3014e0603eaea76d6a885742c8b1762af45949145e5e7408a736d20ded949da99dabc8ccba1fc5531d2d927
   languageName: node
   linkType: hard
 

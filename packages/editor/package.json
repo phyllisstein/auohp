@@ -8,14 +8,17 @@
     "license": "GPL-3.0-or-later",
     "name": "@auohp/editor",
     "scripts": {
+        "build": "vite build",
         "dev": "vite dev",
-        "editor:dev": "vite dev"
+        "editor:dev": "vite dev",
+        "start": "vite preview"
     },
     "devDependencies": {
         "@eslint/js": "^10.0.1",
         "@stylelint/postcss-css-in-js": "0.38.0",
         "@stylistic/eslint-plugin": "^5.10.0",
         "@stylistic/stylelint-config": "2.0.0",
+        "@tanstack/react-router-devtools": "^1.167.0",
         "@types/react": "19.2.14",
         "@vitejs/plugin-react": "^6.0.1",
         "@vitest/browser": "^4.1.5",
