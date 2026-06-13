@@ -10,7 +10,7 @@
                 [
                     ".env",
                     "tsconfig.json",
-                    "next.config.js"
+                    "vite.config.ts"
                 ]
             ]
         ],

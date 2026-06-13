@@ -5,9 +5,12 @@
         "name": "api-restart",
         "expression": [
             "allof",
-            ["dirname", "packages/api"],
             ["anyof",
-                ["match", "**/*.rs"],
+                ["dirname", "packages/api"],
+                ["dirname", "packages/core"]
+            ],
+            ["anyof",
+                ["match", "*.rs"],
                 ["name",
                     [
                         ".env",
