@@ -2,7 +2,6 @@ use rustls::crypto::{CryptoProvider, aws_lc_rs};
 
 mod graphql;
 mod neo4j;
-mod uid;
 
 use anyhow::Result;
 use async_graphql::http::GraphiQLSource;
