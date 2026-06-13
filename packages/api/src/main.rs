@@ -85,6 +85,16 @@ async fn main() -> Result<()> {
     let schema = graphql::build_schema(db, embed_handler);
 
     let app = Router::new()
+        .layer(DefaultBodyLimit::max(16 * 1024 * 1024))
+        .layer(
+            CorsLayer::new()
+                // allow `GET` and `POST` when accessing the resource
+                .allow_methods([Method::GET, Method::POST])
+                // allow requests from any origin
+                .allow_origin(Any)
+                .allow_headers(Any),
+        )
+        .layer(TraceLayer::new_for_http())
         .route("/health", get(|| async { "ok" }))
         // GET  /graphql --> serves the GraphiQL interactive IDE, so you can
         //                  explore the schema and test queries from a browser.
@@ -107,17 +117,7 @@ async fn main() -> Result<()> {
         )
         // with_state() makes `schema` available to any handler that
         // declares a State<AppSchema> parameter.
-        .with_state(schema)
-        .layer(
-            CorsLayer::new()
-                // allow `GET` and `POST` when accessing the resource
-                .allow_methods([Method::GET, Method::POST])
-                // allow requests from any origin
-                .allow_origin(Any)
-                .allow_headers(Any),
-        )
-        .layer(TraceLayer::new_for_http())
-        .layer(DefaultBodyLimit::disable());
+        .with_state(schema);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:6060").await?;
     info!("listening on {}", listener.local_addr()?);
