@@ -1,5 +1,6 @@
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import { Body } from "styles/global";
+import { Provider } from "@react-spectrum/s2/Provider";
 
 export const Route = createRootRoute({
     head: () => ({
@@ -9,23 +10,21 @@ export const Route = createRootRoute({
         ],
     }),
     component: RootComponent,
+    notFoundComponent: () => <div>Not found</div>,
 });
 
 function RootComponent() {
     return (
-        <html lang="en-US">
+        <Provider background="layer-1" colorScheme="light" elementType="html" locale="en-US">
             <head>
                 <HeadContent />
             </head>
             <body>
-                <Body />
-                <sp-theme color="light" scale="medium" system="spectrum">
-                    <main className="spectrum-Body spectrum-Body--sizeXL">
-                        <Outlet />
-                    </main>
-                </sp-theme>
+                <main>
+                    <Outlet />
+                </main>
                 <Scripts />
             </body>
-        </html>
+        </Provider>
     );
 }

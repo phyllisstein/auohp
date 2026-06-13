@@ -1,23 +1,42 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
+import { createEditor } from "slate";
+import { Slate, Editable, withReact } from "slate-react";
+import { Button } from "@react-spectrum/s2/Button";
+import { createLink } from "@tanstack/react-router";
+
+const ButtonLink = createLink(Button);
+
 
 export const Route = createFileRoute("/")({
     component: Page,
-    ssr: false,
-    beforeLoad: () => {
-        import("@spectrum-web-components/theme/sp-theme.js");
-        import("@spectrum-web-components/theme/src/themes.js");
-        import("@spectrum-web-components/theme/theme-light.js");
-        import("@spectrum-web-components/theme/scale-large.js");
-        import("@spectrum-web-components/button/sp-button.js");
-        import("@spectrum-web-components/badge/sp-badge.js");
-    },
 });
 
 
+const initialValue = [
+    {
+        type: "paragraph",
+        children: [{ text: "A line of text in a paragraph." }],
+    },
+    {
+        type: "statement",
+        children: [
+            { type: "word", children: [{ text: "ACT" }], startTime: 0, endTime: 1000 },
+            { type: "word", children: [{ text: "UP" }], startTime: 1000, endTime: 2000 },
+        ],
+    },
+];
+
+
 function Page() {
+    const [editor] = useState(() => withReact(createEditor()));
+
     return (
         <>
-            <sp-button onClick={ () => console.log("Button clicked") }>Try me</sp-button>
+            <Slate editor={ editor } initialValue={ initialValue }>
+                <Editable />
+            </Slate>
+            <ButtonLink to="/oops" variant="accent">Save</ButtonLink>
         </>
     );
 }
