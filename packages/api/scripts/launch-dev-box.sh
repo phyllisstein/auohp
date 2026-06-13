@@ -8,7 +8,7 @@ set -euo pipefail
 # - Resolves the current Ubuntu 22.04 LTS AMI via AWS SSM.
 # - Launches a g4dn.xlarge instance.
 # - Waits for the instance to come up.
-# - SSHes in to install build tools, CUDA 12.6, and the NVIDIA server driver.
+# - SSHes in to install build tools, CUDA 12.9, and the NVIDIA server driver.
 # - Reboots the machine once, because the driver/kernel integration is not
 #   reliably usable until after a reboot.
 # - SSHes in again to verify the GPU, install Rust, clone/pull the repo, and
@@ -144,6 +144,7 @@ sudo apt-get install -y \
     cmake \
     curl \
     ffmpeg \
+    fish \
     git \
     gnupg \
     libglib2.0-dev \
@@ -159,17 +160,17 @@ sudo apt-get install -y \
     wget
 
 # Install the NVIDIA CUDA apt repo.
-wget -q wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/cuda-keyring_1.1-1_all.deb
+wget -q https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/cuda-keyring_1.1-1_all.deb
 sudo dpkg -i cuda-keyring_1.1-1_all.deb
 rm -f cuda-keyring_1.1-1_all.deb
 
 sudo apt-get update
-sudo apt-get install -y cuda-toolkit-12-6 nvidia-driver-570-server
+sudo apt-get install -y cuda-toolkit-12-9 cuda-drivers
 
 # Make the chosen toolkit easy to find in fresh login shells.
-grep -q cuda-12.6 ~/.bashrc || cat >> ~/.bashrc <<EOF
-export PATH=/usr/local/cuda-12.6/bin:\$PATH
-export LD_LIBRARY_PATH=/usr/local/cuda-12.6/lib64:\$LD_LIBRARY_PATH
+grep -q cuda-12.9 ~/.bashrc || cat >> ~/.bashrc <<EOF
+export PATH=/usr/local/cuda-12.9/bin:\$PATH
+export LD_LIBRARY_PATH=/usr/local/cuda-12.9/lib64:\$LD_LIBRARY_PATH
 EOF
 
 echo
@@ -185,8 +186,8 @@ echo "Stage 2: verify GPU/toolchain, install Rust, and prepare the repo."
 ssh_box bash -s <<EOF
 set -euo pipefail
 
-export PATH=/usr/local/cuda-12.6/bin:$PATH
-export LD_LIBRARY_PATH=/usr/local/cuda-12.6/lib64:$LD_LIBRARY_PATH
+export PATH=/usr/local/cuda-12.9/bin:$PATH
+export LD_LIBRARY_PATH=/usr/local/cuda-12.9/lib64:$LD_LIBRARY_PATH
 
 echo "== nvcc =="
 nvcc --version
