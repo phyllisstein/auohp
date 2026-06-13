@@ -22,7 +22,7 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "module": "nodenext",
+    "module": "esnext",
     "declaration": true,
     "removeComments": true,
     "emitDecoratorMetadata": true,
@@ -31,22 +31,16 @@
     "target": "esnext",
     "incremental": true,
     "skipLibCheck": true,
-    "moduleResolution": "node",
-    "checkJs": false,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ]
+    "moduleResolution": "bundler",
+    "checkJs": false
   },
   "include": [
     "./src/**/*.ts",
     "./src/**/*.tsx",
     "./src/**/*.d.ts",
-    ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts",
     "*.js",
-    "*.ts"
+    "*.ts",
+    "*.tsx"
   ],
   "exclude": [
     "node_modules"
