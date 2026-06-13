@@ -7,7 +7,12 @@ use anyhow::Result;
 use async_graphql::http::GraphiQLSource;
 use async_graphql_axum::{GraphQLRequest, GraphQLResponse};
 use auohp_core::embeddings::{Embedder, EmbedderHandle};
-use axum::{Router, extract::State, response::Html, routing::get};
+use axum::{
+    Router,
+    extract::{DefaultBodyLimit, State},
+    response::Html,
+    routing::get,
+};
 use http::Method;
 use tower_http::{
     cors::{Any, CorsLayer},
@@ -111,7 +116,8 @@ async fn main() -> Result<()> {
                 .allow_origin(Any)
                 .allow_headers(Any),
         )
-        .layer(TraceLayer::new_for_http());
+        .layer(TraceLayer::new_for_http())
+        .layer(DefaultBodyLimit::disable());
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:6060").await?;
     info!("listening on {}", listener.local_addr()?);
