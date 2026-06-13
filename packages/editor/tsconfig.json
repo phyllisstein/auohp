@@ -16,6 +16,7 @@
       "esnext"
     ],
     "allowJs": true,
+    "noImplicitAny": false,
     "strict": false,
     "forceConsistentCasingInFileNames": true,
     "noEmit": true,
