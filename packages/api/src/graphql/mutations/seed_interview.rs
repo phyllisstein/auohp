@@ -172,8 +172,15 @@ async fn embed_statements(
     );
 
     let collected_vectors = zip(text_vectors.iter(), word_vectors.iter());
-    const EMBED_BATCH: usize = 100;
-    for chunk in uids.iter().collect::<Vec<_>>().chunks(EMBED_BATCH) {
+    const EMBED_BATCH: usize = 500;
+    for (idx, chunk) in uids
+        .iter()
+        .collect::<Vec<_>>()
+        .chunks(EMBED_BATCH)
+        .enumerate()
+    {
+        tracing::info!(idx, "seeding vector batch");
+
         let items: Vec<BoltType> = chunk
             .iter()
             .zip(collected_vectors.clone())
@@ -287,7 +294,7 @@ pub async fn seed_interview(
     // ── Phase 2: seed statements ───────────────────────────────────────
 
     // Batch statements in groups of 100
-    const BATCH_SIZE: usize = 100;
+    const BATCH_SIZE: usize = 500;
 
     let segment_inputs: Vec<TranscriptSegmentInput> = if let Some(segment_json) =
         input.segments_json
@@ -453,28 +460,45 @@ pub async fn seed_interview(
     // independently of this async frame. Errors are logged inside
     // `embed_statements`; if the server restarts mid-job, the affected
     // Statement nodes will simply lack embeddings until the next seed run.
-    let embedder = ctx.data::<Arc<EmbedderHandle>>()?.clone();
-    let texts: Vec<String> = segments
-        .iter()
-        .map(|s| &s.input)
-        .map(|i| i.text.clone())
-        .collect();
-    let word_json = segments
-        .iter()
-        .map(|s| &s.input)
-        .map(|i| i.words.clone())
-        .filter(|w| w.is_some())
-        .flat_map(|o| o.unwrap())
-        .map(|w| w.word)
-        .collect();
-    let uids: Vec<String> = segments.iter().map(|s| s.uid.clone()).collect();
-    tokio::spawn(embed_statements(
-        db.clone(),
-        embedder,
-        uids,
-        texts,
-        word_json,
-    ));
+    let skip_embedding = std::env::var("SKIP_SEED_EMBEDDING").is_ok();
+    if skip_embedding {
+        tracing::info!(
+            interview_uid,
+            transcript_uid,
+            interviewee = input.interviewee.clone(),
+            "skipping embeddings: SKIP_SEED_EMBEDDING envvar is set"
+        )
+    } else {
+        let embedder = ctx.data::<Arc<EmbedderHandle>>()?.clone();
+        let texts: Vec<String> = segments
+            .iter()
+            .map(|s| &s.input)
+            .map(|i| i.text.clone())
+            .collect();
+        let word_json = segments
+            .iter()
+            .map(|s| &s.input)
+            .map(|i| i.words.clone())
+            .filter(|w| w.is_some())
+            .flat_map(|o| o.unwrap())
+            .map(|w| w.word)
+            .collect();
+        let uids: Vec<String> = segments.iter().map(|s| s.uid.clone()).collect();
+        tracing::info!(
+            statement_count = texts.len(),
+            interview_uid,
+            transcript_uid,
+            interviewee = input.interviewee.clone(),
+            "populating statement embeddings"
+        );
+        tokio::spawn(embed_statements(
+            db.clone(),
+            embedder,
+            uids,
+            texts,
+            word_json,
+        ));
+    }
 
     // ── Build response ──────────────────────────────────────────────────
 
@@ -490,6 +514,6 @@ pub async fn seed_interview(
         statement_count: segments.len() as i64,
         speaker_count,
         transcript_uid,
-        embeddings_queued: true,
+        embeddings_queued: !skip_embedding,
     })
 }
