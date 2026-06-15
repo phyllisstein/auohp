@@ -204,6 +204,7 @@ fn collect_words(seg: &whisper_rs::WhisperSegment<'_>, seg_start: f64) -> Result
     let mut current_word = String::new();
     let mut word_start = seg_start;
     let mut word_end = seg_start;
+    let mut confidence: f32 = 0.0;
 
     for j in 0..n_tokens {
         // get_token returns Option<WhisperToken<'_, '_>>; bounds are guaranteed here.
@@ -224,6 +225,7 @@ fn collect_words(seg: &whisper_rs::WhisperSegment<'_>, seg_start: f64) -> Result
         // alignment is uncertain, then convert centiseconds → seconds.
         let t0 = token_data.t0.max(0) as f64 / 100.0;
         let t1 = token_data.t1.max(0) as f64 / 100.0;
+        confidence = token_data.p;
 
         if token_text.starts_with(' ') {
             // Flush the completed word, then start the next one.
@@ -232,6 +234,7 @@ fn collect_words(seg: &whisper_rs::WhisperSegment<'_>, seg_start: f64) -> Result
                     word: current_word.clone(),
                     start: word_start,
                     end: word_end,
+                    p: confidence,
                 });
             }
             current_word = token_text.trim_start_matches(' ').to_string();
@@ -239,8 +242,10 @@ fn collect_words(seg: &whisper_rs::WhisperSegment<'_>, seg_start: f64) -> Result
         } else {
             if current_word.is_empty() {
                 word_start = t0;
+                confidence = 0.0;
             }
             current_word.push_str(token_text);
+            confidence = confidence.min(token_data.p);
         }
         word_end = t1;
     }
@@ -251,6 +256,7 @@ fn collect_words(seg: &whisper_rs::WhisperSegment<'_>, seg_start: f64) -> Result
             word: current_word,
             start: word_start,
             end: word_end,
+            p: confidence,
         });
     }
 

@@ -6,6 +6,7 @@ pub struct Word {
     pub word: String,
     pub start: f64,
     pub end: f64,
+    pub p: f32,
 }
 
 /// A transcription segment---one contiguous block of speech from Whisper.
