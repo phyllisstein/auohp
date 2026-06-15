@@ -165,9 +165,10 @@ pub fn transcribe(model: &mut WhisperModel, samples: &[f32]) -> Result<Vec<Whisp
             .trim()
             .to_string();
 
-        // Timestamps from whisper.cpp are in centiseconds (1/100 s).
-        let start = seg.start_timestamp() as f64 / 100.0;
-        let end = seg.end_timestamp() as f64 / 100.0;
+        // Timestamps from whisper.cpp are in centiseconds (1/100 s); round to
+        // that same 2-decimal grid so serialised times carry no float noise.
+        let start = round_to(seg.start_timestamp() as f64 / 100.0, 2);
+        let end = round_to(seg.end_timestamp() as f64 / 100.0, 2);
 
         let words = collect_words(&seg, start)?;
         segments.push(WhisperSegment {
@@ -182,6 +183,18 @@ pub fn transcribe(model: &mut WhisperModel, samples: &[f32]) -> Result<Vec<Whisp
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
+
+/// Round `x` to `places` decimal places.
+///
+/// We *round* (nearest) rather than truncate (toward zero): truncation would
+/// bias every value downward --- confidences always a hair low, start times
+/// always a hair early --- and that bias compounds across thousands of words.
+/// Whisper's timing grid is centiseconds and `p` is a coarse editorial signal,
+/// so two decimals is the real information content; more is invented precision.
+fn round_to(x: f64, places: i32) -> f64 {
+    let factor = 10f64.powi(places);
+    (x * factor).round() / factor
+}
 
 /// Group per-token DTW timing from a single segment into words.
 ///
@@ -222,30 +235,38 @@ fn collect_words(seg: &whisper_rs::WhisperSegment<'_>, seg_start: f64) -> Result
         }
 
         // Clamp negative timestamps that whisper.cpp can emit when DTW
-        // alignment is uncertain, then convert centiseconds → seconds.
-        let t0 = token_data.t0.max(0) as f64 / 100.0;
-        let t1 = token_data.t1.max(0) as f64 / 100.0;
-        confidence = token_data.p;
+        // alignment is uncertain, convert centiseconds → seconds, and round to
+        // whisper's native centisecond grid (more precision is fiction).
+        let t0 = round_to(token_data.t0.max(0) as f64 / 100.0, 2);
+        let t1 = round_to(token_data.t1.max(0) as f64 / 100.0, 2);
+        let p = token_data.p;
 
         if token_text.starts_with(' ') {
-            // Flush the completed word, then start the next one.
+            // Leading space = new word. Flush the word we just finished with its
+            // accumulated min-confidence, then open the next word with this
+            // token as its first (and so far only) member.
             if !current_word.is_empty() {
                 words.push(Word {
                     word: current_word.clone(),
                     start: word_start,
                     end: word_end,
-                    p: confidence,
+                    p: round_to(confidence as f64, 2) as f32,
                 });
             }
             current_word = token_text.trim_start_matches(' ').to_string();
             word_start = t0;
-        } else {
-            if current_word.is_empty() {
-                word_start = t0;
-                confidence = 0.0;
-            }
+            confidence = p; // seed the running min with the new word's first token
+        } else if current_word.is_empty() {
+            // First content token of the segment (no leading space): open the
+            // word and seed the min --- do NOT zero it, or min() pins it to 0.
+            word_start = t0;
+            confidence = p;
             current_word.push_str(token_text);
-            confidence = confidence.min(token_data.p);
+        } else {
+            // Continuation of the current word: fold this sub-token's
+            // probability into the running minimum (weakest link wins).
+            confidence = confidence.min(p);
+            current_word.push_str(token_text);
         }
         word_end = t1;
     }
