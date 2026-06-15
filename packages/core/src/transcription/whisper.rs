@@ -112,12 +112,17 @@ pub fn transcribe(model: &mut WhisperModel, samples: &[f32]) -> Result<Vec<Whisp
         .to_str()
         .context("VAD model path is not valid UTF-8")?;
 
-    let mut params = FullParams::new(SamplingStrategy::Greedy { best_of: 1 });
+    let mut params = FullParams::new(SamplingStrategy::BeamSearch {
+        beam_size: 5,
+        patience: 1.0,
+    });
     params.set_language(Some("en"));
     params.set_print_special(false);
     params.set_print_progress(false);
     params.set_print_realtime(false);
     params.set_print_timestamps(false);
+    params.set_entropy_thold(3.0);
+    params.set_no_context(true);
     // DTW token timestamps: whisper.cpp pins each BPE token to a (t0, t1)
     // frame range via Dynamic Time Warping on the cross-attention heads.
     // Costlier than pure greedy decode but required for word-level timing.

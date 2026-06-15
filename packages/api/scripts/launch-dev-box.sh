@@ -165,12 +165,12 @@ sudo dpkg -i cuda-keyring_1.1-1_all.deb
 rm -f cuda-keyring_1.1-1_all.deb
 
 sudo apt-get update
-sudo apt-get install -y cuda-toolkit-12-9 cuda-drivers
+sudo apt-get install -y cuda-toolkit-12-6 cuda-drivers
 
 # Make the chosen toolkit easy to find in fresh login shells.
-grep -q cuda-12.9 ~/.bashrc || cat >> ~/.bashrc <<EOF
-export PATH=/usr/local/cuda-12.9/bin:\$PATH
-export LD_LIBRARY_PATH=/usr/local/cuda-12.9/lib64:\$LD_LIBRARY_PATH
+grep -q cuda-12.6 ~/.bashrc || cat >> ~/.bashrc <<EOF
+export PATH=/usr/local/cuda-12.6/bin:\$PATH
+export LD_LIBRARY_PATH=/usr/local/cuda-12.6/lib64:\$LD_LIBRARY_PATH
 EOF
 
 echo
@@ -186,8 +186,8 @@ echo "Stage 2: verify GPU/toolchain, install Rust, and prepare the repo."
 ssh_box bash -s <<EOF
 set -euo pipefail
 
-export PATH=/usr/local/cuda-12.9/bin:$PATH
-export LD_LIBRARY_PATH=/usr/local/cuda-12.9/lib64:$LD_LIBRARY_PATH
+export PATH=/usr/local/cuda-12.6/bin:$PATH
+export LD_LIBRARY_PATH=/usr/local/cuda-12.6/lib64:$LD_LIBRARY_PATH
 
 echo "== nvcc =="
 nvcc --version
