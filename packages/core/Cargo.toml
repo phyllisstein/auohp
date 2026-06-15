@@ -29,19 +29,17 @@ thiserror = "2"
 
 # Transcription --- whisper-rs wraps whisper.cpp (C++ FFI) for Whisper ASR.
 # Models are pre-downloaded by scripts/download-models.sh into $MODELS_DIR.
-#
-# The audio module no longer decodes or resamples: the comparison harness
-# assumes its input is already mono 16 kHz PCM WAV (the exact format
-# whisper.cpp wants), so hound's minimal WAV reader is all we need.  symphonia
-# / rubato / audioadapter-buffers were removed to take every lossy decode and
-# resample step out from between the file and the model.
+# symphonia decodes audio from MP4/WAV/etc. containers.
+# rubato resamples to 16 kHz mono as required by Whisper.
 #
 # ort is not used directly but must be a direct dependency so that the
 # `metal` / `cuda` feature gates below can activate `ort/coreml` and
 # `ort/cuda` on the shared crate instance that fastembed also pulls in.
 # Pinned to rc.10 because fastembed ~5.8 requires it.
 ort = "=2.0.0-rc.10"
-hound = "3"
+symphonia = { version = "0.5", features = ["isomp4", "aac", "wav", "pcm"] }
+rubato = "1"
+audioadapter-buffers = "2"
 
 # On-device sentence embeddings --- fastembed wraps ONNX sentence transformers
 # (BAAI/bge-small-en-v1.5, 384-dim). Pinned to ~5.8 (allows 5.8.x patches
