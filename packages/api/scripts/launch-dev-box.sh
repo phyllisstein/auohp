@@ -133,7 +133,7 @@ echo "Giving cloud-init and SSH a few extra seconds to settle..."
 sleep 15
 wait_for_ssh
 
-echo "Stage 1: install OS packages, CUDA 12.6 toolkit, and NVIDIA server driver."
+echo "Stage 1: install OS packages, CUDA 13.0 toolkit, and NVIDIA server driver."
 ssh_box bash -s <<EOF
 set -euo pipefail
 
@@ -147,7 +147,12 @@ sudo apt-get install -y \
     fish \
     git \
     gnupg \
+    libglib2.0-dev \
+    libgtk-3-dev \
+    libjavascriptcoregtk-4.1-dev \
+    libsoup-3.0-dev \
     libssl-dev \
+    libwebkit2gtk-4.1-dev \
     linux-headers-aws \
     lsb-release \
     pciutils \
@@ -231,12 +236,13 @@ Terminate when you are done for good:
 EOF
 
 # Ephemeral storage
-# lsblk -o NAME,SIZE,MODEL,SERIAL
-# sudo nvme id-ctrl /dev/nvme1n1 | grep -i "Amazon EC2 NVMe Instance Storage"
-# sudo mkfs.ext4 -E lazy_itable_init=0,lazy_journal_init=0 /dev/nvme1n1
-# sudo mkdir -p /scratch
-# sudo mount /dev/nvme1n1 /scratch
-# sudo chown ubuntu:ubuntu /scratch
+lsblk -o NAME,SIZE,MODEL,SERIAL
+sudo nvme id-ctrl /dev/nvme1n1 | grep -i "Amazon EC2 NVMe Instance Storage"
+sudo mkfs.ext4 -E lazy_itable_init=0,lazy_journal_init=0 /dev/nvme1n1
+sudo mkdir -p /scratch
+sudo mount /dev/nvme1n1 /scratch
+sudo chown ubuntu:ubuntu /scratch
+mkdir /scratch/models /scratch/in /scratch/out /scratch/logs
 
 # Legacy Python
 # sudo add-apt-repository ppa:deadsnakes/ppa

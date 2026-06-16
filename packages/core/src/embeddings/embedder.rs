@@ -1,8 +1,12 @@
 //! On-device sentence embeddings via fastembed (ONNX).
 //!
-//! Wraps the nomic-embed-text-v1.5 model (768-dim) for generating vector
-//! embeddings of transcript text. The ONNX weights are auto-downloaded
-//! from Hugging Face Hub on first use and cached locally.
+//! Wraps nomic-embed-text-v1.5 (768-dim) using fastembed's
+//! `UserDefinedEmbeddingModel` API, which loads the ONNX weights and
+//! tokenizer files directly from disk rather than relying on fastembed's
+//! HuggingFace Hub auto-download.  The five required files are
+//! pre-downloaded by `scripts/download-models.sh` into
+//! `$MODELS_DIR/nomic-embed-text-v1.5/` (default `/opt/auohp/models`),
+//! so no network access occurs at inference time.
 //!
 //! Public API surface:
 //!   - `Embedder`        --- owns and drives the ONNX session directly.
@@ -11,8 +15,14 @@
 //!                           blocks the async executor.
 //!   - `EmbedResult`     --- type alias for the return type of `embed()`.
 
+use std::path::PathBuf;
+
 use anyhow::{Context, Result};
-use fastembed::{EmbeddingModel, TextEmbedding, TextInitOptions};
+use fastembed::{InitOptionsUserDefined, TextEmbedding, TokenizerFiles, UserDefinedEmbeddingModel};
+
+const DEFAULT_MODELS_DIR: &str = "/opt/auohp/models";
+/// Subdirectory within MODELS_DIR holding the five nomic model files.
+const NOMIC_MODEL_DIR: &str = "nomic-embed-text-v1.5";
 
 /// Drives the ONNX embedding session directly.
 ///
@@ -27,20 +37,40 @@ pub struct Embedder {
 }
 
 impl Embedder {
-    /// Load the nomic-embed-text-v1.5 model (768-dim).
+    /// Load nomic-embed-text-v1.5 (768-dim) from pre-downloaded files.
     ///
-    /// Nomic's v1.5 is a significant upgrade from BGE-small: it supports
-    /// 8192-token context (vs. 512), produces 768-dim vectors (vs. 384),
-    /// and scores meaningfully higher on MTEB retrieval benchmarks. The
-    /// larger vectors and context window improve search relevance for
-    /// oral-history transcripts, which tend to be long, conversational
-    /// passages.
+    /// Reads five files from `$MODELS_DIR/nomic-embed-text-v1.5/`:
+    ///   - `model.onnx`               --- ONNX weights (≈275 MB)
+    ///   - `tokenizer.json`           ---
+    ///   - `tokenizer_config.json`    --- tokenizer config files
+    ///   - `config.json`              ---
+    ///   - `special_tokens_map.json`  ---
+    ///
+    /// All five are fetched by `scripts/download-models.sh`.
     pub fn new() -> Result<Self> {
-        let model = TextEmbedding::try_new(
-            TextInitOptions::new(EmbeddingModel::NomicEmbedTextV15)
-                .with_show_download_progress(true),
+        let model_dir = PathBuf::from(
+            std::env::var("MODELS_DIR").unwrap_or_else(|_| DEFAULT_MODELS_DIR.to_string()),
         )
-        .context("failed to load embedding model")?;
+        .join(NOMIC_MODEL_DIR);
+
+        let read = |name: &str| -> Result<Vec<u8>> {
+            std::fs::read(model_dir.join(name))
+                .with_context(|| format!("failed to read {}/{}", NOMIC_MODEL_DIR, name))
+        };
+
+        let onnx_file = read("model.onnx")?;
+        let tokenizer_files = TokenizerFiles {
+            tokenizer_file: read("tokenizer.json")?,
+            config_file: read("config.json")?,
+            special_tokens_map_file: read("special_tokens_map.json")?,
+            tokenizer_config_file: read("tokenizer_config.json")?,
+        };
+
+        let model = TextEmbedding::try_new_from_user_defined(
+            UserDefinedEmbeddingModel::new(onnx_file, tokenizer_files),
+            InitOptionsUserDefined::default(),
+        )
+        .context("failed to initialise embedding model")?;
 
         Ok(Self {
             model,
