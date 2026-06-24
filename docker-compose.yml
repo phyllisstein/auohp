@@ -10,7 +10,7 @@ services:
         mode: 0440
     environment:
       RUST_LOG: auohp_api=debug,transcribe=debug
-      RUSTFLAGS: -Awarnings -Ctarget-feature=+fp16
+      RUSTFLAGS: -Ctarget-feature=+fp16
       VIRTUAL_HOST_MULTIPORTS: |-
         editor.auohp.localhost:
           "/":
@@ -21,7 +21,7 @@ services:
         api.auohp.localhost:
           "/":
             port: "6060"
-    depends_on: [neo4j]
+    # depends_on: [neo4j]
     expose:
       - "3030"
       - "4040"
