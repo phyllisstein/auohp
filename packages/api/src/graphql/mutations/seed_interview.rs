@@ -460,7 +460,10 @@ pub async fn seed_interview(
     // independently of this async frame. Errors are logged inside
     // `embed_statements`; if the server restarts mid-job, the affected
     // Statement nodes will simply lack embeddings until the next seed run.
-    let skip_embedding = std::env::var("SKIP_SEED_EMBEDDING").is_ok();
+    let skip_embedding = match std::env::var("SKIP_SEED_EMBEDDING") {
+        Ok(val) => !val.is_empty(),
+        Err(_) => false,
+    };
     if skip_embedding {
         tracing::info!(
             interview_uid,
