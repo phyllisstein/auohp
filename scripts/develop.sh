@@ -27,7 +27,7 @@ restart_api() {
     pkill -f "auohp-api" || true
 
     echo "Starting API development server..."
-    ./packages/api/scripts/download-models.sh
+    ./packages/core/scripts/download-models.sh
     cargo run --package auohp-api --bin auohp-api &
     disown
 }
