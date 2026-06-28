@@ -4,5 +4,16 @@
             "editor.formatOnSave": true,
             "editor.formatOnPaste": true,
             "editor.formatOnType": true
+        },
+        "[python]": {
+            "diffEditor.ignoreTrimWhitespace": false,
+            "editor.defaultColorDecorators": "never",
+            "gitlens.codeLens.symbolScopes": [
+                "!Module"
+            ],
+            "editor.formatOnType": false,
+            "editor.formatOnSave": true,
+            "editor.defaultFormatter": "charliermarsh.ruff",
+            "editor.wordBasedSuggestions": "off"
         }
 }
