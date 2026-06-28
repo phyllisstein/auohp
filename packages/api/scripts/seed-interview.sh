@@ -7,18 +7,12 @@
 # Usage:
 #   seed-interview.sh <transcribe.json> \
 #       --number 26 \
-#       --date 2003-05-16 \
-#       --interviewee "Iris Long" \
-#       --speakers ./meta/iris-long-speakers.json
+#       --date 2003-05-16
 #
 # Flags:
 #   --number N             Interview number (integer).
 #   --date YYYY-MM-DD      ISO 8601 date.
 #   --interviewee NAME     Display name of the interviewee.
-#   --speakers PATH|JSON   Speakers list. Either a path to a JSON file
-#                          containing an array, or an inline JSON literal.
-#                          Each element: { name, label, role }
-#                          where role is INTERVIEWER or INTERVIEWEE.
 #   --endpoint URL         GraphQL endpoint (default: $SEED_ENDPOINT or
 #                          http://localhost:6060/graphql).
 #
@@ -63,7 +57,7 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-for var in JSON_FILE NUMBER DATE INTERVIEWEE SPEAKERS_ARG; do
+for var in JSON_FILE NUMBER DATE INTERVIEWEE; do
     if [[ -z "${!var}" ]]; then
         echo "missing required argument: $var" >&2
         usage 1
@@ -72,19 +66,6 @@ done
 
 if [[ ! -f "$JSON_FILE" ]]; then
     echo "transcribe JSON not found: $JSON_FILE" >&2
-    exit 1
-fi
-
-# Resolve speakers: file path if it exists, otherwise treat as inline JSON.
-if [[ -f "$SPEAKERS_ARG" ]]; then
-    SPEAKERS_JSON=$(cat "$SPEAKERS_ARG")
-else
-    SPEAKERS_JSON="$SPEAKERS_ARG"
-fi
-
-# Validate the speakers JSON parses as an array.
-if ! echo "$SPEAKERS_JSON" | jq -e 'type == "array"' >/dev/null 2>&1; then
-    echo "--speakers must be a JSON array (or a path to a file containing one)" >&2
     exit 1
 fi
 
@@ -114,7 +95,6 @@ PAYLOAD=$(jq -n \
     --argjson number "$NUMBER" \
     --arg date "$DATE" \
     --arg interviewee "$INTERVIEWEE" \
-    --argjson speakers "$SPEAKERS_JSON" \
     '{
         query: $query,
         variables: {
@@ -122,7 +102,6 @@ PAYLOAD=$(jq -n \
                 number: $number,
                 date: $date,
                 interviewee: $interviewee,
-                speakers: $speakers,
                 segmentsJson: ($segmentsFile[0].segments | tojson)
             }
         }

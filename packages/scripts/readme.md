@@ -43,5 +43,5 @@ python src/subwisp.py assets/whisperx/035_larry_kramer.json
 
 ## ffmpeg
 ```bash
-ffmpeg -i $f -vn -ar 16k -ac 2 -acodec pcm_s16le -y "$f".wav
+ffmpeg -i $f -vn -ar 16k -ac 1 -acodec pcm_s16le -y "$f".wav
 ```

@@ -228,8 +228,10 @@ fn collect_words(seg: &whisper_rs::WhisperSegment<'_>, seg_start: f64) -> Result
         let token_data = token.token_data();
         let token_text = token.to_str().context("failed to read token text")?;
 
-        // `<|…|>` tokens are whisper.cpp's control tokens (language tag, task
-        // tag, timestamp markers, EOT, etc.) --- they carry no word content.
+        // FIXME: `<|` is not actually emitted by whisper.cpp. Filter out
+        // Whisper control tokens (e.g., `[_BEG_]` and
+        // `[_EOT_]`) based on the token ID. (Tokens are partitioned: special
+        // tokens are in a reserved block at the top.)
         if token_text.starts_with("<|") {
             continue;
         }
