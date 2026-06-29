@@ -195,8 +195,6 @@ __metadata:
     postcss-styled-components: "npm:0.2.1"
     postcss-syntax: "npm:0.36.2"
     query-string: "npm:^9.3.1"
-    react: "npm:^19.0.0"
-    react-dom: "npm:^19.0.0"
     rxjs: "npm:^7.8.2"
     sass: "npm:^1.99.0"
     stylelint: "npm:16.12.0"
@@ -209,6 +207,9 @@ __metadata:
     typescript: "npm:^6.0.3"
     typescript-eslint: "npm:^8.59.0"
     vite: "npm:^8.0.10"
+  peerDependencies:
+    react: ^19.0.0
+    react-dom: ^19.0.0
   languageName: unknown
   linkType: soft
 
@@ -9804,17 +9805,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-dom@npm:^19.0.0":
-  version: 19.2.5
-  resolution: "react-dom@npm:19.2.5"
-  dependencies:
-    scheduler: "npm:^0.27.0"
-  peerDependencies:
-    react: ^19.2.5
-  checksum: 10/ba14b022c7191d27b723314b964a1a4d839832e6edd231294097e323973808f97ac647bcf182ab0104e20ae6532dbc36733aec3e8333a1446a7183099c96b255
-  languageName: node
-  linkType: hard
-
 "react-dom@npm:^19.2.7":
   version: 19.2.7
   resolution: "react-dom@npm:19.2.7"
@@ -9846,13 +9836,6 @@ __metadata:
   peerDependencies:
     react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0-rc.1
   checksum: 10/be1d9a04b4c914abbddf0b99c0bfcab86eaf5d4ee5ce609d8798f9a53ae2e75778aad40ea3d13e5914c23a67311874b7754d90e02c2c0044768e5bbc1a7d8586
-  languageName: node
-  linkType: hard
-
-"react@npm:^19.0.0":
-  version: 19.2.5
-  resolution: "react@npm:19.2.5"
-  checksum: 10/1c3c7ffecb90b7f89a5c3ef635e6811f3a84600097f203b918150cb7e6b0a52915e858e5b4c82317a520dffccfa46ee4819ccf92c59c5b2d6c25cffe258dd20c
   languageName: node
   linkType: hard
 

@@ -1,5 +1,5 @@
 import { usePortal } from "./use-portal";
-import ReactDOM from "react-dom";
+import { createPortal } from "react-dom";
 import type { ReactPortal, PropsWithChildren } from "react";
 import { ResultsContainer } from "./results-styles";
 
@@ -29,7 +29,7 @@ export function Results({
 
     top = bottom ?? height + top;
 
-    return ReactDOM.createPortal(
+    return createPortal(
         <ResultsContainer style={{ left, top, width }}>
             { children }
         </ResultsContainer>,
