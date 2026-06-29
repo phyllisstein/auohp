@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 use super::super::interviews::Interview;
 use crate::graphql::error::gql_err;
 use crate::neo4j::Db;
+use crate::uid;
 use auohp_core::embeddings::EmbedderHandle;
 
 /// Build a BoltMap from string-key / BoltType-value pairs.
@@ -240,7 +241,7 @@ pub async fn seed_interview(
     // let you accidentally use the transaction after committing.
     let mut txn = db.start_txn().await.map_err(gql_err)?;
 
-    let interview_uid = uid::generate / ();
+    let interview_uid = uid::generate();
     let transcript_uid = uid::generate();
     let interviewee_uid = uid::generate();
 

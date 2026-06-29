@@ -21,7 +21,6 @@ use tower_http::{
 };
 use tracing::info;
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
-pub use uid::generate;
 
 // The GraphQL handler receives two arguments:
 //

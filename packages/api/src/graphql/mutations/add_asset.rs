@@ -41,7 +41,7 @@ pub async fn add_asset(
         AssetKind::Unknown => "Unknown",
     };
 
-    let asset_uid = uid::generate();
+    let asset_uid = crate::uid::generate();
     let mut create_stream = txn
         .execute(
             query(
