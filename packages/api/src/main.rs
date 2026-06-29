@@ -2,6 +2,7 @@ use rustls::crypto::{CryptoProvider, aws_lc_rs};
 
 mod graphql;
 mod neo4j;
+mod uid;
 
 use anyhow::Result;
 use async_graphql::http::GraphiQLSource;
@@ -20,6 +21,7 @@ use tower_http::{
 };
 use tracing::info;
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
+pub use uid::generate;
 
 // The GraphQL handler receives two arguments:
 //

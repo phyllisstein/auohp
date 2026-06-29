@@ -240,13 +240,13 @@ pub async fn seed_interview(
     // let you accidentally use the transaction after committing.
     let mut txn = db.start_txn().await.map_err(gql_err)?;
 
-    let interview_uid = nanoid::nanoid!();
-    let transcript_uid = nanoid::nanoid!();
-    let interviewee_uid = nanoid::nanoid!();
+    let interview_uid = uid::generate / ();
+    let transcript_uid = uid::generate();
+    let interviewee_uid = uid::generate();
 
     // ── Phase 1: interview scaffold ──────────────────────────────────────
 
-    let video_uid = nanoid::nanoid!();
+    let video_uid = uid::generate();
     let video_url = input
         .assets
         .as_ref()

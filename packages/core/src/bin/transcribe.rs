@@ -14,7 +14,7 @@ use anyhow::Result;
 use clap::Parser;
 use std::path::PathBuf;
 use std::{fs::File, io::Write};
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
+use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 
 #[derive(Parser, Debug)]
 struct Cli {
