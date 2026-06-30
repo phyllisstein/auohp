@@ -11,11 +11,10 @@ const SEARCH_QUERY = gql`
     query SearchStatements($search: String!) {
         searchStatements(
             query: $search
-            limit: 5
+            limit: 15
         ) {
             interview {
                 number
-                uid
             }
             statement {
                 text
@@ -46,7 +45,9 @@ const formatTimestamp = (timestamp: number) =>
 export function Search() {
     const searchBox = useRef<HTMLInputElement>(null);
     const [boxRect, setBoxRect] = useState<DOMRect | null>(null);
-    const [executeSearch, searchQuery] = useLazyQuery(SEARCH_QUERY);
+    const [executeSearch, searchQuery] = useLazyQuery(SEARCH_QUERY, {
+        fetchPolicy: "network-only",
+    });
 
     const handleResultClick = result => {
         const url = `/${ result.interview.number }`;
@@ -68,7 +69,7 @@ export function Search() {
                 setBoxRect(nextBox);
             }
         }
-    });
+    }, []);
 
     return (
         <SearchContainer className="search-container">

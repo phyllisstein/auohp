@@ -77,18 +77,13 @@ async fn main() -> Result<()> {
          }}",
     ))
     .await?;
-    info!("ensured statementEmbedding vector index (768-dim, cosine)");
 
     db.run(neo4rs::query(
-        "CREATE VECTOR INDEX wordJsonEmbedding IF NOT EXISTS
-         FOR (s:Statement) ON s.wordEmbedding
-         OPTIONS {indexConfig: {
-           `vector.dimensions`: 768,
-           `vector.similarity_function`: 'cosine'
-         }}",
+        "CREATE FULLTEXT INDEX statementText IF NOT EXISTS
+         FOR (s:Statement) ON EACH [s.text]",
     ))
     .await?;
-    info!("ensured wordJsonEmbedding vector index (768-dim, cosine)");
+    info!("ensured fulltext Statement index");
 
     let embedder = Embedder::new().expect("failed to load embedding model");
     info!("loaded embedding model ({}-dim)", &embedder.dimensions());

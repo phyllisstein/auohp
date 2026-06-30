@@ -12,8 +12,12 @@ export const SearchResults = styled.ul`
     display: flex;
     flex-direction: column;
     width: 100%;
+    height: min-content;
+    max-height: 400px;
     margin: 0;
     padding: 0;
+    overflow: hidden;
+    overflow-y: auto;
 
     list-style: none;
     background-color: white;

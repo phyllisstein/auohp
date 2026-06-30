@@ -6,8 +6,7 @@
         "paths": {
             "*": [
                 "./src/*",
-                "./vendor/*",
-                "./node_modules/*"
+                "./vendor/*"
             ]
         },
         "lib": [
@@ -22,7 +21,7 @@
         "esModuleInterop": true,
         "resolveJsonModule": true,
         "isolatedModules": true,
-        "module": "nodenext",
+        "module": "esnext",
         "declaration": true,
         "removeComments": true,
         "emitDecoratorMetadata": true,

@@ -1,6 +1,6 @@
 {
     "compilerOptions": {
-        "module": "NodeNext",
+        "module": "esnext",
         "declaration": true,
         "removeComments": true,
         "emitDecoratorMetadata": true,
@@ -9,7 +9,7 @@
         "target": "es2020",
         "incremental": true,
         "skipLibCheck": true,
-        "moduleResolution": "NodeNext"
+        "moduleResolution": "node"
     },
     "typeAcquisition": {
         "enable": true

@@ -1,5 +1,5 @@
 import { nodeResolve } from "@rollup/plugin-node-resolve";
-import react from "@vitejs/plugin-react";
+import react from "@vitejs/plugin-react-swc";
 import { defineConfig } from "vite";
 
 
@@ -7,7 +7,14 @@ export default defineConfig({
     appType: "spa",
     envDir: import.meta.dirname,
     plugins: [
-        react(),
+        react({
+            plugins: [["@swc/plugin-styled-components", {
+                displayName: true,
+                ssr: false,
+                minify: false,
+                fileName: true,
+            }]],
+        }),
         nodeResolve({
             extensions: [".tsx", ".ts", ".js"],
             moduleDirectories: ["src", "node_modules"],

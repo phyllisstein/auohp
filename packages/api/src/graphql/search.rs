@@ -45,7 +45,7 @@ pub async fn search_statements(
     let texts = vec![query_text];
     // ── Embed query text (CPU-bound: run off the async executor) ──────────────
     let vector: Vec<f32> = embedder
-        .embed(texts)
+        .embed(texts.clone())
         .await
         .map_err(gql_err)?
         .into_iter()
@@ -66,24 +66,9 @@ pub async fn search_statements(
     // speaker (from :SAYS), and interview context (via :HAS_TRANSCRIPT).
     let mut stream = db
         .execute(
-            query(
-                "
-                    MATCH (statement:Statement)
-                    SEARCH statement IN (
-                        VECTOR INDEX statementEmbedding
-                        FOR $vector
-                        LIMIT $limit
-                    )
-
-                    MATCH (transcript:Transcript)-[contains:CONTAINS]->(statement)
-                        <-[:SAYS]-(person:Person)
-                    MATCH (interview:Interview)-[:HAS_TRANSCRIPT]->(transcript)
-
-                    RETURN interview, statement, person, contains
-                ",
-            )
-            .param("limit", limit_val)
-            .param("vector", vector_bolt),
+            query(include_str!("./wrrf-search.cypher"))
+                .param("query", texts.clone().join(" "))
+                .param("queryVector", vector_bolt),
         )
         .await
         .map_err(gql_err)?;
@@ -94,15 +79,15 @@ pub async fn search_statements(
         let interview: neo4rs::Node = row.get("interview").map_err(gql_err)?;
         let statement: neo4rs::Node = row.get("statement").map_err(gql_err)?;
         let person: neo4rs::Node = row.get("person").map_err(gql_err)?;
-        let contains: neo4rs::Relation = row.get("contains").map_err(gql_err)?;
+        let span: neo4rs::Relation = row.get("span").map_err(gql_err)?;
         let sn: StatementNode = statement.to().map_err(gql_err)?;
 
         hits.push(SearchHit {
             statement: Statement {
                 text: sn.text,
                 person: person.to().map_err(gql_err)?,
-                start_time: contains.get("startTime").map_err(gql_err)?,
-                end_time: contains.get("endTime").map_err(gql_err)?,
+                start_time: span.get("startTime").map_err(gql_err)?,
+                end_time: span.get("endTime").map_err(gql_err)?,
                 words: sn.words,
             },
             interview: interview.to().map_err(gql_err)?,
