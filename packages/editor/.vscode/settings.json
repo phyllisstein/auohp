@@ -6,8 +6,6 @@
             }
         },
         "editor.defaultFormatter": "dbaeumer.vscode-eslint",
-        "editor.formatOnSave": false,
-        "eslint.format.enable": true,
         "eslint.lintTask.enable": true,
         "eslint.validate": [
             "typescript",

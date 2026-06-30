@@ -1,5 +1,5 @@
 use crate::graphql::error::gql_err;
-use crate::graphql::interviews::StatementNode;
+use crate::graphql::interviews::{Person, Statement, StatementNode};
 use crate::neo4j::Db;
 use async_graphql::{Context, SimpleObject};
 use chrono::TimeDelta;
@@ -68,6 +68,33 @@ pub async fn get_captions(
     let vtt = vtts.join("\n");
 
     Ok(Caption { vtt })
+}
+
+pub async fn span_at_time(
+    ctx: &Context<'_>,
+    timestamp: f64,
+    interview_number: i64,
+) -> async_graphql::Result<StatementNode> {
+    let db = ctx.data::<Db>()?;
+
+    let mut span_stream = db
+        .execute(query!(
+            "
+            (:Interview {{number: {interview_number}}}) -[meta:HAS_TRANSCRIPT]->(span:Statement)
+                WHERE meta.startTime >= {timestamp} AND meta.endTime <= {timestamp}
+            RETURN span
+            LIMIT 1
+        ",
+            interview_number = interview_number,
+            timestamp = timestamp,
+        ))
+        .await
+        .map_err(gql_err)?;
+
+    let s_row = span_stream.single().await.map_err(gql_err)?;
+    let s: StatementNode = s_row.get("span").map_err(gql_err)?;
+
+    Ok(s)
 }
 
 #[cfg(test)]
