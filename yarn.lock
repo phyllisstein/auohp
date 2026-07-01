@@ -187,6 +187,7 @@ __metadata:
     eslint-plugin-react: "npm:^7.37.5"
     eslint-plugin-react-hooks: "npm:^7.1.1"
     fast-deep-equal: "npm:^3.1.3"
+    fragmented: "npm:^3.1.28"
     globals: "npm:^17.7.0"
     graphql: "npm:^17.0.1"
     postcss: "npm:8.5.16"
@@ -197,6 +198,7 @@ __metadata:
     postcss-styled-components: "npm:0.2.1"
     postcss-syntax: "npm:0.36.2"
     query-string: "npm:^9.4.1"
+    react-router-dom: "npm:^7.18.1"
     rxjs: "npm:^7.8.2"
     sass: "npm:^1.99.0"
     stylelint: "npm:16.12.0"
@@ -5800,6 +5802,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"cookie@npm:^1.0.1":
+  version: 1.1.1
+  resolution: "cookie@npm:1.1.1"
+  checksum: 10/85538153054791155cf4d38d2e807e3b9382d71bf71d92fc46fca348515ea574049d0d9ef8eb84d2d54a681ad1d7a7316b1989b901dace50a6c0f4c3858dbdb2
+  languageName: node
+  linkType: hard
+
 "cosmiconfig@npm:^9.0.0":
   version: 9.0.1
   resolution: "cosmiconfig@npm:9.0.1"
@@ -7202,6 +7211,13 @@ __metadata:
     cross-spawn: "npm:^7.0.0"
     signal-exit: "npm:^4.0.1"
   checksum: 10/087edd44857d258c4f73ad84cb8df980826569656f2550c341b27adf5335354393eec24ea2fabd43a253233fb27cee177ebe46bd0b7ea129c77e87cb1e9936fb
+  languageName: node
+  linkType: hard
+
+"fragmented@npm:^3.1.28":
+  version: 3.1.28
+  resolution: "fragmented@npm:3.1.28"
+  checksum: 10/45e6232ac4dae43a6de3d0458b68cb6d5ff2ea30a5755be9c42562791c773d8a643492e9278fe1575968d5bf4457c0c4bbd7ea3f2cfe9c05480c57ab2850bfb3
   languageName: node
   linkType: hard
 
@@ -9907,6 +9923,34 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-router-dom@npm:^7.18.1":
+  version: 7.18.1
+  resolution: "react-router-dom@npm:7.18.1"
+  dependencies:
+    react-router: "npm:7.18.1"
+  peerDependencies:
+    react: ">=18"
+    react-dom: ">=18"
+  checksum: 10/4afbab4fb0f355429ad9905d48c17cdebe264d55bff824d409998d03c8548f86a64ec484cdab54b956cd3de2ceed1b87aa8837e631f47d63f71d490a0f7add00
+  languageName: node
+  linkType: hard
+
+"react-router@npm:7.18.1":
+  version: 7.18.1
+  resolution: "react-router@npm:7.18.1"
+  dependencies:
+    cookie: "npm:^1.0.1"
+    set-cookie-parser: "npm:^2.6.0"
+  peerDependencies:
+    react: ">=18"
+    react-dom: ">=18"
+  peerDependenciesMeta:
+    react-dom:
+      optional: true
+  checksum: 10/f507876822281499759abc53b3230375f706aa45c66b9ba271308f7420501ff1e5430443c560028299210efe1797141d2297c3bb6d09f3ef175220c1ae67a368
+  languageName: node
+  linkType: hard
+
 "react-stately@npm:3.47.0":
   version: 3.47.0
   resolution: "react-stately@npm:3.47.0"
@@ -10473,6 +10517,13 @@ __metadata:
   version: 2.0.0
   resolution: "set-blocking@npm:2.0.0"
   checksum: 10/8980ebf7ae9eb945bb036b6e283c547ee783a1ad557a82babf758a065e2fb6ea337fd82cac30dd565c1e606e423f30024a19fff7afbf4977d784720c4026a8ef
+  languageName: node
+  linkType: hard
+
+"set-cookie-parser@npm:^2.6.0":
+  version: 2.7.2
+  resolution: "set-cookie-parser@npm:2.7.2"
+  checksum: 10/4b6f5ec4e3fa1aef471d9207117704d217ba6bb6443400b41f5ea945c4a7f6fc08e405a122c1a32b4ebde41f06dea75e02c2af87cee9abb27f3e3fe911e5839b
   languageName: node
   linkType: hard
 

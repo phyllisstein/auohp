@@ -64,6 +64,9 @@ export function Player({ url }: PlayerProps) {
 
     return (
         <div className="player-container">
+            <video ref={ player } src="/friday.mp4" controls className="player">
+                <track kind="captions" src="/hildy.vtt" />
+            </video>
         </div>
     );
 }
