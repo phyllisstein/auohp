@@ -10,11 +10,13 @@ use async_graphql_axum::{GraphQLRequest, GraphQLResponse};
 use auohp_core::embeddings::{Embedder, EmbedderHandle};
 use axum::{
     Router,
-    extract::{DefaultBodyLimit, State},
-    response::Html,
+    extract::{DefaultBodyLimit, Path, State},
+    http::header,
+    response::{Html, IntoResponse},
     routing::get,
 };
-use http::Method;
+use http::{Method, StatusCode};
+use std::sync::Arc;
 use tower_http::{
     cors::{AllowHeaders, CorsLayer},
     trace::TraceLayer,
@@ -89,10 +91,25 @@ async fn main() -> Result<()> {
     info!("loaded embedding model ({}-dim)", &embedder.dimensions());
     let embed_handler = std::sync::Arc::new(EmbedderHandle::new(embedder));
 
+    let captions_db = Arc::clone(&db);
     let schema = graphql::build_schema(db, embed_handler);
 
     let app = Router::new()
         .route("/health", get(|| async { "ok" }))
+        .route(
+            "/interview/{interview_number}/captions",
+            get(async move |Path(interview_number): Path<i64>| {
+                match crate::graphql::queries::captions::get_captions(
+                    &captions_db,
+                    interview_number,
+                )
+                .await
+                {
+                    Ok(c) => (([(header::CONTENT_TYPE, "text/vtt")], c.vtt)).into_response(),
+                    Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+                }
+            }),
+        )
         // GET  /graphql --> serves the GraphiQL interactive IDE, so you can
         //                  explore the schema and test queries from a browser.
         // POST /graphql --> the actual GraphQL execution endpoint.

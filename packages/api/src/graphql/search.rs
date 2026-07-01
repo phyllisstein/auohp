@@ -57,8 +57,6 @@ pub async fn search_statements(
     // f64; the precision lost going back to f32 inside Neo4j is irrelevant.
     let vector_bolt: Vec<BoltType> = vector.iter().map(|&v| BoltType::from(v as f64)).collect();
 
-    let limit_val = limit.unwrap_or(15);
-
     // ── ANN index lookup + graph join ─────────────────────────────────────────
     //
     // db.index.vector.queryNodes returns (node, score) pairs from the HNSW

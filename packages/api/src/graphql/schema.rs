@@ -6,6 +6,7 @@ use super::interviews::{self, Interview, Transcript};
 use super::mutations::MutationRoot;
 use super::queries::captions::{self, Caption};
 use super::search::{self, SearchHit};
+use crate::graphql::error::gql_err;
 use crate::neo4j::Db;
 use auohp_core::embeddings::EmbedderHandle;
 
@@ -55,7 +56,10 @@ impl QueryRoot {
         ctx: &Context<'_>,
         #[graphql(desc = "Public-facing numerical label for each interview")] interview_number: i64,
     ) -> async_graphql::Result<Caption> {
-        captions::get_captions(ctx, interview_number).await
+        let db = ctx.data::<Db>()?;
+
+        let vtt_captions = captions::get_captions(&db, interview_number).await?;
+        Ok(vtt_captions)
     }
 }
 

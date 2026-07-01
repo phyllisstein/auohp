@@ -120,17 +120,6 @@ pub async fn list_interviews(ctx: &Context<'_>) -> async_graphql::Result<Vec<Int
 
 pub async fn get_transcript(ctx: &Context<'_>, number: i64) -> async_graphql::Result<Transcript> {
     let db = ctx.data::<Db>()?;
-
-    // Statements are ordered by their startTime on the :CONTAINS relationship,
-    // which records when each statement begins in the recording. This replaces
-    // a previous approach that walked the :NEXT linked list via a variable-
-    // length path pattern ([:NEXT*0..]), which was O(N²)---it materialized
-    // every path from head to every reachable node just to derive ordering.
-    //
-    // startTime is set from the same source as :NEXT during seeding, and
-    // editorial reordering is not a feature of this archive, so the two are
-    // always equivalent. The startTime approach is simpler (one MATCH, no
-    // head-finding) and survives broken :NEXT chains gracefully.
     let mut stream = db
         .execute(
             query(

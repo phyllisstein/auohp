@@ -1,13 +1,14 @@
 use crate::graphql::error::gql_err;
-use crate::graphql::interviews::{Person, Statement, StatementNode};
+use crate::graphql::interviews::StatementNode;
 use crate::neo4j::Db;
+use anyhow::Result;
 use async_graphql::{Context, SimpleObject};
 use chrono::TimeDelta;
 use neo4rs::query;
 
 #[derive(SimpleObject)]
 pub struct Caption {
-    vtt: String,
+    pub vtt: String,
 }
 
 fn to_timestamp(&t: &TimeDelta) -> String {
@@ -24,12 +25,7 @@ fn to_timestamp(&t: &TimeDelta) -> String {
     format!("{hours:02}:{minutes:02}:{seconds:02}.{ms:03}")
 }
 
-pub async fn get_captions(
-    ctx: &Context<'_>,
-    interview_number: i64,
-) -> async_graphql::Result<Caption> {
-    let db = ctx.data::<Db>()?;
-
+pub async fn get_captions(db: &Db, interview_number: i64) -> Result<Caption> {
     let mut statement_stream = db
         .execute(query!(
             "
@@ -39,21 +35,19 @@ pub async fn get_captions(
                 (statement:Statement)
             RETURN statement, meta.startTime as startTime, meta.endTime as endTime
             ORDER BY meta.startTime ASCENDING
-            LIMIT 25
         ",
             interviewNumber = interview_number,
         ))
-        .await
-        .map_err(gql_err)?;
+        .await?;
 
     let mut vtts: Vec<String> = vec!["WEBVTT\n".into()];
 
-    while let Some(row) = statement_stream.next().await.map_err(gql_err)? {
-        let statement: neo4rs::Node = row.get("statement").map_err(gql_err)?;
-        let sn: StatementNode = statement.to().map_err(gql_err)?;
+    while let Some(row) = statement_stream.next().await? {
+        let statement: neo4rs::Node = row.get("statement")?;
+        let sn: StatementNode = statement.to()?;
 
-        let start_time: neo4rs::BoltFloat = row.get("startTime").map_err(gql_err)?;
-        let end_time: neo4rs::BoltFloat = row.get("endTime").map_err(gql_err)?;
+        let start_time: neo4rs::BoltFloat = row.get("startTime")?;
+        let end_time: neo4rs::BoltFloat = row.get("endTime")?;
 
         let start = TimeDelta::milliseconds((start_time.value * 1_000.0) as i64);
         let end = TimeDelta::milliseconds((end_time.value * 1_000.0) as i64);
@@ -62,7 +56,7 @@ pub async fn get_captions(
         let end_timestamp = to_timestamp(&end);
         let text = sn.text.clone();
 
-        vtts.push(format!("{start_timestamp} --> {end_timestamp}\n{text}"))
+        vtts.push(format!("{start_timestamp} --> {end_timestamp}\n{text}\n\n"))
     }
 
     let vtt = vtts.join("\n");
