@@ -26,6 +26,8 @@ services:
       - "3030"
       - "4040"
       - "6060"
+    ports:
+      - "6060:6060"
     volumes:
       - type: bind
         source: .

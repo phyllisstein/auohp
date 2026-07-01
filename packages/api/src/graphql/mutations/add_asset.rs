@@ -10,10 +10,12 @@ pub enum AssetKind {
     Unknown,
 }
 
+// FIXME: { parent_id: "", asset : {  } }
 #[derive(Debug, InputObject)]
 pub struct AddAssetInput {
-    pub uri: String,
+    pub parent_id: String,
     pub kind: AssetKind,
+    uri: String,
 }
 
 #[derive(SimpleObject)]
@@ -43,18 +45,19 @@ pub async fn add_asset(
 
     let asset_uid = crate::uid::generate();
     let mut create_stream = txn
-        .execute(
-            query(
-                "
-                MERGE (asset:$(['Asset', $nodeLabel]) {uri: $uri, kind: $nodeLabel})
-                    ON CREATE SET asset.uid = $uid
-                RETURN asset
+        .execute(query!(
+
+            "
+                MATCH (a) WHERE a.uid = {parentUid}
+                MERGE (a) -[:HAS_ASSET]-> (asset:$(['Asset', $nodeLabel]) {{uri: {uri}, kind: {nodeLabel}}})
+                    ON CREATE SET asset.uid = {uid}
+                RETURN asset, a.uid as artifactUid
             ",
-            )
-            .param("nodeLabel", node_label)
-            .param("uri", input.uri)
-            .param("uid", asset_uid.clone()),
-        )
+            nodeLabel = node_label,
+            uri = input.uri,
+            uid = asset_uid.clone(),
+            parentUid = input.parent_id,
+        ))
         .await
         .map_err(gql_err)?;
 

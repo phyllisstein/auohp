@@ -247,7 +247,7 @@ pub async fn seed_interview(
 
     // ── Phase 1: interview scaffold ──────────────────────────────────────
 
-    let video_uid = uid::generate();
+    let video_uid = crate::uid::generate();
     let video_url = input
         .assets
         .as_ref()
