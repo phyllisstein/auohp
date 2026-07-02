@@ -1,8 +1,6 @@
 import queryString from "query-string";
 import { useEffect, useRef } from "react";
 
-import "./player.scss";
-
 interface PlayerProps {
     url: string;
 }
@@ -64,6 +62,9 @@ export function Player({ url }: PlayerProps) {
 
     return (
         <div className="player-container">
+            <video ref={ player } src="/videos/output.mp4" controls crossOrigin="anonymous" className="player">
+                <track default kind="captions" src="https://api.auohp.localhost/interview/108/captions" />
+            </video>
         </div>
     );
 }

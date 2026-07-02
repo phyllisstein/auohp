@@ -10,6 +10,7 @@ const client = new ApolloClient({
     cache: new InMemoryCache(),
 });
 
+// FIXME: Two roots (player, search), one tree (with portal)
 import { Player } from "components/player";
 import { Search } from "components/search";
 
@@ -28,7 +29,9 @@ export function renderPlayer(url: string, element: HTMLElement) {
     const root = createRoot(element);
     root.render(
         <StrictMode>
-            <Player url={ url } />
+            <ApolloProvider client={ client }>
+                <Player url={ url } />
+            </ApolloProvider>
         </StrictMode>,
     );
 }
