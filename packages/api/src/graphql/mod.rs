@@ -1,9 +1,7 @@
 mod error;
-mod interviews;
 mod mutations;
-pub mod queries;
+mod nodes;
 mod schema;
-mod search;
+pub mod queries;
 
-// FIXME: Structure of thse modules makes no sense.
 pub use schema::{AppSchema, build_schema};

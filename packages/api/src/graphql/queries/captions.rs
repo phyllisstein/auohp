@@ -1,5 +1,5 @@
 use crate::graphql::error::gql_err;
-use crate::graphql::interviews::StatementNode;
+use crate::graphql::nodes::StatementNode;
 use crate::neo4j::Db;
 use anyhow::Result;
 use async_graphql::{Context, SimpleObject};
