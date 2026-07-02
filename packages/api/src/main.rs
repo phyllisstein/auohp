@@ -95,6 +95,11 @@ async fn main() -> Result<()> {
     let schema = graphql::build_schema(db, embed_handler);
 
     let app = Router::new()
+        .layer(DefaultBodyLimit::max(16 * 1024 * 1024))
+        .layer(
+            CorsLayer::very_permissive(),
+        )
+        .layer(TraceLayer::new_for_http())
         .route("/health", get(|| async { "ok" }))
         .route(
             "/interview/{interview_number}/captions",
@@ -131,13 +136,6 @@ async fn main() -> Result<()> {
         )
         // with_state() makes `schema` available to any handler that
         // declares a State<AppSchema> parameter.
-        .layer(DefaultBodyLimit::max(16 * 1024 * 1024))
-        .layer(
-            CorsLayer::new()
-                .allow_headers(AllowHeaders::mirror_request())
-                .allow_methods([Method::POST, Method::GET]),
-        )
-        .layer(TraceLayer::new_for_http())
         .with_state(schema);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:6060").await?;

@@ -1,6 +1,8 @@
 {
     "[rust]": {
             "editor.defaultFormatter": "rust-lang.rust-analyzer",
-            "editor.formatOnSave": true,
+            "editor.formatOnSave": false,
+            "editor.formatOnPaste": false,
+            "editor.formatOnType": false,
         }
 }
