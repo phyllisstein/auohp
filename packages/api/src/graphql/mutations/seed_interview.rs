@@ -1,4 +1,3 @@
-use std::iter::zip;
 use std::sync::Arc;
 
 use async_graphql::{Context, Enum, InputObject, SimpleObject};
@@ -85,7 +84,7 @@ struct TranscriptSegment {
 }
 
 /// Word-level timing from the transcription pipeline.
-#[derive(InputObject, Serialize, Deserialize, Clone)]
+#[derive(InputObject, Serialize, Deserialize)]
 pub struct WordTimingInput {
     pub word: String,
     pub start: f64,
@@ -145,34 +144,25 @@ async fn embed_statements(
     embedder: Arc<EmbedderHandle>,
     uids: Vec<String>,
     texts: Vec<String>,
-    word_json: Vec<String>,
 ) {
     // spawn_blocking moves the synchronous ONNX inference off the async
     // executor thread pool so it cannot stall other requests. The closure
     // captures `embedder` (an Arc clone) and `texts` by move.
     let embedder = embedder.clone();
-    let text_vectors = match embedder.embed(texts).await {
+    let vectors = match embedder.embed(texts).await {
         Ok(v) => v,
         Err(e) => {
-            tracing::error!(error = %e, "text embedding failed");
-            return;
-        }
-    };
-    let word_vectors = match embedder.embed(word_json).await {
-        Ok(v) => v,
-        Err(e) => {
-            tracing::error!(error = %e, "word embedding failed");
+            tracing::error!(error = %e, "embedding failed");
             return;
         }
     };
 
     tracing::info!(
-        count = text_vectors.len(),
-        dims = text_vectors.first().map(|v| v.len()).unwrap_or(0),
-        "background task: text embedding complete, writing to Neo4j"
+        count = vectors.len(),
+        dims = vectors.first().map(|v| v.len()).unwrap_or(0),
+        "background task: embedding complete, writing to Neo4j"
     );
 
-    let collected_vectors = zip(text_vectors.iter(), word_vectors.iter());
     const EMBED_BATCH: usize = 500;
     for (idx, chunk) in uids
         .iter()
@@ -184,16 +174,12 @@ async fn embed_statements(
 
         let items: Vec<BoltType> = chunk
             .iter()
-            .zip(collected_vectors.clone())
-            .map(|(uid, vector)| {
-                let text_vec_bolt: Vec<BoltType> =
-                    vector.0.iter().map(|&v| BoltType::from(v as f64)).collect();
-                let word_vec_bolt: Vec<BoltType> =
-                    vector.1.iter().map(|&v| BoltType::from(v as f64)).collect();
+            .map { |vector|
+                let vec_bolt: Vec<BoltType> =
+                    vector.iter().map(|&v| BoltType::from(v as f64)).collect();
                 bolt_map(vec![
                     ("uid", BoltType::from(uid.as_str())),
-                    ("textVector", BoltType::from(text_vec_bolt)),
-                    ("wordVector", BoltType::from(word_vec_bolt)),
+                    ("vector", BoltType::from(vec_bolt)),
                 ])
             })
             .collect();
@@ -203,8 +189,7 @@ async fn embed_statements(
                 "
                     UNWIND {items} AS item
                     MATCH (s:Statement {{uid: item.uid}})
-                    CALL db.create.setNodeVectorProperty(s, 'embedding', item.textVector)
-                    CALL db.create.setNodeVectorProperty(s, 'wordEmbedding', item.wordVector)
+                    CALL db.create.setNodeVectorProperty(s, 'embedding', item.vector)
                 ",
                 items = items,
             ))
@@ -479,14 +464,6 @@ pub async fn seed_interview(
             .map(|s| &s.input)
             .map(|i| i.text.clone())
             .collect();
-        let word_json = segments
-            .iter()
-            .map(|s| &s.input)
-            .map(|i| i.words.clone())
-            .filter(|w| w.is_some())
-            .flat_map(|o| o.unwrap())
-            .map(|w| w.word)
-            .collect();
         let uids: Vec<String> = segments.iter().map(|s| s.uid.clone()).collect();
         tracing::info!(
             statement_count = texts.len(),
@@ -500,7 +477,6 @@ pub async fn seed_interview(
             embedder,
             uids,
             texts,
-            word_json,
         ));
     }
 

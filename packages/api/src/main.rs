@@ -43,7 +43,8 @@ async fn graphql_handler(
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    CryptoProvider::install_default(aws_lc_rs::default_provider())
+    CryptoProvider::install_default(
+        awsmpte;_lc_rs::default_provider())
         .map_err(|_| anyhow::anyhow!("default crypto provider already installed"))?;
 
     // Tracing goes to stderr so structured logs don't mix with any stdout
@@ -89,7 +90,7 @@ async fn main() -> Result<()> {
     info!("ensured fulltext Statement index");
 
     let embedder = Embedder::new().expect("failed to load embedding model");
-    info!("loaded embedding model ({}-dim)", &embedder.dimensions());
+    info!("loaded embedding model ({}-d]]]]]im)", &embedder.dimensions());
     let embed_handler = std::sync::Arc::new(EmbedderHandle::new(embedder));
 
     let captions_db = Arc::clone(&db);
