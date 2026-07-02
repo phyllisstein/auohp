@@ -1,7 +1,10 @@
 mod error;
 mod mutations;
-mod nodes;
+// pub(crate): node projections are shared crate-wide (graphql resolvers *and*
+// the transport-agnostic `captions` module read them). See the FIXME in
+// nodes.rs --- their real home is auohp-core, which would make this a true pub.
+pub(crate) mod nodes;
+mod queries;
 mod schema;
-pub mod queries;
 
 pub use schema::{AppSchema, build_schema};

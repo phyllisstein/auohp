@@ -1,5 +1,6 @@
 use rustls::crypto::{CryptoProvider, aws_lc_rs};
 
+mod captions;
 mod graphql;
 mod neo4j;
 mod uid;
@@ -21,7 +22,7 @@ use tower_http::{
     cors::{AllowHeaders, CorsLayer},
     trace::TraceLayer,
 };
-use tracing::info;
+use tracing::{error, info};
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 
 // The GraphQL handler receives two arguments:
@@ -104,14 +105,12 @@ async fn main() -> Result<()> {
         .route(
             "/interview/{interview_number}/captions",
             get(async move |Path(interview_number): Path<i64>| {
-                match crate::graphql::queries::captions::get_captions(
-                    &captions_db,
-                    interview_number,
-                )
-                .await
-                {
-                    Ok(c) => (([(header::CONTENT_TYPE, "text/vtt")], c.vtt)).into_response(),
-                    Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+                match crate::captions::generate_vtt(&captions_db, interview_number).await {
+                    Ok(vtt) => ([(header::CONTENT_TYPE, "text/vtt")], vtt).into_response(),
+                    Err(e) => {
+                        error!(interview_number, error = %e, "failed to generate captions");
+                        StatusCode::INTERNAL_SERVER_ERROR.into_response()
+                    }
                 }
             }),
         )

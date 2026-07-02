@@ -4,7 +4,6 @@ use super::captions::{self, Caption};
 use super::interviews;
 use super::search::{self, SearchHit};
 use crate::graphql::nodes::{Interview, Transcript};
-use crate::neo4j::Db;
 
 pub struct QueryRoot;
 
@@ -50,9 +49,6 @@ impl QueryRoot {
         ctx: &Context<'_>,
         #[graphql(desc = "Public-facing numerical label for each interview")] interview_number: i64,
     ) -> async_graphql::Result<Caption> {
-        let db = ctx.data::<Db>()?;
-
-        let vtt_captions = captions::get_captions(&db, interview_number).await?;
-        Ok(vtt_captions)
+        captions::get_captions(ctx, interview_number).await
     }
 }
