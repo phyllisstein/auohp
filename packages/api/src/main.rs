@@ -44,7 +44,7 @@ async fn graphql_handler(
 #[tokio::main]
 async fn main() -> Result<()> {
     CryptoProvider::install_default(
-        awsmpte;_lc_rs::default_provider())
+        aws_lc_rs::default_provider())
         .map_err(|_| anyhow::anyhow!("default crypto provider already installed"))?;
 
     // Tracing goes to stderr so structured logs don't mix with any stdout

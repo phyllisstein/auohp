@@ -4,8 +4,8 @@ use async_graphql::{Context, Enum, InputObject, SimpleObject};
 use neo4rs::{BoltMap, BoltString, BoltType, query};
 use serde::{Deserialize, Serialize};
 
-use crate::graphql::nodes::Interview;
 use crate::graphql::error::gql_err;
+use crate::graphql::nodes::Interview;
 use crate::neo4j::Db;
 use crate::uid;
 use auohp_core::embeddings::EmbedderHandle;
@@ -166,6 +166,7 @@ async fn embed_statements(
     const EMBED_BATCH: usize = 500;
     for (idx, chunk) in uids
         .iter()
+        .zip(vectors.iter())
         .collect::<Vec<_>>()
         .chunks(EMBED_BATCH)
         .enumerate()
@@ -174,7 +175,7 @@ async fn embed_statements(
 
         let items: Vec<BoltType> = chunk
             .iter()
-            .map { |vector|
+            .map(|(uid, vector)| {
                 let vec_bolt: Vec<BoltType> =
                     vector.iter().map(|&v| BoltType::from(v as f64)).collect();
                 bolt_map(vec![
@@ -472,12 +473,7 @@ pub async fn seed_interview(
             interviewee = input.interviewee.clone(),
             "populating statement embeddings"
         );
-        tokio::spawn(embed_statements(
-            db.clone(),
-            embedder,
-            uids,
-            texts,
-        ));
+        tokio::spawn(embed_statements(db.clone(), embedder, uids, texts));
     }
 
     // ── Build response ──────────────────────────────────────────────────

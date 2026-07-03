@@ -62,7 +62,7 @@ export function Player({ url }: PlayerProps) {
 
     return (
         <div className="player-container">
-            <video ref={ player } src="/videos/output.mp4" controls crossOrigin="anonymous" className="player">
+            <video ref={ player } src="/videos/108.mp4" controls crossOrigin="anonymous" className="player">
                 <track default kind="captions" src="https://api.auohp.localhost/interview/108/captions" />
             </video>
         </div>
