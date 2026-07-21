@@ -5,12 +5,13 @@ CYPHER 25
 LET
     query = $query,
     queryVector = $queryVector,
-    sourceK = 50,
-    finalK = 15,
+    sourceK = $sourceK,
+    finalK = $finalK,
+    limit = $limit,
     rrfConstant = 60,
     sourceWeights = {
         fulltext: 1.0,
-        vector: 1.0
+        vector: 0.8
     }
 
 CALL (query, queryVector, sourceK, rrfConstant, sourceWeights) {
@@ -30,7 +31,7 @@ CALL (query, queryVector, sourceK, rrfConstant, sourceWeights) {
         SEARCH statement IN (
             VECTOR INDEX statementEmbedding
             FOR queryVector
-            LIMIT 50            // $sourceK
+            LIMIT $sourceK
         ) SCORE AS score
     ORDER BY score DESC, statement.uid ASC
     WITH collect(statement) AS statements, rrfConstant, sourceWeights
@@ -43,7 +44,7 @@ CALL (query, queryVector, sourceK, rrfConstant, sourceWeights) {
 WITH statement, finalK, sum(contribution) AS wrrf
 ORDER BY wrrf DESC, statement.uid ASC
 WITH collect({statement: statement, wrrf: wrrf}) AS orderedRows, finalK
-LET limitedRows = orderedRows[..finalK]
+LET limitedRows = orderedRows[..$limit]
 UNWIND limitedRows AS row
 WITH row.statement AS statement, row.wrrf AS wrrf
 MATCH  (interview:Interview)-[:HAS_TRANSCRIPT]->(transcript:Transcript)-[span:CONTAINS]->(statement)<-[:SAYS]-(person:Person)

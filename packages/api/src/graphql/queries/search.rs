@@ -56,6 +56,7 @@ pub async fn search_statements(
     // floats. We widen f32 --> f64 here because neo4rs's BoltType::Float wraps
     // f64; the precision lost going back to f32 inside Neo4j is irrelevant.
     let vector_bolt: Vec<BoltType> = vector.iter().map(|&v| BoltType::from(v as f64)).collect();
+    let limit = limit.unwrap_or(15 as i64);
 
     // ── ANN index lookup + graph join ─────────────────────────────────────────
     //
@@ -66,7 +67,10 @@ pub async fn search_statements(
         .execute(
             query(include_str!("./wrrf-search.cypher"))
                 .param("query", texts.clone().join(" "))
-                .param("queryVector", vector_bolt),
+                .param("queryVector", vector_bolt)
+                .param("finalK", 50)
+                .param("sourceK", 100)
+                .param("limit", limit),
         )
         .await
         .map_err(gql_err)?;
