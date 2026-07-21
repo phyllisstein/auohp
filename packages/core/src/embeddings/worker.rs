@@ -2,9 +2,18 @@
 //!
 //! `EmbedderHandle` owns an `Embedder` in a dedicated blocking thread and
 //! exposes two async submission methods: `embed()` (priority --- search
-//! traffic) and `embed_background()` (background --- bulk seeding). The
-//! worker drains the priority queue first, so a search request waits at
-//! most one in-flight inference instead of an entire seed's worth.
+//! traffic) and `embed_background()` (background --- bulk seeding).
+//!
+//! Two mechanisms keep search responsive while a whole interview is being
+//! indexed:
+//!   1. The worker drains the priority queue before the background queue, so
+//!      a queued search jumps ahead of any pending seed work.
+//!   2. Background requests are processed *cooperatively*: the worker slices
+//!      a bulk request into small sub-batches and services waiting priority
+//!      requests between slices. Without this, one whole-interview
+//!      `fastembed` call would pin the thread and search would time out
+//!      behind it --- priority queueing alone can't preempt a single
+//!      monolithic inference.
 //!
 //! Both queues feed a single ONNX session pinned to one thread, so there's
 //! no `Mutex` --- ownership is the synchronization primitive.
@@ -27,6 +36,14 @@ struct EmbedRequest {
     reply: oneshot::Sender<EmbedResult>,
 }
 
+/// How many texts the worker embeds in one uninterruptible `fastembed` call
+/// when servicing a *background* request. This is the preemption granularity:
+/// a search request that arrives mid-seed waits at most one sub-batch's
+/// inference before it's serviced. Smaller = snappier search, more per-batch
+/// overhead; larger = better seeding throughput, longer worst-case search
+/// wait. Turn this knob if search latency under load is still too high.
+const BACKGROUND_SUB_BATCH: usize = 8;
+
 /// Run one request to completion: embed, then ship the result back through
 /// its oneshot. Pulled out of the loop so the loop body is purely about
 /// *which* request to take next, not what to do with one.
@@ -35,6 +52,58 @@ fn handle_request(embedder: &mut Embedder, req: EmbedRequest) {
     // `send()` fails only if the caller dropped the Receiver (gave up
     // waiting). That's benign --- discard.
     let _ = req.reply.send(result);
+}
+
+/// Run one *background* request cooperatively: slice its texts into
+/// `BACKGROUND_SUB_BATCH`-sized chunks and, between chunks, fully service any
+/// waiting priority (search) requests. The caller still sees a single reply
+/// containing every vector in input order --- the slicing is invisible to them.
+///
+/// This is what makes a whole-interview seed preemptible: without it, the one
+/// `embedder.embed(&all_texts)` call pins the worker thread for the entire
+/// interview and search requests time out behind it.
+fn handle_background_request(
+    embedder: &mut Embedder,
+    priority_rx: &mut mpsc::Receiver<EmbedRequest>,
+    req: EmbedRequest,
+) {
+    // Destructure up front: `texts` and `reply` are now independent locals, so
+    // the loop can borrow `texts` (via `.chunks()`) while still being free to
+    // move `reply` into a `send()` --- no partial-move-of-`req` borrow clash.
+    let EmbedRequest { texts, reply } = req;
+
+    // Accumulates one Vec<f32> per input text, in order. Pre-size to avoid
+    // reallocations as we extend it sub-batch by sub-batch.
+    let mut vectors: Vec<Vec<f32>> = Vec::with_capacity(texts.len());
+
+    for slice in texts.chunks(BACKGROUND_SUB_BATCH) {
+        // Drain priority *before* committing the thread to this slice: any
+        // search that queued during the previous slice's inference gets
+        // serviced now, so it waits at most one sub-batch. `try_recv` is
+        // non-blocking --- it empties whatever's currently queued and then
+        // returns `Err(Empty)`, ending the loop, rather than parking (which we
+        // can't do here: this is a synchronous context, no `.await`).
+        while let Ok(p) = priority_rx.try_recv() {
+            handle_request(embedder, p);
+        }
+
+        match embedder.embed(slice) {
+            // Extend in slice order so `vectors[i]` stays aligned with
+            // `texts[i]` --- the caller zips these back against `uids`.
+            Ok(v) => vectors.extend(v),
+            // A failed slice dooms the whole request: send the error and bail
+            // rather than replying with a partial result. `return` also means
+            // the fall-through `reply.send` below never runs --- which matters,
+            // since sending here has already moved `reply`.
+            Err(e) => {
+                let _ = reply.send(Err(e));
+                return;
+            }
+        }
+    }
+
+    // One reply for the whole request: all vectors, in input order.
+    let _ = reply.send(Ok(vectors));
 }
 
 /// An async handle to the background embedding worker.
@@ -80,28 +149,52 @@ impl EmbedderHandle {
         // `spawn_blocking` gives us a dedicated OS thread that is allowed to
         // block. The async executor's worker threads must never block, but
         // ONNX inference is synchronous and CPU-bound, so it has to live here.
-        tokio::task::spawn_blocking(move || {
-            loop {
-                // TODO(human): priority-aware request selection.
-                //
-                // Drain `priority_rx` first (use `try_recv` for the fast path
-                // when something's already waiting). If nothing is ready,
-                // park until either channel produces a request, preferring
-                // priority --- `tokio::select!` with `biased;` is the tool.
-                //
-                // When *both* channels are closed (each `.recv()` resolves to
-                // `None`), there's nothing left to do: break out of the loop
-                // so the thread can exit.
-                //
-                // Use `handle.block_on(async { ... })` to drive the select
-                // from this sync context, and `handle_request(&mut embedder,
-                // req)` to actuall y run the work.
-                //
-                // ~10 lines.
+        tokio::task::spawn_blocking(move || loop {
+            // Which queue did the next request come from? The loop needs to
+            // know: priority requests run straight through, but background
+            // requests run *cooperatively* (yielding to priority between
+            // sub-batches), so they dispatch to a different handler.
+            enum Work {
+                Priority(EmbedRequest),
+                Background(EmbedRequest),
+            }
 
-                let rec = priority_rx.try_recv().map_err(|e| tracing::error!("{e}"));
+            // Fast path: if a priority request is already sitting in the
+            // channel, take it without paying for a `block_on`/`select!` at
+            // all. This is the common case under load: search traffic
+            // arriving faster than the worker can drain it.
+            let work = if let Ok(req) = priority_rx.try_recv() {
+                Some(Work::Priority(req))
+            } else {
+                // Nothing queued on priority right now --- park until
+                // *either* channel has something. `biased` turns off
+                // `select!`'s default (fair, randomized) arm choice: when
+                // both arms are ready in the same poll, the first-listed
+                // arm always wins, so priority preempts background here.
+                //
+                // `.map(...)` on the `Option<EmbedRequest>` each arm yields
+                // tags the origin without disturbing the `None`-means-closed
+                // signal we match on below.
+                handle.block_on(async {
+                    tokio::select! {
+                        biased;
+                        req = priority_rx.recv() => req.map(Work::Priority),
+                        req = background_rx.recv() => req.map(Work::Background),
+                    }
+                })
+            };
 
-                todo!("priority-aware select loop")
+            match work {
+                Some(Work::Priority(req)) => handle_request(&mut embedder, req),
+                Some(Work::Background(req)) => {
+                    handle_background_request(&mut embedder, &mut priority_rx, req)
+                }
+                // `recv()` only returns `None` once a channel is both
+                // closed and drained. Because both senders live inside one
+                // `EmbedderHandle` and are dropped together, they close
+                // together too, so seeing `None` here means there is
+                // nothing left on either side.
+                None => break,
             }
         });
 

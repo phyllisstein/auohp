@@ -90,7 +90,7 @@ async fn main() -> Result<()> {
     info!("ensured fulltext Statement index");
 
     let embedder = Embedder::new().expect("failed to load embedding model");
-    info!("loaded embedding model ({}-d]]]]]im)", &embedder.dimensions());
+    info!("loaded embedding model ({}-dim)", &embedder.dimensions());
     let embed_handler = std::sync::Arc::new(EmbedderHandle::new(embedder));
 
     let captions_db = Arc::clone(&db);

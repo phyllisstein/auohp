@@ -145,11 +145,13 @@ async fn embed_statements(
     uids: Vec<String>,
     texts: Vec<String>,
 ) {
-    // spawn_blocking moves the synchronous ONNX inference off the async
-    // executor thread pool so it cannot stall other requests. The closure
-    // captures `embedder` (an Arc clone) and `texts` by move.
+    // `embed_background` (not `embed`) is deliberate: this path runs for a
+    // whole interview's worth of statements at once. The worker services this
+    // queue only when no search is waiting, *and* slices this batch internally
+    // so search requests are serviced between sub-batches rather than after the
+    // whole interview. See `EmbedderHandle` in `auohp_core::embeddings::worker`.
     let embedder = embedder.clone();
-    let vectors = match embedder.embed(texts).await {
+    let vectors = match embedder.embed_background(texts).await {
         Ok(v) => v,
         Err(e) => {
             tracing::error!(error = %e, "embedding failed");

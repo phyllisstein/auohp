@@ -25,7 +25,6 @@ JSON_FILE=""
 NUMBER=""
 DATE=""
 INTERVIEWEE=""
-SPEAKERS_ARG=""
 
 usage() {
     sed -n '/^# seed-interview/,/^$/{ s/^# \{0,1\}//; p; }' "$0"
@@ -37,7 +36,6 @@ while [[ $# -gt 0 ]]; do
         --number) NUMBER="$2"; shift 2;;
         --date) DATE="$2"; shift 2;;
         --interviewee) INTERVIEWEE="$2"; shift 2;;
-        --speakers) SPEAKERS_ARG="$2"; shift 2;;
         --endpoint) ENDPOINT="$2"; shift 2;;
         -h|--help) usage 0;;
         --) shift; break;;
