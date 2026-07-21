@@ -7,9 +7,18 @@ import { gql } from "@apollo/client";
 import { useQuery } from "@apollo/client/react";
 
 
-const STATEMENT_QUERY = gql`
-    query StatementQuery {
+const TRANSCRIPT_QUERY = gql`
+    query TranscriptQuery($interviewNumber: Int!) {
         health
+        interviewTranscript(number: $interviewNumber) {
+            uid
+            statements {
+                uid
+                startTime
+                endTime
+                text
+            }
+        }
     }
 `;
 
@@ -25,6 +34,9 @@ interface WordElement {
 
 interface StatementElement {
     type: "statement";
+    uid: string;
+    startTime: number;
+    endTime: number;
     children: Array<WordElement | BaseText>;
 }
 
@@ -37,7 +49,7 @@ declare module "slate" {
 }
 
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/interview/$interviewNumber")({
     component: Page,
 });
 
@@ -45,6 +57,9 @@ export const Route = createFileRoute("/")({
 const initialValue: Descendant[] = [
     {
         type: "statement",
+        startTime: 0,
+        endTime: 100,
+        uid: "statement-1",
         children: [
             { text: "ACT UP Oral History Project" },
         ],
@@ -62,6 +77,25 @@ const DefaultElement = props => {
     return <div { ...props.attributes }>{ props.children }</div>;
 };
 
+
+const StatementElement = ({ attributes, children, element }) => {
+    return (
+        <div key={ element.uid } { ...attributes }>
+            <div contentEditable={ false } style={{ userSelect: "none" }}>
+                { formatTimestamp(element.startTime) }
+                { " " }
+                -
+                { formatTimestamp(element.endTime) }
+            </div>
+            { children }
+        </div>
+    );
+};
+
+
+
+
+>>>>>>> 3a823cb (fixup! Fetch Interview by route param)
 const renderElement = props => {
     switch (props.element.type) {
         case "word":
@@ -120,7 +154,8 @@ function Page() {
         return editor.children;
     });
 
-    const { data, loading, error } = useQuery(STATEMENT_QUERY);
+    const interviewNumber = Number.parseInt(Route.useParams().interviewNumber);
+    const { data, loading, error } = useQuery(TRANSCRIPT_QUERY, { variables: { interviewNumber } });
     const variant = loading ? "neutral" : error ? "negative" : "positive";
 
     return (

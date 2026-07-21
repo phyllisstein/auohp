@@ -9,50 +9,51 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as InterviewInterviewNumberRouteImport } from './routes/interview.$interviewNumber'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
+const InterviewInterviewNumberRoute =
+  InterviewInterviewNumberRouteImport.update({
+    id: '/interview/$interviewNumber',
+    path: '/interview/$interviewNumber',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
+  '/interview/$interviewNumber': typeof InterviewInterviewNumberRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
+  '/interview/$interviewNumber': typeof InterviewInterviewNumberRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
+  '/interview/$interviewNumber': typeof InterviewInterviewNumberRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/interview/$interviewNumber'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/interview/$interviewNumber'
+  id: '__root__' | '/interview/$interviewNumber'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
+  InterviewInterviewNumberRoute: typeof InterviewInterviewNumberRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/interview/$interviewNumber': {
+      id: '/interview/$interviewNumber'
+      path: '/interview/$interviewNumber'
+      fullPath: '/interview/$interviewNumber'
+      preLoaderRoute: typeof InterviewInterviewNumberRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
+  InterviewInterviewNumberRoute: InterviewInterviewNumberRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

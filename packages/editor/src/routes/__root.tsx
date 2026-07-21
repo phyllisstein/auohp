@@ -2,6 +2,7 @@ import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-r
 import { Provider as SpectrumProvider } from "@react-spectrum/s2/Provider";
 import { ApolloClient, HttpLink, InMemoryCache } from "@apollo/client";
 import { ApolloProvider } from "@apollo/client/react";
+import { Body } from "styles/global";
 
 const client = new ApolloClient({
     link: new HttpLink({
@@ -29,6 +30,7 @@ function RootComponent() {
                     <HeadContent />
                 </head>
                 <body>
+                    <Body />
                     <main>
                         <Outlet />
                     </main>
