@@ -2,8 +2,17 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { type BaseEditor, createEditor, type Descendant, Editor, Element, Node, Text, Transforms } from "slate";
 import { Slate, Editable, type ReactEditor, withReact } from "slate-react";
-import { Button } from "@react-spectrum/s2/Button";
-import { createLink } from "@tanstack/react-router";
+import { Badge } from "@react-spectrum/s2/Badge";
+import { gql } from "@apollo/client";
+import { useQuery } from "@apollo/client/react";
+
+
+const STATEMENT_QUERY = gql`
+    query StatementQuery {
+        health
+    }
+`;
+
 
 type BaseText = { text: string };
 
@@ -28,9 +37,6 @@ declare module "slate" {
 }
 
 
-const ButtonLink = createLink(Button);
-
-
 export const Route = createFileRoute("/")({
     component: Page,
 });
@@ -40,11 +46,7 @@ const initialValue: Descendant[] = [
     {
         type: "statement",
         children: [
-            { type: "word", children: [{ text: "ACT" }], startTime: 0, endTime: 1000 },
-            { type: "word", children: [{ text: "UP" }], startTime: 1000, endTime: 2000 },
-            { type: "word", children: [{ text: "Oral" }], startTime: 2000, endTime: 3000 },
-            { type: "word", children: [{ text: "History" }], startTime: 3000, endTime: 4000 },
-            { type: "word", children: [{ text: "Project" }], startTime: 4000, endTime: 5000 },
+            { text: "ACT UP Oral History Project" },
         ],
     },
 ];
@@ -108,7 +110,7 @@ const withWords = editor => {
 };
 
 function Page() {
-    const [editor] = useState<Editor>(() => withWords(withReact(createEditor())));
+    const [editor] = useState<Editor>(() => withReact(createEditor()));
     // Slate does not normalize initialValue on its own --- it trusts the tree is
     // already valid. Our initialValue has adjacent inline words (an invalid shape),
     // so we run one forced pass here to let `normalizeNode` intersperse the spaces.
@@ -118,12 +120,17 @@ function Page() {
         return editor.children;
     });
 
+    const { data, loading, error } = useQuery(STATEMENT_QUERY);
+    const variant = loading ? "neutral" : error ? "negative" : "positive";
+
     return (
         <>
-            <Slate editor={ editor } initialValue={ value }>
+            <Badge variant={ variant } size="L">
+                { loading ? "Loading..." : error ? "Error" : data.health }
+            </Badge>
+            <Slate editor={ editor } initialValue={ initialValue }>
                 <Editable renderElement={ renderElement } />
             </Slate>
-            <ButtonLink to="/oops" variant="accent">Save</ButtonLink>
         </>
     );
 }

@@ -16,12 +16,13 @@ use axum::{
     response::{Html, IntoResponse},
     routing::get,
 };
-use http::{Method, StatusCode};
+use http::StatusCode;
 use std::sync::Arc;
 use tower_http::{
-    cors::{AllowHeaders, CorsLayer},
+    cors::{AllowOrigin, CorsLayer},
     trace::TraceLayer,
 };
+use tower::ServiceBuilder;
 use tracing::{error, info};
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -97,11 +98,6 @@ async fn main() -> Result<()> {
     let schema = graphql::build_schema(db, embed_handler);
 
     let app = Router::new()
-        .layer(DefaultBodyLimit::max(16 * 1024 * 1024))
-        .layer(
-            CorsLayer::very_permissive(),
-        )
-        .layer(TraceLayer::new_for_http())
         .route("/health", get(|| async { "ok" }))
         .route(
             "/interview/{interview_number}/captions",
@@ -133,6 +129,14 @@ async fn main() -> Result<()> {
                 )
             })
             .post(graphql_handler),
+        )
+        .layer(
+            ServiceBuilder::new()
+                .layer(TraceLayer::new_for_http())
+                .layer(DefaultBodyLimit::max(16 * 1024 * 1024))
+                .layer(
+                    CorsLayer::permissive(),
+                ),
         )
         // with_state() makes `schema` available to any handler that
         // declares a State<AppSchema> parameter.

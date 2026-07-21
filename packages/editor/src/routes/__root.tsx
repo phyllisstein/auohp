@@ -1,6 +1,14 @@
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
-import { Body } from "styles/global";
-import { Provider } from "@react-spectrum/s2/Provider";
+import { Provider as SpectrumProvider } from "@react-spectrum/s2/Provider";
+import { ApolloClient, HttpLink, InMemoryCache } from "@apollo/client";
+import { ApolloProvider } from "@apollo/client/react";
+
+const client = new ApolloClient({
+    link: new HttpLink({
+        uri: import.meta.env.VITE_GRAPHQL_URI,
+    }),
+    cache: new InMemoryCache(),
+});
 
 export const Route = createRootRoute({
     head: () => ({
@@ -15,16 +23,18 @@ export const Route = createRootRoute({
 
 function RootComponent() {
     return (
-        <Provider background="layer-1" colorScheme="light" elementType="html" locale="en-US">
-            <head>
-                <HeadContent />
-            </head>
-            <body>
-                <main>
-                    <Outlet />
-                </main>
-                <Scripts />
-            </body>
-        </Provider>
+        <SpectrumProvider background="layer-1" colorScheme="light" elementType="html" locale="en-US">
+            <ApolloProvider client={ client }>
+                <head>
+                    <HeadContent />
+                </head>
+                <body>
+                    <main>
+                        <Outlet />
+                    </main>
+                    <Scripts />
+                </body>
+            </ApolloProvider>
+        </SpectrumProvider>
     );
 }

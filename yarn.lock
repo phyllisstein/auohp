@@ -53,6 +53,37 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@apollo/client@npm:^4.2.7":
+  version: 4.2.7
+  resolution: "@apollo/client@npm:4.2.7"
+  dependencies:
+    "@graphql-typed-document-node/core": "npm:^3.1.1"
+    "@wry/caches": "npm:^1.0.0"
+    "@wry/equality": "npm:^0.5.6"
+    "@wry/trie": "npm:^0.5.0"
+    graphql-tag: "npm:^2.12.6"
+    optimism: "npm:^0.18.0"
+    tslib: "npm:^2.3.0"
+  peerDependencies:
+    graphql: ^16.0.0 || ^17.0.0
+    graphql-ws: ^5.5.5 || ^6.0.3
+    react: ^17.0.0 || ^18.0.0 || >=19.0.0-rc
+    react-dom: ^17.0.0 || ^18.0.0 || >=19.0.0-rc
+    rxjs: ^7.3.0
+    subscriptions-transport-ws: ^0.9.0 || ^0.11.0
+  peerDependenciesMeta:
+    graphql-ws:
+      optional: true
+    react:
+      optional: true
+    react-dom:
+      optional: true
+    subscriptions-transport-ws:
+      optional: true
+  checksum: 10/0595e15f38e038657c3774493c478c07f77f75932eac9ef6472f15469d3a8d0ac79c4059b69e2cf9ac2456fb16bcf3e2bddfd05e984bcb0ec555c628d0e5cfc3
+  languageName: node
+  linkType: hard
+
 "@asamuzakjp/css-color@npm:^5.1.11":
   version: 5.1.11
   resolution: "@asamuzakjp/css-color@npm:5.1.11"
@@ -97,6 +128,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@auohp/editor@workspace:packages/editor"
   dependencies:
+    "@apollo/client": "npm:^4.2.7"
     "@eslint/js": "npm:^10.0.1"
     "@react-spectrum/s2": "npm:^1.4.0"
     "@stylelint/postcss-css-in-js": "npm:0.38.0"
@@ -116,6 +148,7 @@ __metadata:
     eslint-plugin-react: "npm:^7.37.5"
     eslint-plugin-react-hooks: "npm:^7.1.1"
     globals: "npm:^17.6.0"
+    graphql: "npm:^17.0.2"
     jsdom: "npm:^29.1.1"
     lightningcss: "npm:^1.32.0"
     playwright: "npm:^1.60.0"
@@ -7613,6 +7646,13 @@ __metadata:
   version: 17.0.1
   resolution: "graphql@npm:17.0.1"
   checksum: 10/f59d39448ec380e0378958cf834905e12e86cbcbe06bc6739a3d903b575f30a87cffee98bd838c40d2546253278e3faf0c4ec848817cda17f663185c511a80ae
+  languageName: node
+  linkType: hard
+
+"graphql@npm:^17.0.2":
+  version: 17.0.2
+  resolution: "graphql@npm:17.0.2"
+  checksum: 10/e3760187b08cafd0755cc504bf272623cba8a05c29671c9ec5709fe634aaf62011a98e7831f67add3775261a0617e1b0d548da99ab70532b72d6dd5e1f0915ca
   languageName: node
   linkType: hard
 
