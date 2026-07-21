@@ -235,7 +235,7 @@ pub async fn seed_interview(
 
     // ── Phase 1: interview scaffold ──────────────────────────────────────
 
-    let video_uid = crate::uid::generate();
+    let video_uid = uid::generate();
     let video_url = input
         .assets
         .as_ref()
@@ -301,7 +301,7 @@ pub async fn seed_interview(
         .into_iter()
         .map(|i| TranscriptSegment {
             input: i,
-            uid: nanoid::nanoid!(),
+            uid: uid::generate(),
         })
         .collect();
 
@@ -332,7 +332,7 @@ pub async fn seed_interview(
                     match segment.speaker.as_deref().and_then(|l| speaker_map.get(l)) {
                         Some(mapping) => (
                             BoltType::from(mapping.name.clone()),
-                            BoltType::from(nanoid::nanoid!()),
+                            BoltType::from(uid::generate()),
                         ),
                         None => (
                             BoltType::from(input.interviewee.clone()),
@@ -394,7 +394,7 @@ pub async fn seed_interview(
                      CREATE (vtt:VTT:Caption {{uid: {vttUid}, url: {vttUrl}, text: {vttText}}})
                      MERGE (v)-[:HAS_CAPTIONS]->(vtt)",
                 videoUid = video_uid.clone(),
-                vttUid = nanoid::nanoid!(),
+                vttUid = uid::generate(),
                 vttUrl = assets.vtt_url.clone().unwrap_or_default(),
                 vttText = assets.vtt_text.clone().unwrap_or_default(),
             ))
@@ -408,7 +408,7 @@ pub async fn seed_interview(
                      CREATE (json:JSON:Caption {{uid: {jsonUid}, url: {jsonUrl}, text: {jsonText}}})
                      MERGE (v)-[:HAS_CAPTIONS]->(json)",
                 videoUid = video_uid.clone(),
-                jsonUid = nanoid::nanoid!(),
+                jsonUid = uid::generate(),
                 jsonUrl = assets.json_caption_url.clone().unwrap_or_default(),
                 jsonText = assets.json_caption_text.clone().unwrap_or_default(),
             ))

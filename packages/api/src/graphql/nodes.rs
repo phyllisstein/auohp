@@ -58,6 +58,7 @@ pub struct StatementMeta {
 /// speaker attribution from `:SAYS`.
 #[derive(SimpleObject)]
 pub struct Statement {
+    pub uid: String,
     pub text: String,
     /// The person who said this (via `:SAYS`).
     pub person: Person,

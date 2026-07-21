@@ -86,6 +86,7 @@ pub async fn search_statements(
 
         hits.push(SearchHit {
             statement: Statement {
+                uid: sn.uid,
                 text: sn.text,
                 person: person.to().map_err(gql_err)?,
                 start_time: span.get("startTime").map_err(gql_err)?,

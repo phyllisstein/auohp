@@ -69,6 +69,7 @@ pub async fn get_transcript(ctx: &Context<'_>, number: i64) -> async_graphql::Re
         let sn: StatementNode = statement.to().map_err(gql_err)?;
 
         statements.push(Statement {
+            uid: sn.uid,
             text: sn.text,
             // Person can be deserialized directly---its fields match the
             // node properties exactly (uid, name).
