@@ -80,7 +80,6 @@ pub struct TranscriptSegmentInput {
 
 struct TranscriptSegment {
     input: TranscriptSegmentInput,
-    uid: String,
 }
 
 /// Word-level timing from the transcription pipeline.
@@ -135,14 +134,9 @@ pub struct SeedInterviewPayload {
 /// If the server restarts before this completes, the affected Statement nodes
 /// simply won't have embeddings yet---re-running `seedInterview` for the same
 /// interview will re-embed them (MATCH … SET is idempotent).
-///
-/// FIXME: The only reason each item has a UID at present is to support this
-/// method. Without this, a UID would be overkill. It would be ideal to match
-/// statements some other way
 async fn embed_statements(
     db: Db,
     embedder: Arc<EmbedderHandle>,
-    uids: Vec<String>,
     texts: Vec<String>,
 ) {
     // `embed_background` (not `embed`) is deliberate: this path runs for a
@@ -151,7 +145,7 @@ async fn embed_statements(
     // so search requests are serviced between sub-batches rather than after the
     // whole interview. See `EmbedderHandle` in `auohp_core::embeddings::worker`.
     let embedder = embedder.clone();
-    let vectors = match embedder.embed_background(texts).await {
+    let vectors = match embedder.embed_background(texts.clone()).await {
         Ok(v) => v,
         Err(e) => {
             tracing::error!(error = %e, "embedding failed");
@@ -166,7 +160,7 @@ async fn embed_statements(
     );
 
     const EMBED_BATCH: usize = 500;
-    for (idx, chunk) in uids
+    for (idx, chunk) in texts
         .iter()
         .zip(vectors.iter())
         .collect::<Vec<_>>()
@@ -177,11 +171,11 @@ async fn embed_statements(
 
         let items: Vec<BoltType> = chunk
             .iter()
-            .map(|(uid, vector)| {
+            .map(|(text, vector)| {
                 let vec_bolt: Vec<BoltType> =
                     vector.iter().map(|&v| BoltType::from(v as f64)).collect();
                 bolt_map(vec![
-                    ("uid", BoltType::from(uid.as_str())),
+                    ("text", BoltType::from(text.as_str())),
                     ("vector", BoltType::from(vec_bolt)),
                 ])
             })
@@ -191,7 +185,7 @@ async fn embed_statements(
             .run(query!(
                 "
                     UNWIND {items} AS item
-                    MATCH (s:Statement {{uid: item.uid}})
+                    MATCH (s:Statement {{text: item.text}})
                     CALL db.create.setNodeVectorProperty(s, 'embedding', item.vector)
                 ",
                 items = items,
@@ -301,7 +295,6 @@ pub async fn seed_interview(
         .into_iter()
         .map(|i| TranscriptSegment {
             input: i,
-            uid: nanoid::nanoid!(),
         })
         .collect();
 
@@ -341,7 +334,6 @@ pub async fn seed_interview(
                     };
 
                 Ok::<BoltType, async_graphql::Error>(bolt_map(vec![
-                    ("uid", BoltType::from(s.uid.clone())),
                     ("text", BoltType::from(segment.text.clone())),
                     ("startTime", BoltType::from(segment.start_time)),
                     ("endTime", BoltType::from(segment.end_time)),
@@ -359,7 +351,6 @@ pub async fn seed_interview(
                 UNWIND {statements} AS s
 
                 CREATE (statement:Statement {{
-                    uid: s.uid,
                     text: s.text,
                     words: s.words
                  }})
@@ -467,7 +458,6 @@ pub async fn seed_interview(
             .map(|s| &s.input)
             .map(|i| i.text.clone())
             .collect();
-        let uids: Vec<String> = segments.iter().map(|s| s.uid.clone()).collect();
         tracing::info!(
             statement_count = texts.len(),
             interview_uid,
@@ -475,7 +465,7 @@ pub async fn seed_interview(
             interviewee = input.interviewee.clone(),
             "populating statement embeddings"
         );
-        tokio::spawn(embed_statements(db.clone(), embedder, uids, texts));
+        tokio::spawn(embed_statements(db.clone(), embedder, texts));
     }
 
     // ── Build response ──────────────────────────────────────────────────
