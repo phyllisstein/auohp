@@ -1,17 +1,33 @@
 import { createRouter } from "@tanstack/react-router";
 
 import { routeTree } from "./routeTree.gen";
-import client from "./apollo";
+
+import {
+    routerWithApolloClient,
+    ApolloClient,
+    InMemoryCache,
+} from "@apollo/client-integration-tanstack-start";
+import { HttpLink } from "@apollo/client";
+
 
 export function getRouter() {
-    return createRouter({
+    const apolloClient = new ApolloClient({
+        link: new HttpLink({
+            uri: import.meta.env.VITE_AUOHP_API_URI?.replace(/\/+$/, "") + "/graphql",
+        }),
+        cache: new InMemoryCache(),
+    });
+
+    const router = createRouter({
         defaultPreload: "intent",
         routeTree,
         scrollRestoration: true,
         context: {
-            apolloClient: client,
+            ...routerWithApolloClient.defaultContext,
         },
     });
+
+    return routerWithApolloClient(router, apolloClient);
 }
 
 declare module "@tanstack/react-router" {

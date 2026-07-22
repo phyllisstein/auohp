@@ -3,14 +3,10 @@ import { Provider as SpectrumProvider } from "@react-spectrum/s2/Provider";
 import { Body } from "@/styles/global";
 import { ApolloProvider } from "@apollo/client/react";
 import { type ApolloClient } from "@apollo/client";
+import type { ApolloClientIntegration } from "@apollo/client-integration-tanstack-start";
 
 
-export interface RouteContext {
-    apolloClient: ApolloClient;
-}
-
-
-export const Route = createRootRouteWithContext<RouteContext>()({
+export const Route = createRootRouteWithContext<ApolloClientIntegration.RouterContext>()({
     component: RootComponent,
     notFoundComponent: () => <div>Not found</div>,
     head: () => ({

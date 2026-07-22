@@ -47,6 +47,40 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@apollo/client-integration-tanstack-start@npm:^0.14.5-rc.0":
+  version: 0.14.5-rc.0
+  resolution: "@apollo/client-integration-tanstack-start@npm:0.14.5-rc.0"
+  dependencies:
+    "@apollo/client-react-streaming": "npm:0.14.5"
+  peerDependencies:
+    "@apollo/client": ^4.0.0
+    "@tanstack/react-router": ^1.132.47
+    "@tanstack/react-start": ^1.132.48
+    "@tanstack/router-core": ^1.132.47
+    graphql: ^16 || >=17.0.0-alpha.2
+    react: ^19
+    react-dom: ^19
+    rxjs: ^7.3.0
+  checksum: 10/d723a1b952bbf9ed68893749091374bc5afa71358f8c40afea57f7bb2f5abd28a673a6dae1ba16adf4435f277ed97e3cb460b0a13b7de6e6ad07bbb514474a57
+  languageName: node
+  linkType: hard
+
+"@apollo/client-react-streaming@npm:0.14.5":
+  version: 0.14.5
+  resolution: "@apollo/client-react-streaming@npm:0.14.5"
+  dependencies:
+    "@types/react-dom": "npm:^19.0.0"
+    "@wry/equality": "npm:^0.5.6"
+  peerDependencies:
+    "@apollo/client": ^4.0.0
+    graphql: ^16 || >=17.0.0-alpha.2
+    react: ^19
+    react-dom: ^19
+    rxjs: ^7.3.0
+  checksum: 10/4176392b974bbcc2f64c93dc40f3ee54e072dd314ce141b9b3ebbdea3e64cdcf211e8e72ef49dea74ce45974e90e9eb32c54a9391aa1f9258f6afe8ce68c3399
+  languageName: node
+  linkType: hard
+
 "@apollo/client@npm:^4.2.3":
   version: 4.2.3
   resolution: "@apollo/client@npm:4.2.3"
@@ -168,6 +202,7 @@ __metadata:
   dependencies:
     "@0no-co/graphqlsp": "npm:^1.17.3"
     "@apollo/client": "npm:^4.2.7"
+    "@apollo/client-integration-tanstack-start": "npm:^0.14.5-rc.0"
     "@eslint/js": "npm:^10.0.1"
     "@graphql-codegen/cli": "npm:^7.2.0"
     "@graphql-codegen/client-preset": "npm:^6.1.0"
@@ -197,6 +232,7 @@ __metadata:
     graphql: "npm:^17.0.2"
     jsdom: "npm:^29.1.1"
     lightningcss: "npm:^1.32.0"
+    perfect-debounce: "npm:^2.1.0"
     playwright: "npm:^1.60.0"
     polished: "npm:^4.3.1"
     postcss: "npm:8.4.49"
@@ -208,8 +244,10 @@ __metadata:
     postcss-syntax: "npm:0.36.2"
     react: "npm:^19.2.7"
     react-dom: "npm:^19.2.7"
+    rxjs: "npm:^7.8.2"
     slate: "npm:^0.124.1"
     slate-dom: "npm:^0.124.1"
+    slate-history: "npm:^0.113.1"
     slate-react: "npm:^0.124.2"
     styled-components: "npm:^6.4.2"
     stylelint: "npm:16.12.0"
@@ -5807,6 +5845,15 @@ __metadata:
   dependencies:
     types-ramda: "npm:^0.30.1"
   checksum: 10/528e62da967adb38b7b6be3314ee11009f4e7312e4fbb9670f4556bb2f640754f08ae68ede87822ae255aba747e67296f40b37d53bfb427c58ab82f5b7a4989e
+  languageName: node
+  linkType: hard
+
+"@types/react-dom@npm:^19.0.0":
+  version: 19.2.3
+  resolution: "@types/react-dom@npm:19.2.3"
+  peerDependencies:
+    "@types/react": ^19.2.0
+  checksum: 10/616c4a8aee250ea05fb1e7b98e7e00475dd3a6c1c30d7be18b4b93caba832f4203106b3a496a6b147e5acc2da14575eca47bce234c633bca1f8430ef8ffb234a
   languageName: node
   linkType: hard
 
@@ -11411,6 +11458,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"perfect-debounce@npm:^2.1.0":
+  version: 2.1.0
+  resolution: "perfect-debounce@npm:2.1.0"
+  checksum: 10/1e45b92ab585fa1bfafaf01783b693b6d164a4da3b80865487f716a010d95e3d8b1131693258e342da25da671312c194cddb103c4743161f57dcf26574273fe6
+  languageName: node
+  linkType: hard
+
 "picocolors@npm:^0.2.1":
   version: 0.2.1
   resolution: "picocolors@npm:0.2.1"
@@ -12727,6 +12781,17 @@ __metadata:
   peerDependencies:
     slate: ">=0.121.0"
   checksum: 10/cc8a951068c4a4a631f12ff04140b7ffb9f7afd0b8c013fb8996e2809d5b00bc877885af9d218a62444b3bcf8663389f942af4bce3c1f72cf95552ebe8bf2280
+  languageName: node
+  linkType: hard
+
+"slate-history@npm:^0.113.1":
+  version: 0.113.1
+  resolution: "slate-history@npm:0.113.1"
+  dependencies:
+    is-plain-object: "npm:^5.0.0"
+  peerDependencies:
+    slate: ">=0.65.3"
+  checksum: 10/e7797cecb2b4d28d891ce791a4a2a09c9bb52bb01b9998bc9d9aefa805fab2e40d1ca598d4f9b90c76b0e29a0e1512a758c3ad2f62ac515a5615fd3f382b35fb
   languageName: node
   linkType: hard
 
