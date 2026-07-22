@@ -100,12 +100,12 @@ async fn main() -> Result<()> {
     let app = Router::new()
         .route("/health", get(|| async { "ok" }))
         .route(
-            "/interview/{interview_number}/captions",
-            get(async move |Path(interview_number): Path<i64>| {
-                match crate::captions::generate_vtt(&captions_db, interview_number).await {
+            "/interview/{interview_uid}/vtt",
+            get(async move |Path(interview_uid): Path<String>| {
+                match crate::captions::generate_vtt(&captions_db, &interview_uid).await {
                     Ok(vtt) => ([(header::CONTENT_TYPE, "text/vtt")], vtt).into_response(),
                     Err(e) => {
-                        error!(interview_number, error = %e, "failed to generate captions");
+                        error!(interview_uid, error = %e, "failed to generate captions");
                         StatusCode::INTERNAL_SERVER_ERROR.into_response()
                     }
                 }

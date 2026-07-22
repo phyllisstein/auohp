@@ -4,7 +4,14 @@ import { type BaseEditor, createEditor, type Descendant, Editor, Element, Node, 
 import { Slate, Editable, type ReactEditor, withReact } from "slate-react";
 import { Badge } from "@react-spectrum/s2/Badge";
 import { gql } from "@apollo/client";
-import { useQuery } from "@apollo/client/react";
+
+
+// FIXME: Constructing URLs for the caption endpoint and the public video URI
+// should be a server-side concern (return a Video node, return Caption metadata).
+const {
+    VITE_AUOHP_PUBLIC: AUOHP_PUBLIC,
+    VITE_AUOHP_API_URI: AUOHP_API_URI,
+} = import.meta.env;
 
 
 const TRANSCRIPT_QUERY = gql`
@@ -206,6 +213,12 @@ function Page() {
 
     return (
         <>
+            <video controls crossOrigin="anonymous">
+                <source src={ `${ AUOHP_PUBLIC }/videos/${ interviewNumber }.mp4` } type="video/mp4" />
+                {
+                    interview?.uid && <track kind="captions" src={ `${ AUOHP_API_URI }/interview/${ interview.uid }/vtt` } srcLang="en" label="English" />
+                }
+            </video>
             <Slate editor={ editor } initialValue={ statementElements } key={ interview?.uid }>
                 <Editable renderElement={ renderElement } />
             </Slate>

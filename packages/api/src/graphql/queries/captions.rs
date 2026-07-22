@@ -15,10 +15,10 @@ pub struct Caption {
 /// the GraphQL `Caption` object.
 pub async fn get_captions(
     ctx: &Context<'_>,
-    interview_number: i64,
+    interview_uid: &str,
 ) -> async_graphql::Result<Caption> {
     let db = ctx.data::<Db>()?;
-    let vtt = captions::generate_vtt(db, interview_number)
+    let vtt = captions::generate_vtt(db, &interview_uid)
         .await
         .map_err(gql_err)?;
     Ok(Caption { vtt })

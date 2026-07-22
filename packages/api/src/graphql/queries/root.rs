@@ -47,8 +47,8 @@ impl QueryRoot {
     async fn captions(
         &self,
         ctx: &Context<'_>,
-        #[graphql(desc = "Public-facing numerical label for each interview")] interview_number: i64,
+        #[graphql(desc = "Interview UID")] interview_number: String,
     ) -> async_graphql::Result<Caption> {
-        captions::get_captions(ctx, interview_number).await
+        captions::get_captions(ctx, &interview_number).await
     }
 }
