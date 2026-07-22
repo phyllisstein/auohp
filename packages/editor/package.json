@@ -18,6 +18,7 @@
         "@stylelint/postcss-css-in-js": "0.38.0",
         "@stylistic/eslint-plugin": "^5.10.0",
         "@stylistic/stylelint-config": "2.0.0",
+        "@tanstack/eslint-plugin-router": "^1.162.0",
         "@tanstack/react-router-devtools": "^1.167.0",
         "@vitejs/plugin-react": "^6.0.2",
         "@vitest/browser": "^4.1.8",

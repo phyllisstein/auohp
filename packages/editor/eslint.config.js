@@ -6,6 +6,7 @@ import reactHooks from "eslint-plugin-react-hooks";
 import { defineConfig } from "eslint/config";
 import js from "@eslint/js";
 import globals from "globals";
+import pluginRouter from '@tanstack/eslint-plugin-router'
 
 export default defineConfig(
     {
@@ -16,6 +17,7 @@ export default defineConfig(
             },
         },
     },
+    pluginRouter.configs['flat/recommended'],
     js.configs.recommended,
     tseslint.configs.recommended,
     stylistic.configs.recommended,
