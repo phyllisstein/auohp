@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 import { defineConfig } from "vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
-import viteReact from "@vitejs/plugin-react";
+import viteReact from "@vitejs/plugin-react-swc";
 import macros from "unplugin-parcel-macros";
 
 export default defineConfig({
@@ -19,7 +19,14 @@ export default defineConfig({
         macros.vite(),
         tanstackStart(),
         // viteReact must come after tanstackStart
-        viteReact(),
+        viteReact({
+            plugins: [
+                [
+                    "@swc-contrib/plugin-graphql-codegen-client-preset",
+                    { artifactDirectory: "./src/gql", gqlTagName: "graphql" },
+                ],
+            ],
+        }),
     ],
     ssr: {
         noExternal: [/^@react-spectrum\//],

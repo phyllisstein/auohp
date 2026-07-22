@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { type BaseEditor, createEditor, Editor } from "slate";
 import { Slate, Editable, type ReactEditor, withReact } from "slate-react";
-import { gql } from "@apollo/client";
+import { graphql } from "../gql";
 
 
 // FIXME: Constructing URLs for the caption endpoint and the public video URI
@@ -13,8 +13,8 @@ const {
 } = import.meta.env;
 
 
-const TRANSCRIPT_QUERY = gql`
-    query TranscriptQuery($interviewNumber: Int!) {
+const TRANSCRIPT_QUERY = graphql(`
+    query Transcript($interviewNumber: Int!) {
         health
         interviewTranscript(number: $interviewNumber) {
             uid
@@ -29,7 +29,7 @@ const TRANSCRIPT_QUERY = gql`
             }
         }
     }
-`;
+`);
 
 
 type BaseText = { text: string };
@@ -69,27 +69,27 @@ export const Route = createFileRoute("/interview/$interviewNumber")({
 
         const client = context.apolloClient;
 
-        try {
-            const { data } = await client.query({
-                query: TRANSCRIPT_QUERY,
-                variables: { interviewNumber },
-            });
+        const { data } = await client.query({
+            query: TRANSCRIPT_QUERY,
+            variables: { interviewNumber },
+        });
 
-            const statementData = data?.interviewTranscript?.statements || [];
-            const statementElements = statementData.map(statement => ({
-                type: "statement",
-                uid: statement.uid,
-                startTime: statement.startTime,
-                endTime: statement.endTime,
-                children: [
-                    { text: statement.text },
-                ],
-            }));
-
-            return { statementElements, interview: data?.interviewTranscript?.interview };
-        } catch (error) {
-            console.error("Error occurred while fetching transcript:", error);
+        if (!data?.interviewTranscript) {
+            throw new Error("Transcript not found");
         }
+
+        const statementData = data.interviewTranscript.statements;
+        const statementElements = statementData.map(statement => ({
+            type: "statement",
+            uid: statement.uid,
+            startTime: statement.startTime,
+            endTime: statement.endTime,
+            children: [
+                { text: statement.text },
+            ],
+        }));
+
+        return { statementElements, interview: data?.interviewTranscript?.interview };
     },
 });
 
