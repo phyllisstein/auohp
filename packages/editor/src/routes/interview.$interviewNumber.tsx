@@ -2,7 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { type BaseEditor, createEditor, Editor } from "slate";
 import { Slate, Editable, type ReactEditor, withReact } from "slate-react";
-import { graphql } from "../gql";
+import { withHistory } from "slate-history";
+import { graphql } from "@/gql";
+import { useMutation, useReadQuery } from "@apollo/client/react";
+import { debounce } from "perfect-debounce";
 
 
 // FIXME: Constructing URLs for the caption endpoint and the public video URI
@@ -13,7 +16,19 @@ const {
 } = import.meta.env;
 
 
-const TRANSCRIPT_QUERY = graphql(`
+export const EDIT_STATEMENT_MUTATION = graphql(`
+    mutation EditStatement($uid: String!, $text: String!) {
+        editStatement(input: { uid: $uid, text: $text }) {
+            uid
+            oldHash
+            newHash
+            wroteEmbedding
+        }
+    }
+`);
+
+
+export const TRANSCRIPT_QUERY = graphql(`
     query Transcript($interviewNumber: Int!) {
         health
         interviewTranscript(number: $interviewNumber) {
@@ -34,25 +49,20 @@ const TRANSCRIPT_QUERY = graphql(`
 
 type BaseText = { text: string };
 
-interface WordElement {
-    type: "word";
-    startTime: number;
-    endTime: number;
-    children: BaseText[];
-}
 
 interface StatementElement {
-    type: "statement";
+    type: string;
     uid: string;
-    startTime: number;
-    endTime: number;
-    children: Array<WordElement | BaseText>;
+    startTime: number | null | undefined;
+    endTime: number | null | undefined;
+    children: Array<BaseText>;
 }
+
 
 declare module "slate" {
     interface CustomTypes {
         Editor: BaseEditor & ReactEditor;
-        Element: StatementElement | WordElement;
+        Element: StatementElement;
         Text: BaseText;
     }
 }
@@ -61,35 +71,19 @@ declare module "slate" {
 export const Route = createFileRoute("/interview/$interviewNumber")({
     component: Page,
     // FIXME: Handle errors gracefully
-    loader: async ({ context, params }) => {
+    loader: ({ context: { preloadQuery }, params }) => {
         const interviewNumber = Number.parseInt(params.interviewNumber);
         if (Number.isNaN(interviewNumber)) {
             throw new Error("Invalid interview number");
         }
 
-        const client = context.apolloClient;
-
-        const { data } = await client.query({
-            query: TRANSCRIPT_QUERY,
-            variables: { interviewNumber },
+        const transcriptQueryRef = preloadQuery(TRANSCRIPT_QUERY, {
+            variables: {
+                interviewNumber,
+            },
         });
 
-        if (!data?.interviewTranscript) {
-            throw new Error("Transcript not found");
-        }
-
-        const statementData = data.interviewTranscript.statements;
-        const statementElements = statementData.map(statement => ({
-            type: "statement",
-            uid: statement.uid,
-            startTime: statement.startTime,
-            endTime: statement.endTime,
-            children: [
-                { text: statement.text },
-            ],
-        }));
-
-        return { statementElements, interview: data?.interviewTranscript?.interview };
+        return { transcriptQueryRef };
     },
 });
 
@@ -137,21 +131,61 @@ const renderElement = props => {
 };
 
 
-function Page() {
-    const [editor] = useState<Editor>(() => withReact(createEditor()));
+const withPersistence = editStatement => (editor: Editor) => {
+    editStatement = debounce(editStatement, 1_000);
+    const { onChange } = editor;
 
+    editor.onChange = args => {
+        onChange(args);
+
+        if (args?.operation.type?.includes("text")) {
+            const [parent] = Editor.parent(editor, args.operation.path);
+
+            editStatement({
+                variables: {
+                    uid: parent.uid,
+                    text: parent.children[0].text,
+                },
+                onCompleted: data => {
+                    console.log("Edit completed:", data);
+                },
+            });
+        }
+    };
+    return editor;
+};
+
+
+function Page() {
     const interviewNumber = Number.parseInt(Route.useParams().interviewNumber);
-    const { statementElements, interview } = Route.useLoaderData();
+    const { transcriptQueryRef } = Route.useLoaderData();
+    const { data } = useReadQuery(transcriptQueryRef);
+
+    const { statements, interview } = data.interviewTranscript;
+    const statementSlice = statements.slice(0, 25);
+    const statementElements = statementSlice.map(statement => ({
+        type: "statement",
+        uid: statement.uid,
+        startTime: statement.startTime,
+        endTime: statement.endTime,
+        children: [
+            { text: statement.text },
+        ],
+    }));
+
+    const [editStatement, { data: editStatementData }] = useMutation(EDIT_STATEMENT_MUTATION);
+
+    const [editor] = useState<Editor>(() => withPersistence(editStatement)(withReact(withHistory(createEditor()))));
 
     return (
         <>
             <video controls crossOrigin="anonymous">
                 <source src={ `${ AUOHP_PUBLIC }/videos/${ interviewNumber }.mp4` } type="video/mp4" />
                 {
-                    interview?.uid && <track kind="captions" src={ `${ AUOHP_API_URI }/interview/${ interview.uid }/vtt` } srcLang="en" label="English" />
+                    interview.uid && <track kind="captions" src={ `${ AUOHP_API_URI }/interview/${ interview.uid }/vtt` } srcLang="en" label="English" />
                 }
             </video>
-            <Slate editor={ editor } initialValue={ statementElements } key={ interview?.uid }>
+            <Slate editor={ editor } initialValue={ statementElements } key={ interview.uid }>
                 <Editable renderElement={ renderElement } />
             </Slate>
         </>

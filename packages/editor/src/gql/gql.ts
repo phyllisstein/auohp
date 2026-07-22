@@ -14,9 +14,11 @@ import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-
  * Learn more about it here: https://the-guild.dev/graphql/codegen/plugins/presets/preset-client#reducing-bundle-size
  */
 type Documents = {
+    "\n    mutation EditStatement($uid: String!, $text: String!) {\n        editStatement(input: { uid: $uid, text: $text }) {\n            uid\n            oldHash\n            newHash\n            wroteEmbedding\n        }\n    }\n": typeof types.EditStatementDocument,
     "\n    query Transcript($interviewNumber: Int!) {\n        health\n        interviewTranscript(number: $interviewNumber) {\n            uid\n            interview {\n                uid\n            }\n            statements {\n                uid\n                startTime\n                endTime\n                text\n            }\n        }\n    }\n": typeof types.TranscriptDocument,
 };
 const documents: Documents = {
+    "\n    mutation EditStatement($uid: String!, $text: String!) {\n        editStatement(input: { uid: $uid, text: $text }) {\n            uid\n            oldHash\n            newHash\n            wroteEmbedding\n        }\n    }\n": types.EditStatementDocument,
     "\n    query Transcript($interviewNumber: Int!) {\n        health\n        interviewTranscript(number: $interviewNumber) {\n            uid\n            interview {\n                uid\n            }\n            statements {\n                uid\n                startTime\n                endTime\n                text\n            }\n        }\n    }\n": types.TranscriptDocument,
 };
 
@@ -34,6 +36,10 @@ const documents: Documents = {
  */
 export function graphql(source: string): unknown;
 
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n    mutation EditStatement($uid: String!, $text: String!) {\n        editStatement(input: { uid: $uid, text: $text }) {\n            uid\n            oldHash\n            newHash\n            wroteEmbedding\n        }\n    }\n"): (typeof documents)["\n    mutation EditStatement($uid: String!, $text: String!) {\n        editStatement(input: { uid: $uid, text: $text }) {\n            uid\n            oldHash\n            newHash\n            wroteEmbedding\n        }\n    }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
