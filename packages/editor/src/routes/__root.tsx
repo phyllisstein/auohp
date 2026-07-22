@@ -1,6 +1,6 @@
 import { createRootRouteWithContext, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import { Provider as SpectrumProvider } from "@react-spectrum/s2/Provider";
-import { Body } from "styles/global";
+import { Body } from "@/styles/global";
 import { ApolloProvider } from "@apollo/client/react";
 import { type ApolloClient } from "@apollo/client";
 
