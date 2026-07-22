@@ -12,6 +12,8 @@
         "codegen": "graphql-codegen --config codegen.ts",
         "dev": "vite dev",
         "editor:dev": "vite dev",
+        "editor:codegen": "graphql-codegen --config codegen.ts --watch",
+        "editor:watch": "concurrently \"yarn:editor:dev\" \"yarn:editor:codegen\"",
         "start": "vite preview"
     },
     "devDependencies": {
@@ -30,6 +32,7 @@
         "@vitest/browser": "^4.1.8",
         "@vitest/browser-playwright": "^4.1.8",
         "chai": "^6.2.2",
+        "concurrently": "^10.0.3",
         "csstype": "^3.2.3",
         "eslint": "^10.5.0",
         "eslint-plugin-jsx-a11y": "^6.10.2",
