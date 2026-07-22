@@ -8,7 +8,7 @@ const {
 
 const config: CodegenConfig = {
     schema: AUOHP_API_URI + "/graphql",
-    documents: ["src/**/*.ts?(x)"],
+    documents: ["src/**/*.{ts,tsx}"],
     generates: {
         "./src/gql/": {
             preset: "client",
@@ -16,12 +16,10 @@ const config: CodegenConfig = {
                 useTypeImports: true,
             },
         },
-        "./src/gql/schema.ts": {
-            plugins: ["typescript", "typescript-operations"],
+        "./schema.graphql": {
+            plugins: ["schema-ast"],
             config: {
-                avoidOptionals: true,
-                useTypeImports: true,
-                printFieldsOnNewLines: true,
+                includeDirectives: true,
             },
         },
     },
