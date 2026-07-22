@@ -1,12 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo } from "react";
 import { type BaseEditor, createEditor, Editor } from "slate";
 import { Slate, Editable, type ReactEditor, withReact } from "slate-react";
 import { withHistory } from "slate-history";
 import { graphql } from "@/gql";
 import { useMutation, useReadQuery } from "@apollo/client/react";
-import { debounce } from "perfect-debounce";
-
+import { flow, debounce } from "es-toolkit/function";
 
 // FIXME: Constructing URLs for the caption endpoint and the public video URI
 // should be a server-side concern (return a Video node, return Caption metadata).
@@ -161,6 +160,15 @@ function Page() {
     const { transcriptQueryRef } = Route.useLoaderData();
     const { data } = useReadQuery(transcriptQueryRef);
 
+    const [editStatement, { data: editStatementData }] = useMutation(EDIT_STATEMENT_MUTATION);
+
+    const withPlugins = flow(
+        withReact,
+        withHistory,
+        withPersistence(editStatement),
+    );
+    const editor = useMemo<Editor>(() => withPlugins(createEditor()), [editStatement]);
+
     const { statements, interview } = data.interviewTranscript;
     const statementSlice = statements.slice(0, 25);
     const statementElements = statementSlice.map(statement => ({
@@ -172,10 +180,6 @@ function Page() {
             { text: statement.text },
         ],
     }));
-
-    const [editStatement, { data: editStatementData }] = useMutation(EDIT_STATEMENT_MUTATION);
-
-    const [editor] = useState<Editor>(() => withPersistence(editStatement)(withReact(withHistory(createEditor()))));
 
     return (
         <>
