@@ -12,6 +12,9 @@ const TRANSCRIPT_QUERY = gql`
         health
         interviewTranscript(number: $interviewNumber) {
             uid
+            interview {
+                uid
+            }
             statements {
                 uid
                 startTime
@@ -51,6 +54,37 @@ declare module "slate" {
 
 export const Route = createFileRoute("/interview/$interviewNumber")({
     component: Page,
+    // FIXME: Handle errors gracefully
+    loader: async ({ context, params }) => {
+        const interviewNumber = Number.parseInt(params.interviewNumber);
+        if (Number.isNaN(interviewNumber)) {
+            throw new Error("Invalid interview number");
+        }
+
+        const client = context.apolloClient;
+
+        try {
+            const { data } = await client.query({
+                query: TRANSCRIPT_QUERY,
+                variables: { interviewNumber },
+            });
+
+            const statementData = data?.interviewTranscript?.statements || [];
+            const statementElements = statementData.map(statement => ({
+                type: "statement",
+                uid: statement.uid,
+                startTime: statement.startTime,
+                endTime: statement.endTime,
+                children: [
+                    { text: statement.text },
+                ],
+            }));
+
+            return { statementElements, interview: data?.interviewTranscript?.interview };
+        } catch (error) {
+            console.error("Error occurred while fetching transcript:", error);
+        }
+    },
 });
 
 
@@ -168,15 +202,11 @@ function Page() {
     });
 
     const interviewNumber = Number.parseInt(Route.useParams().interviewNumber);
-    const { data, loading, error } = useQuery(TRANSCRIPT_QUERY, { variables: { interviewNumber } });
-    const variant = loading ? "neutral" : error ? "negative" : "positive";
+    const { statementElements, interview } = Route.useLoaderData();
 
     return (
         <>
-            <Badge variant={ variant } size="L">
-                { loading ? "Loading..." : error ? "Error" : data.health }
-            </Badge>
-            <Slate editor={ editor } initialValue={ initialValue }>
+            <Slate editor={ editor } initialValue={ statementElements } key={ interview?.uid }>
                 <Editable renderElement={ renderElement } />
             </Slate>
         </>
