@@ -42,6 +42,18 @@ export type Caption = {
   vtt: Scalars['String']['output'];
 };
 
+export type EditStatementInput = {
+  text: Scalars['String']['input'];
+  uid: Scalars['String']['input'];
+};
+
+export type EditStatementPayload = {
+  __typename?: 'EditStatementPayload';
+  newHash: Scalars['String']['output'];
+  oldHash: Scalars['String']['output'];
+  uid: Scalars['String']['output'];
+};
+
 /**
  * Mirrors the (:Interview) node.
  *
@@ -71,6 +83,7 @@ export type InterviewAssetsInput = {
 export type MutationRoot = {
   __typename?: 'MutationRoot';
   addAsset: AddAssetPayload;
+  editStatement: EditStatementPayload;
   /**
    * Seeds a complete interview: creates Interview, Person, Transcript, and
    * Statement nodes plus all relationships. Segments are grouped into
@@ -82,6 +95,11 @@ export type MutationRoot = {
 
 export type MutationRootAddAssetArgs = {
   input: AddAssetInput;
+};
+
+
+export type MutationRootEditStatementArgs = {
+  input: EditStatementInput;
 };
 
 

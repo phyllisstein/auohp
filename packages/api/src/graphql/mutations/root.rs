@@ -1,4 +1,5 @@
 use super::add_asset::{self, AddAssetInput, AddAssetPayload};
+use super::edit_statement::{self, EditStatementInput, EditStatementPayload};
 use super::seed_interview::{self, SeedInterviewInput, SeedInterviewPayload};
 use async_graphql::{Context, Object};
 
@@ -23,5 +24,13 @@ impl MutationRoot {
         input: AddAssetInput,
     ) -> async_graphql::Result<AddAssetPayload> {
         add_asset::add_asset(ctx, input).await
+    }
+
+    async fn edit_statement(
+        &self,
+        ctx: &Context<'_>,
+        input: EditStatementInput,
+    ) -> async_graphql::Result<EditStatementPayload> {
+        edit_statement::edit_statement(ctx, input).await
     }
 }
