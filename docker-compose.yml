@@ -11,6 +11,8 @@ services:
     environment:
       RUST_LOG: auohp_api=debug,transcribe=debug
       RUSTFLAGS: -Ctarget-feature=+fp16
+      HTTPS_METHOD: noredirect
+      NODE_TLS_REJECT_UNAUTHORIZED: "0"
       VIRTUAL_HOST_MULTIPORTS: |-
         editor.auohp.localhost:
           "/":
@@ -21,7 +23,11 @@ services:
         api.auohp.localhost:
           "/":
             port: "6060"
-    # depends_on: [neo4j]
+    depends_on: [neo4j]
+    extra_hosts:
+      - "api.auohp.localhost:host-gateway"
+      - "editor.auohp.localhost:host-gateway"
+      - "search.auohp.localhost:host-gateway"
     expose:
       - "3030"
       - "4040"
