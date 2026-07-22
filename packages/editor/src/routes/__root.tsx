@@ -1,31 +1,32 @@
-import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
+import { createRootRouteWithContext, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import { Provider as SpectrumProvider } from "@react-spectrum/s2/Provider";
-import { ApolloClient, HttpLink, InMemoryCache } from "@apollo/client";
-import { ApolloProvider } from "@apollo/client/react";
 import { Body } from "styles/global";
+import { ApolloProvider } from "@apollo/client/react";
+import { type ApolloClient } from "@apollo/client";
 
-const client = new ApolloClient({
-    link: new HttpLink({
-        uri: import.meta.env.VITE_GRAPHQL_URI,
-    }),
-    cache: new InMemoryCache(),
-});
 
-export const Route = createRootRoute({
+export interface RouteContext {
+    apolloClient: ApolloClient;
+}
+
+
+export const Route = createRootRouteWithContext<RouteContext>()({
+    component: RootComponent,
+    notFoundComponent: () => <div>Not found</div>,
     head: () => ({
         meta: [
             { charSet: "utf-8" },
             { content: "width=device-width, initial-scale=1", name: "viewport" },
         ],
     }),
-    component: RootComponent,
-    notFoundComponent: () => <div>Not found</div>,
 });
 
 function RootComponent() {
+    const { apolloClient } = Route.useRouteContext();
+
     return (
-        <SpectrumProvider background="layer-1" colorScheme="light" elementType="html" locale="en-US">
-            <ApolloProvider client={ client }>
+        <ApolloProvider client={ apolloClient }>
+            <SpectrumProvider background="layer-1" colorScheme="light" elementType="html" locale="en-US">
                 <head>
                     <HeadContent />
                 </head>
@@ -36,7 +37,7 @@ function RootComponent() {
                     </main>
                     <Scripts />
                 </body>
-            </ApolloProvider>
-        </SpectrumProvider>
+            </SpectrumProvider>
+        </ApolloProvider>
     );
 }
