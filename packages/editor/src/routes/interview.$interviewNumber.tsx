@@ -126,7 +126,7 @@ const DefaultElement = props => {
 
 const StatementElement = ({ attributes, children, element }) => {
     const handleClick = () => {
-        playhead.timestamp.value = element.startTime;
+        playhead.seek.value = element.startTime;
         console.debug(`Clicked on statement: ${ element.uid } (${ formatTimestamp(element.startTime) })`);
     };
 
@@ -148,31 +148,23 @@ const TranscriptElement = ({ attributes, children, element }) => {
     const parentRef = useRef<null | HTMLElement>(null);
     const lastIndex = useRef(0);
 
-    const VIRTUALIZER_OVERSCAN = 2;
-
     const childVirtualizer = useVirtualizer({
         count: element.children.length,
-        overscan: VIRTUALIZER_OVERSCAN,
         estimateSize: () => 64,
         getScrollElement: () => parentRef.current,
         getItemKey: index => element.children[index].uid,
         onChange: (instance, sync) => {
             const items = instance.getVirtualItems();
 
-            // `items` includes the overscan items prepended and appended to the
-            // visible items within the scrolling window
-            const index = items[VIRTUALIZER_OVERSCAN].index;
+            const item = items.find(item => item.start >= instance.scrollOffset);
+            const index = item ? item.index : -1;
+
             if (instance.isScrolling || index === lastIndex.current) {
                 return;
             }
 
             playhead.seek.value = element.children[index].startTime;
             lastIndex.current = index;
-
-            instance.scrollToIndex(index, {
-                align: "start",
-                behavior: "smooth",
-            });
 
             console.debug(`Virtualizer scrolled to statement: ${ element.children[index].uid } (${ formatTimestamp(element.children[index].startTime) })`);
         },
@@ -182,22 +174,6 @@ const TranscriptElement = ({ attributes, children, element }) => {
         parentRef.current = node;
         attributes.ref(node);
     }, []);
-
-    useSignalEffect(() => {
-        const index = element.children.findIndex(node => node.startTime <= playhead.timestamp.value && playhead.timestamp.value < node.endTime);
-
-        if (childVirtualizer.isScrolling || lastIndex.current === index) {
-            return;
-        }
-
-        lastIndex.current = index;
-
-        console.debug(`childVirtualizer scrolling to statement: ${ element.children[index].uid } (${ formatTimestamp(element.children[index].startTime) })`);
-        childVirtualizer.scrollToIndex(index, {
-            align: "start",
-            behavior: "smooth",
-        });
-    });
 
     return (
         <div { ...attributes } ref={ setRefs } style={{ height: "400px", overflow: "auto", position: "relative" }}>
