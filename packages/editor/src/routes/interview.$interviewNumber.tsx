@@ -1,12 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useRef, useMemo } from "react";
+import { useCallback, useEffect, useRef, useMemo } from "react";
 import { type BaseEditor, createEditor, Editor } from "slate";
 import { Slate, Editable, type ReactEditor, withReact } from "slate-react";
 import { withHistory } from "slate-history";
 import { graphql } from "@/gql";
 import { useMutation, useReadQuery } from "@apollo/client/react";
-import { flow, debounce } from "es-toolkit/function";
+import { flow, debounce, throttle } from "es-toolkit/function";
 import { useVirtualizer } from "@tanstack/react-virtual";
+import { signal, effect, untracked } from "@preact/signals-react";
 
 
 // FIXME: Constructing URLs for the caption endpoint and the public video URI
@@ -75,6 +76,9 @@ declare module "slate" {
 }
 
 
+const playhead = signal<number>(0);
+
+
 export const Route = createFileRoute("/interview/$interviewNumber")({
     component: Page,
     // FIXME: Handle errors gracefully
@@ -114,8 +118,13 @@ const DefaultElement = props => {
 
 
 const StatementElement = ({ attributes, children, element }) => {
+    const handleClick = () => {
+        playhead.value = element.startTime;
+        console.log(`Playing statement: ${ element.uid } (${ formatTimestamp(element.startTime) })`);
+    };
+
     return (
-        <div key={ element.uid } { ...attributes }>
+        <div key={ element.uid } onClick={ handleClick } { ...attributes }>
             <div contentEditable={ false } style={{ userSelect: "none" }}>
                 { formatTimestamp(element.startTime) }
                 { " " }
@@ -130,17 +139,47 @@ const StatementElement = ({ attributes, children, element }) => {
 
 const TranscriptElement = ({ attributes, children, element }) => {
     const parentRef = useRef<null | HTMLElement>(null);
+    const lastIndex = useRef(0);
     const childVirtualizer = useVirtualizer({
         count: element.children.length,
         estimateSize: () => 64,
         getScrollElement: () => parentRef.current,
         getItemKey: index => element.children[index].uid,
+        onChange: (instance, sync) => {
+            console.log("Virtualizer changed: ", instance, sync);
+
+            const items = instance.getVirtualItems();
+            const index = items[0].index;
+            console.log({ items, item: items[0], lastIndex });
+            if (instance.isScrolling || index + 1 === lastIndex.current) {
+                return;
+            }
+
+            playhead.value = element.children[index].startTime;
+            lastIndex.current = index;
+        },
     });
 
     const setRefs = useCallback(node => {
         parentRef.current = node;
         attributes.ref(node);
     }, []);
+
+    effect(() => {
+        const index = element.children.findIndex(node => node.startTime <= playhead.value && playhead.value <= node.endTime);
+
+        if (childVirtualizer.isScrolling || lastIndex.current === index) {
+            return;
+        }
+
+        lastIndex.current = index;
+
+        console.log(`childVirtualizer scrolling to statement: ${ element.children[index].uid } (${ formatTimestamp(element.children[index].startTime) })`);
+        childVirtualizer.scrollToIndex(index, {
+            align: "start",
+            behavior: "smooth",
+        });
+    });
 
     return (
         <div { ...attributes } ref={ setRefs } style={{ height: "400px", overflow: "auto" }}>
@@ -208,7 +247,7 @@ const withPersistence = editStatement => (editor: Editor) => {
 function Page() {
     const interviewNumber = Number.parseInt(Route.useParams().interviewNumber);
     const { transcriptQueryRef } = Route.useLoaderData();
-    const { data } = useReadQuery(transcriptQueryRef);
+    const { data: transcriptData } = useReadQuery(transcriptQueryRef);
 
     const [editStatement, { data: editStatementData }] = useMutation(EDIT_STATEMENT_MUTATION);
 
@@ -219,7 +258,9 @@ function Page() {
     );
     const editor = useMemo<Editor>(() => withPlugins(createEditor()), []);
 
-    const { statements, interview, uid: transcriptUid } = data.interviewTranscript;
+    const player = useRef<HTMLVideoElement>(null);
+
+    const { statements, interview, uid: transcriptUid } = transcriptData.interviewTranscript;
     const statementNodes = statements.map(statement => ({
         type: "statement",
         uid: statement.uid,
@@ -238,7 +279,7 @@ function Page() {
 
     return (
         <>
-            <video controls crossOrigin="anonymous">
+            <video ref={ player } controls crossOrigin="anonymous" onTimeUpdate={ ev => playhead.value = ev.target.currentTime }>
                 <source src={ `${ AUOHP_PUBLIC }/videos/${ interviewNumber }.mp4` } type="video/mp4" />
                 {
                     interview.uid && <track kind="captions" src={ `${ AUOHP_API_URI }/interview/${ interview.uid }/vtt` } srcLang="en" label="English" />

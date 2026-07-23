@@ -208,6 +208,7 @@ __metadata:
     "@graphql-codegen/client-preset": "npm:^6.1.0"
     "@graphql-codegen/schema-ast": "npm:^6.1.0"
     "@parcel/watcher": "npm:^2.6.0"
+    "@preact/signals-react": "npm:^3.10.3"
     "@react-spectrum/s2": "npm:^1.4.0"
     "@stylelint/postcss-css-in-js": "npm:0.38.0"
     "@stylistic/eslint-plugin": "npm:^5.10.0"
@@ -3820,6 +3821,25 @@ __metadata:
   version: 1.0.0-next.25
   resolution: "@polka/url@npm:1.0.0-next.25"
   checksum: 10/4ab1d7a37163139c0e7bfc9d1e3f6a2a0db91a78b9f0a21f571d6aec2cdaeaacced744d47886c117aa7579aa5694b303fe3e0bd1922bb9cb3ce6bf7c2dc09801
+  languageName: node
+  linkType: hard
+
+"@preact/signals-core@npm:^1.14.4":
+  version: 1.14.4
+  resolution: "@preact/signals-core@npm:1.14.4"
+  checksum: 10/11b948fd5c1420100bacbf384cd27fd3e55db093075b370f15b3029ce29921b2f7bd60b31ed19a8a6dbbba6ce2fa27ec2f2de5ef6335635f3c04ac3b753bf39c
+  languageName: node
+  linkType: hard
+
+"@preact/signals-react@npm:^3.10.3":
+  version: 3.10.3
+  resolution: "@preact/signals-react@npm:3.10.3"
+  dependencies:
+    "@preact/signals-core": "npm:^1.14.4"
+    use-sync-external-store: "npm:^1.2.0"
+  peerDependencies:
+    react: ^16.14.0 || 17.x || 18.x || 19.x
+  checksum: 10/ba4e83922b28874733cf8f96898c4a1f24751b182fc111d9b0f701b5eea3beb1aade70ca7bb545cadc0b2320c3e4d8f780fe11627d9e25333b6a527c58774d46
   languageName: node
   linkType: hard
 
@@ -14081,7 +14101,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"use-sync-external-store@npm:^1.6.0":
+"use-sync-external-store@npm:^1.2.0, use-sync-external-store@npm:^1.6.0":
   version: 1.6.0
   resolution: "use-sync-external-store@npm:1.6.0"
   peerDependencies:

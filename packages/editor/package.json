@@ -65,6 +65,7 @@
     "dependencies": {
         "@apollo/client": "^4.2.7",
         "@apollo/client-integration-tanstack-start": "^0.14.5-rc.0",
+        "@preact/signals-react": "^3.10.3",
         "@react-spectrum/s2": "^1.4.0",
         "@tanstack/react-router": "^1.170.15",
         "@tanstack/react-start": "^1.168.25",
