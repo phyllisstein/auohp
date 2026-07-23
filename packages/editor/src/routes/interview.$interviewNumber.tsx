@@ -7,7 +7,7 @@ import { graphql } from "@/gql";
 import { useMutation, useReadQuery } from "@apollo/client/react";
 import { flow, debounce } from "es-toolkit/function";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { signal, useSignalEffect } from "@preact/signals-react";
+import { signal, useSignalEffect, createModel } from "@preact/signals-react";
 
 
 // FIXME: Constructing URLs for the caption endpoint and the public video URI
@@ -75,8 +75,15 @@ declare module "slate" {
     }
 }
 
+const Playhead = createModel(() => {
+    const seek = signal<number>(0);
+    const timestamp = signal<number>(0);
 
-const playhead = signal<number>(0);
+    return { seek, timestamp };
+});
+
+
+const playhead = new Playhead();
 
 
 export const Route = createFileRoute("/interview/$interviewNumber")({
@@ -119,8 +126,8 @@ const DefaultElement = props => {
 
 const StatementElement = ({ attributes, children, element }) => {
     const handleClick = () => {
-        playhead.value = element.startTime;
-        console.log(`Playing statement: ${ element.uid } (${ formatTimestamp(element.startTime) })`);
+        playhead.timestamp.value = element.startTime;
+        console.debug(`Clicked on statement: ${ element.uid } (${ formatTimestamp(element.startTime) })`);
     };
 
     return (
@@ -140,23 +147,34 @@ const StatementElement = ({ attributes, children, element }) => {
 const TranscriptElement = ({ attributes, children, element }) => {
     const parentRef = useRef<null | HTMLElement>(null);
     const lastIndex = useRef(0);
+
+    const VIRTUALIZER_OVERSCAN = 2;
+
     const childVirtualizer = useVirtualizer({
         count: element.children.length,
+        overscan: VIRTUALIZER_OVERSCAN,
         estimateSize: () => 64,
         getScrollElement: () => parentRef.current,
         getItemKey: index => element.children[index].uid,
         onChange: (instance, sync) => {
-            console.log("Virtualizer changed: ", instance, sync);
-
             const items = instance.getVirtualItems();
-            const index = items[0].index;
-            console.log({ items, item: items[0], lastIndex });
-            if (instance.isScrolling || index + 1 === lastIndex.current) {
+
+            // `items` includes the overscan items prepended and appended to the
+            // visible items within the scrolling window
+            const index = items[VIRTUALIZER_OVERSCAN].index;
+            if (instance.isScrolling || index === lastIndex.current) {
                 return;
             }
 
-            playhead.value = element.children[index].startTime;
+            playhead.seek.value = element.children[index].startTime;
             lastIndex.current = index;
+
+            instance.scrollToIndex(index, {
+                align: "start",
+                behavior: "smooth",
+            });
+
+            console.debug(`Virtualizer scrolled to statement: ${ element.children[index].uid } (${ formatTimestamp(element.children[index].startTime) })`);
         },
     });
 
@@ -166,7 +184,7 @@ const TranscriptElement = ({ attributes, children, element }) => {
     }, []);
 
     useSignalEffect(() => {
-        const index = element.children.findIndex(node => node.startTime <= playhead.value && playhead.value < node.endTime);
+        const index = element.children.findIndex(node => node.startTime <= playhead.timestamp.value && playhead.timestamp.value < node.endTime);
 
         if (childVirtualizer.isScrolling || lastIndex.current === index) {
             return;
@@ -174,7 +192,7 @@ const TranscriptElement = ({ attributes, children, element }) => {
 
         lastIndex.current = index;
 
-        console.log(`childVirtualizer scrolling to statement: ${ element.children[index].uid } (${ formatTimestamp(element.children[index].startTime) })`);
+        console.debug(`childVirtualizer scrolling to statement: ${ element.children[index].uid } (${ formatTimestamp(element.children[index].startTime) })`);
         childVirtualizer.scrollToIndex(index, {
             align: "start",
             behavior: "smooth",
@@ -182,7 +200,7 @@ const TranscriptElement = ({ attributes, children, element }) => {
     });
 
     return (
-        <div { ...attributes } ref={ setRefs } style={{ height: "400px", overflow: "auto" }}>
+        <div { ...attributes } ref={ setRefs } style={{ height: "400px", overflow: "auto", position: "relative" }}>
             <div style={{ position: "relative", height: `${ childVirtualizer.getTotalSize() }px` }}>
                 { childVirtualizer.getVirtualItems().map(virtualItem => {
                     const component = children[virtualItem.index];
@@ -235,7 +253,7 @@ const withPersistence = editStatement => (editor: Editor) => {
                     text: parent.children[0].text,
                 },
                 onCompleted: data => {
-                    console.debug("Edit completed:", data);
+                    console.debug(`Edit completed for statement ${ data.editStatement.uid }:`, data.editStatement);
                 },
             });
         }
@@ -259,6 +277,9 @@ function Page() {
     const editor = useMemo<Editor>(() => withPlugins(createEditor()), []);
 
     const player = useRef<HTMLVideoElement>(null);
+    useSignalEffect(() => {
+        !!player.current && (player.current.currentTime = playhead.seek.value);
+    });
 
     const { statements, interview, uid: transcriptUid } = transcriptData.interviewTranscript;
     const statementNodes = statements.map(statement => ({
@@ -279,7 +300,7 @@ function Page() {
 
     return (
         <>
-            <video ref={ player } controls crossOrigin="anonymous" onTimeUpdate={ ev => playhead.value = ev.target.currentTime }>
+            <video ref={ player } controls crossOrigin="anonymous" onTimeUpdate={ ev => playhead.timestamp.value = ev.target.currentTime }>
                 <source src={ `${ AUOHP_PUBLIC }/videos/${ interviewNumber }.mp4` } type="video/mp4" />
                 {
                     interview.uid && <track kind="captions" src={ `${ AUOHP_API_URI }/interview/${ interview.uid }/vtt` } srcLang="en" label="English" />
