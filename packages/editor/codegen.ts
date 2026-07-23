@@ -2,12 +2,12 @@ import type { CodegenConfig } from "@graphql-codegen/cli";
 
 
 const {
-    VITE_AUOHP_API_URI: AUOHP_API_URI = "http://localhost:6060",
+    CODEGEN_GRAPHQL_ENDPOINT = "http://localhost:6060/graphql",
 } = process.env;
 
 
 const config: CodegenConfig = {
-    schema: AUOHP_API_URI + "/graphql",
+    schema: CODEGEN_GRAPHQL_ENDPOINT,
     documents: ["src/**/*.{ts,tsx}"],
     generates: {
         "./src/gql/": {

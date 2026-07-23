@@ -12,7 +12,6 @@ services:
       RUST_LOG: auohp_api=debug,transcribe=debug
       RUSTFLAGS: -Ctarget-feature=+fp16
       HTTPS_METHOD: noredirect
-      NODE_TLS_REJECT_UNAUTHORIZED: "0"
       VIRTUAL_HOST_MULTIPORTS: |-
         editor.auohp.localhost:
           "/":
