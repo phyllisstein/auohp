@@ -7,7 +7,7 @@ import { graphql } from "@/gql";
 import { useMutation, useReadQuery } from "@apollo/client/react";
 import { flow, debounce } from "es-toolkit/function";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { signal, effect } from "@preact/signals-react";
+import { signal, useSignalEffect } from "@preact/signals-react";
 
 
 // FIXME: Constructing URLs for the caption endpoint and the public video URI
@@ -165,7 +165,7 @@ const TranscriptElement = ({ attributes, children, element }) => {
         attributes.ref(node);
     }, []);
 
-    effect(() => {
+    useSignalEffect(() => {
         const index = element.children.findIndex(node => node.startTime <= playhead.value && playhead.value < node.endTime);
 
         if (childVirtualizer.isScrolling || lastIndex.current === index) {
