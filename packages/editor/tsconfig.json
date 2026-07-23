@@ -32,13 +32,7 @@
         "incremental": true,
         "skipLibCheck": true,
         "moduleResolution": "bundler",
-        "checkJs": false,
-        "plugins": [
-            {
-                "name": "@0no-co/graphqlsp",
-                "schema": "./schema.graphql"
-            }
-        ]
+        "checkJs": false
     },
     "include": [
         "./src/**/*.ts",

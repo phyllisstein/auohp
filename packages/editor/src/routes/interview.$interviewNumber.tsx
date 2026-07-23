@@ -1,11 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useCallback, useRef, useMemo } from "react";
 import { type BaseEditor, createEditor, Editor } from "slate";
 import { Slate, Editable, type ReactEditor, withReact } from "slate-react";
 import { withHistory } from "slate-history";
 import { graphql } from "@/gql";
 import { useMutation, useReadQuery } from "@apollo/client/react";
 import { flow, debounce } from "es-toolkit/function";
+import { useVirtualizer } from "@tanstack/react-virtual";
+
 
 // FIXME: Constructing URLs for the caption endpoint and the public video URI
 // should be a server-side concern (return a Video node, return Caption metadata).
@@ -49,7 +51,7 @@ export const TRANSCRIPT_QUERY = graphql(`
 type BaseText = { text: string };
 
 
-interface StatementElement {
+interface StatementNode {
     type: string;
     uid: string;
     startTime: number | null | undefined;
@@ -57,11 +59,17 @@ interface StatementElement {
     children: Array<BaseText>;
 }
 
+interface TranscriptNode {
+    type: string;
+    uid: string;
+    children: Array<StatementNode>;
+}
+
 
 declare module "slate" {
     interface CustomTypes {
         Editor: BaseEditor & ReactEditor;
-        Element: StatementElement;
+        Element: StatementNode | TranscriptNode;
         Text: BaseText;
     }
 }
@@ -120,10 +128,52 @@ const StatementElement = ({ attributes, children, element }) => {
 };
 
 
+const TranscriptElement = ({ attributes, children, element }) => {
+    const parentRef = useRef<null | HTMLElement>(null);
+    const childVirtualizer = useVirtualizer({
+        count: element.children.length,
+        estimateSize: () => 64,
+        getScrollElement: () => parentRef.current,
+        getItemKey: index => element.children[index].uid,
+    });
+
+    const setRefs = useCallback(node => {
+        parentRef.current = node;
+        attributes.ref(node);
+    }, []);
+
+    return (
+        <div { ...attributes } ref={ setRefs } style={{ height: "400px", overflow: "auto" }}>
+            <div style={{ position: "relative", height: `${ childVirtualizer.getTotalSize() }px` }}>
+                { childVirtualizer.getVirtualItems().map(virtualItem => {
+                    const component = children[virtualItem.index];
+                    return (
+                        <div
+                            key={ virtualItem.key }
+                            style={{
+                                height: `${ virtualItem.size }px`,
+                                transform: `translateY(${ virtualItem.start }px)`,
+                                position: "absolute",
+                                left: 0,
+                                top: 0,
+                                width: "100%",
+                            }}>
+                            { component }
+                        </div>
+                    );
+                }) }
+            </div>
+        </div>
+    );
+};
+
+
 const renderElement = props => {
     switch (props.element.type) {
         case "statement":
             return <StatementElement { ...props } />;
+        case "transcript":
+            return <TranscriptElement { ...props } />;
         default:
             return <DefaultElement { ...props } />;
     }
@@ -146,7 +196,7 @@ const withPersistence = editStatement => (editor: Editor) => {
                     text: parent.children[0].text,
                 },
                 onCompleted: data => {
-                    console.log("Edit completed:", data);
+                    console.debug("Edit completed:", data);
                 },
             });
         }
@@ -167,11 +217,10 @@ function Page() {
         withHistory,
         withPersistence(editStatement),
     );
-    const editor = useMemo<Editor>(() => withPlugins(createEditor()), [editStatement]);
+    const editor = useMemo<Editor>(() => withPlugins(createEditor()), []);
 
-    const { statements, interview } = data.interviewTranscript;
-    const statementSlice = statements.slice(0, 25);
-    const statementElements = statementSlice.map(statement => ({
+    const { statements, interview, uid: transcriptUid } = data.interviewTranscript;
+    const statementNodes = statements.map(statement => ({
         type: "statement",
         uid: statement.uid,
         startTime: statement.startTime,
@@ -181,6 +230,12 @@ function Page() {
         ],
     }));
 
+    const transcriptNode = {
+        type: "transcript",
+        uid: transcriptUid,
+        children: statementNodes,
+    };
+
     return (
         <>
             <video controls crossOrigin="anonymous">
@@ -189,7 +244,7 @@ function Page() {
                     interview.uid && <track kind="captions" src={ `${ AUOHP_API_URI }/interview/${ interview.uid }/vtt` } srcLang="en" label="English" />
                 }
             </video>
-            <Slate editor={ editor } initialValue={ statementElements } key={ interview.uid }>
+            <Slate editor={ editor } initialValue={ [transcriptNode] } key={ interview.uid }>
                 <Editable renderElement={ renderElement } />
             </Slate>
         </>

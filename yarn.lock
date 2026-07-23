@@ -217,6 +217,7 @@ __metadata:
     "@tanstack/react-router": "npm:^1.170.15"
     "@tanstack/react-router-devtools": "npm:^1.167.0"
     "@tanstack/react-start": "npm:^1.168.25"
+    "@tanstack/react-virtual": "npm:^3.14.8"
     "@vitejs/plugin-react-swc": "npm:^4.3.2"
     "@vitest/browser": "npm:^4.1.8"
     "@vitest/browser-playwright": "npm:^4.1.8"
@@ -5536,6 +5537,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@tanstack/react-virtual@npm:^3.14.8":
+  version: 3.14.8
+  resolution: "@tanstack/react-virtual@npm:3.14.8"
+  dependencies:
+    "@tanstack/virtual-core": "npm:3.17.6"
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+    react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+  checksum: 10/d4148ed2da168e4833ba3c27b396a8be2199822539ab8b0712923feb4e130b3c1171496646d38254fc4100443c508662aebfa45ce80e7d742f8fa3bb4d048365
+  languageName: node
+  linkType: hard
+
 "@tanstack/router-core@npm:1.171.13":
   version: 1.171.13
   resolution: "@tanstack/router-core@npm:1.171.13"
@@ -5713,6 +5726,13 @@ __metadata:
   version: 0.9.3
   resolution: "@tanstack/store@npm:0.9.3"
   checksum: 10/fb41b7cb0ea9d79ba6db0335d4bf503911df8e203d5c4fae34996a627e1b43c93071b2d733f13f6db51aff4c703022cd7c2477a9192f84141e0010c4df782f63
+  languageName: node
+  linkType: hard
+
+"@tanstack/virtual-core@npm:3.17.6":
+  version: 3.17.6
+  resolution: "@tanstack/virtual-core@npm:3.17.6"
+  checksum: 10/17a067cf0bf5796b4bdc8572ae22ff7f99096b4bd4f84c12bf5d45303aefb227e7e755f1e064c8689f72658ae952d2ea8c5583817da450707e5a46113778396e
   languageName: node
   linkType: hard
 
