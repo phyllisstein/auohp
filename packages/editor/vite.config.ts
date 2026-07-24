@@ -3,6 +3,19 @@ import { defineConfig } from "vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react-swc";
 import macros from "unplugin-parcel-macros";
+import optimizeLocales from "@react-aria/optimize-locales-plugin";
+
+// See https://github.com/TanStack/router/discussions/6928#discussioncomment-16147477
+function withNormalizedMacroIds(plugin) {
+    return {
+        ...plugin,
+        name: `${ plugin.name }-normalized-ids`,
+        transform(code, id) {
+            return plugin.transform?.call(this, code, id.replace(/\?.*$/, ""));
+        },
+    };
+}
+
 
 export default defineConfig({
     envDir: import.meta.dirname,
@@ -16,7 +29,7 @@ export default defineConfig({
         strictPort: true,
     },
     plugins: [
-        macros.vite(),
+        withNormalizedMacroIds(macros.vite()), // Must come first!
         tanstackStart(),
         // viteReact must come after tanstackStart
         viteReact({

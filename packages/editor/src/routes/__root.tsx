@@ -1,10 +1,9 @@
 import { createRootRouteWithContext, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import { Provider as SpectrumProvider } from "@react-spectrum/s2/Provider";
-import { Body } from "@/styles/global";
+import { Body } from "../styles/global";
 import { ApolloProvider } from "@apollo/client/react";
-import { type ApolloClient } from "@apollo/client";
 import type { ApolloClientIntegration } from "@apollo/client-integration-tanstack-start";
-
+import { useRouter } from "@tanstack/react-router";
 
 export const Route = createRootRouteWithContext<ApolloClientIntegration.RouterContext>()({
     component: RootComponent,
@@ -19,10 +18,25 @@ export const Route = createRootRouteWithContext<ApolloClientIntegration.RouterCo
 
 function RootComponent() {
     const { apolloClient } = Route.useRouteContext();
+    const router = useRouter();
 
     return (
         <ApolloProvider client={ apolloClient }>
-            <SpectrumProvider background="layer-1" colorScheme="light" elementType="html" locale="en-US">
+            <SpectrumProvider
+                background="base"
+                colorScheme="dark"
+                elementType="html"
+                locale="en-US"
+                router={{
+                    navigate: (href, options) => {
+                        if (typeof href === "string") return;
+                        return router.navigate({ ...href, ...options });
+                    },
+                    useHref: href => {
+                        if (typeof href === "string") return href;
+                        return router.buildLocation(href).href;
+                    },
+                }}>
                 <head>
                     <HeadContent />
                 </head>
@@ -36,4 +50,12 @@ function RootComponent() {
             </SpectrumProvider>
         </ApolloProvider>
     );
+}
+
+// Configure the type of the `href` and `routerOptions` props on all React Spectrum components.
+declare module "@react-spectrum/s2/Provider" {
+    interface RouterConfig {
+        href: ToOptions;
+        routerOptions: Omit<NavigateOptions, keyof ToOptions>;
+    }
 }

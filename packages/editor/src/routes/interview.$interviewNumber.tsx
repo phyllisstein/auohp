@@ -3,11 +3,12 @@ import { useCallback, useEffect, useRef, useMemo } from "react";
 import { type BaseEditor, createEditor, Editor } from "slate";
 import { Slate, Editable, type ReactEditor, withReact } from "slate-react";
 import { withHistory } from "slate-history";
-import { graphql } from "@/gql";
+import { graphql } from "../gql";
 import { useMutation, useReadQuery } from "@apollo/client/react";
 import { flow, debounce } from "es-toolkit/function";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { signal, useSignalEffect, createModel } from "@preact/signals-react";
+import { style } from "@react-spectrum/s2/style" with { type: "macro" };
 
 
 // FIXME: Constructing URLs for the caption endpoint and the public video URI
@@ -292,7 +293,11 @@ function Page() {
     };
 
     return (
-        <>
+        <div className={ style({
+            backgroundColor: "layer-1",
+            margin: 4,
+            padding: 4,
+        }) }>
             <video ref={ player } controls crossOrigin="anonymous" onTimeUpdate={ ev => playhead.timestamp.value = ev.target.currentTime }>
                 <source src={ `${ AUOHP_PUBLIC }/videos/${ interviewNumber }.mp4` } type="video/mp4" />
                 {
@@ -302,6 +307,6 @@ function Page() {
             <Slate editor={ editor } initialValue={ [transcriptNode] } key={ interview.uid }>
                 <Editable renderElement={ renderElement } />
             </Slate>
-        </>
+        </div>
     );
 }
