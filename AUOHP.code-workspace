@@ -30,6 +30,7 @@
         }
     ],
     "settings": {
+        "js/ts.tsdk.path": "./node_modules/typescript/lib",
         "editor.tabSize": 4,
         "search.exclude": {
             "**/node_modules": true,
