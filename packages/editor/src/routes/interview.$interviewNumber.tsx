@@ -159,7 +159,7 @@ const TranscriptElement = ({ attributes, children, element }) => {
             const item = items.find(item => item.start >= instance.scrollOffset);
             const index = item ? item.index : -1;
 
-            if (instance.isScrolling || index === lastIndex.current) {
+            if (instance.isScrolling || index === lastIndex.current || index === -1) {
                 return;
             }
 
@@ -174,6 +174,23 @@ const TranscriptElement = ({ attributes, children, element }) => {
         parentRef.current = node;
         attributes.ref(node);
     }, []);
+
+    useSignalEffect(() => {
+        const index = element.children.findIndex(node => node.startTime <= playhead.timestamp.value && playhead.timestamp.value < node.endTime);
+
+        if (childVirtualizer.isScrolling || lastIndex.current === index) {
+            return;
+        }
+
+        lastIndex.current = index;
+
+        console.debug(`childVirtualizer scrolling to statement: ${ element.children[index].uid } (${ formatTimestamp(element.children[index].startTime) })`);
+        childVirtualizer.scrollToIndex(index, {
+            align: "auto",
+            behavior: "smooth",
+        });
+    });
+
 
     return (
         <div { ...attributes } ref={ setRefs } style={{ height: "400px", overflow: "auto", position: "relative" }}>
