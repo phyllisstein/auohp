@@ -6,6 +6,7 @@ import { useRouter } from "@tanstack/react-router";
 import { ThemeProvider as StyledThemeProvider } from "styled-components";
 import theme from "@/styles/theme";
 import { Body } from "@/styles/global";
+import { Button as SButton } from "@react-spectrum/s2";
 
 export const Route = createRootRouteWithContext<ApolloClientIntegration.RouterContext>()({
     component: RootComponent,
