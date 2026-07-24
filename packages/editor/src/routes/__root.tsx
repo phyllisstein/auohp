@@ -1,9 +1,11 @@
 import { createRootRouteWithContext, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import { Provider as SpectrumProvider } from "@react-spectrum/s2/Provider";
-import { Body } from "../styles/global";
 import { ApolloProvider } from "@apollo/client/react";
 import type { ApolloClientIntegration } from "@apollo/client-integration-tanstack-start";
 import { useRouter } from "@tanstack/react-router";
+import { ThemeProvider as StyledThemeProvider } from "styled-components";
+import theme from "@/styles/theme";
+import { Body } from "@/styles/global";
 
 export const Route = createRootRouteWithContext<ApolloClientIntegration.RouterContext>()({
     component: RootComponent,
@@ -41,9 +43,11 @@ function RootComponent() {
                     <HeadContent />
                 </head>
                 <body>
-                    <Body />
                     <main>
-                        <Outlet />
+                        <StyledThemeProvider theme={ theme }>
+                            <Body />
+                            <Outlet />
+                        </StyledThemeProvider>
                     </main>
                     <Scripts />
                 </body>

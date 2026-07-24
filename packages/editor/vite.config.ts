@@ -34,6 +34,7 @@ export default defineConfig({
         // viteReact must come after tanstackStart
         viteReact({
             plugins: [
+                ["@swc/plugin-styled-components", { ssr: true, displayName: true }],
                 [
                     "@swc-contrib/plugin-graphql-codegen-client-preset",
                     { artifactDirectory: "./src/gql", gqlTagName: "graphql" },

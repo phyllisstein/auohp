@@ -9,6 +9,7 @@ import { flow, debounce } from "es-toolkit/function";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { signal, useSignalEffect, createModel } from "@preact/signals-react";
 import { style } from "@react-spectrum/s2/style" with { type: "macro" };
+import styled from "styled-components";
 
 
 // FIXME: Constructing URLs for the caption endpoint and the public video URI
@@ -255,6 +256,16 @@ const withPersistence = editStatement => (editor: Editor) => {
     return editor;
 };
 
+const SCButton = styled.button`
+    display: inline-block;
+`;
+
+const a2ButtonStyles = style({
+    backgroundColor: "layer-1",
+    borderRadius: "lg",
+    margin: 4,
+    padding: 4,
+});
 
 function Page() {
     const interviewNumber = Number.parseInt(Route.useParams().interviewNumber);
@@ -292,12 +303,23 @@ function Page() {
         children: statementNodes,
     };
 
+    const injectedButtonClassNames = style({
+        backgroundColor: "layer-1",
+        borderRadius: "lg",
+        margin: 4,
+        padding: 4,
+    });
+    console.log("Injected button class names:", injectedButtonClassNames);
+    console.log("A2 button class names:", a2ButtonStyles);
+
     return (
         <div className={ style({
             backgroundColor: "layer-1",
+            borderRadius: "lg",
             margin: 4,
             padding: 4,
         }) }>
+            <SCButton className={ injectedButtonClassNames }>Click me</SCButton>
             <video ref={ player } controls crossOrigin="anonymous" onTimeUpdate={ ev => playhead.timestamp.value = ev.target.currentTime }>
                 <source src={ `${ AUOHP_PUBLIC }/videos/${ interviewNumber }.mp4` } type="video/mp4" />
                 {
