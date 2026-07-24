@@ -11,7 +11,7 @@
         "build": "vite build",
         "codegen": "graphql-codegen --config codegen.ts",
         "dev": "vite dev",
-        "editor:dev": "vite dev --clearScreen false --logLevel warn --experimentalBundle",
+        "editor:dev": "vite dev --clearScreen false --logLevel warn",
         "editor:codegen": "graphql-codegen --config codegen.ts --watch --silent",
         "editor:watch": "concurrently \"yarn:editor:dev\" \"yarn:editor:codegen\"",
         "start": "vite preview"
@@ -67,6 +67,7 @@
         "@apollo/client": "^4.2.7",
         "@apollo/client-integration-tanstack-start": "^0.14.5-rc.0",
         "@preact/signals-react": "^3.10.3",
+        "@react-aria/optimize-locales-plugin": "^2.0.0",
         "@react-spectrum/s2": "^1.4.0",
         "@tanstack/react-router": "^1.170.15",
         "@tanstack/react-start": "^1.168.25",

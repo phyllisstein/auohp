@@ -40,6 +40,12 @@ export default defineConfig({
                 ],
             ],
         }),
+        {
+            ...optimizeLocales.vite({
+                locales: ["en-US"],
+            }),
+            enforce: "pre",
+        },
     ],
     ssr: {
         noExternal: [/^@react-spectrum\//],
