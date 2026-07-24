@@ -208,6 +208,7 @@ __metadata:
     "@graphql-codegen/client-preset": "npm:^6.1.0"
     "@graphql-codegen/schema-ast": "npm:^6.1.0"
     "@parcel/watcher": "npm:^2.6.0"
+    "@preact/eslint-plugin-signals": "npm:^0.3.0"
     "@preact/signals-react": "npm:^3.10.3"
     "@react-spectrum/s2": "npm:^1.4.0"
     "@stylelint/postcss-css-in-js": "npm:0.38.0"
@@ -3821,6 +3822,13 @@ __metadata:
   version: 1.0.0-next.25
   resolution: "@polka/url@npm:1.0.0-next.25"
   checksum: 10/4ab1d7a37163139c0e7bfc9d1e3f6a2a0db91a78b9f0a21f571d6aec2cdaeaacced744d47886c117aa7579aa5694b303fe3e0bd1922bb9cb3ce6bf7c2dc09801
+  languageName: node
+  linkType: hard
+
+"@preact/eslint-plugin-signals@npm:^0.3.0":
+  version: 0.3.0
+  resolution: "@preact/eslint-plugin-signals@npm:0.3.0"
+  checksum: 10/15ec227deab172251b040c6f5ff1f1b401ac7172c08e0ce0f86ec6399f8930f70e849388a1c94a4b0a29acc545db1e3a41ab5edbab99047e341e0ff8bad200a1
   languageName: node
   linkType: hard
 

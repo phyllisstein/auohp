@@ -32,15 +32,15 @@
         "incremental": true,
         "skipLibCheck": true,
         "moduleResolution": "bundler",
-        "checkJs": false
+        "checkJs": true
     },
     "include": [
         "./src/**/*.ts",
         "./src/**/*.tsx",
         "./src/**/*.d.ts",
-        "*.js",
-        "*.ts",
-        "*.tsx"
+        "./eslint.config.js",
+        "./*.js",
+        "./*.ts"
     ],
     "exclude": [
         "node_modules"

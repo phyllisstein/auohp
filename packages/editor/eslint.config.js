@@ -7,6 +7,7 @@ import { defineConfig } from "eslint/config";
 import js from "@eslint/js";
 import globals from "globals";
 import pluginRouter from "@tanstack/eslint-plugin-router";
+import signals from "@preact/eslint-plugin-signals";
 
 export default defineConfig(
     {
@@ -148,6 +149,7 @@ export default defineConfig(
             react,
             "react-hooks": reactHooks,
             "jsx-a11y": jsxA11y,
+            signals,
         },
         settings: {
             react: {
@@ -169,12 +171,13 @@ export default defineConfig(
             },
         },
         rules: {
-            "react-hooks/exhaustive-deps": [
-                "warn",
-                {
-                    additionalHooks: "(useRecoilCallback|useRecoilTransaction_UNSTABLE)",
-                },
-            ],
+            "react-hooks/exhaustive-deps": "warn",
+            "signals/no-signal-write-in-computed": "error",
+            "signals/no-value-after-await": "error",
+            "signals/no-signal-truthiness": "warn",
+            "signals/no-signal-in-component-body": "error",
+            "signals/no-conditional-value-read": "error",
+            "signals/no-useless-computed": "warn",
             ...react.configs["jsx-runtime"].rules,
             ...jsxA11y.configs.recommended.rules,
         },
