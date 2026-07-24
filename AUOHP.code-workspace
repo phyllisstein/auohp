@@ -35,14 +35,37 @@
             "**/node_modules": true,
             "**/.yarn": true
         },
+        "editor.formatOnSave": false,
+        "eslint.format.enable": true,
+        "eslint.lintTask.enable": true,
         "[rust]": {
-            "editor.quickSuggestions": {
-                "other": true,
-                "comments": false,
-                "strings": false
-            },
             "editor.defaultFormatter": "rust-lang.rust-analyzer",
-            "editor.formatOnSave": true
-        }
+            "editor.codeActionsOnSave": {
+                "source.fixAll": "explicit"
+            }
+        },
+        "[javascript][typescript][javascriptreact][typescriptreact]": {
+            "editor.defaultFormatter": "dbaeumer.vscode-eslint",
+            "editor.codeActionsOnSave": {
+                "source.fixAll.eslint": "explicit"
+            },
+        },
+        "[scss]": {
+            "editor.codeActionsOnSave": {
+                "source.fixAll.stylelint": "always"
+            }
+        },
+        "eslint.validate": [
+            "javascript",
+            "typescript",
+            "javascriptreact",
+            "typescriptreact"
+        ],
+        "stylelint.enable": false,
+        "stylelint.validate": [
+            "scss",
+            "typescript",
+            "typescriptreact"
+        ],
     }
 }
