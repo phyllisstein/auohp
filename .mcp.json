@@ -2,8 +2,10 @@
   "mcpServers": {
     "neo4j-mcp": {
       "type": "stdio",
-      "command": "neo4j-mcp",
-      "args": [],
+      "command": "uvx",
+      "args": [
+        "neo4j-mcp-server@1.5.3"
+      ],
       "env": {
         "NEO4J_READ_ONLY": "false",
         "NEO4J_TELEMETRY": "false",
@@ -13,17 +15,21 @@
       }
     },
     "neo4j-data-modeling": {
+      "type": "stdio",
       "command": "uvx",
       "args": [
         "mcp-neo4j-data-modeling@0.8.2",
+        "--transport",
+        "stdio",
         "--transport",
         "stdio"
       ]
     },
     "neo4j-database": {
+      "type": "stdio",
       "command": "uvx",
       "args": [
-        "mcp-neo4j-cypher@0.5.3",
+        "mcp-neo4j-cypher@0.6.0",
         "--transport",
         "stdio"
       ]
