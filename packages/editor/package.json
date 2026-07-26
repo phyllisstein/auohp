@@ -66,6 +66,8 @@
     "dependencies": {
         "@apollo/client": "^4.2.8",
         "@apollo/client-integration-tanstack-start": "^0.14.5-rc.0",
+        "@lexical/react": "^0.48.0",
+        "@lexical/utils": "^0.48.0",
         "@preact/signals-react": "^3.11.0",
         "@react-aria/optimize-locales-plugin": "^2.0.0",
         "@react-spectrum/s2": "^1.5.1",
@@ -75,6 +77,7 @@
         "bezier-easing": "^3.0.1",
         "es-toolkit": "^1.50.0",
         "graphql": "^17.0.2",
+        "lexical": "^0.48.0",
         "perfect-debounce": "^2.1.0",
         "polished": "^4.3.1",
         "react": "^19.2.8",
