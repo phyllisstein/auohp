@@ -13,6 +13,7 @@ import {
     DecoratorNode,
     ElementNode,
     KEY_ENTER_COMMAND,
+    setDOMUnmanaged,
     type EditorConfig,
     type LexicalCommand,
     type LexicalEditor,
@@ -88,11 +89,16 @@ const formatTimestamp = (timestamp: number) =>
 //
 // It extends ElementNode (a block that HOLDS the editable TextNode children) and
 // carries the graph identity (uid) plus the caption window (startTime/endTime).
-// The non-editable timestamp label is drawn with a CSS `::before` pseudo-element
-// fed by a `data-label` attribute --- pseudo-elements are inherently
-// unselectable/uneditable, so Lexical's child reconciler never sees an extra DOM
-// node to trip over. (Injecting a real <div> child into createDOM would desync
-// the reconciler's child-index bookkeeping; the pseudo-element sidesteps that.)
+//
+// The non-editable timestamps are REAL chrome DOM --- the direct analogue of
+// Slate's `contentEditable={false}` child --- not a CSS pseudo-element. createDOM
+// returns a wrapper holding (a) a chrome column and (b) an inner content element;
+// getDOMSlot re-points the reconciler at the content element so it only ever
+// manages the editable text there, never the chrome sibling. The chrome is also
+// marked `setDOMUnmanaged` (the primitive DecoratorNode DOM uses) so selection and
+// reconciliation ignore it entirely. This is what lets chrome grow past a text
+// label --- speaker <Select>s, confidence meters, tag affordances --- which a
+// pseudo-element (text-only, max two per element, no React) could never hold.
 // -----------------------------------------------------------------------------
 type SerializedStatementNode = Spread<
     {
@@ -149,15 +155,49 @@ class StatementNode extends ElementNode {
         const dom = document.createElement("div");
         dom.className = "auohp-statement";
         dom.setAttribute("data-uid", this.__uid);
-        dom.setAttribute("data-label", this.#label());
+
+        // Non-editable chrome column: two stacked timestamps (start over end),
+        // built as real elements so this can later hold structure/React that a
+        // pseudo-element cannot. `setDOMUnmanaged` tells the reconciler this DOM
+        // is not its concern; contentEditable=false keeps the caret out.
+        const chrome = document.createElement("div");
+        chrome.className = "auohp-statement__chrome";
+        chrome.contentEditable = "false";
+        chrome.append(
+            this.#timeElement(this.__startTime),
+            this.#timeElement(this.__endTime),
+        );
+        setDOMUnmanaged(chrome);
+
+        // The content element the reconciler DOES manage (see getDOMSlot): the
+        // editable TextNode children live here, beside --- not inside --- the chrome.
+        const content = document.createElement("div");
+        content.className = "auohp-statement__content";
+
+        dom.append(chrome, content);
         return dom;
     }
 
+    // Point the reconciler's child-management slot at the inner content element
+    // rather than the wrapper, so managed children never mingle with the chrome.
+    // `ElementDOMSlot.resolveLeafPosition` handles DOM-caret -> lexical-offset
+    // mapping for this wrap pattern, so selection needs no hand-rolled math.
+    getDOMSlot(element: HTMLElement) {
+        const content = element.querySelector<HTMLElement>(".auohp-statement__content") ?? element;
+        return super.getDOMSlot(element).withElement(content);
+    }
+
     // Return `false` --- Lexical keeps managing our text children --- but first
-    // refresh the label if the caption window shifted (e.g. an inherited split).
+    // refresh the chrome timestamps if the caption window shifted (e.g. a split).
     updateDOM(prevNode: StatementNode, dom: HTMLElement): boolean {
         if (prevNode.__startTime !== this.__startTime || prevNode.__endTime !== this.__endTime) {
-            dom.setAttribute("data-label", this.#label());
+            const times = dom.querySelectorAll<HTMLElement>(".auohp-statement__chrome > .auohp-statement__time");
+            if (times[0]) {
+                times[0].textContent = formatTimestamp(this.__startTime ?? 0);
+            }
+            if (times[1]) {
+                times[1].textContent = formatTimestamp(this.__endTime ?? 0);
+            }
         }
         return false;
     }
@@ -173,10 +213,11 @@ class StatementNode extends ElementNode {
         };
     }
 
-    #label(): string {
-        const start = this.__startTime ?? 0;
-        const end = this.__endTime ?? 0;
-        return `${ formatTimestamp(start) } - ${ formatTimestamp(end) }`;
+    #timeElement(time: number | null): HTMLElement {
+        const el = document.createElement("span");
+        el.className = "auohp-statement__time";
+        el.textContent = formatTimestamp(time ?? 0);
+        return el;
     }
 }
 
@@ -584,19 +625,29 @@ function useVideoSync(player: RefObject<HTMLVideoElement | null>) {
 }
 
 
-// Styles for the non-editable timestamp label (see StatementNode.createDOM).
+// Styles for the statement wrapper, its non-editable chrome column, and the
+// editable content element (see StatementNode.createDOM / getDOMSlot).
 const EditorStyle = createGlobalStyle`
     .auohp-statement {
+        display: flex;
+        gap: 0.75rem;
+        align-items: flex-start;
         padding: 0.25rem 0;
     }
 
-    .auohp-statement::before {
-        display: block;
+    .auohp-statement__chrome {
+        display: flex;
+        flex-direction: column;
+        flex-shrink: 0;
+        min-width: 6rem;
         font-family: monospace;
         font-size: 0.75rem;
         color: #888;
-        content: attr(data-label);
         user-select: none;
+    }
+
+    .auohp-statement__content {
+        flex: 1;
     }
 `;
 
