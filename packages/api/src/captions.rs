@@ -1,5 +1,4 @@
-//! Caption generation --- transport-agnostic.
-//!
+//! Caption generation --- transport-agnostic//!
 //! Produces WebVTT text for an interview's statements. Both the GraphQL
 //! `captions` resolver and the REST `/interview/{n}/captions` endpoint call
 //! `generate_vtt`; neither transport's types appear here. The function takes a
@@ -7,12 +6,12 @@
 //! about how the result is served. Dependency points inward: transports depend
 //! on this module, never the reverse.
 
+use crate::graphql::nodes::StatementNode;
+use crate::neo4j::Db;
 use anyhow::Result;
 use chrono::TimeDelta;
 use neo4rs::query;
-
-use crate::graphql::nodes::StatementNode;
-use crate::neo4j::Db;
+use rand::Rng;
 
 // FIXME: reaching up into `graphql::nodes` for `StatementNode` is the wrong
 // direction --- a transport-agnostic module should not depend on the GraphQL
@@ -21,8 +20,8 @@ use crate::neo4j::Db;
 // is what surfaces the pressure to lift those projections into `auohp-core`,
 // where both this module and the GraphQL layer could depend on them cleanly.
 
-fn to_timestamp(&t: &TimeDelta) -> String {
-    let mut ts = t;
+fn format_millisecond_timestamp(t: i64) -> String {
+    let mut ts = TimeDelta::milliseconds(t);
 
     let hours = ts.num_hours();
     ts -= TimeDelta::hours(hours);
@@ -57,14 +56,17 @@ pub async fn generate_vtt(db: &Db, interview_uid: &str) -> Result<String> {
         let statement: neo4rs::Node = row.get("statement")?;
         let sn: StatementNode = statement.to()?;
 
-        let start_time: neo4rs::BoltFloat = row.get("startTime")?;
-        let end_time: neo4rs::BoltFloat = row.get("endTime")?;
+        let start_time: neo4rs::BoltInteger = row.get("startTime")?;
+        let end_time: neo4rs::BoltInteger = row.get("endTime")?;
 
-        let start = TimeDelta::milliseconds((start_time.value * 1_000.0) as i64);
-        let end = TimeDelta::milliseconds((end_time.value * 1_000.0) as i64);
+        // Whisper Statements define timestamps that are entirely contiguous.
+        // Theis deviates from the WebVTT standad; adjusting is one hairy yak to
+        // shave. Here, we simply pad the timings. Done here, not at archiving
+        // time, on the elief that "VTT doesn't like it" should compromise the
+        // representation, not the source of truth.
+        let start_timestamp = format_millisecond_timestamp(start_time.value * 1_000 + 250);
+        let end_timestamp = format_millisecond_timestamp(end_time.value * 1_000 - 250);
 
-        let start_timestamp = to_timestamp(&start);
-        let end_timestamp = to_timestamp(&end);
         let text = sn.text.clone();
 
         vtts.push(format!(
@@ -82,10 +84,30 @@ mod tests {
 
     #[test]
     fn creates_timestamp_from_fractional_seconds() {
-        const SECONDS: f64 = 1794.7;
+        const SECONDS: i64 = 1_7947;
+        const STAMP: &str = "00:00:17.947";
 
-        let ts = TimeDelta::milliseconds((SECONDS * 1_000.0) as i64);
-        let as_str = to_timestamp(&ts);
-        assert_eq!(as_str, "00:29:54.700");
+        let as_str = format_millisecond_timestamp(SECONDS);
+        println!("ms: {SECONDS}");
+        println!("timestamp: {as_str}");
+
+        assert_eq!(as_str, STAMP);
+    }
+
+    #[test]
+    fn pads_contiguous_timestamps() {
+        let base_r: i64 = rand::thread_rng().gen_range(500..=5_000);
+
+        let t1 = base_r + 500;
+        let t2 = base_r - 500;
+        let ts_1 = format_millisecond_timestamp(t1);
+        let ts_2 = format_millisecond_timestamp(t2);
+
+        println!("t1:\t\t{t1}");
+        println!("t2:\t\t{t2}");
+        println!("ts_1:\t{ts_1}");
+        println!("ts_2:\t{ts_2}");
+
+        assert_ne!(ts_1, ts_2);
     }
 }
