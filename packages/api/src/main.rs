@@ -1,10 +1,8 @@
 use rustls::crypto::{CryptoProvider, aws_lc_rs};
-
 mod captions;
 mod graphql;
 mod neo4j;
 mod uid;
-
 use anyhow::Result;
 use async_graphql::http::GraphiQLSource;
 use async_graphql_axum::{GraphQLRequest, GraphQLResponse};
@@ -18,11 +16,11 @@ use axum::{
 };
 use http::StatusCode;
 use std::sync::Arc;
+use tower::ServiceBuilder;
 use tower_http::{
     cors::{AllowOrigin, CorsLayer},
     trace::TraceLayer,
 };
-use tower::ServiceBuilder;
 use tracing::{error, info};
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -44,8 +42,7 @@ async fn graphql_handler(
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    CryptoProvider::install_default(
-        aws_lc_rs::default_provider())
+    CryptoProvider::install_default(aws_lc_rs::default_provider())
         .map_err(|_| anyhow::anyhow!("default crypto provider already installed"))?;
 
     // Tracing goes to stderr so structured logs don't mix with any stdout
@@ -97,50 +94,49 @@ async fn main() -> Result<()> {
     let captions_db = Arc::clone(&db);
     let schema = graphql::build_schema(db, embed_handler);
 
-    let app = Router::new()
-        .route("/health", get(|| async { "ok" }))
-        .route(
-            "/interview/{interview_uid}/vtt",
-            get(async move |Path(interview_uid): Path<String>| {
-                match crate::captions::generate_vtt(&captions_db, &interview_uid).await {
-                    Ok(vtt) => ([(header::CONTENT_TYPE, "text/vtt")], vtt).into_response(),
-                    Err(e) => {
-                        error!(interview_uid, error = %e, "failed to generate captions");
-                        StatusCode::INTERNAL_SERVER_ERROR.into_response()
+    let app =
+        Router::new()
+            .route("/health", get(|| async { "ok" }))
+            .route(
+                "/interview/{interview_uid}/vtt",
+                get(async move |Path(interview_uid): Path<String>| {
+                    match crate::captions::generate_vtt(&captions_db, &interview_uid).await {
+                        Ok(vtt) => ([(header::CONTENT_TYPE, "text/vtt")], vtt).into_response(),
+                        Err(e) => {
+                            error!(interview_uid, error = %e, "failed to generate captions");
+                            StatusCode::INTERNAL_SERVER_ERROR.into_response()
+                        }
                     }
-                }
-            }),
-        )
-        // GET  /graphql --> serves the GraphiQL interactive IDE, so you can
-        //                  explore the schema and test queries from a browser.
-        // POST /graphql --> the actual GraphQL execution endpoint.
-        //
-        // GraphiQLSource generates a self-contained HTML page that talks to
-        // the POST endpoint. It's baked into async-graphql behind the
-        // "graphiql" feature flag.
-        .route(
-            "/graphql",
-            get(|| async {
-                Html(
-                    GraphiQLSource::build()
-                        .endpoint("/graphql")
-                        .title("AUOHP GraphQL")
-                        .finish(),
-                )
-            })
-            .post(graphql_handler),
-        )
-        .layer(
-            ServiceBuilder::new()
-                .layer(TraceLayer::new_for_http())
-                .layer(DefaultBodyLimit::max(16 * 1024 * 1024))
-                .layer(
-                    CorsLayer::permissive(),
-                ),
-        )
-        // with_state() makes `schema` available to any handler that
-        // declares a State<AppSchema> parameter.
-        .with_state(schema);
+                }),
+            )
+            // GET  /graphql --> serves the GraphiQL interactive IDE, so you can
+            //                  explore the schema and test queries from a browser.
+            // POST /graphql --> the actual GraphQL execution endpoint.
+            //
+            // GraphiQLSource generates a self-contained HTML page that talks to
+            // the POST endpoint. It's baked into async-graphql behind the
+            // "graphiql" feature flag.
+            .route(
+                "/graphql",
+                get(|| async {
+                    Html(
+                        GraphiQLSource::build()
+                            .endpoint("/graphql")
+                            .title("AUOHP GraphQL")
+                            .finish(),
+                    )
+                })
+                .post(graphql_handler),
+            )
+            .layer(
+                ServiceBuilder::new()
+                    .layer(TraceLayer::new_for_http())
+                    .layer(DefaultBodyLimit::max(16 * 1024 * 1024))
+                    .layer(CorsLayer::permissive()),
+            )
+            // with_state() makes `schema` available to any handler that
+            // declares a State<AppSchema> parameter.
+            .with_state(schema);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:6060").await?;
     info!("listening on {}", listener.local_addr()?);

@@ -12,8 +12,6 @@
         "codegen": "graphql-codegen --config codegen.ts",
         "dev": "vite dev",
         "editor:dev": "vite dev --clearScreen false --logLevel warn",
-        "editor:codegen": "graphql-codegen --config codegen.ts --watch --silent",
-        "editor:watch": "concurrently \"yarn:editor:dev\" \"yarn:editor:codegen\"",
         "start": "vite preview"
     },
     "devDependencies": {

@@ -74,3 +74,4 @@ nanoid = "0.5"
 
 rustls = { version = "0.23", features = ["aws-lc-rs"] }
 md5 = "0.8.1"
+rand = "0.8.5"

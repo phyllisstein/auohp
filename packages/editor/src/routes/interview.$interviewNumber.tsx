@@ -3,13 +3,11 @@ import { useCallback, useEffect, useRef, useMemo } from "react";
 import { type BaseEditor, createEditor, Editor } from "slate";
 import { Slate, Editable, type ReactEditor, withReact } from "slate-react";
 import { withHistory } from "slate-history";
-import { graphql } from "../gql";
+import { graphql } from "@/gql";
 import { useMutation, useReadQuery } from "@apollo/client/react";
-import { flow, debounce } from "es-toolkit/function";
+import { flow, debounce, throttle } from "es-toolkit/function";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { signal, useSignalEffect, createModel } from "@preact/signals-react";
-import { style } from "@react-spectrum/s2/style" with { type: "macro" };
-import styled from "styled-components";
 
 
 // FIXME: Constructing URLs for the caption endpoint and the public video URI
@@ -129,7 +127,7 @@ const DefaultElement = props => {
 const StatementElement = ({ attributes, children, element }) => {
     const handleClick = () => {
         playhead.seek.value = element.startTime;
-        console.debug(`Clicked on statement: ${ element.uid } (${ formatTimestamp(element.startTime) })`);
+        console.debug(`Clicked on statement: ${ element.uid } (${ element.startTime })`);
     };
 
     return (
@@ -154,6 +152,7 @@ const TranscriptElement = ({ attributes, children, element }) => {
         count: element.children.length,
         estimateSize: () => 64,
         getScrollElement: () => parentRef.current,
+        useScrollendEvent: true,
         getItemKey: index => element.children[index].uid,
         onChange: (instance, sync) => {
             const items = instance.getVirtualItems();
@@ -168,7 +167,7 @@ const TranscriptElement = ({ attributes, children, element }) => {
             playhead.seek.value = element.children[index].startTime;
             lastIndex.current = index;
 
-            console.debug(`Virtualizer scrolled to statement: ${ element.children[index].uid } (${ formatTimestamp(element.children[index].startTime) })`);
+            console.debug(`Virtualizer scrolled to statement: ${ element.children[index].uid } (${ element.children[index].startTime })`);
         },
     });
 
@@ -186,9 +185,9 @@ const TranscriptElement = ({ attributes, children, element }) => {
 
         lastIndex.current = index;
 
-        console.debug(`childVirtualizer scrolling to statement: ${ element.children[index].uid } (${ formatTimestamp(element.children[index].startTime) })`);
+        console.debug(`childVirtualizer scrolling to statement: ${ element.children[index].uid } (${ element.children[index].startTime })`);
         childVirtualizer.scrollToIndex(index, {
-            align: "auto",
+            align: "center",
             behavior: "smooth",
         });
     });
@@ -256,16 +255,6 @@ const withPersistence = editStatement => (editor: Editor) => {
     return editor;
 };
 
-const SCButton = styled.button`
-    display: inline-block;
-`;
-
-const a2ButtonStyles = style({
-    backgroundColor: "layer-1",
-    borderRadius: "lg",
-    margin: 4,
-    padding: 4,
-});
 
 function Page() {
     const interviewNumber = Number.parseInt(Route.useParams().interviewNumber);
@@ -303,23 +292,8 @@ function Page() {
         children: statementNodes,
     };
 
-    const injectedButtonClassNames = style({
-        backgroundColor: "layer-1",
-        borderRadius: "lg",
-        margin: 4,
-        padding: 4,
-    });
-    console.log("Injected button class names:", injectedButtonClassNames);
-    console.log("A2 button class names:", a2ButtonStyles);
-
     return (
-        <div className={ style({
-            backgroundColor: "layer-1",
-            borderRadius: "lg",
-            margin: 4,
-            padding: 4,
-        }) }>
-            <SCButton className={ injectedButtonClassNames }>Click me</SCButton>
+        <div>
             <video ref={ player } controls crossOrigin="anonymous" onTimeUpdate={ ev => playhead.timestamp.value = ev.target.currentTime }>
                 <source src={ `${ AUOHP_PUBLIC }/videos/${ interviewNumber }.mp4` } type="video/mp4" />
                 {

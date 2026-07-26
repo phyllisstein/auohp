@@ -7,10 +7,9 @@ args="$*"
 restart_editor() {
     echo "Terminate existing editor..."
     pkill -f "editor:dev" || true
-    pkill -f "editor:codegen" || true
 
     echo "Starting editor development server..."
-    yarn editor:watch &
+    yarn editor:dev &
     disown
 }
 
