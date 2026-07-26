@@ -7,7 +7,8 @@ import { graphql } from "@/gql";
 import { useMutation, useReadQuery } from "@apollo/client/react";
 import { flow, debounce, throttle } from "es-toolkit/function";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { signal, useSignalEffect, createModel } from "@preact/signals-react";
+import { useSignalEffect } from "@preact/signals-react";
+import { playhead } from "@/playhead";
 
 
 // FIXME: Constructing URLs for the caption endpoint and the public video URI
@@ -74,17 +75,6 @@ declare module "slate" {
         Text: BaseText;
     }
 }
-
-const Playhead = createModel(() => {
-    const seek = signal<number>(0);
-    const timestamp = signal<number>(0);
-
-    return { seek, timestamp };
-});
-
-
-const playhead = new Playhead();
-
 
 export const Route = createFileRoute("/interview/$interviewNumber")({
     component: Page,
