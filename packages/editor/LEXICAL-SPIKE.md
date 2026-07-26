@@ -161,6 +161,16 @@ a human-invoked insertion (a button/command), not auto-LLM entity-tagging --- it
 respects the product philosophy that ML stays a draft humans edit at their
 discretion.
 
+**Inline content vs. block chrome --- two different React seams.** A `DecoratorNode`
+is the bridge for *inline content that flows with the text* (a chip mid-sentence).
+Non-editable *block chrome* (the timestamps beside a statement) is a different need,
+solved by `getDOMSlot` re-pointing the reconciler at an inner content element while a
+`setDOMUnmanaged` sibling holds the chrome (see `StatementNode`). Today that chrome is
+imperative DOM, but the same unmanaged subtree is a valid React portal target --- so
+React-rendered block chrome (a speaker `<Select>`, a confidence meter) is a short
+follow-on, not a rewrite. Between the two seams, Lexical covers both graph-tagging
+shapes: inline mentions *and* per-statement metadata controls.
+
 ---
 
 ## The persistence porting seam (Slate op-stream -> Lexical dirty-nodes)
@@ -192,11 +202,19 @@ works/doesn't:
   for a missing registration is loud. `clone` copying every field *including the
   key* is the one non-obvious footgun; the getters-via-`getLatest()` idiom is
   learnable but not self-evident.
-- **The `::before` timestamp label: a self-inflicted-avoidance win.** Lexical's
-  reconciler tracks child DOM by index, so injecting a real label `<div>` into
-  `createDOM` would desync it. A CSS `::before` fed by a `data-label` attribute is
-  non-editable by nature and invisible to the reconciler. Discoverable? Only once
-  you understand the reconciler --- worth documenting for the team.
+- **Non-editable block chrome (`getDOMSlot`): good, once discovered.** The
+  timestamps are real chrome DOM --- the analogue of Slate's `contentEditable={false}`
+  child. `createDOM` returns a wrapper (chrome column + content element),
+  `getDOMSlot(element).withElement(content)` re-points the reconciler at the content
+  element, and `setDOMUnmanaged` fences off the chrome so selection/reconciliation
+  ignore it. `ElementDOMSlot.resolveLeafPosition` handles DOM-caret -> offset mapping
+  for this wrap pattern, so selection needs no hand-rolled math. (An earlier draft of
+  this node used a CSS `::before` fed by `data-label` and claimed a real child "would
+  desync the reconciler" --- that was wrong: `getDOMSlot` is the supported path, and
+  unlike a pseudo-element, real chrome scales past a text label to speaker
+  `<Select>`s, confidence meters, and tag affordances.) `getDOMSlot` is
+  `@experimental` in 0.48 but fits exactly; discoverable only once you know it
+  exists --- worth writing down for the team.
 - **`@lexical/react` plugin composition: excellent.** Every concern is a headless
   component that grabs the editor via `useLexicalComposerContext` and registers in
   an effect. The route reads as a list of capabilities.
@@ -209,8 +227,8 @@ works/doesn't:
 - **Docs overall:** materially better than Slate. Slate's core is famously
   under-documented (the abandoned `insertBreak` seam is proof); Lexical's API is
   large but the naming is honest and the guides cover the exact tasks this spike
-  needed. A couple of things (reconciler child-index rules, `getLatest()` in
-  getters) are tribal knowledge worth writing down internally.
+  needed. A couple of things (the `getDOMSlot` slot-redirection pattern for chrome,
+  `getLatest()` in getters) are tribal knowledge worth writing down internally.
 
 ---
 
