@@ -217,6 +217,7 @@ __metadata:
     "@stylelint/postcss-css-in-js": "npm:0.38.0"
     "@stylistic/eslint-plugin": "npm:^5.10.0"
     "@stylistic/stylelint-config": "npm:2.0.0"
+    "@suspensive/react": "npm:^3.21.3"
     "@swc-contrib/plugin-graphql-codegen-client-preset": "npm:^0.27.0"
     "@swc/plugin-styled-components": "npm:^12.15.0"
     "@tanstack/eslint-plugin-router": "npm:^1.162.0"
@@ -5421,6 +5422,15 @@ __metadata:
   peerDependencies:
     stylelint: ^17.6.0
   checksum: 10/3639fdec8eb75eb2c9f1113a057f036b95427cbc99523d5cf7a6aeccbaa29653ef2bfc52cc9cb34b61c190435b5475742b38f54887b041fb34e83aebf228f1f4
+  languageName: node
+  linkType: hard
+
+"@suspensive/react@npm:^3.21.3":
+  version: 3.21.3
+  resolution: "@suspensive/react@npm:3.21.3"
+  peerDependencies:
+    react: ^18 || ^19
+  checksum: 10/3754b6a31afcb7451a50ca56f015ee6ee56e0fbe356c31de9dc6d83d667eb1656c55df652f844349af8a2b73dc134bc7306a417f986353a81507f86c6fe6cef6
   languageName: node
   linkType: hard
 

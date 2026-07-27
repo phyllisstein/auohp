@@ -7,6 +7,8 @@ import { ThemeProvider as StyledThemeProvider } from "styled-components";
 import theme from "@/styles/theme";
 import { Body } from "@/styles/global";
 import { Button as SButton } from "@react-spectrum/s2";
+import { ErrorBoundary } from "@suspensive/react";
+
 
 export const Route = createRootRouteWithContext<ApolloClientIntegration.RouterContext>()({
     component: RootComponent,
@@ -47,7 +49,15 @@ function RootComponent() {
                     <main>
                         <StyledThemeProvider theme={ theme }>
                             <Body />
-                            <Outlet />
+                            <ErrorBoundary
+                                fallback={
+                                    ({ error, reset }) => {
+                                        console.error("Error occurred: %o", error);
+                                        return <div>Error: { error.message }</div>;
+                                    }
+                                }>
+                                <Outlet />
+                            </ErrorBoundary>
                         </StyledThemeProvider>
                     </main>
                     <Scripts />

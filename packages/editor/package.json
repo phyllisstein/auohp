@@ -71,6 +71,7 @@
         "@preact/signals-react": "^3.11.0",
         "@react-aria/optimize-locales-plugin": "^2.0.0",
         "@react-spectrum/s2": "^1.5.1",
+        "@suspensive/react": "^3.21.3",
         "@tanstack/react-router": "^1.170.18",
         "@tanstack/react-start": "^1.168.32",
         "@tanstack/react-virtual": "^3.14.8",
