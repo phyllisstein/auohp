@@ -66,7 +66,10 @@
     "dependencies": {
         "@apollo/client": "^4.2.8",
         "@apollo/client-integration-tanstack-start": "^0.14.5-rc.0",
+        "@lexical/extension": "^0.48.0",
+        "@lexical/history": "^0.48.0",
         "@lexical/react": "^0.48.0",
+        "@lexical/rich-text": "^0.48.0",
         "@lexical/utils": "^0.48.0",
         "@preact/signals-react": "^3.11.0",
         "@react-aria/optimize-locales-plugin": "^2.0.0",
