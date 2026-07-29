@@ -93,7 +93,9 @@ pub struct VadTimeline {
 impl VadTimeline {
     /// Identity map, for when VAD is disabled and the two timelines are the same.
     fn identity() -> Self {
-        Self { regions: Vec::new() }
+        Self {
+            regions: Vec::new(),
+        }
     }
 
     fn is_identity(&self) -> bool {
@@ -672,7 +674,10 @@ mod tests {
     /// a turn marker. Length is what separates the two, so pin it.
     #[test]
     fn a_leading_double_dash_is_not_a_turn_marker() {
-        assert_eq!(strip_turn_dash("-- it would take place"), "-- it would take place");
+        assert_eq!(
+            strip_turn_dash("-- it would take place"),
+            "-- it would take place"
+        );
         assert_eq!(strip_turn_dash("---"), "---");
     }
 
@@ -735,7 +740,10 @@ mod tests {
     /// word even with no leading space.
     #[test]
     fn a_segment_may_open_mid_word() {
-        let words = assemble_words(vec![(b"ing" as &[u8], 0.0, 0.9), (b" up" as &[u8], 0.4, 0.9)]);
+        let words = assemble_words(vec![
+            (b"ing" as &[u8], 0.0, 0.9),
+            (b" up" as &[u8], 0.4, 0.9),
+        ]);
         assert_eq!(
             words.iter().map(|w| w.0.as_str()).collect::<Vec<_>>(),
             vec!["ing", "up"]
@@ -749,8 +757,16 @@ mod tests {
     fn timeline() -> VadTimeline {
         VadTimeline {
             regions: vec![
-                VadRegion { orig_start: 2.0, filtered_start: 0.0, duration: 3.0 },
-                VadRegion { orig_start: 15.0, filtered_start: 3.1, duration: 3.0 },
+                VadRegion {
+                    orig_start: 2.0,
+                    filtered_start: 0.0,
+                    duration: 3.0,
+                },
+                VadRegion {
+                    orig_start: 15.0,
+                    filtered_start: 3.1,
+                    duration: 3.0,
+                },
             ],
         }
     }
@@ -770,8 +786,14 @@ mod tests {
         assert_eq!(t.to_original(1.5), 3.5, "inside first region");
         assert_eq!(t.to_original(3.0), 5.0, "first region end");
         assert_eq!(t.to_original(3.1), 15.0, "second region start");
-        assert!((t.to_original(4.5) - 16.4).abs() < 1e-9, "inside second region");
-        assert!((t.to_original(6.1) - 18.0).abs() < 1e-9, "second region end");
+        assert!(
+            (t.to_original(4.5) - 16.4).abs() < 1e-9,
+            "inside second region"
+        );
+        assert!(
+            (t.to_original(6.1) - 18.0).abs() < 1e-9,
+            "second region end"
+        );
     }
 
     #[test]
@@ -780,7 +802,10 @@ mod tests {
         // at 4.5 s of the recording. It is really at 16.4 s -- and the error grows
         // with every silence dropped, so a long interview drifts badly.
         let t = timeline();
-        assert!((t.to_original(4.5) - 4.5 - 11.9).abs() < 1e-9, "error the map removes");
+        assert!(
+            (t.to_original(4.5) - 4.5 - 11.9).abs() < 1e-9,
+            "error the map removes"
+        );
     }
 
     #[test]
