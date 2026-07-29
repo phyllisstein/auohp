@@ -1,0 +1,712 @@
+{
+ "_comment": [
+  "Speaker turns for 047 (Jim Eigo, interviewed by Sarah Schulman, 5 March 2004).",
+  "Concatenating `text` reproduces 047_truth.clean.txt token-for-token; asserted at build."
+ ],
+ "turns": [
+  {
+   "speaker": "INTERVIEWER",
+   "text": "If you could just say your name, today\u2019s date, your age, and where we are?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "I\u2019m Jim Eigo. We\u2019re at 406 East 9th, which is Sarah Schulman\u2019s apartment. It\u2019s March 5th, 2004, and I am 52."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Where were you born?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "I was born in Paterson, New Jersey, actually. But my family lived in the Bronx, which is where I spent my early childhood. My later childhood in the Philadelphia area \u2013 some of it in Philadelphia proper, some of it in a suburb of Philadelphia, in South Jersey."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "So, did you go to high school in the Bronx?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "No, no, by then I went to high school in \u2013 my school was just outside the city line of Philadelphia, in Bucks County, Pennsylvania. So no, my high school years were in Philly."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "So your parents escaped from the city."
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "They did, but they live in Brooklyn, now. When my father retired from \u2013 he was a letter carrier. So, when he retired from the Post Office as early as he could. He knew he was going to get another job. They retired to Long Island, and within eight months were going crazy because they\u2019re city people, and so they moved to Brooklyn, even though they were both Bronx people. But by then a lot of our old neighborhood in the Bronx was pretty devastated."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "What did your mother do?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "My mother, in between children, did a whole number of jobs, including secretarial work and working as a cashier in different stores. The longest period of time \u2013 working as a cashier in a drug store, but she was mostly their deliverer, because she was still \u2013 as long as she drove, she was the fastest driver I have ever known \u2013 the fastest safe driver I have ever known. So, she was a good deal of \u2013 eight-year stretch there \u2013 she delivered drugs."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "And, were they born in New York, also?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "No. My father was originally from the Philadelphia area, which is why after New York \u2013 and my mother was born in the New York area, but raised \u2013 actually was born in Stamford, Connecticut, but spent most of her childhood in the Bronx."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Okay, so you\u2019re a real New Yorker."
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Yeah. And I was the one in the family when we moved that did not want to leave New York. Everybody else did. And so I even as a child always thought that I was coming back to the city, which I \u2013 I just have always loved the density of experience in New York, and the diversity of people. And those are still the two reasons that keep me here, despite the incredible number of changes the city has gone through."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "What is Eigo, is it Irish?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "It\u2019s black Irish \u2013 it is, yeah. Originally, Iago \u2013 so, it\u2019s the corruption of the Spanish Iago. It\u2019s more commonly spelled I-G-O-E, but somewhere there was a misspelling, and I guess there are about anywhere between fifty and a hundred and fifty of E-I-G-O\u2019s at any given time. Some I think are in South America. Very few are left in Ireland."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Okay, so you were growing up pretty much outside of Philadelphia. How did you connect with the other kids in high school?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "High school in a way was a little funny, in that it was different from \u2013 it changed \u2013 things changed. I actually was a member of, in some ways, two different cliques. I was recruited when I was a freshman for the football team, so I actually played four years of football. So, I was at home with that clique, but I was also very interested in theater. And actually in high school began writing plays, but very definitely acting in plays, since I had a scholarship to an all boys prep school \u2013 Catholic school. I was also in lots of plays for all the sister schools we had in the neighborhood. So, it in some ways almost quadrupled the number of plays that all of us \u2013 the guys and the girls who were interested in theater \u2013 were in, because we were all in each other\u2019s plays. So, I think I connected fairly well with people in high school, and in odd ways, at that time in my life, was able to bridge two very different worlds."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Yeah, you were the only theater jock. Did you go to college?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Yeah. I got a partial scholarship to California Institute of the Arts. I was one of the two playwrights they accepted in their first year of being. And so I went out there at 18 \u2013 talk about culture shock. I\u2019d only been used to East Coast cities, and it was Southern California and although the first year, we were based in Burbank because the campus really wasn\u2019t open yet \u2013 the second year was in Valencia, which is as far north as you can get in LA county, and very far from the city. And it\u2019s full of farms \u2013 at that time, at least \u2013 and aerospace. It was a very strange thing. And then, I went to grad school at University of California, Davis, because by then I was considered a California resident and got \u2013 tuition was virtually nothing then, and I was a TA, so I must be one of the few people who wound up making money off of grad school \u2013 in theater, because at the time the experimental theater \u2013 in the campus of the whole UC system, the one that you\u2019d go to for experimental theater believe it or not, at that time, was Davis, California. I guess, now it would probably be San Diego. That\u2019s where, in fact, some of the people who are now at San Diego started things. So yes, I \u2013 so both my undergrad and grad work, I did in California, although I had never been there before, and have only been back to visit since."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "What were your plays about, at that time?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "I was at the time very influenced I guess by the French absurdists. So in a way, it\u2019s almost hard to say what they were about. But eventually, I became very involved in the whole group theater movement that was going on then. So, I spent several of my years out there. And my first few years back here in the East, I went to Baltimore, because I was the playwright who was associated \u2013 Herb Lau, who had run Lincoln Center Theater, when it started \u2013 he had been \u2013"
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "The husband of Uta Hagen?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "No, he was actually the husband of Beatrice Manley, who was an actress of some note back in the \u201950s and \u201960s \u2013 but he had run the theater at Lincoln Center before he ran the theater at Cal Arts. And I became the playwright associated with his ensemble at Cal Arts. And when he later left and started a theater down at University of Maryland in Baltimore, I went there and was the playwright, again, associated with the theater. So, for example we had one piece that was based on Kafka\u2019s The Burrow. We had another piece called Elsinore that, of course was a take-off on Hamlet. We were at one time working \u2013 for a long while, worked on a piece that never panned out, but it was called The Cell, which was in some ways both predictive of a lot of the work that I wound up doing later in ACT UP, in the sense that it was in some ways based on material we\u2019d collected about the Symbionese Liberation Army \u2013 but it was the whole idea of the left at that time, and what was going on with it as the \u201960s turned into the \u201970s and things seemed to sour considerably and get a lot more violent and all that. In some ways, I always thought of my work with ACT UP as redeeming what went wrong, during the \u201970s."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "How did you get involved with the politics?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Well, I was always involved \u2013 even in high school, I was involved in anti- Vietnam politics and worked with a group that was called \u2013 briefly, a year \u2013 New Mobilization for Survival. But they are the group that wound up bringing off the twobiggest anti-war rallies in Washington DC. But you know, I was a teenager at the time, so I don\u2019t want to blow up my involvement at that time. But, I continued on the West Coast working with mostly anti-war groups. But even here, after two years in Baltimore \u2013 as the playwright, as I mentioned \u2013 it was then that I moved back to New York, although for me it was the first time in Manhattan. And because most of the theater I was doing was based on a group, when I was no longer with a group, I was even then writing other things. You ask about the political involvement \u2013 those years, I became very involved with Amnesty International. I was in their Urgent Action Network, but was doing four times the amount of work, and all that meant that four times a week, I would have to get off a series of letters, trying to get some political prisoner or other out of jail \u2013 out of custody, usually. And then throughout the \u201980s, I was involved in a series of groups that were working against US involvement in Central America."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Which groups were you in? You were in CISPES?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "No, and I\u2019m trying to remember. Actually, I am not a religious man. I dropped my Catholic faith my sophomore year in high school, but the group that I was most involved in worked out of Riverside Church here on the Upper West Side, here in New York \u2013 Pledge of Resistance. Funny how things come to you \u2013 I think it was called Pledge of Resistance. And in fact, for over a year we would have rallies in Times Square by the Marine Recruiting Station before everyone had to get to work, and it became a weekly thing. And probably the other big thing that we carried off was, for a full week we had a vigil outside Senator Al D\u2019Amato\u2019s office, and in fact this was before I had ever gotten arrested. So, a bunch of them did get arrested, sitting-in in Al D\u2019Amato\u2019s office. And I trained for it, but I never did get arrested at that time, although I made up for it later."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "So, you had a long history of political engagement before you came to ACT UP. Where did that come from? Was your family \u2013?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "My family, my parents are un-reconstituted New Dealers. They were both, you know, leftist Democrats \u2013 still are leftist Democrats. But, I don\u2019t think they were the type who would have ever left the party. But they were both very \u2013 even in the \u201960s, when it was not common, certainly among their religion, say \u2013 there is a leftist strand of Catholicism, so I don\u2019t want to say that. They were very much pro-civil rights. When we lived in Philadelphia, we were the \u2013 it sounds so primitive to say it now \u2013 we were the only people on the block that we lived on in Philadelphia who would have black friends over \u2013 the only family. That sounds so terrible to say right now, and it even sounds terrible for me \u2013 even saying it, you feel like you\u2019re sounding like the Great White Father, or something \u2013 as if that was something privileged to do, but it was the truth of race relations in the country at that time. So, my parents were not always the most popular people around because of that, but they were always incredibly pro-civil rights and pro-the poor. My first political memory is when Eisenhower was running, and we got a piece of junk mail and it was for Eisenhower. My mother wondered how in the world we could have gotten it, and there was an elephant on it. And so I asked my mother \u2013 well, why did it have an elephant on something for the Republican Party. And she explained, \u201cBecause all Republicans are all fat cats. They just want to eat and consume everybody else.\u201d So that was, in some ways, my first political lesson and I\u2019ve been through a lot of changes, but it\u2019s one that still sticks with me. And when it\u2019s come to gay causes, they\u2019ve always been very supportive and they \u2013 particularly my mother, but my father as well when he was not working \u2013 they went to several ACT UP rallies, and certainly every year \u2013 until they got too old to do it \u2013 would go to the Gay Pride marches on the last weekend of June."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "So, at what point did you come out?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "I actually came out fairly late. I came out in my late 20s and early 30s \u2013 and, I mean not only just came out, but that was the first time I had sex with another guy, too. Although I\u2019d known for years \u2013 I had dated girls in high school and even the first few years of college \u2013 but somewhere inside me, I knew at that time that men attracted me and not women, and yet I didn\u2019t act upon it until after I got here, in New York City."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "So, the whole time you were in the theater and \u2013"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Exactly, and I don\u2019t know how to explain it in the sense that I was in a profession that would have certainly welcomed gays, even then. And I also knew where my parents stood on the issue, which was for gay rights. Nor was I any longer a member of the Catholic Church. And yet, that is the fact. And even I, who lived it, sometimes wonder why it was that long that it took \u2013 but like I say, that is the fact."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "So then you moved to New York, moved to Manhattan, and moved to this neighborhood, I think."
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Moved to this neighborhood and mostly because, although like I say, most of the writing I was doing then wasn\u2019t for theater, I was still incredibly interested in the experimental arts \u2013 all of them \u2013 theater and dance. But even here we were a hotbed of experimental film and lots of other things that I was very interested in at the time."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "What was the other writing that you were doing?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "I was writing fiction. And in 1980, I had a novella published \u2013 it was in a collection by other people \u2013 a press that\u2019s still around, but it\u2019s a small press, based in upstate New York, McPherson and Company \u2013 short stories in places like the Chicago Review and all that, so I was writing what might be considered fiction. But, as it got more and more experimental it might be less and less considered fiction, so that some of it, by people who read it, was actually thought of as prose poetry and some of it was even once nominated for a poetry prize, but it didn\u2019t win it and I never saw it as poetry, because I knew the tradition it was coming from, and it was a tradition of fiction."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "So, were you moving away from playwriting?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Yes, because as I say, the last several years I was playwriting it was very steeped in that whole group theater movement, which \u2013 I was the playwright attached to a group of actors who were working. And we were working on common material and in rehearsals would generate almost like, little cells of work that I would then write up and then go back. So it was in some ways intensely collaborative effort by then. So, it had been years since I\u2019d written a stand-alone play \u2013 really since my first year in grad school. But certainly the end of grad school and the first few years I was working as a playwright, I was no longer \u2013 all the writing I was doing separate from the group was fiction. So that I continued even after the theater troupe I was with more or less dissolved \u2013 although that theater troupe did give birth to a few famous people. Julie Taymor was in it \u2013 the director, and Bill Irwin, the clown. It was an interesting group, an interesting troupe, and I\u2019ve always been very happy for the experience and, in a way, I thought I kind of alluded to it before \u2013 I saw parallels between the work that I later did with ACT UP, although it was in a political, rather than in an art realm."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "So, when you moved here, that was in the \u201970s?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Yes, \u201978."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Did you then get involved in a writing community of any kind?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Not other than I got to know some people who were always at the readings that I attended. But, not in the sense of taking workshops."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Friends were reading your work and you were reading their work. Because it\u2019s so different than being a playwright, right? It\u2019s so alone being a fiction writer."
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Yes, and as I said the type of playwriting I was doing was even more removed from fiction writing in the sense that it was a daily collaboration \u2013 not even a sense of writing a script separately and then bringing it to a group of people. It was much more alone, yup."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "What was the relationship between the gay world that you were in before ACT UP, and your art making?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "It overlapped in the sense that some of the people were in both groups, but there was not the sense of a shared community. It was much more disparate than that. I knew lots of the people whose work I was following closely were gay, but I know a lot of them were not. And the political causes I was involved in at that time, until AIDS work, were not gay \u2013 or only peripherally. I remember \u2013 and this was almost at the time when I was about to start AIDS work \u2013 I was doing some work in gay marches and would be marshals for gay marches, and finally in 1987 when we had the big march on Washington, I was a marshal there and a bus monitor on the way down \u2013 things like that. But really, the first intensive political work I did that was rooted within the gay community was within ACT UP. It had been pretty hit or miss before then."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "I remember seeing you for years and years and years in this neighborhood and at many, many events. And when you look back at the \u201970s avant-garde around here, a lot of people were in the closet still, at that time. I mean, there was a gay underground, but it wasn\u2019t that integrated somehow."
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Then you can understand what I\u2019m saying about disparate. I would know some gay friends who were also in one art or the other, but there was not much of a sense of gay identity within the arts, although there were individual people that you knew were gay."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Who were some of the artists that you were really into at the time, from this neighborhood?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Well, some of the people that I started following then \u2013 and he\u2019s moved around \u2013 Kenneth King, the choreographer. There will be some people you know \u2013 Abby Childs\u2019 films. I saw the first film of hers before she even moved to New York City. She was still in San Francisco, because Henry showed it at an evening \u2013 a Tuesday evening that he use to run at the Millennium \u2013 the basement of La Mama complex \u2013 some people may know it more widely as. And so a lot of the artists I was interested in were writers who were doing what at the time would come to be known as language poetry, and a lot of the experimental filmmakers were working out of the Collective of Living Cinema, or the Millennium \u2013 associated with one group or another, and I was very interested in dance. In some ways I became more interested in a lot of the dance that was being done then in a lot of the theater, because it struck me as a lot more rooted in a community \u2013 a group of people working with each other critiquing each other\u2019s work \u2013 and it struck me that the experimental dance world, at that time, was a lot more interesting than a lot of the theater that was being done."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "And who were some of the people that you\u2019re thinking about in that era \u2013 just to ground it historically \u2013 the dancers?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Well, the people that I was looking at were people who had arisen from the Judson Church and slightly later. And some of them, I\u2019ve even had \u2013 now that I\u2019ve been \u2013 when I came to write about the dance, I even interviewed several of them \u2013 but people like Kenneth King, Trisha Brown, Steve Paxton \u2013 a lot of the people. And then, younger generation \u2013 people like Sally Silvers. I saw the very first dance she ever did when it was still a student thing, and I think I\u2019ve seen everything she\u2019s done since then. And you know, it\u2019s practically a 23-year body of work. One of the advantages of living in New York for so long is that you can see certain artists that you\u2019re very interested in develop over a few decade period."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "And then you started writing about them?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "I did writing about them for both \u2013 and a lot of it appeared in \u2013 for a long time, Movement Research had a newsletter. But, also, dance writing I did appeared in a magazine that is now defunct, but was around for a while called Dance Ink. I did a Trisha Brown interview for them, things like that."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "What were you doing for a living at this time?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "I was publishing, but certainly not enough to live on. Until I got a job, my rent was paid by a professor of mine who lived then, and still lives in, San Francisco \u2013 a woman, a theater critic who, from the time I was 18, has read virtually everything I\u2019ve written, and in those years that I didn\u2019t have a job, paid the rent."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "You had a patron."
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Or a matron."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Yes. Do you remember when you first became aware of AIDS?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Like most gay men who lived in urban settings at the time, it was in fits and starts. It was rumors about a gay cancer, rumors about clusters of people who were ill in New York and Los Angeles and San Francisco. Eventually \u2013 but even then, it was only like eight or 10 months \u2013 maybe even a year after you\u2019re first aware of rumors \u2013 there are terms or GRID \u2013 Gay Related Immune Deficiency \u2013 that are put on to these cluster of men that they are presenting with, at first, a cancer, but then a cancer and a pneumonia. And, as with anyone who lived through that time, the information came in fits and starts and it was contradictory and it was frightening \u2013 particularly for those of us who lived in the East Village. For those people who don\u2019t know the East Village, at that time we were an art center, but we were also a drug center. And the combination of lots of gay men and lots of people who used injection drugs in the same neighborhood meant that in the early \u201980s \u2013 or all throughout the \u201980s \u2013 lots of people on your block and among your friends were getting sick and dying. And in the first few years, it was very swift and it was without an awful lot of understanding. I guess early on we knew it was sex, but I remember as late as \u201984, before they found the putative agent HIV, it was thought well, if you cut down on the number of partners you had, you were probably all right, because there was a notion for several years that it was a cumulative disease \u2013 that it was, almost like the number of partners you had, and the number of times you would be exposed to whatever agent it was that was causing this. So, there was an awful lot of confusion within the community, an awful lot of fear. And as I say, a lot of people were getting sick and dying."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Now, the places that you would go to be gay, the places that you would go to have sex or to meet guys \u2013 were those places associated with AIDS early on? Or, were there places that were not? Like The Saint, for example, was like that."
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Exactly. I was not part of the whole disco and drug scene, ever. I have nothing \u2013 I mean, I have nothing against drugs and I\u2019m totally for decriminalization of the whole thing, but it was just never \u2013 it was not a scene I traveled in. A lot of the places I went to be gay \u2013 I guess it would have been associated, but \u2013 were places like the series of gay movie houses on Third Avenue. There were other places in the city, but here on Third was of course much closer to me. And certainly, I imagine lots of people there were infected, getting sick and dying, but it was a different feeling, I would imagine, from a scene like one at the gay discos, where there was a crowd of people who knew each other, saw each other every weekend or maybe every night, and suddenly knew people among them who were getting sick and dying."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Who was the first person in your life that you really knew, who had"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "It\u2019s hard to answer \u2013 I found out, in retrospect, that partners I had had, had AIDS? AIDS and eventually died. But those were things that I found out later, and despite the fact that I was an active gay man in New York City, a lot of the first people I knew who had AIDS were people from the art world who were dying \u2013 who I was really like, only acquaintances of rather than close friends with, or colleagues with."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Can you say who some of those people were?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "I\u2019m trying to think of the first \u2013 I can see the man, but I don\u2019t have his name. He wrote on dance and was a performance artist, himself."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Barry Laine?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Barry Laine. He was the first person I knew. And, I\u2019d only spoken to him three or four times. I\u2019d seen him perform and I was closer with someone who was a good friend of his \u2013 Craig Bromberg, at the time \u2013 because he was writing and curating some of the dance and performance events that I attended, a lot. But Barry was the first person I knew directly who got sick and died."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "So, when did you decide to get involved with AIDS? Did you do anything before ACT UP?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Yes. By the mid-\u201980s \u2013 as I said before, or as I just said here \u2013 being a gay man in the arts, living in the East Village, it was hard to avoid. So, I became a volunteer for GMHC. I worked in their financial advocacy unit, which at that time \u2013 because the caseload was a lot lower \u2013 you could actually one-on-one assign financial advocates to patients. But the financial advocates that they assigned to their clients were all on GMHC\u2019s staff, and we were support people for them. So, we did a lot of the \u2013 everything from research to filing papers to Xeroxing."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "What was available, financially, to someone with AIDS in those days?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Well, a lot of it was trying to get people onto disability, or trying to get them onto Social Security, or trying to get those few people who qualified onto Medicaid and Medicare. It was just very difficult, at the time. The city was trying to avoid AIDS like a plague. And of course we were, unfortunately, saddled with the Reagan administration at the time, that didn\u2019t even want to breathe the word AIDS. So, there was very little to try and get the clients who were there at the time. And I guess maybe, after about year or a year and a half of volunteer work, it was not so much that I was dissatisfied with what GMHC was doing \u2013 and certainly not what Client Services, the area I was working in, was doing \u2013 but, it was so clear that there was a political dimension to the problem. It sounds naive, in retrospect, but those first few years, people were so busy digesting what was happening to them that politics only came up after five or six years of being knee-deep in a crisis. You know, the very first things we had to do were to try to take care of the people who were sick and try to make sense of it for oneself, and change one\u2019s own behavior to the degree you had to, or thought you had to. So, the first several years were very confused. And it sounds amazing, but ACT UP really was the first political organization to emerge in the AIDS crisis, and that already was 1987, so at least six years after we knew GRID and four or five after we\u2019d had the word AIDS. But, I guess I wasn\u2019t alone in only coming to the realization that there was a huge, political dimension to this problem, because it was only then that ACT UP came into being. But, I\u2019ve always thought the reason it combusted so quickly and became big so very quickly was because there were so many people here in New York and across the country \u2013 certainly, in urban centers \u2013 who were ready \u2013 who realized as soon as that political dimension was articulated, they could say yes, this is so, and could get behind a political group. I don\u2019t think it could have happened earlier."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Can you articulate what that political dimension was?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "What I later phrased it for myself \u2013 I didn\u2019t start there, but I wound up working mostly in the area of drug development and treatments. At that point \u2013 and I think it was in part because we knew so little about AIDS at the beginning \u2013 and, people who were identified as having AIDS were quite literally treated with rubber gloves. In the very early period, there was such a pariah nature about the disease. In this society, people who are sick are not treated very well. We have a horrific healthcare system \u2013 as bad then. But, AIDS \u2013 it was even worse, because of the pariah nature of first the disease itself, and then, when it was identified with gay men, and then injection drug users, that only intensified the pariah nature of it. So what we had to articulate was first, the whole idea that people with AIDS, or people with HIV, had a right to make decisions about their lives, their treatment, how they were treated at every stage of their disease and through every government organization they had to deal with. There was a certain \u2013 ACT UP was only able to do what it did because such a huge number of us within it were themselves HIV-positive. So many of them were ill themselves, and everyone \u2013 I as I\u2019m sure we\u2019ll get to some time in this, I\u2019m HIV-negative \u2013 but, even those of us in the group who were not HIV-positive, follow that lead and wound up putting our bodies on the line, in some way \u2013 whether it was being arrested or in other ways. So, it was articulating almost that first principle that people with HIV had a right to make their treatment decisions all through it, and eventually those of us who wound up working in drug development could articulate that principle in the halls of power and actually try, and to some degree succeed in getting people with HIV actually onto the panels and in the areas that were finally making decisions. It\u2019s easier to talk about \u2013 in some ways, it\u2019s easier to come up with principles in retrospect. I have to say, at the time, most of the people who met in that room, had come to a point where grief was not enough. They were angry, and in that anger they were quite prepared to shut down the whole city, if need be."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Okay, so we\u2019re going to get into the specifics of everything in a minute, but I just want to ask you a few more general things beforehand. Okay, so you have this group of people who are basically despised. And, as you have just described \u2013 they have to assert that they have a right to make decisions about their own fate. What enabled people to overcome that image of themselves, in order to be able to connect with each other?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Well, it starts in a very small way. And with ACT UP, it just really started with a handful of people who sat down at Wall Street. But, ACT UP snowballed awfully quickly, and when word got around that on Monday night, ACT UP gave a home to people who were sick, people who were not yet sick, and to their friends and people who cared for them. It was not long before a hundred to two hundred people were meeting in that room every Monday night. Pretty soon, it would be four hundred and even more. But, when you get a hundred people meeting every week, you have enough there to start something and people become courageous awfully quickly. I certainly am not alone in saying \u2013 everyone who was active in ACT UP wound up drawing on resources they had inside them, that they never dreamed they had \u2013 just never dreamed they had. But, it only could have come out of them because they were locking arms with a hundred other people, at that point. And, I\u2019ve always believed in community and ACT UP is the most splendid enactment \u2013 during those two or three years of its height \u2013 is the most splendid enactment of the idea of community I\u2019ve ever been a part of it."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Did it change the sense of yourself as a gay man?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "It changed everything in my life. I did not go \u2013 this is a somewhat humorous story \u2013 I went to the Gay and Lesbian Community Services Center in November of 1987. So, this would be about seven months after ACT UP had started in March. I went there thinking I was going to a forum that Lambda Legal Defense was presenting on what we should do in the wake of the Bowers Hardwick decision, which effectively criminalized gay sodomy. This would have been about 15 months after the decision, and yet Lambda was having a forum on it and it was going to be on the second floor of the Community Services Center. But, I thought it was on the first floor. So, I sat down in an ACT UP meeting, and I very quickly knew that this was not Lambda. It was the most vital political meeting \u2013 even before the meeting started \u2013 the most vital group of people I\u2019d ever sat among in my life. The table by the entry was full of literature that everybody was producing themselves and had out. And there was a buzz everywhere. And then when the meeting started, and it was quite clear that unlike any political meeting I had ever been to in my life that this was really, actually being run by the people, from the floor, for themselves, for those concerns that were central to their lives at this time \u2013 it just blew me away. I knew right away that it was a group that I had to become involved with immediately. And I did it because I was very lucky that first week, in that Iris Long took the microphone. Iris, at the time, was a \u201cQueens housewife,\u201d as she frequently called herself. But, not just any Queens housewife. She had advanced degrees in chemistry and on and off throughout the years had worked for drug companies including Wellcome, who was the forerunner of Burroughs Wellcome, the company that at the time owned AZT, the only approved AIDS drug. Iris was brilliant, but Iris was not very articulate or very organized. And she took the microphone and talked about a group she wanted to get together of people who would look into the drug approval process, and what drugs were in the pipeline right now, to try and eliminate those barriers toward approving potential agents for people with HIV and for the opportunistic infections associated with HIV. And, it was something of a jumble. But luckily for me, Vito Russo, who lots of people will know as the author of The Celluloid Closet, the pioneering study of gay themes in the movies. Vito Russo took the floor immediately after Iris, grabbed the microphone \u2013 jumped up, grabbed the microphone, and said he thought the floor had been insufficiently interested in what Iris was saying \u2013 that, for his money, what Iris was talking about was the area that ACT UP should be most involved in at this time because it was the one that had the potential for doing the most people the most amount of good, in a quick, fast amount of time. Well, I was a writer and was pretty good at research and organization, and I was a quick study and all of that, and I thought maybe this is the area I could get involved in, and make a very quick dent in. So, this was just the very first week. Iris said she was meeting everyone who was interested the next Monday before the meeting. So, I was there and there were only about two or three other people there, but Vito was one of them. And Marty Robinson, another long-term gay and AIDS activist \u2013 both Marty and Vito, of course, have since died \u2013 and Marty and Vito had this incredible love/hate relationship with each other. At that very first meeting, they were shouting at each other. So, it was hard to know what to make of all this. But, Iris had an incredible amount of knowledge \u2013 not just about chemistry and about drugs, but she also knew a lot about the greed of the drug companies, how perverse the whole process was. Iris was deeply motivated by a sense of justice, and she knew what was wrong, and she could almost put her finger on it, and she thought she could help us, because here is \u2013 like I said, she had no reason to be in the midst of \u2013 at that time, a bunch of mostly white gay guys, and she was interested in helping us. Within a few weeks, I was her guy Friday, and together we were drafting and shooting off paper after paper to the floor of ACT UP. Iris\u2019s study group was really a study group that was associated with the Issues Committee of ACT UP. It was one of the two biggest committees of ACT UP \u2013 Actions and Issues \u2013 and their names tell you what they thought of themselves. Issues thought of itself as the think tank, and Actions organized all of the street actions for ACT UP. And because I got involved in the Issues Committee \u2013 within a month, I was sitting on the Coordinating Committee of ACT UP, representing Issues. I was not then or ever the chair of the Issues Committee. But for nearly the next year, I sat on the Coordinating Committee of ACT UP, and that really was the year when ACT UP consolidated its base in New York City and became, practically, certainly, a national organization and also with lots of international chapters. But at that very beginning, there were a handful of about five of us that were working with Iris Long. And by February of 1988, we had put out papers that formed the basis of all the treatment work that we would do within the next three years and over the process of the next few years, we secured the approval of several drugs and certainly changed the drug approval process, although there were some things about the rapacity of capitalism that we could not change. And we always were working within a very limited framework. But, looking back on it, it was fairly amazing \u2013 the degree we changed things, and the speed with which we were able to change things. And, it was only because we were embedded within a community like ACT UP. And when ACT UP later dissipated, it was because, in some ways, the brain and the body split again. It was only then, when we were quite literally working hand-in-hand. The very first successes we had were when Issues and Action committees worked very close together and targeted the local AIDS treatment units \u2013 the teaching hospitals in New York where experimental drugs were being tested on patients. It was only when the people who were thinking on different issues came up with very particular targets that all of the membership \u2013 the several hundred active members of ACT UP \u2013 could get behind and put their bodies on the line for. That was the only time that ACT UP could actually make a change and it was \u2013 like I say \u2013 it worked for about two to three years, splendidly. I know ACT UP has done good work since then. I don't mean to trivialize what has been done since then. But there was a time when we had 400 people a week in the room, and we were able to affect change on several different fronts."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "science at all? Let me ask you some specifics. Now, you had no background in"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "No."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "When you first started looking at this material, how did you adjust your mind to conceptualizing in terms that were appropriate for science?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "I spent that first few weeks around Christmas \u2013 I really joined ACT UP in November \u2013 learning all I could about the drug approval process \u2013 how a drug gets approved in the United States, approved for people, and about AIDS drugs. But you have to figure, we had a very limited palette of AIDS drugs back then. There was AZT and a few other things that were in the pipeline. The government, at that time, was hardly doing anything about drugs to treat the various opportunistic infections that were associated with AIDS. And so, it was pretty much, the major antivirals \u2013 AZT, basically, and a few knock-offs \u2013 that they were putting money behind. And so, it was mostly learning the whole system of AIDS treatment units across the country, that the government had set up for the National Institute of Allergies and Infectious Diseases, which was part of the National Institutes of Health \u2013 so, set up between 20 and 40 teaching hospitals, in those first few years, around the country. But, we were lucky here in New York, in that five of them were situated here that first year, and when they were renewed two years later, seven were situated here. So, it meant that there were lots of targets for us to sit-in at those first few years."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "How did you get this information in those first few weeks?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "By February, we were calling ourselves the Treatment and Data Committee. And the reason we were that is because Iris\u2019s study group was the treatment part of that. And David Kirschenbaum \u2013 who\u2019s really an underrated treatment hero of those first year or two of ACT UP \u2013 had a one-man data gathering operation going since July of \u201887, when he joined ACT UP, because through his friend David Barr, the lawyer, he was getting volumes \u2013 I mean literally, volumes \u2013 of information under the Freedom of Information Act. So we would weekly just get boxes and boxes and stuff."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "You sued? David sued?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "The stuff that he could not get by just threatening that we would go through the Freedom of Information Act, he would actually \u2013 through \u2013 I don\u2019t think we ever had to actually sue, although I do know that we would have to use David Barr\u2019s name, and David was working on AIDS issues through Lambda Legal Defense Fund, at that time. We also worked with David\u2019s predecessor \u2013 a lawyer named Jay Lipner, who later worked an awful lot with ACT UP, although he was not himself an ACT UP member, and he had been the brains behind helping people in Love Canal years before. So, he was an out gay lawyer who had a long history of trying to shake the system."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Is he still alive?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "No, Jay died in \u201989, maybe \u201990."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "So, this information was gotten from the NIH?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "NIH, but lots of other sources, as well. Eventually, we had lots of people within the system that liked us \u2013 or, at the very least, were sympathetic with us \u2013 some who were closeted gays. We wound up, eventually, befriending \u2013 the head biostatistician at the National Cancer Institute at that time was gay and dying of AIDS, but he was not out, but we got stuff from him."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "What was his name?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Dave \u2013 was his first name. I prefer not to give his last name, because he was only half out at the time of his death. I might not agree with it, but I will honor it."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "An anonymous hero. And, there were people that were both hero and villain, at different times. It was a very complicated thing. But we were able to get huge amounts of information, and I think very early on, we were very good. And, I think it was because we had gone to school within ACT UP, realizing you always had to be very concrete. You couldn\u2019t be too theoretical. You had to distill everything you did to a few points. You had to break down \u2013 because AIDS was such a huge problem. As I said before, it was as big as all the problems we had in society. It had to do with the rapacity of capitalism, and the inability of this country to ever recognize how all of our services are being eaten away, because of that rapacity, and the fact that we had an administration that just could not begin to deal with AIDS. So, because of that \u2013 you can\u2019t deal with the ocean \u2013 you really can\u2019t. You might want to, but you really have to be very rigorous. And so, early on, for example, one of our first big successes was \u2013 there was a blindness drug called DHPG. It was used to treat people who had cytomegalovirus \u2013 an opportunistic infection that many people with AIDS got and usually attacked the eyes, at that time. It attacked different organs at different points, in the history of AIDS. At that point, it was the standard of care, in the sense that it was an unapproved drug, but ever doctor gave it to his or her patient if they had AIDS and they came down with CMV. And yet at one point, the Food and Drug Administration said, \u201cNo, we can\u2019t approve it because we don\u2019t have the good data.\u201d And they didn\u2019t have good data. But because of that, that meant no one who couldn\u2019t afford paying for it out of pocket themselves could get it, because the drug was only legal for other purposes. So, no insurance would pay for it, and certainly not any one who was on Social Security, Medicare or Medicaid. So, we had a very potent issue there. It was an issue that affected lots of people. It was an obvious injustice, and we had 300 people in ACT UP who could get on a bus, go down to Bethesda, Maryland, where Ellen Cooper, who was an official with the Food and Drug Administration, was testifying, and we could sit-in there and we could have \u2013 what was it \u2013 I guess, a semi-peaceful protest \u2013 enough, that within a month, the Food and Drug Administration felt they had to re-open the case, drag in all the data they could and become pro-active, in order to extract from data \u2013 which, I have to admit was sloppy, terribly done, disparate, and lots of it was coming from local AIDS doctors. But it was there, and in some ways we were able to \u2013 as I say, within a month \u2013 have the Food and Drug Administration reverse themselves, extract the data and approve the drug. Well, when people within the drug approval process \u2013 both, within government and pharmaceuticals and local doctors \u2013 approving a drug is still a very dispersed process. We live in such a dispersed country. And because our government operates on so many different levels \u2013 federal, state and local, and so much of \u2013 private industry has a stranglehold on so much of the healthcare industry \u2013 it\u2019s very difficult to do things. But we found out, at least within those few years, if you could identify an obvious problem \u2013 if you could get the media on board about it, if you could get 200 to 300 ACT UP people sitting-in at a very particular target and making it very, very uncomfortable for the powers that were, you could affect very, very quick change. And within only a year, we wound up doing things like reversing the unapproval of DHPG, getting another AIDS drug \u2013 ddI \u2013 approved. We were the first group \u2013 in 1988, I wrote a letter to Tony Fauci, who headed at the time the National Institute of Allergies and Infectious Diseases, and he still is virtually the unnamed AIDS drug czar, in the United States. I wrote a letter to him with a proposal that we\u2019d worked on \u2013 only three or four of us within Iris\u2019s group \u2013 saying that for people with AIDS who had exhausted AZT and had no treatment options and were too sick themselves to get into any clinical trials, that they should have what was known as \u2013 what we were calling parallel trials for people, so that they could get the only treatment options. So in other words, if I\u2019d exhausted my treatment options \u2013 even if I couldn\u2019t get into a clinical trial for the drug, I would get the drug, because I had \u2013 provided you knew that you were taking a drug that was not approved. But, if that\u2019s what someone with HIV wanted at that time, he or she should be allowed to do it. And, our argument was, at the same time, you could also get dirty data on that person. The data might not be absolutely clean, because the person would not \u2013 was too sick to obey certain parameters. In other words, you wouldn\u2019t want that person to go off all other medicines he or she was taking, to fight other opportunistic infections. But, that sort of real world data, itself, would be invaluable, if you actually kept it. So, keep the fine \u2013 keep her out of your pristine trials to get a drug approved, but then have parallel trials. Well, within five months, Fauci was behind the idea. He renamed it the parallel track, because he had to remake it in his own image, of course. But, it was things like that \u2013 that time and time again \u2013 because we were able to find a great need, narrow our focus, articulate it, through the people who were working intensively in the area of drugs and then, always \u2013 and I cannot say this enough \u2013 back it up through the people in ACT UP, who had just come en masse everywhere \u2013 down to Washington, down to Bethesda, down to all the places where drug approval gets done, and put their bodies on the line. There is something incredibly powerful about seeing hundreds of people just sitting there or yelling \u2013 or people \u2013 if it\u2019s a different sort of meeting \u2013 people with AIDS who are themselves sick and need a drug, getting up at a microphone and telling the powers that be, \u201cYou are not serving me.\u201d"
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Had you ever met Tony Fauci before you wrote him this letter?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "No, no."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "So, you were just sitting in your little apartment over there, and you typed this letter? And you just put it in the mail?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Yes. But I have to say, this particular one \u2013 I wrote it, but the principles in the letter were devised with David Kirschenbaum and Iris Long, and Gary Kleinman, who was another early AIDS activist. But, I was always the penman."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "You guys just mailed him a letter? And he read it?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "We were targeting the AIDS treatment units at the five teaching hospitals in New York, who had AIDS treatment units. Iris, Gary, David and I finagled a meeting with Fred Valentine, a doctor who at that time was heading the unit at NYU. So, we wrote the letter to Fred Valentine after the meeting, and cc\u2019d it to Fauci, since he was the man who was the head of the AIDS Clinical Trial units across the country. So, it was sent to Valentine and to Fauci."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Did Fauci call you back?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "No, although, springtime, when he came to New York to talk at the local branch of the Institute of Medicine, I was in the audience and peppered him with questions and later told Gay Community News at the time that he had gotten the letter, that he had read it, that he thought it was very smart and thought there were a lot of things that the government should be doing and that they should act upon a lot of the things that were in the letter. Now, I don\u2019t for a minute think it was only out of the goodness of his heart that he was doing it. He also was coming up against the Food and Drug Administration. So, we\u2019re dealing with internal politics within government agencies here, and sometimes one agency would play us off against another agency. But, we tried to keep our eyes open about that, and tried to never allow ourselves to be co-opted too much by one agency against another. But, Fauci would have been very happy to almost do away with the Food and Drug Administration, because they were standing in the way of his glory, of his approving virtually everything they wanted to get approved. The FDA always saw itself as the gatekeeper, and people who were doing the investigations, who were doing the experiments \u2013 the scientists always thought as the FDA as almost this dowdy, old, fusty organization that was standing in the way of science. Whereas, of course, the Food and Drug Administration looked upon the experimenters as begin quite willing to throw any drug out into the market that might help someone or might not \u2013 might harm someone or might not, just because they thought it would, and they had some good theoretical basis for. So there\u2019s always an internal \u2013"
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "How much time was there between parallel \u2013"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "There was nearly a year and a half before we were doing parallel track. I wrote the letter \u2013 but as I say, it was really in the name of the four of us, and we were really the core of Iris\u2019s study group, and that\u2019s what Treatment and Data really was at the time. We wrote that in February of \u201988, and by June of \u201989 was when parallel track started snowballing. And by the end of that summer, we had an expanded access program for ddI, and it was part \u2013 once again, because you could target things very well. We knew what was going on in the AIDS Clinical Trials units. We saw that they had tried to get a drug \u2013 ddI \u2013 which was a nucleoside analog, like AZT. Although it was different in some ways, similar in other ways, its toxicity \u2013 the way it might harm someone \u2013 was different from the way AZT might harm someone. Neither were great drugs, but because the toxicities were different, at least, in theory, the idea was, you could lower \u2013 if you did them together \u2013 the doses of both of the drugs, and lessen the side effects. It was clear that these guys \u2013 I don\u2019t know what they were doing. For years, they were just trying to get ddI in trials, and they had huge amounts of money. But it wasn\u2019t until \u2013 again, ACT UP, in June of 1989, went to these yearly AIDS meetings, and that year, it was in Montreal. And luckily, Montreal is not too far from New York City. So, we had a few hundred people up there, in Montreal, for eight days \u2013 the eight days that the conference ran. Those of us who were interested in treatment issues, actually had a chance to go to all the papers and grill the scientists. Kevin Smith, who was a photographer who worked in ACT UP, took a picture of me grilling a scientist on ddI, and it is the only picture of myself that I ever liked, from when I was working in ACT UP, because it struck me \u2013 it got to the whole \u2013 it showed us in action, in the way that I, at least, liked us to be seen. You see me only from the back, but you see me on this huge screen above the poor scientist who is getting grilled. And half the people in the audience are ACT UP people. So, it\u2019s really quite wonderful. But, it was also wonderful, because that was, really, the very moment I was grilling them about ddI. And they can\u2019t explain it, of course, because they had flubbed it. There was no excuse for what they weren\u2019t doing. Because again \u2013 because of the media glare we were able to bring, and because we were now able to bring hundreds and hundreds of people from all over the country to bear on this \u2013 by the end of that summer, we had DDI in several trials. We had ddI in an expanded access program that people who had failed AZT could get all over the country. And, we had the beginnings of the commission on which I sat, that later came up with a parallel track program \u2013 highly flawed, because we live within such an incredibly flawed and complicated healthcare system. By the end of that summer, I was asked by the Food and Drug Administration to come to a meeting of the Food and Drug Administration, at which they were going to be deciding the feasibility of a parallel track system, with ddI kind of being the pilot project. We\u2019d already gotten the pilot project, which seemed to be working. And I addressed the commission, and it was a daylong thing, in which lots of people from around the country spoke, and lots of ACT UP people came down and were a quiet, but palpable presence in the audience, and several ACT UP members spoke very movingly. And by the end of the day, to everyone\u2019s lasting shock, the Food and Drug Administration decided that they were going to embark on a parallel \u2013 going to embrace the idea of having parallel \u2013 what we called parallel trials, they were trials \u2013 the parallel track for experimental AIDS drugs. And they used my proposal as the rough draft of it, and they named me to the commission that was going to be deciding it. So, it was shocking, scary. But it was also terrific, too. As much as I look back upon it as a victory, I still also am, at the same time, very conscious of what we were not able to accomplish and how broken the healthcare system within the United States continues to be. So, I don\u2019t want to overstate what we did, but within the world we were handed at the time \u2013 when five ACT UP members would die a month \u2013 we, at the time, felt it was a great victory. And fifteen years after the fact, I look back and say it was qualified victory."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "How many people were affected by parallel track?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "I don\u2019t know the numbers over the years. I really don\u2019t. I know there were thousands. I know there were more than a thousand just with the very first drug, ddI. Let me say, the good part about parallel track was that it enabled us to get in a really quick time, a lot of drugs approved, a lot of HIV drugs approved. And because of that, it allowed the whole idea of a cocktail to even be. You could not have an AIDS drug cocktail, unless you had several drugs. And so, it allowed us to get lots of mediocre drugs approved really quickly. It also allowed us to get some fairly good drugs that targeted one or another opportunistic infection that people with advanced HIV are prone to, approved pretty quickly."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "What were some of the mediocre drugs? What were some of the good"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "The mediocre drugs were, virtually all of the early AZT knock-offs \u2013 so, drugs? AZT, ddI, ddC \u2013 they all become approved relatively quickly. But, in some ways, because the drug approval process was easier, drug companies that before had not been very willing to put much money into developing drugs for exotic opportunistic infections that would affect a limited number of people, now could do that, because they were not looking at a 10-year approval process, but maybe a three-year approval process. So in some ways, it worked better for opportunistic infections, but I don\u2019t know that that\u2019s so, because like I say, I\u2019m glad that the cocktail came about. On the other hand, I don\u2019t think any of us should \u2013 we\u2019re still living with the fact that, still, twelve to fifteen years later, we don\u2019t have great AIDS drugs. We don\u2019t have a cure. We don\u2019t have a vaccine. We have drugs that work somewhat \u2013 that are very expensive and have limited availability. So, I think we can pat ourselves on the back only a little. I think we accomplished an awful lot, within a very short period of time, but in some ways, the greatest disappointment of my life both on a personal level and what had become my professional life \u2013 since, for those four years, this was virtually all I did \u2013 all the writing I did at that time were just the papers that, to my surprise, were actually getting published in peer review journals. But again, I have no delusions they would have been, without ACT UP behind us. So, this goes with what I was saying about my great personally and professionally \u2013 the biggest disappointment of my life was that at this point, we could hold ACT UP together, to do it just a bit longer or somewhat longer. A lot of us who were working in drug approval, wanted to push the fight to universal healthcare and to reforming things like Social Security, Medicare and Medicaid and, if you remember, it looked at that time\u2026."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "You were going to tell us an anecdote."
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "There was a vice president of a drug company who told me in 1990 that he thought the healthcare system in America was so broken, served the people of this country so badly, that definitely, before the turn of the century, we would have universal healthcare. I mention that because, if certainly \u2013 some guy who, you know, bringing down a six-figure salary within a drug company felt this, of course those of us within ACT UP were thinking this. You have to remember, \u201892 was when Clinton was elected, and within that first year he and Hilary Clinton tried to push the whole idea of universal healthcare. Several of us in the few years before that were obviously thinking in the same way. And, after we secured parallel track, a few of us wanted to move us into other areas. By then, Treatment and Data had moved from Iris\u2019s four-person study group to then a sub-committee, then a committee itself, broke off from Issues Committee, because we were eventually the tail that wagged the dog. We literally could get sixty people a week, just to the sub-committee meeting. There were many people who came to Treatment and Data meetings and never came to an ACT UP meeting \u2013 that\u2019s how big it was. So because of that, there were some of us who wanted to work more in the healthcare end of things, rather than the narrower area of drug approval. And some of them left Treatment and Data before I did. People like David Kirschenbaum and Gary Kleinman were much more working on state issues by that time and trying to get the state to pay for certain things \u2013 certain healthcare things. They wound up leaving Treatment and Data before I did, and as soon as we secured parallel track \u2013 now, I mentioned that I was named to that committee, and that committee worked for a year. I was also named to a committee of the Institute of Medicine, which despite its name \u2013 because it\u2019s part of the National Academies of Science \u2013 but despite its name, that\u2019s not a government entity. It\u2019s kind of like an academic watchdog group that sits outside of science in the United States, and really kind of critiques what both the Academy and the government does on science. So, I was sitting on a panel of that that was critiquing AIDS drug approval, at the National Institutes of Health. So that too lasted about a year. Also, Congress mandated a committee, which was called the AIDS Research Advisory Committee, which again I was the AIDS activist that was named to it. But that too was a year commitment. And when that year was up, I knew that I wanted to gradually extricate myself from the drug treatment end of things. I mentioned Jay Lipner, who was the lawyer who pretty much masterminded the plaintiffs getting money after the Love Canal disaster \u2013 an AIDS lawyer, a gay lawyer, who had worked with us, and was instrumental in helping us. He knew more about Social Security, Medicare, Medicaid than anybody I knew. And, he was willing to help us. And, we were starting a study group to tackle this, knowing that it was going to be so much harder. I talked before about \u2013 I think one of the things we were really good at the year that we were humming, was narrowing our focus on something that was do-able within a short period of time. It was almost hard to see how you could do that with Social Security and getting benefits for those people who weren\u2019t \u2013 fixing a very broken healthcare system \u2013 always with the idea knowing \u2013 when we went to the FDA in 1988, one of the slogans I came up with, that really ended the paper that I delivered to ACT UP, which got us to vote to go to the FDA in the beginning, ended with the whole idea that healthcare is a human right. And it was pressing. And, that was the first time, I think, that ACT UP officially articulated it, but it was very much \u2013 certainly what the majority of the floor felt, and I thought the more that we could press that as a moral cause, was something that we could ally ourselves with many people outside of the gay world and the AIDS world. We could not secure the benefits for the people we were fighting for, if we didn\u2019t tackle some of these problems. And so, we started a study group."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Who was in it?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Someone who was very interested in it, and was going to be doing fundraising for it, was Peter Staley \u2013 someone you might think \u2013 Peter Staley, for people who don\u2019t know \u2013 had a background in Wall Street. He had set up for ACT UP, as its principle fundraiser its first two years of existence, practically. He has set up a moneymaking system within ACT UP that got us enough money so that within a year, we had \u2013 a year and a half, at least \u2013 our own office. We really didn\u2019t have to worry about money for about a year there, which was a mixed blessing."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Because he was raising money?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Because he was raising the money."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "And how was he doing it?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "A lot of it was through letters that people like Harvey Fierstein would sign, and gay people and sympathizers around the country would bankroll us. We have to remember, at the time, we were getting a lot of publicity. And just as I said, in New York, you could get a thousand people. Our first year anniversary, a thousand people were at Wall Street. Most of them were sitting in. We could sometimes get five hundred people arrested. Those are impressive numbers, even for New York. And as I said, it\u2019s because it was about to combust because people around the country knew there was a political dimension. And, I think because of that, many people who didn\u2019t live in urban centers, they could just give. Money was what they did."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "So, Peter Staley was interested in universal healthcare?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Peter Staley \u2013 we\u2019d meet at Lambda Legal Defense. We were starting a study group to try and get the whole idea of reforming \u2013 like I say, it was starting with Social Security, Medicare and Medicaid, and the overlap and the contradiction between \u2013 just those three terms, you could give a disquisition for hours on just what\u2019s wrong with that stuff, but always with the idea that universal healthcare was the goal. The problem was by then ACT UP was falling apart. I don\u2019t know how much we want to go into this, but, like so many groups, ACT UP is in part a victim of its own success. But, it\u2019s own successes, more and more, I think much of the activity within ACT UP was getting done within dozens and dozens of sub-committees and special groups that would form for individual causes. So less and less was getting done in the room on a Monday night, which is when we always had the meetings. We got so big that we had to move from the Gay and Lesbian Community Services Center to Cooper Union over here, which while it has a fine, leftist history \u2013 a union history \u2013 it never, at least to me, never quite felt like home. I don\u2019t want to blame the dissolution of ACT UP on that, but there came a time when different sub-committees were very \u2013 and I think people who were in no subcommittee at all \u2013 were very mistrustful of what each other were doing."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "I want to challenge you on something. And, I\u2019m sure you\u2019re going to disagree with me, but \u2013 you\u2019re talking about capitalism as the centerpiece to understanding all the problems in this country and how they converged on the AIDS crisis, but wasn\u2019t the split in ACT UP \u2013 and in fact, the split in T&D itself \u2013 about a disagreement about capitalism?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "No. It was a disagreement about \u2013 this is how I would phrase it \u2013 it was a disagreement about how important community was to what we\u2019ve been doing. As I\u2019ve said before, I\u2019m HIV-negative, and yet, I was sitting on all these AIDS panels. The only way I saw myself as having any legitimacy, and even opening my mouth on AIDS issues was, as long as I had a vital grassroots organization behind me. When I no longer felt they were behind me \u2013 to the degree they had been \u2013 even though we wound up winning fights on the floor, virtually all the time \u2013 there\u2019s a difference when you\u2019re winning 60/40 and when it was virtual unanimity. I don\u2019t think things have to be 100% consensus, but in a grassroots organization, they better be very close to that. When ACT UP was at its most vital, it was because it agreed on certain very basic core issues, but also in how applying it."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Yes, but the T&D group that you\u2019ve articulated \u2013 you, Iris, David \u2013 okay, you\u2019re talking about \u2013 you in a sense got supplanted by \u2013 or joined by \u2013 a new T&D group that were from a higher, upper-class background, that had gone to Ivy League schools, who was not a middle-aged, working class woman from Queens \u2013 and they had a whole different political world view. I mean, you haven\u2019t mentioned this at all, but this is part of the split in ACT UP."
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "It is, perhaps, part of it but, I think a lot of those people, at least, thought of themselves of lefties \u2013 certainly, Mark Harrington did and who, in some ways, was the core of TAG \u2013 the group that a lot of the Treatment and Data members who left ACT UP later came to be called \u2013 came to be called even when they were still within ACT UP, because TAG, technically formed before they split from ACT UP. They wanted TAG originally to do things that they didn\u2019t want to go through the floor of ACT UP in order to get."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Well, was there a class difference between you guys and the TAG guys? Is that what the difference was, in terms of worldview and experience?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "There might have been \u2013 some of it. I don\u2019t mean to be avoiding the question, but I hadn\u2019t thought of the class difference between us. But now that you mention it, there was a difference between coming from a working class background and those who didn\u2019t."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Okay \u2013 these two different factions, or whatever \u2013 did you, overtly talk to each other about capital, about access? Did you have different priorities about access?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Yes, access was important from the beginning. But I have to say, it became less important when \u2013 particularly when people like Iris and David \u2013 it\u2019s so hard to know how to go into detail about certain things. One of the organizations that spun off from ACT UP was the AIDS Treatment Registry, which was a registry of all the clinical trials in New York that were available to people with HIV, or with an opportunistic infection associated with HIV. That siphoned off all of Iris\u2019s time by early 1989, certainly. David Kirschenbaum and Gary Kleinman were working on state issues almost exclusively by that time, as well. Richard Elovich, who had been very early on, and also would have been on the working class end of things, was devoting all of his time to needle exchange and drug related issues \u2013 injectable drug related issues. I could name lots of other people who were working on other aspects of it \u2013 and it\u2019s true, Treatment and Data almost exclusively came to work on drug approval, and how can we get drugs approved. It was much more technocratic, it was much more scientific. My expertise was never in the science of it. Even when I became a quick study, what I became a quick study of was the maze of drug approval, and the Byzantine US government, and the factions between different branches and sub-branches of US government. I never wanted to become a doctor. A lot of people in Treatment and Data wound up going the route of \u2013 they in some ways were more interested in the drug than in a lot of other things. For me, I was always interested in the community of ACT UP, because that was the only basis on which I felt I had a leg to stand on. But on the other hand, a lot of the core of T&D were, themselves, HIV infected people. And they felt they were being true to the whole principle of \u2013 I have a right to self-determination, I have a right to be part of the process of drug approval, because it eventually affects my life directly. They deeply resented being told by the floor that, no, for the next six months, we don\u2019t want you talking to Anthony Fauci. So, when things like that came up, I have to say, the amount of ill will within Treatment and Data about something like that was huge, because it was seen as something imposed upon them, mostly by people who didn\u2019t have the disease themselves, as something that would handcuff them, when they were looking a death sentence in the face \u2013 to put it in bold terms. I felt myself in the middle. I was, at that process, extricating myself from the whole drug end of things, wanting to work more on access \u2013 not knowing how in the world I could do it, if ACT UP was falling apart. Because, like I said, I could not have done it on my own. I was really one of those people \u2013 just by temperament, by the fact I was HIV-negative. But, even by my modus operandi \u2013 all of the successes that we\u2019d had from that really small group was because we worked well within ACT UP. We loved the group. We really wanted the group to succeed and we reveled in the fact that so many of the other sub-committees were doing the same thing. Someone who just hears my tape will think it was only drugs, drugs, drugs, but you\u2019ve got to remember, there were so many accomplishments that different groups \u2013 and I\u2019m sure you interviewed different people in different areas \u2013 were doing. And it was almost like we were paralleling their success, they were paralleling our success in that heady first year and a half. Sometimes the Monday meetings were too much like a pep rally, but in some ways you could understand it, because there were people who felt they were legitimately changing things and wanted to share it with everybody. And in turn, I think they really drew strength from that group. And, for demonstrations, when one end or the other needed everybody, they could draw on it. That wasn\u2019t so, within two or so years \u2013 certainly by 1991 and even midway through 1990, that was starting to change. I don\u2019t know how you \u2013 I know I couldn\u2019t jump with TAG, because I didn\u2019t want to be an AIDS professional. I wanted to be a community activist. I felt that my voice had no legitimacy as a professional because I wasn\u2019t then. Maybe if I were myself HIV-positive, I would have made the jump. Maybe I would have felt, as well, I don\u2019t want to be handcuffed. But, I didn\u2019t make the jump because, one, I wanted to be now working on access issues and two, I was not myself \u2013 I didn\u2019t have the disease myself. But I\u2019ve also \u2013 and to this day \u2013 I feel strongly that I couldn\u2019t point my finger at someone who was himself infected and may himself be dealing daily with the disease. You can\u2019t be trying to affect the system in the way you feel will get you the drug within the year that you \u2013"
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Yeah, but Jim, there were plenty of people who stayed in ACT UP who had HIV. And there were people in TAG who were negative."
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "I\u2019m just saying why I didn\u2019t \u2013 maybe that\u2019s a better \u2013 maybe that is more of explanation of why I didn\u2019t leave."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Right, I understand. So, what did you do next, when you started to work on access?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Well, we did start to do the access thing, but by then, the floor of ACT UP was falling apart, just when we wanted to start some sort of dialogue \u2013 but, I use the word \u2013 that\u2019s fine, it\u2019s more civil than how you start, but just when we started wanting to hit the Social Security administration \u2013 because you really have to hit it at the level of the Department of Health and Human Services, so in some ways, we really were almost hitting at a cabinet level, whereas, drug approval, we were able to deal with a lower level. The floor of ACT UP was less and less inclined to want to even deal with the Feds at all. It was just hard. After a few months of trying to work at that, it was hard to see how you could even begin to get the full approval that I wanted for dealing with the federal government. They got to be \u2013 after the big fight, which resulted in the eventual pulling out of TAG \u2013 it was just hard to see how some of us, who were also remnants of Treatment and Data, could ever have gotten full approval or close to full approval from the floor, for almost anything. So, in fact, my last several months in ACT UP \u2013 the project I was involved in and wanted to get involved in was an internal one, almost like an in-reach committee within ACT UP that would try and \u2013 a support committee for the various sub-committees and groups, to try and minimize the internal damage that just seemed to me we were doing to ourselves, with those floor fights that, really, were just tearing the group apart, and eventually did tear the group apart. Eventually, I was exhausted and did not carry that off, although my last important paper that I wrote for ACT UP was a proposal that we try and develop \u2013 that the group was so important, that I was willing the chuck all the outside stuff to try and come up with an organization that would focus on the group, to try to heal it or minimize the damage \u2013 some sort of a support system that would try to arbitrate disagreements before they just tore the place apart. I felt so very bad, because there were people within all the various factions of ACT UP that I was personally close to, and there were people who were doing work that I thought was so important and had to go on, and it would be so diminished if ACT UP flew apart. But in the end, I just couldn\u2019t see how to do it. And also, some of it was personal, in the sense that, by then, I can\u2019t tell you how tired I was \u2013 how draining. I hated the halls of power as much as \u2013 more than I thought I would. Having always been skeptical of power."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "I never knew that you spent a year on a congressional committee."
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Well, mandated by Congress. I didn\u2019t have to be there all the time."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Who was on it with you?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Lots of doctors from around the country and people from NIH and people from FDA. There was a Social Security person on there, and so, you know \u2013 it was a bullshit committee and the Congress mandated it because of ACT UP. It was, virtually because of all the action that was going on in the street, and our pointing up all of the disconnect in the system, but we heard lots of testimony, and in some ways, it duplicated a lot of what the president\u2019s committee was doing, and other committees were doing. But, it had no power."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "I want to ask you about the bureaucratic mentality, because you were so exposed to it, and as you said, it drained you and you had so many face-to-face experiences. Can you help us understand these people? Why would a human being decide to withdraw DHPG and think that\u2019s a good idea? What were they like?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Well, there were a lot of people, even on the left, who come from consumer activism. And, in some ways, consumer activism \u2013 a lot of it is about protecting the country from Thalidomide. So, there were people who went into the Food and Drug Administration from pure motives \u2013 that is, you don\u2019t allow \u2013 Thalidomide was not released in the United States, but was released in Europe, and so the Food and Drug Administration in America came to see itself as the protector of the American public against drugs that were let out prematurely and might do a lot more harm than good. So, there was this whole mindset among people \u2013 some of whom were pure-hearted, but did not have the day-to-day realities of AIDS to deal with, to know that it was time to see what was going on, and to re-examine the whole thesis."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "How come they couldn\u2019t see it? Was it homophobia, or was it just being a scientist?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "There were different motives. But, I tell you, the person we dealt with most in the Food and Drug Administration was Ellen Cooper and her boss, Frank Young and Tony Fauci at the NIH."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Let\u2019s talk about these people \u2013 what were they like?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "None of them were homophobic. I really, honestly, have to say that. I think Tony Fauci has lots of faults. He is a vain man and he sees himself as a great man, and he wants to protect that legacy, and he saw AIDS as a way to further that legacy. I\u2019m under no delusion that he was just doing it just to help us, or just to save the lives of people with AIDS. I do have to say, he was one of the straight men of his generation, from whom I never detected a whiff of homophobia. I have to say that. Ellen Cooper, in fact \u2013 after she worked with the FDA, worked with AmFAR. So, we in some ways \u2013 I think she was deeply hurt by us, to begin with. And then, she listened to us. And then, she wanted to work at a community level, in order to develop AIDS drugs. Frank Young, her boss, left pretty quickly and he was something of a well meaning blow-hard, but he was not \u2013 the Bush administration figurehead in some ways. A lot of the community doctors, a lot of the people who worked in teaching hospitals, saw themselves as great champions of people who were ill. They were working to get them drugs. They were highly insulted if you suggested that what they were doing was not in the best interest of people with AIDS, or that it was too slow. And, in part, you could see that. Everyone works from mixed motives, and they work from their own vantage point. What I do have to say about it was there was \u2013 in all of the bureaucracy \u2013 the major goal of any individual is usually to protect his or her ass, to advance his or her position, to preserve his or her legacy for those few, like Fauci, who do see themselves on a much larger scale. And so, they all have little fiefdoms. And, most of them are working in all their adult lives in a very specialized field. They see very little. None of them had much day-to-day contact with people with AIDS, although some people who were researchers had AIDS patients. But, up until ACT UP started speaking, they were just, oh, those poor AIDS patients or guinea pigs, in the worst scenario. One great thing that AIDS accomplished was to give these people \u2013 it gave a face to AIDS. Really, I had to start dealing with individuals out there."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "How did they feel about you? You coming in with no training, and you understood these things so much better than they did. Were they resentful?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "I guess, maybe some were."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "How did they treat you?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "They usually treated me fairly well. They didn\u2019t treat everybody fairly well. I had a way of dealing with them. Once again, I was articulate, and in some way I could be more articulate about their situations than a lot of them could, because a lot of them were scientists. Part of me hates to say that, but it intimidates people \u2013 it can intimidate people. A lot of these people were intimidated. I mentioned this Dave \u2013 and I won\u2019t give his last name \u2013 head bio-statistician at the National Cancer Institute, told me that he had seen me about four or five times at scientific meetings speaking at a microphone, before he had enough courage to come up to me and speak to me. Now, you\u2019re talking about the first time I spoke to the floor of ACT UP, I was so green as a public speaker that I had \u2013 I\u2019m left-handed \u2013 my printout from my computer of what I wanted to say. It was, like, two hundred words only \u2013 in one hand. And, I was so nervous, in order to be able to read it, I had to hold this hand with this hand. So none of it came naturally, but I was articulate, and as I said before, within ACT UP so many people found reserves within themselves that they never knew they did. So, because I was articulate, a lot of them cut you a lot of slack. And, because you could articulate sometimes their problems \u2013 I\u2019m also fairly analytical. It\u2019s why, I think \u2013 really, everything TAG did, everything that we did in our first five years \u2013 the study group articulated in the first few weeks. It sounds stupid, but it\u2019s very true, because it was obvious. It\u2019s just that no one was looking at it from an AIDS perspective before. A lot of them I think thought, Eureka! They\u2019re saying some things we never thought before. But, I\u2019m not stupid enough to think that there weren\u2019t other people. I mentioned the day that I talked about parallel track to this FDA meeting, and they adopted as official FDA policy \u2013 yes, an expanded access for people with AIDS. An aide to Ted Kennedy came up to me afterwards and said, \u201cDo you realize how jealous every physician in this room is of you?\u201d And, I didn\u2019t quite understand what he was saying, and he said, \u201cDo you realize that most people, most physicians at 60 years old don\u2019t have enough credentials in order to sit on an FDA committee?\u201d So it is that sort of thing that you don\u2019t think about from the outside, but they did on the inside, and we did come across doctors who were hurt, angry, jealous \u2013 certainly trying to sabotage the ddI parallel track, because there were some doctors who didn\u2019t like the idea of parallel track, because they were great defenders of the very pure system of only allowing people access to a drug that had gone through \u2013 at that time \u2013 four phases of clinical trial. So, you knew, virtually everything about the drug before everybody else got it. But, I didn\u2019t get the brunt of it. I think, perhaps, a major reason was that they knew I had ACT UP there. Nobody wanted 300 people sitting-in at their teaching hospital."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Okay, that\u2019s the scientist, now I want to ask you about the left, because you represent a certain sector of ACT UP of which, also, I am part of, of people who had a political analysis beforehand, were involved in a lot of different social movements and brought that to ACT UP, as opposed to people who had never been involved before. So, you had been involved in anti-war, you had done solidarity work, you had done amnesty work. So, you had this experience of doing political work that was about somebody else. And now, you\u2019re in this constituency movement \u2013 it\u2019s about the people in the movement. I know that very few straight people ever came to ACT UP. There were some significant people, like Iris Long, but very few. And at the left, certainly, never got on board with AIDS. How did you feel about that? Or, did you notice that? Was that an issue for you at the time?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "It was an issue, only toward the end of my involvement with ACT UP, when we were contemplating making alliances with leftist groups outside of the AIDS world, because we wanted to attack universal healthcare. But, those first few years of ACT UP, it was a full time job just making that community work. I said when we were changing the reels \u2013 I said, in some ways, all this talk about drugs was a bit misleading \u2013 about my involvement with ACT UP, because I also sat on the Coordinating Committee that first full year of ACT UP \u2013 from December of \u201887 to November of \u201888. And that was when it really burgeoned. And, despite all this other stuff I was doing, thank God, I wasn\u2019t \u2013 Issues was the one committee where the chair and the representative on the Coordinating Committee were different. But thank God, I certainly couldn\u2019t have chaired a committee and sat on it. But I sat on the Coordinating Committee, although it was a thankless and awful job, in some ways."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "During that time \u2013"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Because I believe so much in getting this organization up and running, and that it had to be a community, because that was \u2013 I sometimes sound like a broken record \u2013 that was our legitimacy. It was, either succeed as a community, or cease to be. So, it was really so very important."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "What I\u2019m asking you is, in that time, when you were really in leadership, did you ever see groups from the left, or straight organizations come to ACT UP and say, we want to join with you? We want to be part of you?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "No \u2013 I\u2019m thinking 14 or 15 years later."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "How come the left didn\u2019t get on board with AIDS?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "They didn\u2019t put their bodies on the line, that\u2019s for sure. I do think we had armchair fellow travelers who saw it and agreed with it. I started saying, some of it is because some of the people on the left we did deal with resented our loosening the strictures on getting drugs out there, because they came from a consumer advocacy protectionist thing \u2013 but that\u2019s not a big segment of the left. I don\u2019t know. We can always talk about homophobia on the left, and there is that, but I didn\u2019t have enough contact with people on the left, outside the movement in those few years to know."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "While we were changing tapes, we were dishing about The Nation."
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "We were talking about the left. Fairly early on \u2013 it would have been the summer of 1988, and I wish I could remember how we got this gig \u2013 but, Margaret McCarthy, who was another person who worked within ACT UP, was a member of the Issues Committee \u2013 another lefty within ACT UP \u2013 it\u2019s funny that Treatment and Data was an offshoot of the Issues Committee, because early on all the lefties were in the Issues Committee \u2013 naturally there\u2019s a certain affinity for that. So, a lot of us \u2013 we went to Treatment and Data, because that\u2019s where the bones of issues wound up going. Margaret McCarthy, Mark Harrington and I gave a teach-in on AIDS issues to the staff of The Nation. We went over there and Navasky and at least a skeleton crew of the staff sat down and they listened to us, and they listened attentively. And they were all appreciative \u2013 or, at least, they expressed their appreciation to us. But even then, you almost felt like you were this exotic sitting there that they were looking at and admiring. They were admiring, but it was more admiring for the plumage or something like that. You did feel like an exotic bird. And I remember, afterwards, down in the street, we were talking and thinking, so little of the left in the United States is pragmatic, so little of the left works in day-to-day issues. We\u2019re far better at theory than we are in practice. So little of the left ever practices anything. Maybe I should feel very privileged for having ACT UP, to have put a bit of that into practice, because I think most people on the left of my generation \u2013 unless they\u2019re old enough to have worked against the Vietnam war \u2013 ever really get that feeling of actually changing something and actually working and every day seeing the result of what you were working on. And, having your theory interact with the practice and affect each other and go back and forth and temper it and change it, and realize you were wrong, and sometimes realizing you were right. But, I don\u2019t think the left in this country works, in some ways. They\u2019re not workers, they\u2019re thinkers. And, as the left more and more secretes itself within the academy, there\u2019s less and less opportunity for it to work. As I say, I feel privileged that ACT UP gave me the ground on which to work and actually \u2013"
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "I\u2019ll tell you, just FYI, I wrote the first piece on AIDS that was published in The Nation, and it was about homeless people with AIDS, because they would not do it as a gay issue. That\u2019s how homophobic they were about \u2013 and probably still are. Let\u2019s move on because there are a lot of things I want to ask you about the culture of ACT UP and the internal community that you\u2019ve talked about so much. So, you had all these people coming to T&D, and of course, a lot of them had AIDS. And you were a very respected and beloved figure in ACT UP. I remember you constantly presenting information and reading all the time and all that kind of thing. Did you have people coming to you and asking for advice about their personal treatment?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Yes, and I probably \u2013 early on in the treatment work, I spoke on the floor of ACT UP almost weekly. And then, when I felt that we needed to get other faces in ACT UP, I started worrying about not being able to report to the floor. So, I started writing a weekly report on what, exactly, we were doing in the drug approval process, because I didn\u2019t want Treatment and Data to be unaccountable to the floor. Because of that, too \u2013 so that even after I stopped talking so much \u2013 three out of every four weeks, I would get my newsletter to the floor and because of that, a lot of people would come to me. So, yes, they did, and sometimes \u2013 I\u2019m not a physician, so sometimes, all I could tell them was what was available. But, there were, by then, a number of community AIDS doctors that we were working with, that were helping ACT UP and you could frequently advise them to different community physicians. You could certainly tell them that drugs available for a particular opportunistic infection. You could certainly advise them, if they had no other options, what clinical trial they could get into, if they were of the mind that they were willing to risk that. And that\u2019s of course the impulse Iris was working from \u2013 to try and get that information in a book form, so that those people who were constantly coming to us, had easy reference material that they could go to."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "But also, personally \u2013 I mean, for yourself \u2013 in terms of your sexuality and your emotional life \u2013 you had gone from this person who was going to the movie houses to meet men, to being this person who was getting a huge amount of attention and who people were really respecting and coming to. Was there a way that the T&D stuff was helping you negotiate your relationships with other guys in the organization, with other people \u2013 friendships?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "I became very close to a number of people within ACT UP, but the people I came closest to were the core of people I worked with at the beginning \u2013 those first several months. So, my 10 or 12 closest friends within ACT UP remained a lot of the people whom I\u2019ve mentioned, who we were very close to. ACT UP had this terrific system of affinity groups. I guess it was terrific, if you were in an affinity group you felt comfortable with the first few years. An affinity group was a small group of people who would work together, within an ACT UP demonstration or, alternatively, come up with an action of their own. So, it was a tight-knit group. Affinity groups did not have to come to the floor to get approval for what they were doing because, frequently, if what they were doing was illegal, we didn\u2019t want it revealed on the floor. My affinity group was called Wave III. We were called Wave III because we were the third wave of people to get arrested on ACT UP\u2019s first anniversary. We went back to Wall Street for one of the most terrific demonstrations I have ever been a part of in my life. There\u2019s something terrific about the canyons of lower Manhattan and having them just all ringing with your voices. The whole city was echoing \u2013 it was quite wonderful, just on an aesthetic level. It felt like music. And we stayed together, because we liked each other so much."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Who was in Wave III?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "A whole bunch of people. The party that you had \u2013 the launch party, was at the restaurant that\u2019s co-operated by Debbie Gavito. Debbie Gavito is one of my favorite people in the world, and she\u2019s one of the people I got closest to within Wave III. Iris Long was in it. Gary Kleinman was in it. Richard Elovich was in it. David Kirschenbaum was in it. Mark Harrington was in it. There were several. Brian Allen \u2013 whose stage name was Brian Damage \u2013 he, for years was a mainstay in the performance scene here at the Pyramid Club, over on Avenue A \u2013 who has since died. At our biggest, we probably were close to \u2013 Margaret McCarthy was in it, whom I\u2019ve also mentioned. At our biggest, we were probably about twenty members and even at our smallest, we were one of the most active affinity groups within ACT UP. When we went \u2013 that would be October of \u201988, was when we invaded the Food and Drug Administration. And we all dressed \u2013 I wrote 15 edicts about how to \u2013 we essentially declared ourselves the new Food and Drug Administration and our shtick for that day \u2013 and most affinity groups at least had a theme that they were going for. We dressed ourselves up in lab coats and we were promulgating the fifteen edicts that I had written on how to change the Food and Drug Administration. Because the cops were guarding the central building on the campus, we actually took over a small building where research was being done on animals, at the Food and Drug Administration, and we actually sat there and got our picture taken. And there was a big article in The Native, with our pictures. We actually succeeded in taking over the Food and Drug Administration. And a few months later, we turned that into a play that we did at La Mama called Rockville is Burning. We opened for one of Richard Elovich\u2019s one-man shows. Richard had a run. We had a one-night run, and that night, it was a benefit for the AIDS Treatment Registry. It was a terrific night and we acted in it ourselves. So, some of us had a stage experience, some of us didn\u2019t. But, it was great and Bob Huff did a video of it and the videos ran even in gay bars and nightclubs for years, afterwards. It was a trip. So, that\u2019s what affinity groups within ACT UP could do. I mentioned Brian Allen \u2013 Brian Damage was how he preferred to be known \u2013 Brian got sick rather early on, had a few really rigorous hospitalizations and our affinity group \u2013 we were virtually his care system. We were there at the hospital the whole time. And the months that he was at the hospital, we pretty much transfigured the AIDS ward over at Beth Israel, and all the doctors \u2013 after being pretty wary of us, at the beginning \u2013 came to like us. For one thing, we were bringing them an awful lot of drug approval knowledge that they could not have gotten. We had ins by then at the FDA and the NIH that they couldn\u2019t dream of. They wound up being splendid with us, and frequently providing us case studies that we could talk about at higher levels \u2013 telling us about new opportunistic infections and things that they could see. But, I started this, talking about how we were virtually the support system for Brian, who was estranged from his family. So, affinity groups within ACT UP \u2013 if they worked, when they worked \u2013 for their lifetime, could be almost like these close-knit communities within communities. Wave III \u2013 we met for Sunday potluck for months. One of our members was the former agent for Tommy Tune, so we had a retreat at Tommy Tune\u2019s place \u2013 Tommy Tune was nowhere to be seen \u2013 out in Fire Island. That\u2019s kind of like, a chronicle of just one affinity group within ACT UP. And, as trivial as some of these social occasions might sound, they really mortar a group together. And when you\u2019re getting arrested, there might be a few people who are out there, who are gung-ho about getting arrested and really have no fear, but I was never arrested when I didn\u2019t have a fear. And the smaller the group, the greater the fear. When all of ACT UP was arrested together, there was very little fear. En masse, we would try to do it at FDA \u2013 when no one succeeded in getting arrested, except very few people. We tried to get arrested. Or, the yearly Wall Street things \u2013 hundreds of people would get arrested. The fear level was low. But, if an affinity group did something that put your bodies on the line, risked arrest and sometimes, actually, did arrest \u2013 I\u2019ll speak, at least for myself \u2013 my fear level was always very high, and I don\u2019t know if I could have done it without a group of people, within which I felt close to. I\u2019d seen in similar situations, lots, trusted, liked and several of them loved. Some of them were people I was as close to as any people I\u2019ve been to, in my life. So, those, in some ways, were the little cells within ACT UP. And, I think, many people within ACT UP could tell you similar stories about the affinity groups, the special causes, the committees, the sub-committees that they worked in, within ACT UP. The only way you could get 400 people coming together weekly \u2013 and at our height, we could draw on about fifteen hundred people coming to our biggest demonstration. The only way you could do that, I think, is if there was these small, hyper-active groups of people who felt really close to each other \u2013 even when they didn\u2019t personally like each other \u2013 trusted at those times, that you were really putting your body on the line, and didn\u2019t know what would be coming at you. I mean, how the cops were going to be treating you."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "So, what was it like for you when you left ACT UP and you lost all of"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "It was very difficult. But the dissolution or disintegration, at least for me this? was slow, because as you have already alluded to, the Treatment and Data Committee that split off to be TAG was not the Treatment and Data Committee that was the inheritor of Iris\u2019s and David\u2019s two important \u2013 really, one man and one woman projects. And so, it was a long, slow decline for me. I can\u2019t answer for other people. In some ways, when I\u2019ve gone to ACT UP demonstrations in subsequent years or talked about ACT UP in subsequent years, even written a bit about it in subsequent years, I always hesitate to articulate that, because I\u2019m sure there were people who were just getting in ACT UP when I was leaving, who felt terrific about the organization \u2013 who had great feeling about what they were doing, and accomplished important stuff. So, I don\u2019t at all want to demean or denigrate it. There are as many ACT UPs as there are ACT UP members, of course. Sadly, that\u2019s always the case \u2013 or, maybe that\u2019s good. So, let me put that little addendum on this. I have no intention of denigrating anything that ACT UP has done since then or continue to do. But, for me, in the area I was particularly involved in, it was a slow dissolution and slowly realizing that I wanted to get out of one area and wanted to start in another area, and I saw no way I could get the full group support for the new area, to the degree I\u2019d had it for the previous area. And the people who were working in TAG were going to be professionals and I didn\u2019t want to be that. They wanted to be more technological, and I wanted to be more drug focused. I never got paid for my AIDS work. I was in the hole after ACT UP, because \u2013 ACT UP was good about paying for things, but they were just \u2013 I remember once I was flown to Toronto to address \u2013 the Society of Clinical Trials was supposed to pay for it, and that never got through, and things like that. I was not deeply in the hole, but a few hundred dollars in the hole, at the end of my few years in ACT UP. I just never could have seen myself as an AIDS professional. Again, that\u2019s not to denigrate the work done by those who could, but my involvement with AIDS was different. And after ACT UP, I was like almost spoiled for any subsequent AIDS work within GMHC or something \u2013 although, most of my friends wound up doing something. And then, people who did really good work in other organizations, but again, that wasn\u2019t \u2013"
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "So, what have you been doing since you left ACT UP?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Well, I\u2019ve done a lot of writing. The last four years, I\u2019ve been doing editing, as well. I work for a group that puts out five gay porn magazines. I edit two of them and write just about all the text for those two magazines."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Is this Stan Leventhal\u2019s old job?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "It is Stan Leventhal\u2019s \u2013 yes. I did not know Stan, but he actually accepted two of my stories for an anthology that was put out after he died \u2013 but he obviously accepted them before he died, so I knew him \u2013"
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "So, you\u2019re Mr. Torso."
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Playguy and Inches are my two magazines, and I\u2019m also the Associate Editor at Honcho. All that means is that I edit a story for them, but I actually do work on the \u2013 if you have a minute or two, what I will say is \u2013 it sounds like a huge jump, but, actually, the writing that I started to do within ACT UP when \u2013 except for the AIDS writing I was doing \u2013 I was at the height of my involvement on committees. I would spend almost half my weekends in Washington, DC \u2013 not my favorite city. It\u2019s not a walking city, for one, even though, well \u2013 I started returning to writing, the last few years in ACT UP. One of the things I was interested in doing was writing erotic stuff. One of the things ACT UP was great about, too, is \u2013 ACT UP, at least for gay men, ACT UP was an erotic place. The Monday meetings \u2013 this hasn\u2019t often been articulated \u2013 the Monday meetings were \u2013 it was in some ways almost the first place that you could celebrate sexuality, after AIDS hit. People were having sex, but there was an erotic dimension to ACT UP that I don\u2019t think has been talked about a lot. But, one of the things I became interested in was how the erotic could survive AIDS \u2013 both the AIDS years within it, and \u2013 so I started doing a lot of writing, and in the mid-\u201990s, I actually wrote lots of short stories that were in a lot of different anthologies, because within the mid-1990s, both small publishing houses and large publishing houses \u2013 like Little, Brown and places \u2013 were all putting out anthologies of gay fiction or anthologies of erotic fiction, or sometimes overlapping, and heaven forbid, even gay erotic fiction. I remember I once gave a reading at Border\u2019s in Philadelphia, and they actually broadcast it over the internal loudspeaker system, and I thought to myself, we were in a different world. A bunch of gay erotic writers were talking in a Borders, in the middle of a bunch of straight people. Lot of them were stopping \u2013 coming by. That \u2013 as the publishing world has narrowed and narrowed, and I probably don\u2019t need to tell you \u2013 is happening less and less now, but that was in some ways was the transitional. On the strength of the stories that I had published, Doug McClemont, who was Stan Leventhal\u2019s successor, hired me as a staff writer there because he had a vision of having someone who was a good writer and could pull the magazines together. That didn\u2019t pan, for reasons too long to get into, but I was there about a month, and they asked me to take over Playguy, and I did, and a few months later they asked me to edit Inches, and I did, and they were very happy with how Playguy went, so that\u2019s why they asked me for the second one. How is it? It\u2019s exciting in the sense that I\u2019m writing; I\u2019m getting paid for it. I feel very \u2013 to people outside the field, this might sound ridiculous, but those of us who work within the field, we know we\u2019re working in sex therapy. Because in the age of e-mail, you can have a very close relationship to hundreds of your readers, for whom you are the place \u2013 once a month, they are gay. Stonewall is more than a generation ago. It hasn\u2019t hit most of America yet, as awful as that sounds. It hasn\u2019t hit lots of America. There are lots of people around this country who are embedded within towns or families, and they still feel like they can\u2019t come out. That\u2019s not all or even a large percentage of our readership, by any means, but that\u2019s a lot of the people I\u2019m in communication with."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "People who would e-mail you."
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "And, for Playguy, which has \u2013 our audience in Playguy skews much younger than the other ones. It\u2019s the one that\u2019s dedicated to younger guys. A lot of them are just coming out and it\u2019s very touching and moving to get their monthly takes on each issue. So, it\u2019s a very different community from the community I helped to make in ACT UP, but it\u2019s not as far a jump as people might think, and there are \u2013 sexuality, in general, and queer sexuality, in particular is still not something you can talk about freely around this country. It\u2019s still not something you can act upon, for a lot of people. We use sex in this country very freely to sell products, but the stuff of it, itself, is not often dealt with or talked about. There are not many places where men can still feel that it\u2019s even all right to talk about. And, as I say, outside of the major gay urban cities, there\u2019s a whole world that many of us don\u2019t know about, unless you come in contact with people like I have, because they write me, as the editor of a magazine they read."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Jim, I don\u2019t have anything left. Is there something that you think we should talk about, that I missed?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "ACT UP was very lucky we were in New York, in some ways, because we could draw on lots of people who were involved in the arts or other professions. And, ACT UP was an awfully arty bunch the first two years, you know. Gran Fury got them \u2013 an art group, which actually started as an affinity group within ACT UP got a lot of \u2013 and has spawned people like Todd Haynes and Tom Kalin, and other people. And, even beyond that, the posters ACT UP put out those first few years were just astounding. They were great agit-prop, but they were also good art, or, at least, good street art, you know? Some of them hold up as art beyond that. Our demonstrations were all really arty things. There was a time when, always, one or two affinity groups would just do really beautiful things. Once we, at a hospitals demonstration, we tied bed sheets together and surrounded City Hall with these bed sheets. Well, it\u2019s a very simple idea, but it can be quite beautiful. There were several times when people really put their lives at risk \u2013 to hang banners from incredible heights, from the Municipal Building certainly for our first anniversary demonstration. And lots of that stuff was pretty terrific. The costuming, the posters, the leaflets \u2013 this was not trivial stuff, because a lot of people came to ACT UP because of these posters that we wheat-pasted everywhere, just everywhere those first few years. Every street corner had an ACT UP poster \u2013 sometimes, three and four ACT UP posters, and you could even compare the art styles and things like that. The other thing that was important to be in New York was, of course, we had several \u2013 we had lots of gay people, but I think it was important that we didn\u2019t \u2013 the gay ghetto in New York, I think, has never been as closed as, maybe, gay ghettos in some other big cities. I\u2019m sure that will be controversial in some other cities, but I always thought it was great that we could \u2013 you mentioned, you thought a lot of straight people didn\u2019t come through the portals of ACT UP, and I think you\u2019re right, but we had some. And I was always glad we could draw on it, and I was always glad that we had people within ACT UP like Richard Elovich, who because he was working on injector drug issues, had access to worlds outside the gay ghetto, and to a limited extent, brought that world back into ACT UP, but in a whole number of things \u2013 on prison issues, on immigrant issues, on women\u2019s issues. We were able \u2013 at least for brief periods \u2013 to focus on certain issues and draw on that energy and expertise. I don\u2019t know if we could have done that elsewhere. And then there was the other New York thing that I mentioned \u2013 the grit of New York. It can seem impersonal at some times, but just those canyons. There was demonstration after demonstration after demonstration, and you\u2019d be in the New York streets and just feel that incredible exhilaration, partly just because of the way your voices would echo. But, if you were leafleting, you would always feel that you were doing really important one on one outreach, to 100 people a night. Where else could you do that? You just couldn\u2019t. We usually had \u2013 we were smart enough \u2013 we had people who were working, too \u2013 most of our demonstrations were at closing time. So, we could draw on people, our membership, who were just getting out of work. But also, we could confront and talk to the people who were just getting out of work. I got to a point where I started as a terrible leafletter. I told you, back when I was in Pledge of Resistance, I remember the D\u2019Amato thing \u2013 just hating whenever I had leafleting duty, although I did it, because I\u2019m a very shy person by nature. And thrusting something into someone\u2019s hand is not something I do readily, but it got to \u2013 in ACT UP, at a demonstration, that used to be my favorite thing to do, because I felt you could evangelize just about anyone you talked to. There were always a few people who just didn\u2019t want to hear it, and there were always some people who were just angry because you were in their way and stopping traffic. But, there were an amazing number of people who would take it, who would talk to you. You found out an amazing number of New Yorkers who were touched by AIDS at that time \u2013 who had people in their family or friends, and while they never would have taken part in a demonstration themselves, they would tell you their personal story about AIDS and how they liked what you were doing and more power to you. So, ACT UP\u2019s demonstrations and the way we got such publicity those first few years, I have always thought depended so much on many of the qualities of New York \u2013 it\u2019s geography, it\u2019s people \u2013 the relative tolerance. We all know you can overstate that. We all know that there\u2019s separation and hatreds and all these other things that go on \u2013 it\u2019s alive and well in New York. At yet, you could at least a foothold with a lot of people \u2013 just the New York nature of our ACT UP \u2013 of where we started, when we started \u2013 how quickly we became national. The fact that we were in a media capital did not hurt at all. The fact we had so many people within the meeting. Bradley Ball, who was our first \u2013 he headed the Coordinating Committee \u2013 the first year and a half, worked at NBC. NBC gave us so much, they will never know. They Xeroxed so many thousands dollars of stuff. We had so many people working within so many of the communications and art industries within New York City that drew upon those industries. That\u2019s something that you don\u2019t often hear about, talk about, within ACT UP, and that\u2019s something that\u2019s always interested me \u2013 maybe interested the New Yorker in me \u2013 how that part of it could only have been done in New York. But, other than that \u2013 I don\u2019t know \u2013 I could go on talking forever, but I think we\u2019ve hit the major things."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Thank you so much, Jim. It\u2019s been wonderful to talk to you. Thank"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "You\u2019re welcome."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "And you have a beautiful face. you."
+  }
+ ]
+}

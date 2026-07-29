@@ -191,6 +191,30 @@ postmodernism
 needle exchange
 Women Don't Get AIDS They Just Die From It
 
+# -- Interview 047 (Jim Eigo): treatment activism from inside T&D -----------
+# `Fauci` (11 occurrences here) was absent, which is a useful check on how these
+# lists rot: he is among the most searched names in the archive and was missed
+# only because the first three interviews happened not to dwell on him. Terms get
+# added when an interview proves they matter.
+#
+# Adding a term retroactively changes the denominator for every archived run in
+# which it occurs, so the archive was re-scored after this edit. Nothing moved ---
+# none of these appear in 108, 026, or 074 --- but that was confirmed, not assumed.
+Jim Eigo
+Anthony Fauci
+Tony Fauci
+Fauci
+Richard Elovich
+Gary Kleinman
+Stan Leventhal
+Issues Committee
+Wave III
+Playguy
+Food and Drug Administration
+Social Security
+Medicare
+Montreal
+
 # -- People recurring across the corpus -------------------------------------
 Robert Vazquez-Pacheco
 Moises Agosto

@@ -14,11 +14,38 @@ Media is gigabytes and lives outside the repo — under `AUOHP_FIXTURE_DIR`,
 
 ## Rebuilding
 
-`scripts/build_026_fixtures.py` and the `build_108_*` scripts regenerate the
-derived fixtures from the source transcripts. Each asserts that concatenating the
-turns reproduces the cleaned truth **token-for-token**, so `clean.txt` and
-`turns.json` cannot silently drift apart — a drift there would corrupt the
-diarization metric without erroring.
+The `scripts/build_*` scripts regenerate the derived fixtures from the source
+transcripts. Each asserts that concatenating the turns reproduces the cleaned
+truth **token-for-token**, so `clean.txt` and `turns.json` cannot silently drift
+apart — a drift there would corrupt the diarization metric without erroring.
+
+Worth running the printed counts against the source every time. On 047 the tag
+count was seven short of `grep -c` on the raw file: a tape marker landing
+immediately before a speaker tag defeated the `^` anchor, and seven turns were
+silently glued onto their predecessors. Nothing errored, and the transcript still
+read correctly — only the turn boundaries were wrong, which is precisely the
+input the diarization metric trusts.
+
+## Coverage — the fixtures do not all mean the same thing
+
+| Interview | Truth covers | Media |
+|---|---|---|
+| 108 Avram Finkelstein | a 34-minute excerpt | 34 min clip, plus the 3.4 h master |
+| 026 Iris Long | ~2× the clip's tape | 34 min clip |
+| 074 Douglas Crimp | pages 37–43 only | 34 min clip |
+| **047 Jim Eigo** | **the whole recording** | **2.61 h, original and re-encode** |
+
+047 is the first fixture where truth and media are the same span, so it is the
+only one where `partial_coverage` should come back false and WER is computed over
+the entire interview rather than an overlap. It also carries 32 tape markers
+across four tapes against 108's six, and `score_drift` fits each tape separately —
+four independent slope estimates over 2.6 hours, by a distance the best timing
+evidence in the corpus.
+
+It is deliberately **not** in `tests/decode.rs`. That table wants an
+externally-resampled WAV as its control, and decoding three 2.6-hour files would
+turn a 47-second CPU test into a multi-minute, multi-gigabyte one. The decode path
+is settled on 108 and 026 at clip length.
 
 ## Why the cleaning is not a regex pass
 
@@ -61,3 +88,12 @@ rule resolved all 84 displacements, including `names.` landing back on a turn
 three exchanges earlier. Tape markers are captured as sentinels in the stream and
 their `following_text` read off the *assembled* transcript, because raw file
 order is exactly what the displacement makes unreliable.
+
+### 047: blank lines inside turns
+
+047 sits between the two cases. Like 026 the speaker tag is alone on its line with
+the text following after a blank; like 074 nothing is reordered, so no
+reconstruction is needed. The trap is that blank lines appear *within* turns as
+well as between them, so a blank cannot mark a turn boundary — only a tag line
+starts a turn. The opening exchange is tagged with full names before the
+transcript settles into initials, so the tag pattern accepts both.
