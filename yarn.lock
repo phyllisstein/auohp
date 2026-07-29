@@ -312,7 +312,9 @@ __metadata:
     "@stylistic/eslint-plugin": "npm:^5.10.0"
     "@stylistic/stylelint-config": "npm:5.0.0"
     "@swc/plugin-styled-components": "npm:^12.14.0"
-    "@vitejs/plugin-react": "npm:^6.0.3"
+    "@types/react": "npm:^19"
+    "@types/react-dom": "npm:^19"
+    "@vitejs/plugin-react": "npm:^6.0.4"
     "@vitejs/plugin-react-swc": "npm:^4.3.1"
     eslint: "npm:^10.6.0"
     eslint-plugin-jsx-a11y: "npm:^6.10.2"
@@ -331,9 +333,12 @@ __metadata:
     postcss-styled-components: "npm:0.2.1"
     postcss-syntax: "npm:0.36.2"
     query-string: "npm:^9.4.1"
+    react: "npm:^19.2.8"
+    react-dom: "npm:^19.2.8"
     react-router-dom: "npm:^7.18.1"
     rxjs: "npm:^7.8.2"
     sass: "npm:^1.99.0"
+    styled-components: "npm:^7.0.0-prerelease-20260719013821"
     stylelint: "npm:16.12.0"
     stylelint-config-rational-order: "https://github.com/phyllisstein/stylelint-config-rational-order.git#empty-line-threshold"
     stylelint-config-recommended: "npm:14.0.1"
@@ -344,9 +349,6 @@ __metadata:
     typescript: "npm:^6"
     typescript-eslint: "npm:^8.62.1"
     vite: "npm:^8.1.0"
-  peerDependencies:
-    react: ^19.0.0
-    react-dom: ^19.0.0
   languageName: unknown
   linkType: soft
 
@@ -6531,12 +6533,30 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/react-dom@npm:^19":
+  version: 19.2.4
+  resolution: "@types/react-dom@npm:19.2.4"
+  peerDependencies:
+    "@types/react": ^19.2.0
+  checksum: 10/e055ef08805768b2e6abc39955b1ac25a8bfd0f8034e6dc62846d007982e40fb69400c3b9440e35335bf4175d1789bf71dacf6007d2ba57385ed8433d16286fc
+  languageName: node
+  linkType: hard
+
 "@types/react-dom@npm:^19.0.0":
   version: 19.2.3
   resolution: "@types/react-dom@npm:19.2.3"
   peerDependencies:
     "@types/react": ^19.2.0
   checksum: 10/616c4a8aee250ea05fb1e7b98e7e00475dd3a6c1c30d7be18b4b93caba832f4203106b3a496a6b147e5acc2da14575eca47bce234c633bca1f8430ef8ffb234a
+  languageName: node
+  linkType: hard
+
+"@types/react@npm:^19":
+  version: 19.2.18
+  resolution: "@types/react@npm:19.2.18"
+  dependencies:
+    csstype: "npm:^3.2.2"
+  checksum: 10/c718ec5c5272ef5c1c77fcdd07f567c77197b593583539459b4bdaea89ca55ad7c814b7eb2151dccfa459b2c384b599a45e7e35550b789883d66b363d30c94d8
   languageName: node
   linkType: hard
 
@@ -6861,24 +6881,6 @@ __metadata:
   peerDependencies:
     vite: ^4 || ^5 || ^6 || ^7 || ^8
   checksum: 10/cdaafe91eec41f2e478deebff21f1c953d0f4099e11d23cfc599ba420dad8d5a1500949a200e2b4d1a7b77734abe37d6d370dcbafed46f74d50f56e1e7f8f726
-  languageName: node
-  linkType: hard
-
-"@vitejs/plugin-react@npm:^6.0.3":
-  version: 6.0.3
-  resolution: "@vitejs/plugin-react@npm:6.0.3"
-  dependencies:
-    "@rolldown/pluginutils": "npm:^1.0.1"
-  peerDependencies:
-    "@rolldown/plugin-babel": ^0.1.7 || ^0.2.0
-    babel-plugin-react-compiler: ^1.0.0
-    vite: ^8.0.0
-  peerDependenciesMeta:
-    "@rolldown/plugin-babel":
-      optional: true
-    babel-plugin-react-compiler:
-      optional: true
-  checksum: 10/135a63a27592108ea0fcbd8a5d71753f9e8b484568113e15975f59d48bd796ca361de501e4acec6f04ae1e5dcb2d266b82ed158c759c4177b2504755d481e35c
   languageName: node
   linkType: hard
 
@@ -8121,7 +8123,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"csstype@npm:3.2.3, csstype@npm:^3.2.3":
+"csstype@npm:3.2.3, csstype@npm:^3.2.2, csstype@npm:^3.2.3":
   version: 3.2.3
   resolution: "csstype@npm:3.2.3"
   checksum: 10/ad41baf7e2ffac65ab544d79107bf7cd1a4bb9bab9ac3302f59ab4ba655d5e30942a8ae46e10ba160c6f4ecea464cc95b975ca2fefbdeeacd6ac63f12f99fe1f
