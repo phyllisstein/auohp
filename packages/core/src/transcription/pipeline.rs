@@ -48,6 +48,22 @@ pub fn run_with(input_path: &Path, cfg: &TranscribeConfig) -> Result<Transcripti
         }
     );
 
+    // Load the model *after* decoding, and keep it that way.
+    //
+    // This looks like incidental ordering and is a memory constraint. Decoding a
+    // 2.6-hour stereo master peaks around 3.8 GB; the model side --- weights
+    // 3094 MB, kv 343 MB, compute buffers 861 MB, DTW arena 128 MB --- is about
+    // 4.4 GB. Sequenced, peak is roughly 5.0 GB because the interleaved buffer is
+    // freed before the weights arrive. Overlapped, it is 8.2 GB.
+    //
+    // On CUDA that distinction is invisible: the model lives in VRAM and the
+    // decode buffer in host RAM, two separate pools. Inference here is on Apple
+    // Silicon, where unified memory means one pool, and 8 GB is a shipping
+    // configuration. So hoisting this above the decode to fail fast on a missing
+    // model --- a reasonable thing to want --- would cost 3.2 GB of headroom on
+    // the hardware that matters. Validate the model *path* early if that is the
+    // goal; do not load the weights early.
+    //
     // All models live under $MODELS_DIR, pre-downloaded by download-models.sh.
     let models_dir = PathBuf::from(
         std::env::var("MODELS_DIR").unwrap_or_else(|_| DEFAULT_MODELS_DIR.to_string()),
