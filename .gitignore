@@ -220,7 +220,8 @@ fabric.properties
 .LSOverride
 
 # Icon must end with two \r
-Icon
+Icon
+
 
 # Thumbnails
 ._*
@@ -663,6 +664,5 @@ tags
 !**/secrets/.gitkeep
 .fastRequest
 .claude/worktrees/
-
 # Machine-local Claude Code settings (permissions, MCP toggles).
 .claude/settings.local.json

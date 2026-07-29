@@ -64,8 +64,8 @@ pub struct Statement {
     pub person: Person,
     /// Seconds from start of recording. Null for non-media statements
     /// (e.g. broadsheet text).
-    pub start_time: Option<i64>,
-    pub end_time: Option<i64>,
+    pub start_time: Option<f64>,
+    pub end_time: Option<f64>,
     /// Per-word timing data as a JSON string, e.g.
     /// `[{"word":"the","start":1.23,"end":1.45}, ...]`.
     /// Null if the transcription pipeline did not produce word-level timing.
