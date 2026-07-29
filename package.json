@@ -5,6 +5,7 @@
     ],
     "packageManager": "yarn@4.17.1",
     "dependencies": {
-        "typescript": "^6"
+        "@typescript/native": "npm:typescript@^7.0.2",
+        "typescript": "npm:@typescript/typescript6@^6.0.2"
     }
 }
