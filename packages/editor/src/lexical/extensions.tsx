@@ -217,11 +217,20 @@ export const TagChipExtension = /* @__PURE__ */ defineExtension({
 //
 // Two things changed in the port beyond the mechanical de-componentisation:
 //
-// 1. It registers in `afterRegistration`, not `register`. Extension lifecycle is
-//    ordered `init -> build -> register -> [initial EditorState is set] ->
-//    afterRegistration`, so a listener attached here CANNOT observe the seed.
-//    The old plugin had to defend itself with `tags.has("seed")`; that check is
-//    now structurally unnecessary and has been deleted.
+// 1. It registers in `afterRegistration`, not `register`. Beware the tempting
+//    inference here --- it is wrong, and it cost us a bug. The lifecycle IS
+//    ordered `init -> build -> register -> InitialStateExtension.afterRegistration
+//    -> ... -> afterRegistration`, but that ordering governs INITIATION, not
+//    COMPLETION. InitialStateExtension seeds via `editor.update()`, and
+//    `$beginUpdate` defers its commit to a MICROTASK
+//    (`scheduleMicroTask(() => $commitPendingUpdates(editor))`), while
+//    `LexicalBuilder.registerEditor` runs both of its loops SYNCHRONOUSLY.
+//    Update listeners fire from `$commitPendingUpdates`, so the seed's dirty-node
+//    wave lands after every `afterRegistration` has already returned --- and an
+//    unguarded listener sees all of it: one spurious mutation per statement.
+//
+//    Tags would work (the seed carries HISTORY_MERGE_TAG), but see `lastPersisted`
+//    below for why we ask a question about STATE instead of one about provenance.
 //
 // 2. `config` replaces props, and `build` turns that config into SIGNALS
 //    (`namedSignals` --- the same move RichTextExtension and HistoryExtension
@@ -239,10 +248,20 @@ export interface PersistenceConfig {
     editStatement: EditStatementFn | null;
     /** Per-statement debounce window, in milliseconds. */
     delay: number;
+    /**
+     * Text the server is known to hold, keyed by statement uid --- the same
+     * `TranscriptStatements` payload `$initialEditorState` seeds the editor from.
+     * Anything equal to this is, by definition, already persisted.
+     */
+    knownText: ReadonlyMap<string, string>;
 }
 
 export const PersistenceExtension = /* @__PURE__ */ defineExtension({
-    config: /* @__PURE__ */ safeCast<PersistenceConfig>({ delay: 1_000, editStatement: null }),
+    config: /* @__PURE__ */ safeCast<PersistenceConfig>({
+        delay: 1_000,
+        editStatement: null,
+        knownText: new Map<string, string>(),
+    }),
     dependencies: [StatementExtension],
     name: "@auohp/persistence",
 
@@ -254,7 +273,7 @@ export const PersistenceExtension = /* @__PURE__ */ defineExtension({
     build: (_editor, config) => namedSignals(config),
 
     afterRegistration(editor, _config, state) {
-        const { delay, editStatement } = state.getOutput();
+        const { delay, editStatement, knownText } = state.getOutput();
 
         const createDebouncer = (uid: string) =>
             debounce((text: string) => {
@@ -276,7 +295,26 @@ export const PersistenceExtension = /* @__PURE__ */ defineExtension({
         // shape simply cannot have.
         const debouncers = new Map<string, ReturnType<typeof createDebouncer>>();
 
+        // What the server is believed to hold, seeded from the same payload the
+        // editor was built from. Copied (not aliased) because this map mutates as
+        // we write, while the config signal stays the load-time snapshot.
+        //
+        // Comparing against this converts "was this update a user edit?" --- a
+        // question about PROVENANCE, which update tags answer only approximately
+        // --- into "is this text different from what the server has?", a question
+        // about STATE. The second is strictly stronger: it also suppresses a
+        // remount re-seed, an undo back to the original wording, and (later) a
+        // collaborative echo, none of which carry HISTORY_MERGE_TAG.
+        const lastPersisted = new Map(knownText.peek());
+
         const persist = (uid: string, text: string) => {
+            // The whole bootstrap fix. Every statement in the seed wave arrives
+            // with text identical to its `knownText` entry, so the entire wave
+            // exits here without scheduling anything.
+            if (lastPersisted.get(uid) === text) {
+                return;
+            }
+
             let flush = debouncers.get(uid);
             if (!flush) {
                 flush = createDebouncer(uid);
