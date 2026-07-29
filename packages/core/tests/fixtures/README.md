@@ -36,11 +36,23 @@ input the diarization metric trusts.
 | **047 Jim Eigo** | **the whole recording** | **2.61 h, original and re-encode** |
 
 047 is the first fixture where truth and media are the same span, so it is the
-only one where `partial_coverage` should come back false and WER is computed over
-the entire interview rather than an overlap. It also carries 32 tape markers
-across four tapes against 108's six, and `score_drift` fits each tape separately —
-four independent slope estimates over 2.6 hours, by a distance the best timing
-evidence in the corpus.
+only one where `partial_coverage` comes back false and WER is computed over the
+entire interview rather than an overlap.
+
+Its 32 tape markers served a **one-time** purpose and are not a live metric. The
+tape coordinate system — reel number plus a clock that restarts each reel — is a
+relic of analog camera work and is close to the thing this project exists to
+eliminate; it is much of why the archive has no usable timing-keyed transcription
+today. What the markers were good for was certifying once that recording-time
+agrees with reel-time, and `030-full-047-original` did that: tapes I, III and IV
+fit with residuals inside ±10s, ±22s and ±7s over 2.6 hours.
+
+Recurring timing checks are tape-free — last word end against container duration,
+segment-start monotonicity, `backwards_time_words`. Do not read `drift` residuals
+as a defect signal; `score_drift` locates anchors by first match with no ordering
+constraint, which over a 21,000-token stream produced one match at second 1.0 of a
+2.6-hour recording and wrecked that tape's fit. Left unfixed on purpose. See
+`docs/transcription-tuning-log.md`, "Settled: the tape model is not a metric".
 
 It is deliberately **not** in `tests/decode.rs`. That table wants an
 externally-resampled WAV as its control, and decoding three 2.6-hour files would

@@ -442,6 +442,49 @@ and spend effort on the code items below, none of which need the card.
 
 ---
 
+## Settled: the tape model is not a metric — 2026-07-29
+
+**Decided by Daniel. Do not invest further in making per-tape drift residuals fit
+cleanly.**
+
+`Tape I/II/III at time t` made sense to a filmmaker with an analog camera and
+makes none for timing-keyed captions and search. It is a large part of *why* this
+archive has no usable timing-keyed transcription, and it is arguably the archival
+model the project exists to eliminate. Improving the harness's ability to report
+tidily about it is work aimed the wrong way.
+
+What the markers were genuinely for was a **one-time certification** that the new
+coordinate system agrees with the old one. Run `030-full-047-original` did that:
+tapes I, III and IV fit with residuals inside ±10s, ±22s and ±7s across 2.6 hours
+— slope ≈ 1.0, three times independently. The bridge from reel-time to
+recording-time is crossed. It does not need re-crossing every run.
+
+Tape II's ±1000s residuals are not a timing defect. One anchor phrase
+(`Tape II 00:00:00`) matched at second 1.0 of a 2.6-hour recording, because
+`score_drift` takes `find_all(...).first()` with no ordering constraint — fine
+over 4,700 tokens, not fine over 21,000. A single false point destroys that tape's
+linear fit. **Left unfixed on purpose**, per the above.
+
+The recurring timing metrics are tape-free, and both were already computed:
+
+| Check | 047 original | 047 re-encode |
+|---|---|---|
+| last word end vs. container duration (9404.0s) | 9401.0s, **−3.0s / −0.032%** | 9401.0s, **−3.0s** |
+| non-monotonic segment starts | 0 | 0 |
+| `backwards_time_words` | 0 | 0 |
+
+Three seconds is room tone after the last word, not clock error.
+
+Stated limitation, so this is not oversold: end-displacement catches *accumulated*
+drift but not a mid-file jump that later self-corrects. Externally-timed markers
+could have caught that. The check that catches it for a caption product is a person
+scrubbing a VTT, which is the appropriate instrument — the requirement is "does the
+caption appear when the words are spoken", and that is a human judgement about a
+rendered artifact, not a scalar.
+
+`047_truth.anchors.json` stays in the tree. It is cheap, it did its job once, and
+re-deriving it later would be worse than keeping it.
+
 ## Settled: no post-processing — 2026-07-29
 
 **Decided by Daniel. Do not re-propose a filler filter, a repair detector, or any
