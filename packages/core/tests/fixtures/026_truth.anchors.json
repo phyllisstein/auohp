@@ -1,0 +1,71 @@
+{
+ "_comment": [
+  "Tape markers from the PDF margin. `tape_seconds` is time WITHIN that tape;",
+  "Tape II restarts its clock, so the harness fits each tape separately.",
+  "`following_text` was read off the assembled transcript at the marker's position,",
+  "not from raw file order, which the column layout makes unreliable.",
+  "The clip is shorter than the transcript, so late anchors may report NOT FOUND."
+ ],
+ "anchors": [
+  {
+   "tape": 1,
+   "label": "Tape I 00:35:00",
+   "tape_seconds": 2100,
+   "following_text": "house, and we all discussed what we should do next, with respect to treatment."
+  },
+  {
+   "tape": 1,
+   "label": "Tape I 00:40:00",
+   "tape_seconds": 2400,
+   "following_text": "So, this action was part of that pressure? Yeah, that was at a meeting"
+  },
+  {
+   "tape": 2,
+   "label": "Tape II 00:00:00",
+   "tape_seconds": 0,
+   "following_text": "So, after you disrupted a meeting at FDA about DHPG \u2013 had you ever"
+  },
+  {
+   "tape": 2,
+   "label": "Tape II 00:05:00",
+   "tape_seconds": 300,
+   "following_text": "And do you remember who thought of that? It\u2019s hard to say one person,"
+  },
+  {
+   "tape": 2,
+   "label": "Tape II 00:10:00",
+   "tape_seconds": 600,
+   "following_text": "No. Had you had any gay friends at all? Not that I know of,"
+  },
+  {
+   "tape": 2,
+   "label": "Tape II 00:15:00",
+   "tape_seconds": 900,
+   "following_text": "Well, it was another system that was set up \u2013 that didn\u2019t work very"
+  },
+  {
+   "tape": 2,
+   "label": "Tape II 00:20:00",
+   "tape_seconds": 1200,
+   "following_text": "No. All we did was give the entry criteria \u2013 for people who could"
+  },
+  {
+   "tape": 2,
+   "label": "Tape II 00:25:00",
+   "tape_seconds": 1500,
+   "following_text": "Well, with the protease inhibitors, it just seemed to fall into place, all these"
+  },
+  {
+   "tape": 2,
+   "label": "Tape II 00:30:00",
+   "tape_seconds": 1800,
+   "following_text": "and there\u2019s supposed to be certain information given. Now, the investigator sometimes wants to"
+  },
+  {
+   "tape": 2,
+   "label": "Tape II 00:35:00",
+   "tape_seconds": 2100,
+   "following_text": "Were you ever in direct conflict with them? No, not exactly. Meetings are a"
+  }
+ ]
+}
