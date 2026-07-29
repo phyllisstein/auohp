@@ -1,17 +1,35 @@
 import {
     $applyNodeReplacement,
+    $create,
+    $createParagraphNode,
+    $createTextNode,
+    $setSlot,
     DecoratorNode,
     ElementNode,
     setDOMUnmanaged,
     type EditorConfig,
+    type LexicalEditor,
     type LexicalNode,
+    type LexicalUpdateJSON,
     type NodeKey,
     type SerializedElementNode,
-    type SerializedLexicalNode,
+    type SlotChildNode,
     type Spread,
+    type DOMExportOutput,
+    $getDocument,
+    type RangeSelection,
 } from "lexical";
 import { type JSX } from "react";
 import { formatTimestamp } from "@/lexical/shared";
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import { useLexicalSlotRef } from "@lexical/react/useLexicalSlotRef";
+import styled from "styled-components";
+import numberSignSVG from "./number.sign.square.svgo.svg?inline";
+import { MarkNode } from "@lexical/mark";
+import { rest } from "es-toolkit";
+
+
+const NO_IDS: readonly string[] = [];
 
 
 // -----------------------------------------------------------------------------
@@ -175,82 +193,207 @@ export function $isStatementNode(node: LexicalNode | null | undefined): node is 
 // is the state -> React bridge: whatever it returns is mounted into the editor's
 // DOM at this node's position and re-rendered when the node changes.
 // -----------------------------------------------------------------------------
-type SerializedTagChipNode = Spread<{ label: string }, SerializedLexicalNode>;
+const TagChipContainer = styled.div`
+    display: inline-block;
+    margin: 0.4em;
+    padding: 0.4em;
+
+    color: #0B0B0B;
+    font-weight: 600;
+    font-size: 85%;
+
+    background: #7DD3FC;
+    border-radius: 11em;
+
+    user-select: none;
+
+    positiopn: relative;
+
+    & p {
+        margin: 0 0 0 1.5em;
+        border: 0;
+    }
+
+    & svg path,
+    & svg rect {
+        fill: #000 !important;
+        stroke: #000 !important;
+    }
+
+    &::before {
+        position: absolute;
+
+        display: block;
+        align-items: center;
+        justify-content: center;
+        width: 1em;
+        height: 1em;
+
+        color: #000 !important;
+
+        content: ${ () => `url("${ numberSignSVG }") ` };
+        fill: #000 !important;
+        stroke: #000 !important;
+    }
+`;
 
 
-function TagChip({ label }: { label: string }) {
+type SerializedTagChipNode = Spread<{ ids: string[] }, SerializedElementNode>;
+
+
+function TagChip({ nodeKey }: { nodeKey: NodeKey }) {
+    const [editor] = useLexicalComposerContext();
+    const tagRef = useLexicalSlotRef<HTMLDivElement>(editor, nodeKey, "tag");
+
+    console.log(tagRef);
+
     return (
-        <span
-            style={{
-                display: "inline-block",
-                padding: "0 0.4em",
-                margin: "0 0.15em",
-                borderRadius: "0.6em",
-                fontSize: "0.85em",
-                fontWeight: 600,
-                color: "#0b0b0b",
-                background: "#7dd3fc",
-                userSelect: "none",
-            }}>
-            #{ label }
-        </span>
+        <>
+            <TagChipContainer
+                ref={ tagRef }
+                className="tag-chip-container">
+            </TagChipContainer>
+        </>
     );
 }
 
 
-export class TagChipNode extends DecoratorNode<JSX.Element> {
-    __label: string;
-
+export class TagChipNode extends MarkNode {
     static getType(): string {
         return "tag-chip";
     }
 
     static clone(node: TagChipNode): TagChipNode {
-        return new TagChipNode(node.__label, node.__key);
+        return new TagChipNode(node.__ids, node.__key);
     }
 
-    static importJSON(serialized: SerializedTagChipNode): TagChipNode {
-        return $createTagChipNode(serialized.label);
+    constructor(ids: readonly string[] = NO_IDS, key?: NodeKey) {
+        super(ids, key);
+        this.__ids = ids;
     }
 
-    constructor(label: string, key?: NodeKey) {
-        super(key);
-        this.__label = label;
+    $config() {
+        return this.config("tag-chip", {
+            extends: MarkNode,
+            slots: ["tag"],
+        });
     }
+
+    afterCloneFrom(prevNode: this): void {
+        super.afterCloneFrom(prevNode);
+        this.__ids = prevNode.__ids;
+    }
+
+    updateFromJSON(serializedNode: LexicalUpdateJSON<SerializedTagChipNode>): this {
+        return super.updateFromJSON(serializedNode).setIDs(serializedNode.ids);
+    }
+
+
+    insertNewAfter(
+        selection: RangeSelection,
+        restoreSelection: boolean = true,
+    ): ElementNode | null {
+        const tagChipNode = $createTagChipNode(this.__ids);
+        this.insertAfter(tagChipNode, restoreSelection);
+        return tagChipNode;
+    };
 
     // Inline so the chip flows within a statement's text rather than breaking it
     // onto its own line.
-    isInline(): boolean {
-        return true;
-    }
+    // isInline(): true {
+    //     return true;
+    // }
 
-    createDOM(): HTMLElement {
-        const dom = document.createElement("span");
-        dom.style.display = "inline-block";
-        return dom;
+    // isShadowRoot(): true {
+    //     return true;
+    // }
+
+    createDOM(config: EditorConfig): HTMLElement {
+        const mark = super.createDOM(config);
+        return mark;
     }
 
     // The DOM host never changes --- React owns everything inside it --- so the
     // reconciler can skip this node entirely.
-    updateDOM(): boolean {
-        return false;
-    }
+    // updateDOM(): boolean {
+    //     return false;
+    // }
 
     exportJSON(): SerializedTagChipNode {
-        return {
-            ...super.exportJSON(),
+        const parent = super.exportJSON();
+        console.log(parent);
+
+        const serial = {
+            ...parent,
             type: "tag-chip",
             version: 1,
-            label: this.__label,
         };
+
+        console.log({ serial });
+
+        return serial;
+    }
+
+    // Export as a fragment since it "is" the slot wrapper created by the host
+    exportDOM(editor: LexicalEditor): DOMExportOutput {
+        return { element: document.createDocumentFragment() };
     }
 
     decorate(): JSX.Element {
-        return <TagChip label={ this.__label } />;
+        return <TagChip nodeKey={ this.__key } />;
+    }
+
+    collapseAtStart(): true {
+        return true;
+    }
+
+    getIDs(): string[] {
+        return [...this.getLatest().__ids];
     }
 }
 
 
-export function $createTagChipNode(label: string): TagChipNode {
-    return $applyNodeReplacement(new TagChipNode(label));
+export function $createTagChipNode(
+    ids: readonly string[] = NO_IDS,
+): TagChipNode {
+    return $applyNodeReplacement(new TagChipNode(ids));
+}
+
+export function $isTagChipNode(node?: LexicalNode) {
+    return node instanceof TagChipNode;
+}
+
+
+export class EmptyEditorNode extends DecoratorNode<JSX.Element> {
+    __label: string;
+}
+
+// See: https://github.com/facebook/lexical/blob/main/packages/lexical-playground/src/nodes/SlotContainerNode/index.tsx
+export class SlotContainerNode extends ElementNode {
+    $config() {
+        return this.config("slot-container", { extends: ElementNode });
+    }
+
+    createDOM(): HTMLElement {
+        const div = document.createElement("div");
+        div.className = "auohp-slot-container";
+        return div;
+    }
+
+    // Export as a fragment since it "is" the slot wrapper created by the host
+    exportDOM(editor: LexicalEditor): DOMExportOutput {
+        return { element: document.createDocumentFragment() };
+    }
+
+    updateDOM(): false {
+        return false;
+    }
+
+    isShadowRoot(): boolean {
+        return true;
+    }
+
+    collapseAtStart(): true {
+        return true;
+    }
 }

@@ -24,9 +24,10 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import { $findMatchingParent } from "@lexical/utils";
 import { debounce } from "es-toolkit/function";
 import { playhead } from "@/playhead";
-import { $createStatementNode, $createTagChipNode, $isStatementNode, StatementNode, TagChipNode } from "@/lexical/nodes";
+import { $createStatementNode, $createTagChipNode, $isStatementNode, SlotContainerNode, StatementNode, TagChipNode } from "@/lexical/nodes";
 import { INSERT_TAG_CHIP_COMMAND } from "@/lexical/commands";
 import { SYNTHETIC_UID_MARKER, type EditStatementFn, type TranscriptStatements } from "@/lexical/shared";
+import { $wrapSelectionInMarkNode, MarkExtension } from "@lexical/mark";
 
 
 // -----------------------------------------------------------------------------
@@ -190,13 +191,19 @@ export const SplitStatementExtension = /* @__PURE__ */ defineExtension({
 export const TagChipExtension = /* @__PURE__ */ defineExtension({
     name: "@auohp/tag-chip",
     nodes: () => [TagChipNode],
+    dependencies: [MarkExtension],
     register: editor =>
         editor.registerCommand(
             INSERT_TAG_CHIP_COMMAND,
-            label => {
+            () => {
                 const selection = $getSelection();
                 if ($isRangeSelection(selection)) {
-                    selection.insertNodes([$createTagChipNode(label)]);
+                    $wrapSelectionInMarkNode(
+                        selection,
+                        false,
+                        "str",
+                        () => $createTagChipNode(["str"]),
+                    );
                 }
                 return true;
             },
@@ -251,14 +258,16 @@ export const PersistenceExtension = /* @__PURE__ */ defineExtension({
 
         const createDebouncer = (uid: string) =>
             debounce((text: string) => {
+                // FIXME: Fires for every single Statement on first being hydrated
+                //
                 // `.peek()` reads the signal without subscribing --- we want the
                 // value as of the moment the debounce fires, not as of registration.
-                editStatement.peek()?.({
-                    variables: { uid, text },
-                    onCompleted: data => {
-                        console.debug(`Edit completed for statement ${ data.editStatement.uid }:`, data.editStatement);
-                    },
-                });
+                // editStatement.peek()?.({
+                //     variables: { uid, text },
+                //     onCompleted: data => {
+                //         console.debug(`Edit completed for statement ${ data.editStatement.uid }:`, data.editStatement);
+                //     },
+                // });
             }, delay.peek());
 
         // One debouncer PER STATEMENT UID, created lazily on first edit. The Slate
@@ -303,10 +312,14 @@ export const PersistenceExtension = /* @__PURE__ */ defineExtension({
                 };
 
                 for (const key of dirtyLeaves) {
-                    collect($getNodeByKey(key));
+                    const dirtyLeaf = $getNodeByKey(key);
+                    // console.log({ dirtyLeaf });
+                    collect(dirtyLeaf);
                 }
                 for (const [key] of dirtyElements) {
-                    collect($getNodeByKey(key));
+                    const dirtyNode = $getNodeByKey(key);
+                    // console.log({ dirtyNode });
+                    collect(dirtyNode);
                 }
             });
         });
@@ -426,7 +439,7 @@ function TagButton(): JSX.Element {
     return (
         <button
             type="button"
-            onClick={ () => editor.dispatchCommand(INSERT_TAG_CHIP_COMMAND, "person") }>
+            onClick={ () => editor.dispatchCommand(INSERT_TAG_CHIP_COMMAND) }>
             Insert #person chip
         </button>
     );
@@ -480,6 +493,7 @@ export function defineAuohpEditorExtension({ statements, editStatement }: AuohpE
             SplitStatementExtension,
             TagChipExtension,
             LatencyExtension,
+            SlotContainerNode,
             configExtension(PersistenceExtension, { editStatement }),
             configExtension(ReactExtension, { EditorChildrenComponent: EditorChrome }),
         ],
