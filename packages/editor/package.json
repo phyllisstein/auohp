@@ -60,6 +60,7 @@
         "typescript": "^6",
         "typescript-eslint": "^8.65.0",
         "unplugin-parcel-macros": "^0.2.0",
+        "vite-plugin-svgr": "^5.2.0",
         "vitest": "^4.1.10",
         "vitest-browser-react": "^2.2.0"
     },
@@ -68,6 +69,7 @@
         "@apollo/client-integration-tanstack-start": "^0.14.5-rc.0",
         "@lexical/extension": "^0.48.0",
         "@lexical/history": "^0.48.0",
+        "@lexical/mark": "^0.48.0",
         "@lexical/react": "^0.48.0",
         "@lexical/rich-text": "^0.48.0",
         "@lexical/utils": "^0.48.0",

@@ -182,4 +182,18 @@ export default defineConfig(
             ...jsxA11y.configs.recommended.rules,
         },
     },
+    {
+        files: ["**/*.{ts,tsx}"],
+        rules: {
+            "@typescript-eslint/no-unused-vars": [
+                "warn",
+                {
+                    args: "all",
+                    argsIgnorePattern: "^_",
+                    vars: "all",
+                    varsIgnorePattern: "^_",
+                },
+            ],
+        },
+    },
 );

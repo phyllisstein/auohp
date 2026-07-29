@@ -4,6 +4,7 @@ import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react-swc";
 import macros from "unplugin-parcel-macros";
 import optimizeLocales from "@react-aria/optimize-locales-plugin";
+import svgr from "vite-plugin-svgr";
 
 // See https://github.com/TanStack/router/discussions/6928#discussioncomment-16147477
 function withNormalizedMacroIds(plugin) {
@@ -46,6 +47,7 @@ export default defineConfig({
             }),
             enforce: "pre",
         },
+        svgr(),
     ],
     ssr: {
         noExternal: [/^@react-spectrum\//],

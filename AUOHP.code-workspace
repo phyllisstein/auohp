@@ -46,8 +46,9 @@
         "[javascript][typescript][javascriptreact][typescriptreact]": {
             "editor.defaultFormatter": "dbaeumer.vscode-eslint",
             "editor.codeActionsOnSave": {
-                "source.fixAll.eslint": "explicit"
-            },
+                "source.fixAll.eslint": "always",
+                "source.fixAll.stylelint": "always"
+            }
         },
         "[scss]": {
             "editor.codeActionsOnSave": {
@@ -60,10 +61,11 @@
             "javascriptreact",
             "typescriptreact"
         ],
-        "stylelint.enable": false,
+        "stylelint.enable": true,
         "stylelint.validate": [
-            "scss",
+            "javascript",
             "typescript",
+            "javascriptreact",
             "typescriptreact"
         ],
     }
