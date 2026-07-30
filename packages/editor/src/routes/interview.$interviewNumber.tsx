@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useMemo } from "react";
-import { type BaseEditor, createEditor, Editor } from "slate";
+import { type BaseEditor, createEditor, Editor, Element, Range } from "slate";
 import { Slate, Editable, type ReactEditor, withReact } from "slate-react";
 import { withHistory } from "slate-history";
 import { graphql } from "@/gql";
@@ -131,6 +131,23 @@ const StatementElement = ({ attributes, children, element }) => {
             { children }
         </div>
     );
+};
+
+
+const wihCaptionSplit = editor => {
+    const { insertBreak } = editor; ;
+
+    editor.insertBreak = () => {
+        const { selection } = editor;
+        if (selection) {
+            const [statement] = Editor.nodes(editor, {
+                match: n =>
+                    !Editor.isEditor(n)
+                    && Element.isElement(n)
+                    && n.type === "statement",
+            });
+        }
+    };
 };
 
 
