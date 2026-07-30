@@ -389,8 +389,17 @@ pub fn transcribe(
             .get_segment(i)
             .context("segment index out of bounds")?;
 
+        // Lossy is right *here* and wrong at the token level. A segment is a
+        // complete run of tokens, so its bytes are valid UTF-8 unless whisper.cpp
+        // split the segment mid-character --- rare, and when it happens there is no
+        // larger unit to accumulate into, so one replacement char is the best
+        // available answer. Per *token*, by contrast, fragments are routine and
+        // lossy decoding would corrupt ordinary text; see `collect_words`.
+        //
+        // Not hypothetical: `to_str()` here and in `collect_words` aborted the
+        // whole of run `033-full-108` after 60 minutes of completed inference.
         let text = seg
-            .to_str()
+            .to_str_lossy()
             .context("failed to read segment text")?
             .trim()
             .to_string();
@@ -458,16 +467,63 @@ fn round_to(x: f64, places: i32) -> f64 {
 ///
 /// The parameter type uses `whisper_rs::WhisperSegment<'_>` (fully qualified) to
 /// avoid a name collision with our own public `WhisperSegment` struct.
+/// Group a token stream into words, decoding UTF-8 once per word.
+///
+/// Split out from `collect_words` so it can be tested without a live Whisper
+/// state, because the interesting case is invisible from the outside: whisper's
+/// vocabulary is byte-level BPE, so a multi-byte character may arrive as two
+/// tokens neither of which is valid UTF-8 alone.
+///
+/// The word boundary is the *only* boundary where a character is guaranteed
+/// whole, so it is the only place decoding may happen. Decoding per token — which
+/// is what `to_str_lossy()` on each token would do, and which looks correct —
+/// turns a 3-byte character split 2/1 into two U+FFFD replacements instead of one
+/// character. `from_utf8_lossy` here fires only if a *word* ends mid-character.
+///
+/// A leading `0x20` is a real separator and never a fragment: every UTF-8
+/// continuation byte has its high bit set, so a space cannot occur inside a
+/// multi-byte sequence.
+fn assemble_words<'a, I>(toks: I) -> Vec<(String, f64, f32)>
+where
+    I: IntoIterator<Item = (&'a [u8], f64, f32)>,
+{
+    let mut groups: Vec<(Vec<u8>, f64, f32)> = Vec::new();
+    for (bytes, at, p) in toks {
+        // The first content token opens a word even without a leading space,
+        // since a segment need not begin on a word boundary.
+        if bytes.first() == Some(&b' ') || groups.is_empty() {
+            let start = bytes.iter().take_while(|b| **b == b' ').count();
+            groups.push((bytes[start..].to_vec(), at, p));
+        } else {
+            let last = groups.last_mut().expect("non-empty by construction");
+            last.0.extend_from_slice(bytes);
+            // Weakest link wins: a word is only as trustworthy as its least
+            // confident sub-token.
+            last.2 = last.2.min(p);
+        }
+    }
+    groups
+        .into_iter()
+        .map(|(b, at, p)| (String::from_utf8_lossy(&b).into_owned(), at, p))
+        .collect()
+}
+
 fn collect_words(
     seg: &whisper_rs::WhisperSegment<'_>,
     seg_start: f64,
     seg_end: f64,
     special_min: i32,
 ) -> Result<Vec<Word>> {
-    /// One content token: its text, the instant DTW placed it at, and its
+    /// One content token: its **bytes**, the instant DTW placed it at, and its
     /// probability.
+    ///
+    /// Bytes, not `&str`, because whisper's vocabulary is byte-level BPE: a
+    /// multi-byte character can be split across two tokens, and neither fragment
+    /// is valid UTF-8 on its own. `to_str()` returns `Err(InvalidUtf8)` for such a
+    /// token, which killed run `033-full-108` after 60 minutes of GPU time --- the
+    /// inference had already produced all 2739 segments.
     struct Tok<'a> {
-        text: &'a str,
+        bytes: &'a [u8],
         at: f64,
         p: f32,
         starts_word: bool,
@@ -499,7 +555,7 @@ fn collect_words(
             continue;
         }
 
-        let text = token.to_str().context("failed to read token text")?;
+        let bytes = token.to_bytes().context("failed to read token bytes")?;
 
         let at = if td.t_dtw >= 0 {
             td.t_dtw as f64 / 100.0
@@ -512,28 +568,17 @@ fn collect_words(
         last_at = at;
 
         toks.push(Tok {
-            text,
+            bytes,
             at,
             p: td.p,
-            starts_word: text.starts_with(' '),
+            // Safe on raw bytes: 0x20 cannot occur inside a multi-byte UTF-8
+            // sequence, since every continuation byte has its high bit set. So a
+            // leading space is a leading space and never a fragment.
+            starts_word: bytes.first() == Some(&b' '),
         });
     }
 
-    // Group tokens into words. The first content token opens a word even without
-    // a leading space, since a segment need not begin on a word boundary.
-    let mut groups: Vec<(String, f64, f32)> = Vec::new();
-    for t in &toks {
-        let opens = t.starts_word || groups.is_empty();
-        if opens {
-            groups.push((t.text.trim_start_matches(' ').to_string(), t.at, t.p));
-        } else {
-            let last = groups.last_mut().expect("non-empty by construction");
-            last.0.push_str(t.text);
-            // Weakest link wins: a word is only as trustworthy as its least
-            // confident sub-token.
-            last.2 = last.2.min(t.p);
-        }
-    }
+    let groups = assemble_words(toks.iter().map(|t| (t.bytes, t.at, t.p)));
 
     // A word ends where the next begins; the last one ends with the segment.
     let words = groups
@@ -561,6 +606,64 @@ fn collect_words(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// The failure that cost 60 minutes of completed inference on run
+    /// `033-full-108`: a right single quote (U+2019, `e2 80 99`) arriving as two
+    /// BPE tokens, neither valid UTF-8 alone.
+    #[test]
+    fn a_character_split_across_tokens_reassembles() {
+        let words = assemble_words(vec![
+            (b" don" as &[u8], 1.0, 0.9),
+            (&[0xe2, 0x80], 1.1, 0.8), // first two bytes of U+2019
+            (&[0x99], 1.2, 0.7),       // ...and the third
+            (b"t" as &[u8], 1.3, 0.95),
+        ]);
+        assert_eq!(words.len(), 1, "one word, not four");
+        assert_eq!(words[0].0, "don\u{2019}t");
+        assert!(!words[0].0.contains('\u{fffd}'), "no replacement chars");
+        assert_eq!(words[0].1, 1.0, "the word starts where its first token did");
+        assert_eq!(words[0].2, 0.7, "weakest sub-token wins");
+    }
+
+    /// Decoding per token instead of per word is the plausible-looking wrong fix.
+    /// This pins the distinction: lossy applied to each fragment above would give
+    /// two U+FFFD, so a test that only checked "does not error" would pass while
+    /// the text was corrupted.
+    #[test]
+    fn per_token_decoding_would_have_corrupted_this() {
+        let fragments: Vec<u8> = [0xe2u8, 0x80, 0x99].to_vec();
+        let per_token: String = [&fragments[..2], &fragments[2..]]
+            .iter()
+            .map(|b| String::from_utf8_lossy(b).into_owned())
+            .collect();
+        assert_eq!(per_token, "\u{fffd}\u{fffd}", "the trap this fix avoids");
+        assert_eq!(String::from_utf8_lossy(&fragments), "\u{2019}");
+    }
+
+    /// Multi-byte text that is *not* split must survive untouched, and interior
+    /// bytes must never be mistaken for the leading-space separator.
+    #[test]
+    fn whole_multibyte_tokens_pass_through() {
+        let words = assemble_words(vec![
+            (" café".as_bytes(), 0.0, 0.9),
+            (" —".as_bytes(), 0.5, 0.8),
+        ]);
+        assert_eq!(
+            words.iter().map(|w| w.0.as_str()).collect::<Vec<_>>(),
+            vec!["café", "—"]
+        );
+    }
+
+    /// A segment need not begin on a word boundary, so the first token opens a
+    /// word even with no leading space.
+    #[test]
+    fn a_segment_may_open_mid_word() {
+        let words = assemble_words(vec![(b"ing" as &[u8], 0.0, 0.9), (b" up" as &[u8], 0.4, 0.9)]);
+        assert_eq!(
+            words.iter().map(|w| w.0.as_str()).collect::<Vec<_>>(),
+            vec!["ing", "up"]
+        );
+    }
 
     /// Two speech regions, 10 s of silence dropped between them.
     ///
