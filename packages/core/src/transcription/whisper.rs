@@ -398,11 +398,12 @@ pub fn transcribe(
         //
         // Not hypothetical: `to_str()` here and in `collect_words` aborted the
         // whole of run `033-full-108` after 60 minutes of completed inference.
-        let text = seg
-            .to_str_lossy()
-            .context("failed to read segment text")?
-            .trim()
-            .to_string();
+        let text = strip_turn_dash(
+            seg.to_str_lossy()
+                .context("failed to read segment text")?
+                .trim(),
+        )
+        .to_string();
 
         // Timestamps from whisper.cpp are in centiseconds (1/100 s); round to
         // that same 2-decimal grid so serialised times carry no float noise.
@@ -467,6 +468,33 @@ fn round_to(x: f64, places: i32) -> f64 {
 ///
 /// The parameter type uses `whisper_rs::WhisperSegment<'_>` (fully qualified) to
 /// avoid a name collision with our own public `WhisperSegment` struct.
+/// Drop a leading dialogue dash --- markup Whisper invents, not speech.
+///
+/// Whisper sometimes opens a segment with `- ` to mark a change of speaker, having
+/// learned the screenplay/subtitle convention from its training data. It is a
+/// *turn indicator*, and a false one: this pipeline assigns no speakers, so the
+/// dash asserts a structure nothing downstream can honour, and it renders in a
+/// caption as a stray hyphen.
+///
+/// Same class of thing as the `[_BEG_]` control tokens --- text the model emits
+/// about the transcript rather than words anyone said --- so removing it is not
+/// the editorial post-processing that was ruled out.
+///
+/// **Deliberately narrow.** Only a *single* hyphen, and only at the very start.
+/// Mid-segment `--` is a genuine false-start marker and the most readable thing in
+/// the output: `"it would be around -- it would"`, `"So it was -- in October"`.
+/// Measured over 8300 segments of interviews 043, 047, 108 and the Ashes footage:
+/// every leading dash was a bare `-` at word 0, and every `--` sat mid-segment
+/// (indices 15, 4, 6). The two never overlap, so position plus length separates
+/// them exactly.
+fn strip_turn_dash(text: &str) -> &str {
+    match text.strip_prefix('-') {
+        // `--` and longer runs are false-start markers; leave them be.
+        Some(rest) if !rest.starts_with('-') => rest.trim_start(),
+        _ => text,
+    }
+}
+
 /// Group a token stream into words, decoding UTF-8 once per word.
 ///
 /// Split out from `collect_words` so it can be tested without a live Whisper
@@ -578,7 +606,16 @@ fn collect_words(
         });
     }
 
-    let groups = assemble_words(toks.iter().map(|t| (t.bytes, t.at, t.p)));
+    let mut groups = assemble_words(toks.iter().map(|t| (t.bytes, t.at, t.p)));
+
+    // The dialogue dash arrives as its own word, always at index 0. Dropping it
+    // costs no timing: `collect_words` gives every word an end equal to the *next*
+    // word's start, so the following word's span is untouched by the removal.
+    // See `strip_turn_dash` for why this is markup rather than speech, and why the
+    // test is a bare `-` and not any hyphen.
+    if groups.first().is_some_and(|(w, _, _)| w == "-") {
+        groups.remove(0);
+    }
 
     // A word ends where the next begins; the last one ends with the segment.
     let words = groups
@@ -606,6 +643,46 @@ fn collect_words(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Every leading dash observed across 8300 segments was this shape.
+    #[test]
+    fn a_leading_dialogue_dash_is_markup_and_goes() {
+        assert_eq!(
+            strip_turn_dash("- Why do you start with the hard questions?"),
+            "Why do you start with the hard questions?"
+        );
+        assert_eq!(strip_turn_dash("-No space either"), "No space either");
+    }
+
+    /// The case this must never touch. Mid-segment `--` is a false-start marker and
+    /// the most readable thing in the output; a rule that swallowed it would be a
+    /// regression dressed as a cleanup.
+    #[test]
+    fn false_start_markers_survive() {
+        for s in [
+            "about the CDC would be around -- it would",
+            "time. So it was -- in October, we did the one at HHS",
+            "And we did a lot of -- that was the first time",
+        ] {
+            assert_eq!(strip_turn_dash(s), s, "interior -- must be preserved");
+        }
+    }
+
+    /// A segment *opening* with `--` is a false start carried across a boundary, not
+    /// a turn marker. Length is what separates the two, so pin it.
+    #[test]
+    fn a_leading_double_dash_is_not_a_turn_marker() {
+        assert_eq!(strip_turn_dash("-- it would take place"), "-- it would take place");
+        assert_eq!(strip_turn_dash("---"), "---");
+    }
+
+    /// Hyphenated words must be untouched --- `strip_prefix` only ever fires at
+    /// position zero, but this is the reading that would break if it did not.
+    #[test]
+    fn hyphenated_words_are_untouched() {
+        assert_eq!(strip_turn_dash("die-in at the FDA"), "die-in at the FDA");
+        assert_eq!(strip_turn_dash("Sloan-Kettering"), "Sloan-Kettering");
+    }
 
     /// The failure that cost 60 minutes of completed inference on run
     /// `033-full-108`: a right single quote (U+2019, `e2 80 99`) arriving as two
