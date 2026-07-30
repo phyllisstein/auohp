@@ -59,11 +59,6 @@ pub async fn generate_vtt(db: &Db, interview_uid: &str) -> Result<String> {
         let start_time: neo4rs::BoltFloat = row.get("startTime")?;
         let end_time: neo4rs::BoltFloat = row.get("endTime")?;
 
-        // Whisper Statements define timestamps that are entirely contiguous.
-        // Theis deviates from the WebVTT standad; adjusting is one hairy yak to
-        // shave. Here, we simply pad the timings. Done here, not at archiving
-        // time, on the elief that "VTT doesn't like it" should compromise the
-        // representation, not the source of truth.
         let start_timestamp =
             format_millisecond_timestamp((start_time.value * 1_000.0 + 250.0).round() as i64);
         let end_timestamp =
