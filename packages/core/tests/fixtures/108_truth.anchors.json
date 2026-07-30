@@ -1,0 +1,31 @@
+{
+  "_comment": [
+    "Tape markers lifted from the PDF margin column of 108_truth.txt.",
+    "`tape_seconds` is time WITHIN that tape, not within the audio file: the fixture",
+    "does not start at a tape boundary, so the offset from tape time to media time is",
+    "unknown and must be FIT, never assumed.",
+    "Fit media_time = slope * tape_seconds + offset over the Tape III anchors alone.",
+    "Tape IV restarts its clock and needs its own offset -- do not pool the two.",
+    "The slope is the useful part: it should come out at 1.0. A slope materially off 1.0",
+    "means decoded audio runs fast or slow, which indicts the resampler rather than the",
+    "decoder, and would otherwise show up as a diffuse WER penalty with no obvious cause.",
+    "`following_text` locates the anchor in a word stream; it is the speech the marker",
+    "sits beside in the two-column layout."
+  ],
+  "anchors": [
+    { "tape": 3, "label": "Tape III 00:10:00", "tape_seconds": 600,
+      "following_text": "many people could actually be there" },
+    { "tape": 3, "label": "Tape III 00:15:00", "tape_seconds": 900,
+      "following_text": "You remember what it was like Care teams hospital visits funerals" },
+    { "tape": 3, "label": "Tape III 00:20:00", "tape_seconds": 1200,
+      "following_text": "Well I don't know Larry is leadership-obsessed" },
+    { "tape": 3, "label": "Tape III 00:25:00", "tape_seconds": 1500,
+      "following_text": "So how was ACT UP received by the other organizations" },
+    { "tape": 3, "label": "Tape III 00:30:00", "tape_seconds": 1800,
+      "following_text": "original sketches of the Silence = Death poster I put it in his coffin" },
+    { "tape": 3, "label": "Tape III 00:35:00", "tape_seconds": 2100,
+      "following_text": "incredibly alienated that I left town and didn't come back for a week" },
+    { "tape": 4, "label": "Tape IV 00:00:00", "tape_seconds": 0,
+      "following_text": "all at once and feeling privileged and scared" }
+  ]
+}

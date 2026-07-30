@@ -1,0 +1,705 @@
+{
+ "_comment": [
+  "Speaker turns for 026 (Iris Long, interviewed by Sarah Schulman, 16 May 2003).",
+  "Concatenating `text` reproduces 026_truth.clean.txt token-for-token; asserted at build.",
+  "Rebuilt from pdftotext output whose column layout defers wrapped lines; see build026.py."
+ ],
+ "turns": [
+  {
+   "speaker": "INTERVIEWER",
+   "text": "How did ACT UP respond to this information? What did they decide to do?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "They essentially accepted it and put it on their agenda. That was it. It was on the agenda."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "What were the drugs that people wanted to have studied?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "I can\u2019t remember all the drugs, but there were at least five or six drugs. They all have the letters and stuff. I can remember the AL very clearly, because I helped distribute it. But, the others \u2013"
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Did any of them turn out to be valuable?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "No, I don\u2019t think so. But, some of them were cancer drugs, too. They were not in the nucleoside area. They were not that type of a drug, but they were cancer drugs."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Where did you fit in, in ACT UP? Did you get into a committee? Or, did you start a committee?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Yeah, I started a committee. It was going to these meetings. It wasn\u2019t just going to ACT UP. There were meetings after ACT UP, after the general meeting."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "So, Monday night, after the general meeting?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Right, right. There were meetings at people\u2019s houses. I can\u2019t remember his name \u2013 Herbert \u2013 you probably know who I mean \u2013 I don\u2019t know \u2013 you\u2019re probably interviewing him. Herb \u2013 anyway, he made his house available, and people went to his house, and we all discussed what we should do next, with respect to treatment. And, actually \u2013 I can\u2019t remember the names \u2013 a little guy and I \u2013 we decided we needed a treatment committee, and he said, no, we need treatment and we need data. So, it became the Treatment Data Committee. So, we formed the committee and that was \u2013"
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Who were some of the people on the Treatment and Data Committee?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Jim Eigo, of course, was in it. But, he came a little later. He was at Herb\u2019s house. He was there. And, there were a number of other people. I can\u2019t remember their names at this point. David Kirschenbaum was the other. And so, we formed a committee, and it met every week, and we worked on it. I worked on it all day long, actually. We were calling drug companies and things like that \u2013 finding out, here\u2019s a drug, let\u2019s find out where it is, how can we get it? And, so forth. So, we had a list of drugs that we were working on \u2013 the DHPG. Then, we had an action in Washington and so forth."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "What was the action?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "The action for DHPG was at a hearing."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Let\u2019s go through the whole trajectory, so people can understand how the whole process worked in ACT UP. So, first you identified DHPG, and, were there any trials for it?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "I would say there were trials for it, but they probably were very small."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Let\u2019s say what the drug was for, also."
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "It\u2019s for CMV retinitis. So the idea is, number one, it should be an approved drug. Before we even had this Treatment and Data Committee, we had had sessions where we started to learn what the FDA was all about. And, I can remember a group of us trying to teach one another what the FDA is about, and how the FDA works to approve drugs. That was a very key part of the whole thing. It wasn\u2019t only the testing of drugs, the clinical trials \u2013 but how these drugs would be approved, and would they be approved in a timely way? Because they were not being approved in a timely way. And, DHPG was one of the drugs."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "So, you felt confident that this was a drug that definitely merited approval."
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Oh yeah, everyone said that it definitely merited approval."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "And what held it up? What was the problem?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "It was the whole process of the FDA."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "That they had no \u2013"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "It was the bureaucracy of the review. On the application they have tons of paper they have to go through, and so forth. They have committees that will review the data and so forth. An anti-viral committee would review it. It would have to be put on a calendar. They would have to look at the data, make presentations. But, the whole process was very slow. And, the drug companies agreed, everything was slow. They agreed too, so they had an ally in us."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Who was the company?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "I can\u2019t remember. I guess it was \u2013"
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Glaxo?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Burroughs Wellcome? I\u2019m not certain."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "So what would be the process? So, first you would go to the FDA?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Because there was another new, purine type compound."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "So, first did you go to the FDA and say look, this is ridiculous, how can you speed this up?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Well, there was contact with the \u2013"
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Who were the people there that you were in contact with?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Ellen Cooper, and different people."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "What was their response?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "They met and we had to put pressure on them. There was constant pressure on them. It was not only us in ACT UP New York. There were other people putting pressure on them, too."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "So, this action was part of that pressure?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Yeah, that was at a meeting \u2013 at an advisory committee meeting \u2013 and I can remember we had clocks \u2013 made clocks. Paper clocks or cardboard clocks, to show that the time was going by and so forth."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "So, after you disrupted a meeting at FDA about DHPG \u2013 had you ever done anything like that before in your life?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "No, but everybody was gung-ho on doing it."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Did you feel scared?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "No. A little. Not much."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Were they angry?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "No. They were somewhat I would say stunned."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "So, how long after that did DHPG get released?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "I really don\u2019t know the exact time, but it was made available and some key people got the drug. They were key \u2013 Michael Callen \u2013 a number that I knew."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "So, Michael Callen\u2019s sight was saved \u2013"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "It wasn\u2019t Michael Callen, exactly, but a friend of his, who had CMV retinitis."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "So, were you involved in ACT UP\u2019s restructuring of the FDA approval system? The parallel track system? Can you tell us a little bit about who thought of that, and how it was implemented? What it was?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "I\u2019ve talked about it so much. I can\u2019t figure out right now. I talked about it \u2013 I can remember talking about parallel track, but right now, I can\u2019t think \u2013"
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "You can\u2019t remember what it was?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "It\u2019s getting the one drug \u2013 I can\u2019t remember how it went, at this point."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Was that Jim Eigo\u2019s project?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Yeah. He talked about it quite a bit. We all talked about it."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Why did ACT UP have to think of a way for the FDA to be more effective? How come the FDA couldn\u2019t deal with it?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "They had their bureaucracy \u2013 the way they did things, how they got doctors. I mean, you know \u2013 within their ranks, there \u2013 they came from major medical centers. They weren\u2019t looking to make the system work better. That wasn\u2019t their job, number one. They would say, that\u2019s somebody else\u2019s job. This is what developed for them. They didn\u2019t think of making the system more effective, I don\u2019t think."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "How do you think that people in ACT UP got to the point, where they realized that they had to and could be the people who were going to restructure the FDA?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "I don\u2019t think they thought that they were doing this, but they knew that they had to put pressure on the FDA and change the FDA \u2013 how they did business, because the drug development system was just taking too long. There was too much bureaucracy. Trials couldn\u2019t be done, because of the FDA. Drugs couldn\u2019t be approved and gotten by the public or whatever because of this long process. The compassionate use was not an effective way to get drugs."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Was compassionate use another ACT UP \u2013"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Because the compassionate use \u2013 yeah. The whole idea of getting the drugs before they were approved and expanding them to communities, before the exact approval date, that they knew the drugs were working and the expanded access thing."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "And do you remember who thought of that?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "It\u2019s hard to say one person, because we were all working on this together, and we just said, well, this is what we have to do. We have to get these drugs sooner. They have to be available to people \u2013 people who have no other choices. They have to be available. So, it just sort of mushroomed and developed. I can\u2019t remember the exact person who had this idea or that idea, because we were working on various aspects of it. We knew FDA was key. We knew that NIAID was key. And, there were people who were putting a lot of energy in each one of these segments of the puzzle."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Now, when ACT UP did its famous action at the FDA, did you participate in that?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Yeah."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "What were the demands?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Well, it\u2019s a long time ago, and I can\u2019t remember the demands."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Was it related to compassionate use and parallel track? Or, were they already in place?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "It wasn\u2019t one issue. It was many issues. We made a flyer \u2013 and it was many issues. I mean, we put down a number of issues."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Did you have an affinity group with that action?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Yeah."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "What was it?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "I can\u2019t remember."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Did you get arrested?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "No, I didn\u2019t get arrested."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Do you remember anything about that action?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "The buses, a lot of people there, people on top of the \u2013 someone having a banner on top of the projection of the building."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Iris, how much of your life was involved with this?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Quite a bit."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Ask your husband?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Yeah."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Would you say every day?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Yeah, every day. Every day, because I was either making calls \u2013 initially, there was no Internet or anything, so you had to make calls to find out about different drugs, drug companies, whatever. People would call sometimes, find out, I need this drug or whatever."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "People with AIDS would call you?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Yeah."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "And ask for advice?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Yeah, that was going on, yeah."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "And did you feel comfortable giving advice?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "They were trying to get drugs, or \u2013 what the problem was with getting drugs. Actually, I was even contacted during the TB, by a patient who needed \u2013 because drugs were cut off, for some reason. They couldn\u2019t get the drugs anymore, because the FDA banned the drugs, because they were contaminated or whatever, or they didn\u2019t like where the drugs were coming from \u2013 for TB, certain TB drugs were unavailable. So, I helped a woman get drugs from Canada. She needed streptomycin \u2013 a very simple drug \u2013 one of the first drugs she needed. She only had one lung, and she needed this drug. It was part of her cocktail, and it was no longer available in this country."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "What did you friends and family think? That you were spending all your time on AIDS?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Well, I had new friends, that\u2019s all."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Did your relationships change because of the work you were doing?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "No, I don\u2019t think they changed. Maybe. I would have been doing something else, if I wasn\u2019t doing this."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Were you talking about AIDS all the time \u2013 like, if you were getting together with your family, were you talking about AIDS?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "No. That was a time when I wouldn\u2019t talk about AIDS that much. I would say what I was doing, but it wasn\u2019t a long, drawn out thing."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "So, what about all these gay men? All these gay people that you\u2019re spending every single day with \u2013 had you ever had gay people in your life, to that extent before?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "No."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Had you had any gay friends at all?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Not that I know of, no. It was very closeted, so it was very hard to say whether you did have a gay friend or not."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "So, how did that affect you? What did you think about that, at the time?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "I sort of just accepted it, that\u2019s it. I said, this is what I\u2019m doing. These are the people I\u2019m involved with. I like the people. It\u2019s a whole different thing I\u2019m doing here, and I think I\u2019m doing the right thing, and I\u2019m very interested in what I\u2019m doing. So, that\u2019s another thing. It\u2019s getting drugs for people, and also, the whole idea of interacting. I was always a laboratory person, and now, interacting with people, it was completely different and something I had never done before. I was not a joiner before, at all. But, I was a fighter type person, that would fight for somebody\u2019s rights."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "What happened to you when people started to die \u2013 your friends?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Well, it was very hard on everyone \u2013 myself, the group. There were funerals, meetings, memorial meetings for people, and it was very moving, to see all the people that came."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Did you have any particularly close friends, whose deaths you recall?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Well, one \u2013 I can\u2019t remember his first name. His name was Bohn. He was a Quaker, and then another woman who died."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "From ACT UP?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Yeah, I think it was ACT UP, because I did get involved with some people \u2013 through someone in ACT UP, with a group of women in Brooklyn \u2013 it was a help group for women with AIDS \u2013 making them trainers and so forth. So, yeah, it was very moving, you know? To see people dying of this disease \u2013 knowing that they soon would not be here. There were a lot of people like that."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "You were the founder, I believe, of the AIDS Treatment Data Network?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Treatment Network. It was called ATR \u2013 AIDS Treatment Registry, and then the name changed a number of times. Then, it went AIDS Treatment Resources or something \u2013 AIDS Treatment."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "What was the need that that responded to?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Well, you didn\u2019t know where the trials were. I mean, my working with this one woman \u2013 the one woman who affected me, was this woman with ALS, and attempting to find the drugs. Now, in that disease \u2013 there\u2019s no drugs for this disease. I even doubt if there are any drugs now. They were using cyclosporin or something. She went to Germany \u2013 she was German \u2013 there was nothing there. She came back and died shortly after. But, I know that this was an area that was not properly covered. The hospitals do not \u2013 or, the doctors do not get information about clinical trials out to people. And, there was a barrier, it seemed. You couldn\u2019t give medical information, if you weren\u2019t a doctor. There was all this stuff that you couldn\u2019t do."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "So, you mean, individual hospitals would just be constructing their own trials, and nobody would know what anyone else was doing?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Well, it was another system that was set up \u2013 that didn\u2019t work very well. It had to do with the doctors \u2013 the doctors in certain fields, whether they were in cancer or whatever. And, they would have to be research doctors. They would have to have certain qualifications and fill out the forms \u2013 the FDA forms, to be a principle investigator. Then, there were the drug companies involved with these doctors, too. If it was a drug company trial, there were payments made for these things. And they seemed to like to be under the covers."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Why?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "One can imagine that they felt comfortable with that system. They were getting paid in some way, shape or form. And, they didn\u2019t want people to understand what was going on. It seems like this is what was going on. So, it was very easy to say, well, okay. I started to look at cancer trials, just to see what kind of data base there was \u2013 a government data base. And, I did find some stuff. But, I didn\u2019t think it was very good or up to date or anything. It was very hard to get. So we said, well you have to have this type of information. This is crazy \u2013 keeping information from people, about where the drugs are being tested. That was the idea, it took off. Everybody was working on this \u2013 Bob Huff, everybody. We had meetings \u2013 that was another meeting \u2013 that was not Treatment and Data. And, it actually became overpowering, because the amount of work you had to do on this thing \u2013"
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "How many clinical trials were there at a given time, that you would track? Like, in an issue of ATR or whatever?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Well, we got more and more, as the years went by. The first one \u2013 maybe there were 30, 40 or so, in the first book. One of the first books was in 1990. Then, it became more about pushing them. We got more trials. We were getting more trials. More drugs were being tested. When we pushed and finally got the ACTG, the AIDS Clinical Trial Group going, they were doing more trials, also. And then, we found out, it was very hard to get drug company trials, because that was more secret, because of all these payments probably going by, to the doctors. And finding \u2013 we were contacting each of the hospitals that were doing these trials, and you had to find the key person that would tell you what was going on there, in trials for AIDS. And, it was usually the same people that were doing the ACTG trials, actually. Some hospitals that are not ACTG sites \u2013 you had to make contact with the AIDS doctor there, and find out what the trials were. Or some coordinator."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "So, if you started out with 40 or 50 in 1990, what did you have by \u2013"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "I don\u2019t know. I don\u2019t know when I left ATR, but there were 60 or 70 trials."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "And how often would ATR come out?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Initially, it came out \u2013 I don\u2019t know if it was every quarter or whatever. We came out more often, and then we cut down because it was very intense. I didn\u2019t like the fact that it was cut down. Nowadays, you can have it on the net, but we had to have hard copy, and it was very difficult."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "So, like, every three months, you\u2019re coming out with a list of 60 or 70 trials. And, how extensive were the descriptions? Did you evaluate the trials? Or, did you just try to say what they were?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "No. All we did was give the entry criteria \u2013 for people who could get into it \u2013 blood work they had to have, and the sites where the trials were going on."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "So, this revolutionized AIDS research, because it democratized access to the trials \u2013 or at least information. So, ACT UP was running this also?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Yeah. ACT UP was a nucleus of this happening, and it gathered the people who were going to work on this project. This became more intense I had to leave ACT UP somewhat \u2013 I had to leave Treatment and Data and only do this, because it was so intense."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "You left Treatment and Data to do the ATR?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Yes."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Do you know what year that was?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "I can\u2019t remember. Maybe it was \u201993, or \u201994. No \u2013 it was before that. Probably, it was about \u201990 \u2013 probably when the first directories came out."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "In 1990. And, how much longer did you stay in ACT UP after that?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Well, I continued to go to ACT UP."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Do you continue to go now?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "No, I don\u2019t."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "You continued until when?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Well, I sort of \u2013 I don\u2019t know how many years \u2013 it was about 1996 or \u201997."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "So, you spent about 10 years in ACT UP?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Right. 10 years, definitely 10 years."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Okay, so you left T&D and you went to the ATR, around 1990. And then, you work on that for a few years."
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Right."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "And, that was your major focus in ACT UP?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Right."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Did you work on anything else, later, in ACT UP? Or, did you stay with the Registry?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "I pretty much stayed with the Registry. But, I was involved. I went to the meetings and stuff, and was still involved."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Can you describe, a little bit, how the introduction of the protease inhibitors or the ideas about the protease inhibitors \u2013 how they were received in ACT UP? And, when people first became aware of this direction?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Protease \u2013 yeah. I remember the first protease, which was a very small trial in Boston or somewhere. It was \u2013 essentially, it didn\u2019t really give very much. I don\u2019t know what protease it was, but it wasn\u2019t that successful. But, I can remember that there was this small trial. I don\u2019t know \u2013 it may have been at Johns Hopkins or somewhere, and everyone wanted to get in it. It maybe had 10 spaces. And, any new drug was really sought after, and people wanted to try it, get into the trial, whatever. And, that was, I would say, the beginning \u2013 that small trial of a few people. And, the protease probably is not around anymore. That was the model, and that\u2019s what I remember was the first protease. And, of course, that was on Treatment and Data\u2019s agenda \u2013 was the protease inhibitors, after that."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "When did you start to think that this could really be a turnaround direction?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Well, with the protease inhibitors, it just seemed to fall into place, all these things. This company makes it, that company made it; some other company made one. And, it just fell into place. And then, the nucleosides are still there, having cocktails. So, it\u2019s the better use of the drugs \u2013 finding better ways to deliver what the dose should be. And, of course, measuring the viral load. Those are all the things that made sense with the drugs \u2013 reducing the side effects."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Were you involved with the campaign to change the CDC definition of AIDS?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Yeah."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Can you describe, a little bit, what that situation was?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Well, I can remember going down to the CDC \u2013 a rainy day, whatever it was, raining buckets \u2013 and changing the definition. And, one of the things that I helped to change there was getting TB as an opportunistic infection, I guess it was. And, the women\u2019s issues that were there, also. And I was always interested in the women\u2019s issues \u2013 the access to women in the clinical trials."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "How were women excluded from clinical trials?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Well, they were excluded by the rules of the FDA, again. And the doctors \u2013 the research doctors. I can remember \u2013 this was before I even came here \u2013 this one doctor, when they treated rats, they only wanted male rats or something. So, it was very ingrown, with respect to \u2013 they felt that women\u2019s bodies would affect the results in some way that they didn\u2019t want because of the hormone cycles and everything \u2013 that they would affect these drug cycles and stuff. Like, no one else had these problems of hormonal things going on."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "And it was really that vulgar? Those were the reasons why women were excluded from the trials?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Well, they didn\u2019t say it like that, but that was the rationale they talked amongst themselves, I\u2019m sure."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "So, how did that get that changed?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Well, Terry McGovern \u2013 and there were law suits against this. I can remember being called about women not being \u2013 one of the drugs, Ampligen, didn\u2019t work very well, wasn\u2019t a good drug, but the woman wanted to get into the trial, and couldn\u2019t get into it. And, Terry McGovern sought these people out, and she worked as an advocate for these people."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "So, why did you finally leave ACT UP after 10 years?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "You have to move on. First of all, I did the AIDS Clinical Trial Group. I thought that was very important, to have a good Community Advisory Board \u2013 CAB, as they called it. And, I was always associated with Mt. Sinai, and I thought the CAB wasn\u2019t going anywhere, so I thought I would take it over, and I became the Chair there. So, it was quite a bit of work, actually."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "What were some of the projects that you did there?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Well, the whole idea was how you have a meeting every month and how you find out what\u2019s going on, and also \u2013 you have to run \u2013 this is supposed to be a Board, and there\u2019s supposed to be certain information given. Now, the investigator sometimes wants to give you his information. He\u2019ll talk about \u2013 not AIDS clinical trial, not the government trials, but some other trial he wants to do. So, there\u2019s a problem in what type of information, and also, how you train people, how the whole organization works and what influence you have at the national level. So, that took up a lot of time, figuring out that, and trying to \u2013 the CCG \u2013 the Community \u2013 do you know what it is? The CCG \u2013 it\u2019s like the CAB on a national level \u2013 Community Constituency Group \u2013 that\u2019s what it is. And, it\u2019s supposed to be made up of representatives from the CABs and stuff, but that never really happened exactly that way. People may come from other areas. And so, there\u2019s somewhat of a disconnect that I felt was a disconnect, between the CCG and the CABs. And, there\u2019s a lot of issues \u2013 getting more members to CABs, and getting them to meetings and all these things. And, I tried to work in that area. I tried to drum up more activism in the CABs and help them get to meetings."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Who was in the Sinai CAB? Who were some of the other people?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "There was Holly Horn of ACT UP, and David \u2013 I can\u2019t remember their names."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "David Gold?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "No."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "David Barr?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "No. I can\u2019t remember right now. I have a whole list upstairs, if you need to know \u2013 Sandy Baker, who was a patient at Mt. Sinai. I built it up pretty good. Finally, there was even the woman who\u2019s now in the CCG. What\u2019s her name? Ann something. She works for the city. She\u2019s a nurse, and she worked for GMHC, also. Holly acted as the Vice President and Secretary, and I was the Chair, and we had minutes at every meeting. I think they were too long, at this point, now, from what I know about minutes. But, we tried to record everything that was said at the meeting and we had good discussions. I was the Chair for two years there, and before that time, I was also involved \u2013 there was a man who had HIV, and he was a Chair. I just acted as a Secretary at that time, but I was sort of doing the work. He was not too well. And, I thought we built it up pretty good. We had regular meetings. There was never a meeting missed."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Now, when TAG separated from ACT UP, why did you stay with ACT UP? Or, did you also go to TAG?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "No. I never went to a TAG meeting."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Why was that?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "I don\u2019t know. I just felt \u2013 I didn\u2019t feel \u2013 there was some sort of animosity between certain ACT UP people and TAG. I wanted to go, but I never pushed myself to go."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Were you ever in direct conflict with them?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "No, not exactly. Meetings are a dynamic. And, you can either feel wanted at a meeting or you don\u2019t. And, I felt that some of the meetings, later on, were not very friendly. In fact, I saw one woman, who was a friend of mine \u2013 she was trashed. This had to do with peptide-T, and she was at the meeting and really made to feel not very welcome. So, I wasn\u2019t comfortable with TAG. And, there were other people, also, that were not comfortable with TAG."
+  },
+  {
+   "speaker": "INTERVIEWER",
+   "text": "Right, so you stayed in ACT UP?"
+  },
+  {
+   "speaker": "SUBJECT",
+   "text": "Yeah, I stayed in ACT UP. The people are fine \u2013 Gonsalves and whatever, the others. But, there was a little ruthlessness. I don\u2019t know what it was, there was something that was not just right."
+  }
+ ]
+}

@@ -22,6 +22,17 @@ struct Cli {
     #[arg(short, long)]
     output: Option<PathBuf>,
 
+    /// TranscribeConfig JSON. Defaults to the baseline configuration.
+    #[arg(short, long)]
+    config: Option<PathBuf>,
+
+    /// Write the effective config here, including defaults that were not
+    /// specified. The run manifest should record this, not the input config ---
+    /// they differ whenever a knob was left unset, and the manifest has to
+    /// describe what actually ran.
+    #[arg(long)]
+    dump_config: Option<PathBuf>,
+
     /// File to transcribe
     file: PathBuf,
 }
@@ -33,7 +44,16 @@ fn main() -> Result<()> {
         .init();
 
     let cli = Cli::parse();
-    let result = transcription::run(&cli.file)?;
+
+    let config = match &cli.config {
+        Some(p) => transcription::TranscribeConfig::from_json(&std::fs::read_to_string(p)?)?,
+        None => transcription::TranscribeConfig::default(),
+    };
+    if let Some(p) = &cli.dump_config {
+        std::fs::write(p, serde_json::to_string_pretty(&config)?)?;
+    }
+
+    let result = transcription::run_with(&cli.file, &config)?;
     let json = serde_json::to_string_pretty(&result)?;
 
     if let Some(output_path) = cli.output {

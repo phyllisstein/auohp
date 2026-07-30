@@ -1,0 +1,202 @@
+{
+ "_comment": [
+  "Tape markers from the PDF margin. `tape_seconds` is time WITHIN that tape,",
+  "so the four tapes are four coordinate systems; `score_drift` fits each",
+  "separately. Unlike the other three fixtures this transcript covers the whole",
+  "recording, so `partial_coverage` should be false on a full-length run."
+ ],
+ "anchors": [
+  {
+   "tape": 1,
+   "label": "Tape I 00:05:00",
+   "tape_seconds": 300,
+   "following_text": "plays, since I had a scholarship to an all boys prep school \u2013 Catholic"
+  },
+  {
+   "tape": 1,
+   "label": "Tape I 00:10:00",
+   "tape_seconds": 600,
+   "following_text": "Mobilization for Survival. But they are the group that wound up bringing off the"
+  },
+  {
+   "tape": 1,
+   "label": "Tape I 00:15:00",
+   "tape_seconds": 900,
+   "following_text": "been through a lot of changes, but it\u2019s one that still sticks with me."
+  },
+  {
+   "tape": 1,
+   "label": "Tape I 00:20:00",
+   "tape_seconds": 1200,
+   "following_text": "\u2013 although that theater troupe did give birth to a few famous people. Julie"
+  },
+  {
+   "tape": 1,
+   "label": "Tape I 00:25:00",
+   "tape_seconds": 1500,
+   "following_text": "community \u2013 a group of people working with each other critiquing each other\u2019s work"
+  },
+  {
+   "tape": 1,
+   "label": "Tape I 00:30:00",
+   "tape_seconds": 1800,
+   "following_text": "right, because there was a notion for several years that it was a cumulative"
+  },
+  {
+   "tape": 1,
+   "label": "Tape I 00:35:00",
+   "tape_seconds": 2100,
+   "following_text": "and Medicare. It was just very difficult, at the time. The city was trying"
+  },
+  {
+   "tape": 1,
+   "label": "Tape I 00:40:00",
+   "tape_seconds": 2400,
+   "following_text": "themselves HIV-positive. So many of them were ill themselves, and everyone \u2013 I as"
+  },
+  {
+   "tape": 2,
+   "label": "Tape II 00:00:00",
+   "tape_seconds": 0,
+   "following_text": "Okay, so we\u2019re going to get into the specifics of everything in a minute,"
+  },
+  {
+   "tape": 2,
+   "label": "Tape II 00:05:00",
+   "tape_seconds": 300,
+   "following_text": "become involved with immediately. And I did it because I was very lucky that"
+  },
+  {
+   "tape": 2,
+   "label": "Tape II 00:10:00",
+   "tape_seconds": 600,
+   "following_text": "nearly the next year, I sat on the Coordinating Committee of ACT UP, and"
+  },
+  {
+   "tape": 2,
+   "label": "Tape II 00:15:00",
+   "tape_seconds": 900,
+   "following_text": "teaching hospitals, in those first few years, around the country. But, we were lucky"
+  },
+  {
+   "tape": 2,
+   "label": "Tape II 00:20:00",
+   "tape_seconds": 1200,
+   "following_text": "with AIDS got and usually attacked the eyes, at that time. It attacked different"
+  },
+  {
+   "tape": 2,
+   "label": "Tape II 00:25:00",
+   "tape_seconds": 1500,
+   "following_text": "might not be absolutely clean, because the person would not \u2013 was too sick"
+  },
+  {
+   "tape": 2,
+   "label": "Tape II 00:30:00",
+   "tape_seconds": 1800,
+   "following_text": "How much time was there between parallel \u2013 There was nearly a year and"
+  },
+  {
+   "tape": 2,
+   "label": "Tape II 00:35:00",
+   "tape_seconds": 2100,
+   "following_text": "day, to everyone\u2019s lasting shock, the Food and Drug Administration decided that they were"
+  },
+  {
+   "tape": 3,
+   "label": "Tape III 00:00:00",
+   "tape_seconds": 0,
+   "following_text": "You were going to tell us an anecdote. There was a vice president of"
+  },
+  {
+   "tape": 3,
+   "label": "Tape III 00:05:00",
+   "tape_seconds": 300,
+   "following_text": "masterminded the plaintiffs getting money after the Love Canal disaster \u2013 an AIDS lawyer,"
+  },
+  {
+   "tape": 3,
+   "label": "Tape III 00:10:00",
+   "tape_seconds": 600,
+   "following_text": "individual causes. So less and less was getting done in the room on a"
+  },
+  {
+   "tape": 3,
+   "label": "Tape III 00:15:00",
+   "tape_seconds": 900,
+   "following_text": "Okay \u2013 these two different factions, or whatever \u2013 did you, overtly talk to"
+  },
+  {
+   "tape": 3,
+   "label": "Tape III 00:20:00",
+   "tape_seconds": 1200,
+   "following_text": "heady first year and a half. Sometimes the Monday meetings were too much like"
+  },
+  {
+   "tape": 3,
+   "label": "Tape III 00:25:00",
+   "tape_seconds": 1500,
+   "following_text": "ACT UP was a proposal that we try and develop \u2013 that the group"
+  },
+  {
+   "tape": 3,
+   "label": "Tape III 00:30:00",
+   "tape_seconds": 1800,
+   "following_text": "her boss, left pretty quickly and he was something of a well meaning blow-hard,"
+  },
+  {
+   "tape": 3,
+   "label": "Tape III 00:35:00",
+   "tape_seconds": 2100,
+   "following_text": "\u2013 yes, an expanded access for people with AIDS. An aide to Ted Kennedy"
+  },
+  {
+   "tape": 3,
+   "label": "Tape III 00:40:00",
+   "tape_seconds": 2400,
+   "following_text": "No \u2013 I\u2019m thinking 14 or 15 years later. How come the left didn\u2019t"
+  },
+  {
+   "tape": 4,
+   "label": "Tape IV 00:00:45",
+   "tape_seconds": 45,
+   "following_text": "While we were changing tapes, we were dishing about The Nation. We were talking"
+  },
+  {
+   "tape": 4,
+   "label": "Tape IV 00:05:00",
+   "tape_seconds": 300,
+   "following_text": "ACT UP, I started worrying about not being able to report to the floor."
+  },
+  {
+   "tape": 4,
+   "label": "Tape IV 00:10:00",
+   "tape_seconds": 600,
+   "following_text": "we probably were close to \u2013 Margaret McCarthy was in it, whom I\u2019ve also"
+  },
+  {
+   "tape": 4,
+   "label": "Tape IV 00:15:00",
+   "tape_seconds": 900,
+   "following_text": "within which I felt close to. I\u2019d seen in similar situations, lots, trusted, liked"
+  },
+  {
+   "tape": 4,
+   "label": "Tape IV 00:20:00",
+   "tape_seconds": 1200,
+   "following_text": "So, what have you been doing since you left ACT UP? Well, I\u2019ve done"
+  },
+  {
+   "tape": 4,
+   "label": "Tape IV 00:25:00",
+   "tape_seconds": 1500,
+   "following_text": "hasn\u2019t hit most of America yet, as awful as that sounds. It hasn\u2019t hit"
+  },
+  {
+   "tape": 4,
+   "label": "Tape IV 00:30:00",
+   "tape_seconds": 1800,
+   "following_text": "within ACT UP like Richard Elovich, who because he was working on injector drug"
+  }
+ ]
+}

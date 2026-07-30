@@ -1,0 +1,27 @@
+{
+ "_comment": [
+  "Tape markers from the PDF margin. `tape_seconds` is time WITHIN that tape.",
+  "The transcript is an excerpt (pages 37-43), so it may cover less tape than the",
+  "clip, or more; the harness reports `partial_coverage` either way."
+ ],
+ "anchors": [
+  {
+   "tape": 3,
+   "label": "Tape III 00:05:00",
+   "tape_seconds": 300,
+   "following_text": "the greater nuance that you needed to talk about certain kinds of issues. But"
+  },
+  {
+   "tape": 3,
+   "label": "Tape III 00:10:00",
+   "tape_seconds": 600,
+   "following_text": "ACT UP was able to do was to figure out ways of putting a"
+  },
+  {
+   "tape": 3,
+   "label": "Tape III 00:15:00",
+   "tape_seconds": 900,
+   "following_text": "And I came to realize that that was one of the things that I"
+  }
+ ]
+}

@@ -1,0 +1,245 @@
+# ACT UP Oral History Project -- domain lexicon.
+#
+# Serves two purposes at once, deliberately:
+#   1. Scored metric. `score` counts occurrences of each term in the cleaned truth
+#      (`expected`) and in the hypothesis (`found`). Terms with expected == 0 for a
+#      given interview are skipped in the recall figure, so corpus-wide entries below
+#      cost nothing when scoring a single transcript.
+#   2. Decoder prompt. The same list seeds `set_initial_prompt`, which is the
+#      highest-leverage fix for exactly the failures this metric detects.
+#
+# Keep the prompt-facing selection under ~200 tokens: the initial prompt consumes
+# decoder context, and an over-stuffed one degrades what it was meant to help.
+#
+# Format: one term per line. `#` comments and blank lines ignored. Matching is done
+# on the normalised token stream, so casing and punctuation here are for human
+# readability only -- write terms the way a person would.
+
+# -- The core terms ----------------------------------------------------------
+# `AIDS` was missing until interview 074 made the omission obvious: it is the
+# single most searched word in the archive and appears in every transcript.
+# Worth stating plainly --- a lexicon is only as good as its most boring entries.
+AIDS
+HIV
+ACT UP
+
+# -- Organisations and bodies ------------------------------------------------
+GMHC
+Gay Men's Health Crisis
+Coordinating Committee
+Logistics Committee
+Actions Committee
+Action Committee
+Student Mobilization Committee
+Poor People's Campaign
+Queer Nation
+Treatment and Data
+T&D
+Majority Action Committee
+Women's Caucus
+Housing Committee
+Needle Exchange
+
+# -- Slogans, artefacts, terms of art ---------------------------------------
+Silence = Death
+Silence Equals Death
+SILENCE = DEATH
+Working Document
+Letraset
+phone tree
+affinity group
+die-in
+zap
+political funeral
+seroconversion
+Read My Lips
+Kissing Doesn't Kill
+Gran Fury
+Testing the Limits
+DIVA TV
+The Marys
+
+# -- Institutions and agencies ----------------------------------------------
+FDA
+NIH
+CDC
+NIAID
+ACTG
+AIDS Clinical Trial Group
+Sloan-Kettering
+Supreme Court
+Wall Street
+St. Vincent's
+Mt. Sinai
+Johns Hopkins
+CRI
+Community Research Initiative
+
+# -- Treatment activism vocabulary -------------------------------------------
+# Iris Long's interview (026) is dense with these; they are the terms a
+# researcher would actually search the archive for, and the ones an acoustic
+# model with no domain prior is most likely to mangle.
+TAG
+Treatment Action Group
+ATR
+AIDS Treatment Registry
+AIDS Treatment Data Network
+CAB
+CABs
+Community Advisory Board
+CCG
+Community Constituency Group
+expanded access
+entry criteria
+principal investigator
+opportunistic infection
+viral load
+clinical trial
+data base
+
+# -- Drug companies -----------------------------------------------------------
+Burroughs Wellcome
+Hoffman-La Roche
+Glaxo
+
+# -- Drugs and clinical vocabulary ------------------------------------------
+AZT
+ddI
+ddC
+AL 721
+pentamidine
+Bactrim
+PCP
+Kaposi's sarcoma
+protease
+protease inhibitor
+protease inhibitors
+placebo
+parallel track
+compassionate use
+DHPG
+CMV
+CMV retinitis
+nucleoside
+nucleosides
+purine
+streptomycin
+cyclosporin
+Ampligen
+peptide-T
+cocktail
+ALS
+TB
+HIV
+
+# -- People named in this interview (108, Avram Finkelstein) ----------------
+Avram Finkelstein
+Larry Kramer
+Michael Nesline
+Nesline
+Steve Webb
+Brad Ball
+Mike Savino
+Peter Staley
+Jerry Smith
+Deb Levine
+Maria Maggenti
+Joy Episalla
+David Wojnarowicz
+Wojnarowicz
+Michelangelo Signorile
+Signorile
+Frank Young
+Joe Papp
+Vito Russo
+Maxine Wolfe
+
+# -- People named in interview 026 (Iris Long) ------------------------------
+Iris Long
+Ellen Cooper
+Michael Callen
+Bob Huff
+Holly Horn
+Sandy Baker
+David Gold
+David Barr
+Gregg Gonsalves
+Gonsalves
+
+# -- Interview 074 (Douglas Crimp): graphics, culture, and NYC politics -----
+Douglas Crimp
+AIDS Demo Graphics
+Stop the Church
+Fact Sheets
+pink triangle
+Silence Equals Death
+sloganeering
+Gran Fury
+Fast Trip Long Drop
+Rollerina
+Matt Ebert
+Ryan Landry
+Marlene McCarty
+Stephen Joseph
+Ed Koch
+George Bush
+Cooper Union
+Bethesda
+New York City
+NPR
+postmodernism
+needle exchange
+Women Don't Get AIDS They Just Die From It
+
+# -- Interview 047 (Jim Eigo): treatment activism from inside T&D -----------
+# `Fauci` (11 occurrences here) was absent, which is a useful check on how these
+# lists rot: he is among the most searched names in the archive and was missed
+# only because the first three interviews happened not to dwell on him. Terms get
+# added when an interview proves they matter.
+#
+# Adding a term retroactively changes the denominator for every archived run in
+# which it occurs, so the archive was re-scored after this edit. Nothing moved ---
+# none of these appear in 108, 026, or 074 --- but that was confirmed, not assumed.
+Jim Eigo
+Anthony Fauci
+Tony Fauci
+Fauci
+Richard Elovich
+Gary Kleinman
+Stan Leventhal
+Issues Committee
+Wave III
+Playguy
+Food and Drug Administration
+Social Security
+Medicare
+Montreal
+
+# -- People recurring across the corpus -------------------------------------
+Robert Vazquez-Pacheco
+Moises Agosto
+Gregg Bordowitz
+Mark Harrington
+Iris Long
+Ann Northrop
+David Kirschenbaum
+Marlene McCarty
+Jim Eigo
+Vincent Gagliostro
+Douglas Crimp
+Terry McGovern
+David Robinson
+Sarah Schulman
+Jean Carlomusto
+Ann Philbin
+
+# -- New York geography ------------------------------------------------------
+Lower Broadway
+Astor Place
+Waverly Place
+Crosby Street
+Lafayette
+Fire Island
+Sheridan Square
+Christopher Street
+the Center
