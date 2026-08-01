@@ -371,16 +371,14 @@ export const PersistenceExtension = /* @__PURE__ */ defineExtension({
 
         const createDebouncer = (uid: string) =>
             debounce((text: string) => {
-                // FIXME: Fires for every single Statement on first being hydrated
-                //
                 // `.peek()` reads the signal without subscribing --- we want the
                 // value as of the moment the debounce fires, not as of registration.
-                // editStatement.peek()?.({
-                //     variables: { uid, text },
-                //     onCompleted: data => {
-                //         console.debug(`Edit completed for statement ${ data.editStatement.uid }:`, data.editStatement);
-                //     },
-                // });
+                editStatement.peek()?.({
+                    variables: { uid, text },
+                    onCompleted: data => {
+                        console.debug(`Edit completed for statement ${ data.editStatement.uid }:`, data.editStatement);
+                    },
+                });
             }, delay.peek());
 
         // One debouncer PER STATEMENT UID, created lazily on first edit. The Slate
@@ -402,13 +400,6 @@ export const PersistenceExtension = /* @__PURE__ */ defineExtension({
         const lastPersisted = new Map(knownText.peek());
 
         const persist = (uid: string, text: string) => {
-            // The whole bootstrap fix. Every statement in the seed wave arrives
-            // with text identical to its `knownText` entry, so the entire wave
-            // exits here without scheduling anything.
-            if (lastPersisted.get(uid) === text) {
-                return;
-            }
-
             let flush = debouncers.get(uid);
             if (!flush) {
                 flush = createDebouncer(uid);
@@ -418,7 +409,11 @@ export const PersistenceExtension = /* @__PURE__ */ defineExtension({
         };
 
         const unregister = editor.registerUpdateListener(
-            ({ dirtyLeaves, dirtyElements, editorState }) => {
+            ({ dirtyLeaves, dirtyElements, editorState, tags }) => {
+                if (tags.has("history-merge")) {
+                    return;
+                }
+
                 if (dirtyLeaves.size === 0 && dirtyElements.size === 0) {
                     return;
                 }
@@ -656,6 +651,7 @@ export function defineAuohpEditorExtension({ statements, editStatement }: AuohpE
             //
             // RootNode.importJSON(statements);
 
+            const appendables: StatementNode[] = [];
             for (const statement of statements) {
                 const statementNode = $createStatementNode(
                     statement.uid,
@@ -664,8 +660,9 @@ export function defineAuohpEditorExtension({ statements, editStatement }: AuohpE
                 );
                 const textNode = $createTextNode(statement.text);
                 statementNode.append(textNode);
-                root.append(statementNode);
+                appendables.push(statementNode);
             }
+            root.append(...appendables);
 
             return root;
         },
