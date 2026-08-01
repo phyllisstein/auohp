@@ -1,4 +1,5 @@
-import { type JSX } from "react";
+import { useEffect, useState, type JSX } from "react";
+import { createPortal } from "react-dom";
 import {
     $createTextNode,
     $getNodeByKey,
@@ -24,11 +25,23 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import { $findMatchingParent } from "@lexical/utils";
 import { debounce } from "es-toolkit/function";
 import { playhead } from "@/playhead";
-import { $createStatementNode, $createTagChipNode, $isStatementNode, SlotContainerNode, StatementNode, TagChipNode } from "@/lexical/nodes";
+import {
+    $createStatementNode,
+    $createTagChipNode,
+    $isStatementNode,
+    BADGE_CLASS,
+    StatementNode,
+    TagChip,
+    TagChipNode,
+    TagMarkStyles,
+} from "@/lexical/nodes";
 import { INSERT_TAG_CHIP_COMMAND } from "@/lexical/commands";
-import { SYNTHETIC_UID_MARKER, type EditStatementFn, type TranscriptStatements } from "@/lexical/shared";
+import {
+    SYNTHETIC_UID_MARKER,
+    type EditStatementFn,
+    type TranscriptStatements,
+} from "@/lexical/shared";
 import { $wrapSelectionInMarkNode, MarkExtension } from "@lexical/mark";
-
 
 // -----------------------------------------------------------------------------
 // Extensions --- Lexical's composition model as of 0.48.
@@ -48,7 +61,6 @@ import { $wrapSelectionInMarkNode, MarkExtension } from "@lexical/mark";
 // React re-enters only where there is genuinely something to paint.
 // -----------------------------------------------------------------------------
 
-
 // -----------------------------------------------------------------------------
 // StatementExtension --- pure schema.
 //
@@ -64,7 +76,6 @@ export const StatementExtension = /* @__PURE__ */ defineExtension({
     name: "@auohp/statement",
     nodes: () => [StatementNode],
 });
-
 
 // -----------------------------------------------------------------------------
 // Litmus test 1 --- click-to-seek.
@@ -94,7 +105,9 @@ export const StatementSeekExtension = /* @__PURE__ */ defineExtension({
 
                 if ($isStatementNode(statement) && statement.getStartTime() != null) {
                     playhead.seek.value = statement.getStartTime()!;
-                    console.debug(`Clicked on statement: ${ statement.getUid() } (${ statement.getStartTime() })`);
+                    console.debug(
+                        `Clicked on statement: ${ statement.getUid() } (${ statement.getStartTime() })`,
+                    );
                 }
 
                 return false;
@@ -102,7 +115,6 @@ export const StatementSeekExtension = /* @__PURE__ */ defineExtension({
             COMMAND_PRIORITY_LOW,
         ),
 });
-
 
 // -----------------------------------------------------------------------------
 // Litmus test 2 --- split-on-Enter. The feature Slate blocked on.
@@ -178,6 +190,84 @@ export const SplitStatementExtension = /* @__PURE__ */ defineExtension({
         ),
 });
 
+// -----------------------------------------------------------------------------
+// TagChipPortals --- the ElementNode -> React bridge.
+//
+// A DecoratorNode gets React for free: the reconciler PULLS JSX out of
+// `decorate()` at the node's own position. TagChipNode extends MarkNode, hence
+// ElementNode, so no such hook exists --- and it must stay an ElementNode,
+// because its children ARE the tagged text (a DecoratorNode's getTextContent()
+// returns "", which would silently erase those words from the statement text
+// PersistenceExtension ships to the server).
+//
+// So we invert the flow and PUSH instead: a mutation listener reports every
+// chip's lifecycle, we resolve each one's unmanaged badge span, and React
+// portals into it. The badge being `setDOMUnmanaged` is what makes this legal
+// --- Lexical's mutation-attribution up-walk terminates there, so nothing React
+// renders inside gets evicted as foreign DOM.
+//
+// Rendered via ReactExtension's `decorators` channel, which exists precisely for
+// "JSX inside the editor context that is not location-dependent".
+// -----------------------------------------------------------------------------
+function TagChipPortals(): JSX.Element {
+    const [editor] = useLexicalComposerContext();
+
+    // NodeKey -> the badge span to portal into. Held in React state (not a ref)
+    // because adding or dropping an entry must trigger a re-render.
+    const [hosts, setHosts] = useState<ReadonlyMap<NodeKey, HTMLElement>>(new Map());
+
+    useEffect(
+        () =>
+            editor.registerMutationListener(TagChipNode, mutations => {
+                // Resolve a chip's portal target from its NodeKey. Returns null
+                // when the node has no DOM yet (or no badge, e.g. a node
+                // replacement swapped createDOM out from under us).
+                const resolveHost = (key: NodeKey): HTMLElement | null =>
+                    editor.getElementByKey(key)?.querySelector<HTMLElement>(
+                        `:scope > .${ BADGE_CLASS }`,
+                    ) ?? null;
+
+                setHosts(prev => {
+                    let updates = 0;
+                    const mutablePrev = new Map(prev);
+
+                    for (const mutation of mutations) {
+                        const [key, kind] = mutation;
+
+                        if (kind === "updated") {
+                            continue;
+                        }
+
+                        if (kind === "destroyed" && mutablePrev.has(key)) {
+                            mutablePrev.delete(key);
+                            updates++;
+                            continue;
+                        }
+
+                        const host = resolveHost(key);
+
+                        if (kind === "created" && !!host) {
+                            mutablePrev.set(key, host);
+                            updates++;
+                        }
+                    }
+
+                    if (updates === 0) {
+                        return prev;
+                    }
+
+                    return mutablePrev;
+                });
+            }),
+        [editor],
+    );
+
+    return (
+        <>
+            { Array.from(hosts, ([key, host]) => createPortal(<TagChip nodeKey={ key } />, host, key)) }
+        </>
+    );
+}
 
 // -----------------------------------------------------------------------------
 // TagChipExtension --- the React-in-editor seam.
@@ -191,26 +281,30 @@ export const SplitStatementExtension = /* @__PURE__ */ defineExtension({
 export const TagChipExtension = /* @__PURE__ */ defineExtension({
     name: "@auohp/tag-chip",
     nodes: () => [TagChipNode],
-    dependencies: [MarkExtension],
+    dependencies: [
+        MarkExtension,
+        configExtension(ReactExtension, { decorators: [TagChipPortals] }),
+    ],
     register: editor =>
         editor.registerCommand(
             INSERT_TAG_CHIP_COMMAND,
-            () => {
+            id => {
                 const selection = $getSelection();
-                if ($isRangeSelection(selection)) {
-                    $wrapSelectionInMarkNode(
-                        selection,
-                        false,
-                        "str",
-                        () => $createTagChipNode(["str"]),
-                    );
+                if (!$isRangeSelection(selection)) {
+                    return false;
                 }
+
+                // `$wrapSelectionInMarkNode` does the whole selection -> element
+                // wrap, including splitting boundary TextNodes. The 4th argument
+                // is the factory hook that lets us substitute our subclass for a
+                // plain MarkNode --- it receives the accumulated ids, so
+                // overlapping tags merge rather than nest.
+                $wrapSelectionInMarkNode(selection, false, id, ids => $createTagChipNode(ids));
                 return true;
             },
             COMMAND_PRIORITY_LOW,
         ),
 });
-
 
 // -----------------------------------------------------------------------------
 // PersistenceExtension --- the write path.
@@ -323,44 +417,48 @@ export const PersistenceExtension = /* @__PURE__ */ defineExtension({
             flush(text);
         };
 
-        const unregister = editor.registerUpdateListener(({ dirtyLeaves, dirtyElements, editorState }) => {
-            if (dirtyLeaves.size === 0 && dirtyElements.size === 0) {
-                return;
-            }
-
-            editorState.read(() => {
-                const seen = new Set<NodeKey>();
-
-                const collect = (node: LexicalNode | null) => {
-                    if (!node) {
-                        return;
-                    }
-                    const statement = $isStatementNode(node) ? node : $findMatchingParent(node, $isStatementNode);
-                    if (!$isStatementNode(statement) || seen.has(statement.getKey())) {
-                        return;
-                    }
-                    seen.add(statement.getKey());
-
-                    const uid = statement.getUid();
-                    // Visual-only split products have no backend row --- skip them.
-                    if (uid.includes(SYNTHETIC_UID_MARKER)) {
-                        return;
-                    }
-                    persist(uid, statement.getTextContent());
-                };
-
-                for (const key of dirtyLeaves) {
-                    const dirtyLeaf = $getNodeByKey(key);
-                    // console.log({ dirtyLeaf });
-                    collect(dirtyLeaf);
+        const unregister = editor.registerUpdateListener(
+            ({ dirtyLeaves, dirtyElements, editorState }) => {
+                if (dirtyLeaves.size === 0 && dirtyElements.size === 0) {
+                    return;
                 }
-                for (const [key] of dirtyElements) {
-                    const dirtyNode = $getNodeByKey(key);
-                    // console.log({ dirtyNode });
-                    collect(dirtyNode);
-                }
-            });
-        });
+
+                editorState.read(() => {
+                    const seen = new Set<NodeKey>();
+
+                    const collect = (node: LexicalNode | null) => {
+                        if (!node) {
+                            return;
+                        }
+                        const statement = $isStatementNode(node)
+                            ? node
+                            : $findMatchingParent(node, $isStatementNode);
+                        if (!$isStatementNode(statement) || seen.has(statement.getKey())) {
+                            return;
+                        }
+                        seen.add(statement.getKey());
+
+                        const uid = statement.getUid();
+                        // Visual-only split products have no backend row --- skip them.
+                        if (uid.includes(SYNTHETIC_UID_MARKER)) {
+                            return;
+                        }
+                        persist(uid, statement.getTextContent());
+                    };
+
+                    for (const key of dirtyLeaves) {
+                        const dirtyLeaf = $getNodeByKey(key);
+                        // console.log({ dirtyLeaf });
+                        collect(dirtyLeaf);
+                    }
+                    for (const [key] of dirtyElements) {
+                        const dirtyNode = $getNodeByKey(key);
+                        // console.log({ dirtyNode });
+                        collect(dirtyNode);
+                    }
+                });
+            },
+        );
 
         // The old plugin leaked here: its useEffect cleanup dropped the Map
         // without cancelling in-flight timers. An extension's disposer is the
@@ -374,7 +472,6 @@ export const PersistenceExtension = /* @__PURE__ */ defineExtension({
         };
     },
 });
-
 
 // -----------------------------------------------------------------------------
 // LatencyExtension --- litmus test 1 instrumentation, and the canonical shape for
@@ -451,7 +548,6 @@ export const LatencyExtension = /* @__PURE__ */ defineExtension({
     },
 });
 
-
 function LatencyMeter(): JSX.Element {
     // `useExtensionSignalValue` bridges the signal to React via
     // useSyncExternalStore --- no editor, no context, no useEffect.
@@ -464,7 +560,6 @@ function LatencyMeter(): JSX.Element {
     );
 }
 
-
 // A trivial toolbar affordance that dispatches the typed insert command ---
 // demonstrating an out-of-editor React control mutating EditorState, which then
 // renders back through a React DecoratorNode. `useLexicalComposerContext` is NOT
@@ -474,15 +569,19 @@ function LatencyMeter(): JSX.Element {
 function TagButton(): JSX.Element {
     const [editor] = useLexicalComposerContext();
 
+    // The payload is the MARK ID. Deferred decision: a throwaway uid for now, so
+    // each chip is at least distinct. When entity resolution lands, this becomes
+    // the graph uid of the Person/Organization being mentioned --- MarkNode's
+    // __ids then genuinely means "this range MENTIONS these entities", and
+    // $getMarkIDs answers that question directly. No signature change needed.
     return (
         <button
             type="button"
-            onClick={ () => editor.dispatchCommand(INSERT_TAG_CHIP_COMMAND) }>
+            onClick={ () => editor.dispatchCommand(INSERT_TAG_CHIP_COMMAND, crypto.randomUUID()) }>
             Insert #person chip
         </button>
     );
 }
-
 
 // ReactExtension renders `<>{contentEditable}{children}</>` by default, which
 // would put our toolbar BELOW the transcript. Overriding EditorChildrenComponent
@@ -494,6 +593,7 @@ function EditorChrome({ contentEditable, children }: EditorChildrenComponentProp
 
     return (
         <>
+            <TagMarkStyles />
             <div style={{ display: "flex", gap: "1rem", alignItems: "center", padding: "0.5rem 0" }}>
                 <TagButton />
                 <Meter />
@@ -503,7 +603,6 @@ function EditorChrome({ contentEditable, children }: EditorChildrenComponentProp
         </>
     );
 }
-
 
 // -----------------------------------------------------------------------------
 // The root extension.
@@ -531,7 +630,6 @@ export function defineAuohpEditorExtension({ statements, editStatement }: AuohpE
             SplitStatementExtension,
             TagChipExtension,
             LatencyExtension,
-            SlotContainerNode,
             configExtension(PersistenceExtension, { editStatement }),
             configExtension(ReactExtension, { EditorChildrenComponent: EditorChrome }),
         ],
@@ -559,7 +657,11 @@ export function defineAuohpEditorExtension({ statements, editStatement }: AuohpE
             // RootNode.importJSON(statements);
 
             for (const statement of statements) {
-                const statementNode = $createStatementNode(statement.uid, statement.startTime, statement.endTime);
+                const statementNode = $createStatementNode(
+                    statement.uid,
+                    statement.startTime,
+                    statement.endTime,
+                );
                 const textNode = $createTextNode(statement.text);
                 statementNode.append(textNode);
                 root.append(statementNode);

@@ -1,36 +1,23 @@
 import {
     $applyNodeReplacement,
-    $create,
-    $createParagraphNode,
-    $createTextNode,
-    $setSlot,
-    DecoratorNode,
+    addClassNamesToElement,
     ElementNode,
     setDOMUnmanaged,
     type EditorConfig,
-    type LexicalEditor,
     type LexicalNode,
     type LexicalUpdateJSON,
     type NodeKey,
-    type SerializedElementNode,
-    type SlotChildNode,
-    type Spread,
-    type DOMExportOutput,
-    $getDocument,
     type RangeSelection,
+    type SerializedElementNode,
+    type Spread,
 } from "lexical";
 import { type JSX } from "react";
 import { formatTimestamp } from "@/lexical/shared";
-import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { useLexicalSlotRef } from "@lexical/react/useLexicalSlotRef";
-import styled from "styled-components";
+import styled, { createGlobalStyle, css } from "styled-components";
 import numberSignSVG from "./number.sign.square.svgo.svg?inline";
 import { MarkNode } from "@lexical/mark";
-import { rest } from "es-toolkit";
-
 
 const NO_IDS: readonly string[] = [];
-
 
 // -----------------------------------------------------------------------------
 // StatementNode --- the Lexical analogue of the Slate `statement` element.
@@ -56,7 +43,6 @@ type SerializedStatementNode = Spread<
     },
     SerializedElementNode
 >;
-
 
 export class StatementNode extends ElementNode {
     __uid: string;
@@ -111,10 +97,7 @@ export class StatementNode extends ElementNode {
         const chrome = document.createElement("div");
         chrome.className = "auohp-statement__chrome";
         chrome.contentEditable = "false";
-        chrome.append(
-            this.#timeElement(this.__startTime),
-            this.#timeElement(this.__endTime),
-        );
+        chrome.append(this.#timeElement(this.__startTime), this.#timeElement(this.__endTime));
         setDOMUnmanaged(chrome);
 
         // The content element the reconciler DOES manage (see getDOMSlot): the
@@ -139,7 +122,9 @@ export class StatementNode extends ElementNode {
     // refresh the chrome timestamps if the caption window shifted (e.g. a split).
     updateDOM(prevNode: StatementNode, dom: HTMLElement): boolean {
         if (prevNode.__startTime !== this.__startTime || prevNode.__endTime !== this.__endTime) {
-            const times = dom.querySelectorAll<HTMLElement>(".auohp-statement__chrome > .auohp-statement__time");
+            const times = dom.querySelectorAll<HTMLElement>(
+                ".auohp-statement__chrome > .auohp-statement__time",
+            );
             if (times[0]) {
                 times[0].textContent = formatTimestamp(this.__startTime ?? 0);
             }
@@ -169,65 +154,68 @@ export class StatementNode extends ElementNode {
     }
 }
 
-
-export function $createStatementNode(uid: string, startTime: number | null, endTime: number | null): StatementNode {
+export function $createStatementNode(
+    uid: string,
+    startTime: number | null,
+    endTime: number | null,
+): StatementNode {
     // `$applyNodeReplacement` runs any registered node-replacement hooks and is
     // the idiomatic constructor wrapper --- cheap insurance even when we register
     // no replacements today.
     return $applyNodeReplacement(new StatementNode(uid, startTime, endTime));
 }
 
-
 export function $isStatementNode(node: LexicalNode | null | undefined): node is StatementNode {
     return node instanceof StatementNode;
 }
 
-
 // -----------------------------------------------------------------------------
-// TagChipNode --- React-in-editor.
+// TagChipNode --- React-in-editor, the hard way.
 //
-// A DecoratorNode: a leaf whose visual body is a REACT component rendered by
-// @lexical/react's decorator machinery. This is the primitive future graph-tagging
-// needs --- an inline node that lives in EditorState (serialises, undoes,
-// participates in selection) yet paints itself with arbitrary React. `decorate()`
-// is the state -> React bridge: whatever it returns is mounted into the editor's
-// DOM at this node's position and re-rendered when the node changes.
+// The obvious move is a DecoratorNode, whose `decorate()` returns JSX that the
+// reconciler mounts at the node's own position. We can't use it. A DecoratorNode
+// is a LEAF: `LexicalNode.getTextContent()` returns "" for one, and
+// PersistenceExtension ships `statement.getTextContent()` to the server as the
+// authoritative Statement.text. A decorator chip would silently delete the words
+// it was tagging.
+//
+// So the chip extends MarkNode (hence ElementNode) and its children ARE the
+// tagged text --- transparent to getTextContent, copy/paste, and search. That
+// costs us `decorate()`, since only DecoratorNodes have one. React gets in by
+// the other door instead: createDOM builds an unmanaged badge span, and
+// TagChipPortals (extensions.tsx) portals <TagChip/> into it, driven by a
+// mutation listener. Pull becomes push.
+//
+// MarkNode also brings semantics we would otherwise hand-roll: __ids with
+// overlap merging, canInsertTextBefore/After() === false and canBeEmpty() ===
+// false (so the chip is already sealed at its boundaries), and isInline() ===
+// true.
 // -----------------------------------------------------------------------------
-const TagChipContainer = styled.div`
-    display: inline-block;
-    margin: 0.4em;
-    padding: 0.4em;
+const TagChipContainer = styled.span`
+    position: absolute;
+    top: 0;
+    left: -1em;
+    z-index: -1;
+
+    display: block;
+    width: calc(100% + 1.6em);
+    height: 100%;
 
     color: #0B0B0B;
     font-weight: 600;
-    font-size: 85%;
+    font-size: 100%;
 
     background: #7DD3FC;
-    border-radius: 11em;
 
     user-select: none;
 
-    positiopn: relative;
-
-    & p {
-        margin: 0 0 0 1.5em;
-        border: 0;
-    }
-
-    & svg path,
-    & svg rect {
-        fill: #000 !important;
-        stroke: #000 !important;
-    }
-
     &::before {
         position: absolute;
+        left: 0;
 
         display: block;
-        align-items: center;
-        justify-content: center;
-        width: 1em;
-        height: 1em;
+        width: 0.8em;
+        height: 0.8em;
 
         color: #000 !important;
 
@@ -237,37 +225,48 @@ const TagChipContainer = styled.div`
     }
 `;
 
+export const TagMarkStyles = createGlobalStyle`
+    .auohp-tag-chip {
+        position: relative;
+
+        display: inline-block;
+        margin: 0 1.5rem;
+
+        background: none;
+    }
+`;
 
 type SerializedTagChipNode = Spread<{ ids: string[] }, SerializedElementNode>;
 
+// Shared by createDOM (which writes it) and getDOMSlot (which must re-find the
+// element it names) --- keeping them in sync by construction rather than by
+// two matching string literals.
+export const BADGE_CLASS = "auohp-tag-chip__badge";
 
-function TagChip({ nodeKey }: { nodeKey: NodeKey }) {
-    const [editor] = useLexicalComposerContext();
-    const tagRef = useLexicalSlotRef<HTMLDivElement>(editor, nodeKey, "tag");
-
-    console.log(tagRef);
-
+// The chip's React face. It is NOT rendered in place by Lexical --- MarkNode is
+// an ElementNode, so there is no `decorate()` hook --- it is portalled into the
+// unmanaged badge span that TagChipNode.createDOM builds (see TagChipPortals).
+//
+// It receives only a NodeKey. Everything else is read back out of EditorState
+// via `editor.read()` / `editor.update()`, which keeps the component a pure
+// function of editor state rather than a second copy of it.
+export function TagChip({ nodeKey }: { nodeKey: NodeKey }): JSX.Element {
     return (
         <>
-            <TagChipContainer
-                ref={ tagRef }
-                className="tag-chip-container">
-            </TagChipContainer>
+            <TagChipContainer className="tag-chip__container" />
         </>
     );
 }
 
-
 export class TagChipNode extends MarkNode {
-    static getType(): string {
-        return "tag-chip";
-    }
-
     static clone(node: TagChipNode): TagChipNode {
         return new TagChipNode(node.__ids, node.__key);
     }
 
-    constructor(ids: readonly string[] = NO_IDS, key?: NodeKey) {
+    constructor(
+        ids: readonly string[] = NO_IDS,
+        key?: NodeKey,
+    ) {
         super(ids, key);
         this.__ids = ids;
     }
@@ -275,7 +274,6 @@ export class TagChipNode extends MarkNode {
     $config() {
         return this.config("tag-chip", {
             extends: MarkNode,
-            slots: ["tag"],
         });
     }
 
@@ -288,60 +286,49 @@ export class TagChipNode extends MarkNode {
         return super.updateFromJSON(serializedNode).setIDs(serializedNode.ids);
     }
 
-
-    insertNewAfter(
-        selection: RangeSelection,
-        restoreSelection: boolean = true,
-    ): ElementNode | null {
+    insertNewAfter(selection: RangeSelection, restoreSelection: boolean = true): ElementNode | null {
         const tagChipNode = $createTagChipNode(this.__ids);
         this.insertAfter(tagChipNode, restoreSelection);
         return tagChipNode;
-    };
+    }
 
-    // Inline so the chip flows within a statement's text rather than breaking it
-    // onto its own line.
-    // isInline(): true {
-    //     return true;
-    // }
-
-    // isShadowRoot(): true {
-    //     return true;
-    // }
-
+    // Defer to MarkNode for the <mark> itself: it applies `config.theme.mark`
+    // AND `config.theme.markOverlap` when __ids.length > 1, which is free
+    // multi-tag styling we would lose by hand-rolling the element. We only add
+    // our own class and the badge host on top.
+    //
+    // The badge is REAL chrome, not a pseudo-element: `setDOMUnmanaged` makes
+    // Lexical's mutation-attribution up-walk terminate here
+    // (LexicalMutations.ts:127), so React may render arbitrarily deep inside it
+    // without the observer evicting the DOM as foreign.
     createDOM(config: EditorConfig): HTMLElement {
         const mark = super.createDOM(config);
+        addClassNamesToElement(mark, "auohp-tag-chip");
+
+        const badge = document.createElement("span");
+        badge.className = BADGE_CLASS;
+        setDOMUnmanaged(badge);
+        mark.prepend(badge);
+
         return mark;
     }
 
-    // The DOM host never changes --- React owns everything inside it --- so the
-    // reconciler can skip this node entirely.
-    // updateDOM(): boolean {
-    //     return false;
-    // }
-
-    exportJSON(): SerializedTagChipNode {
-        const parent = super.exportJSON();
-        console.log(parent);
-
-        const serial = {
-            ...parent,
-            type: "tag-chip",
-            version: 1,
-        };
-
-        console.log({ serial });
-
-        return serial;
+    // Tell the reconciler its managed range starts AFTER the badge. `after` is a
+    // boundary node reference rather than an index (LexicalDOMSlot.ts:64), so
+    // nothing needs recomputing when children churn --- and `resolveChildIndex`
+    // then handles DOM-caret -> lexical-offset mapping for free.
+    //
+    // Re-find the badge from `element` rather than closing over the one
+    // createDOM built: getDOMSlot runs against the latest node version, and
+    // clone() mints new instances constantly.
+    getDOMSlot(element: HTMLElement) {
+        const badge = element.querySelector<HTMLElement>(`:scope > .${ BADGE_CLASS }`);
+        return badge ? super.getDOMSlot(element).withAfter(badge) : super.getDOMSlot(element);
     }
 
-    // Export as a fragment since it "is" the slot wrapper created by the host
-    exportDOM(editor: LexicalEditor): DOMExportOutput {
-        return { element: document.createDocumentFragment() };
-    }
-
-    decorate(): JSX.Element {
-        return <TagChip nodeKey={ this.__key } />;
-    }
+    // NOTE: no updateDOM override --- MarkNode's own implementation maintains
+    // the overlap class as __ids crosses 1 <-> 2, and returns false so our DOM
+    // is never rebuilt.
 
     collapseAtStart(): true {
         return true;
@@ -352,48 +339,10 @@ export class TagChipNode extends MarkNode {
     }
 }
 
-
-export function $createTagChipNode(
-    ids: readonly string[] = NO_IDS,
-): TagChipNode {
-    return $applyNodeReplacement(new TagChipNode(ids));
+export function $createTagChipNode(ids: readonly string[] = NO_IDS, key?: NodeKey): TagChipNode {
+    return $applyNodeReplacement(new TagChipNode(ids, key));
 }
 
 export function $isTagChipNode(node?: LexicalNode) {
     return node instanceof TagChipNode;
-}
-
-
-export class EmptyEditorNode extends DecoratorNode<JSX.Element> {
-    __label: string;
-}
-
-// See: https://github.com/facebook/lexical/blob/main/packages/lexical-playground/src/nodes/SlotContainerNode/index.tsx
-export class SlotContainerNode extends ElementNode {
-    $config() {
-        return this.config("slot-container", { extends: ElementNode });
-    }
-
-    createDOM(): HTMLElement {
-        const div = document.createElement("div");
-        div.className = "auohp-slot-container";
-        return div;
-    }
-
-    // Export as a fragment since it "is" the slot wrapper created by the host
-    exportDOM(editor: LexicalEditor): DOMExportOutput {
-        return { element: document.createDocumentFragment() };
-    }
-
-    updateDOM(): false {
-        return false;
-    }
-
-    isShadowRoot(): boolean {
-        return true;
-    }
-
-    collapseAtStart(): true {
-        return true;
-    }
 }
