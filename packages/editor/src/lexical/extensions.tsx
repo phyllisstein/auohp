@@ -29,6 +29,7 @@ import {
     $createStatementNode,
     $createTagChipNode,
     $isStatementNode,
+    $isTagChipNode,
     BADGE_CLASS,
     StatementNode,
     TagChip,
@@ -111,80 +112,6 @@ export const StatementSeekExtension = /* @__PURE__ */ defineExtension({
                 }
 
                 return false;
-            },
-            COMMAND_PRIORITY_LOW,
-        ),
-});
-
-// -----------------------------------------------------------------------------
-// Litmus test 2 --- split-on-Enter. The feature Slate blocked on.
-//
-// COMMAND_PRIORITY_LOW (1) outranks RichTextExtension's default handler at
-// COMMAND_PRIORITY_EDITOR (0), so returning `true` cleanly PRE-EMPTS the built-in
-// paragraph insert. Note the dependency is on StatementExtension, not on
-// RichTextExtension: priority ordering is a property of the command bus, not of
-// registration order, so we do not have to sequence ourselves after rich text.
-// -----------------------------------------------------------------------------
-export const SplitStatementExtension = /* @__PURE__ */ defineExtension({
-    dependencies: [StatementExtension],
-    name: "@auohp/split-statement",
-    register: editor =>
-        editor.registerCommand(
-            KEY_ENTER_COMMAND,
-            (event: KeyboardEvent | null) => {
-                const selection = $getSelection();
-                if (!$isRangeSelection(selection)) {
-                    return false;
-                }
-
-                const anchorNode = selection.anchor.getNode();
-                const statement = $isStatementNode(anchorNode)
-                    ? anchorNode
-                    : $findMatchingParent(anchorNode, $isStatementNode);
-
-                if (!$isStatementNode(statement)) {
-                    return false;
-                }
-
-                event?.preventDefault();
-
-                // Caret offset relative to the whole statement: sum the text sizes
-                // of children before the anchor, then add the in-node offset. This
-                // stays correct even if Lexical has split the text into several
-                // TextNodes.
-                let caretOffset = selection.anchor.offset;
-                let accumulated = 0;
-                for (const child of statement.getChildren()) {
-                    if (child.getKey() === anchorNode.getKey()) {
-                        caretOffset = accumulated + selection.anchor.offset;
-                        break;
-                    }
-                    accumulated += child.getTextContentSize();
-                }
-
-                const fullText = statement.getTextContent();
-                const head = fullText.slice(0, caretOffset);
-                const tail = fullText.slice(caretOffset);
-
-                // Rebuild the current statement as `head`...
-                for (const child of statement.getChildren()) {
-                    child.remove();
-                }
-                statement.append($createTextNode(head));
-
-                // ...and spill `tail` into a NEW, visual-only statement. Its uid is
-                // synthetic (see SYNTHETIC_UID_MARKER) because no backend mutation
-                // can mint a real one yet; it inherits the source caption window.
-                const newStatement = $createStatementNode(
-                    `${ statement.getUid() }${ SYNTHETIC_UID_MARKER }${ Date.now() }`,
-                    statement.getStartTime(),
-                    statement.getEndTime(),
-                );
-                newStatement.append($createTextNode(tail));
-                statement.insertAfter(newStatement);
-                newStatement.selectStart();
-
-                return true;
             },
             COMMAND_PRIORITY_LOW,
         ),
@@ -300,6 +227,59 @@ export const TagChipExtension = /* @__PURE__ */ defineExtension({
                 // plain MarkNode --- it receives the accumulated ids, so
                 // overlapping tags merge rather than nest.
                 $wrapSelectionInMarkNode(selection, false, id, ids => $createTagChipNode(ids));
+                return true;
+            },
+            COMMAND_PRIORITY_LOW,
+        ),
+});
+
+// -----------------------------------------------------------------------------
+// TagSplitBoundaryExtension --- keep proper nouns whole across caption breaks.
+//
+// StatementNode.insertNewAfter now handles the split itself, so the old
+// SplitStatementExtension is gone. What remains is an EDITORIAL rule, not a
+// structural one: a caption boundary should never fall inside a proper noun.
+// Enter halfway through "Larry Kramer" should still split --- just not there.
+//
+// This has to run BEFORE anything mutates. `$removeTextAndSplitBlock` walks up
+// splitting nodes until it reaches a block, and a chip is inline
+// (INTERNAL_$isBlock requires !isInline()), so it cleaves the chip in two on its
+// way to the statement. By the time insertNewAfter is called it is already too
+// late to object.
+//
+// COMMAND_PRIORITY_LOW (1) runs BEFORE RichTextExtension's default handler at
+// COMMAND_PRIORITY_EDITOR (0) --- the bus dispatches high-to-low. We relocate
+// the caret and return `false`, so the default handler proceeds normally; it
+// re-reads `$getSelection()` rather than closing over one, so it sees our edit.
+// -----------------------------------------------------------------------------
+export const TagSplitBoundaryExtension = /* @__PURE__ */ defineExtension({
+    dependencies: [StatementExtension, TagChipExtension],
+    name: "@auohp/tag-split-boundary",
+    register: editor =>
+        editor.registerCommand(
+            KEY_ENTER_COMMAND,
+            event => {
+                const selection = $getSelection();
+
+                // Non-collapsed selections replace their content before
+                // splitting --- a different problem, left alone for now.
+                if (!$isRangeSelection(selection) || !selection.isCollapsed()) {
+                    return false;
+                }
+
+                const anchor = selection.anchor.getNode();
+                const chip = $isTagChipNode(anchor)
+                    ? anchor
+                    : $findMatchingParent(anchor, $isTagChipNode);
+
+                // Caret is not inside a proper noun --- nothing to consolidate.
+                if (!$isTagChipNode(chip)) {
+                    return false;
+                }
+
+                // FIXME: Show UX feedback or make a call on splitting the text
+                // before/after the chip. For now, silently bail in all cases.
+                event?.preventDefault();
                 return true;
             },
             COMMAND_PRIORITY_LOW,
@@ -619,14 +599,15 @@ export interface AuohpEditorOptions {
 export function defineAuohpEditorExtension({ statements, editStatement }: AuohpEditorOptions) {
     return defineExtension({
         dependencies: [
-            RichTextExtension,
-            HistoryExtension,
-            StatementSeekExtension,
-            SplitStatementExtension,
-            TagChipExtension,
-            LatencyExtension,
             configExtension(PersistenceExtension, { editStatement }),
             configExtension(ReactExtension, { EditorChildrenComponent: EditorChrome }),
+            HistoryExtension,
+            LatencyExtension,
+            RichTextExtension,
+            StatementExtension,
+            StatementSeekExtension,
+            TagChipExtension,
+            TagSplitBoundaryExtension,
         ],
         name: "@auohp/editor",
         namespace: "auohp-lexical-spike",

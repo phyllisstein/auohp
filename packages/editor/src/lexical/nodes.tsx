@@ -1,5 +1,7 @@
 import {
     $applyNodeReplacement,
+    $findMatchingParent,
+    $isTextNode,
     addClassNamesToElement,
     ElementNode,
     setDOMUnmanaged,
@@ -12,7 +14,7 @@ import {
     type Spread,
 } from "lexical";
 import { type JSX } from "react";
-import { formatTimestamp } from "@/lexical/shared";
+import { formatTimestamp, SYNTHETIC_UID_MARKER } from "@/lexical/shared";
 import styled, { createGlobalStyle, css } from "styled-components";
 import numberSignSVG from "./number.sign.square.svgo.svg?inline";
 import { MarkNode } from "@lexical/mark";
@@ -83,6 +85,25 @@ export class StatementNode extends ElementNode {
 
     getEndTime(): number | null {
         return this.getLatest().__endTime;
+    }
+
+    // Called by RangeSelection.insertParagraph() (LexicalSelection.ts:1597) when
+    // Enter splits this block. Lexical has already split the TextNodes and knows
+    // which children belong to the tail --- it only needs us to say what KIND of
+    // node the continuation is. It then MOVES those children into whatever we
+    // return, so inline structure (tag chips and their __ids) crosses the split
+    // intact. This replaces the old SplitStatementExtension, which rebuilt the
+    // statement from getTextContent() and therefore destroyed every chip in it.
+    //
+    // Return null to refuse the split (what CodeNode does).
+    insertNewAfter(selection: RangeSelection, restoreSelection = true): ElementNode | null {
+        const newUid = `${ this.getUid() }${ SYNTHETIC_UID_MARKER }${ Date.now() }`;
+        // FIXME: New node's startTime, old node's endTime = current position of the playhead
+        const continuation = $createStatementNode(newUid, this.getStartTime(), this.getEndTime());
+
+        this.insertAfter(continuation, restoreSelection);
+
+        return continuation;
     }
 
     createDOM(_config: EditorConfig): HTMLElement {
@@ -343,6 +364,6 @@ export function $createTagChipNode(ids: readonly string[] = NO_IDS, key?: NodeKe
     return $applyNodeReplacement(new TagChipNode(ids, key));
 }
 
-export function $isTagChipNode(node?: LexicalNode) {
+export function $isTagChipNode(node?: LexicalNode | null | undefined): node is TagChipNode {
     return node instanceof TagChipNode;
 }
