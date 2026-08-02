@@ -14,13 +14,14 @@ use crate::graphql::error::gql_err;
 use crate::graphql::nodes::{Interview, Statement, StatementNode};
 use crate::neo4j::Db;
 use auohp_core::EmbedderHandle;
+use serde::Deserialize;
 
 // ---------------------------------------------------------------------------
 // Output type
 // ---------------------------------------------------------------------------
 
 /// A single hit from a vector similarity search over Statement nodes.
-#[derive(SimpleObject)]
+#[derive(SimpleObject, Deserialize)]
 pub struct SearchHit {
     /// The matching statement, with speaker and timing.
     pub statement: Statement,
@@ -94,6 +95,57 @@ pub async fn search_statements(
                 words: sn.words,
             },
             interview: interview.to().map_err(gql_err)?,
+        });
+    }
+
+    Ok(hits)
+}
+
+pub async fn search_interview(
+    ctx: &Context<'_>,
+    query_text: String,
+    interview_uid: String,
+) -> async_graphql::Result<Vec<SearchHit>> {
+    let db = ctx.data::<Db>()?;
+    let mut stream = db.execute(
+        query(
+            "
+                CALL db.index.fulltext.queryNodes('statementText', $queryText) YIELD node AS statement, score
+                WITH *
+                MATCH (person) <-[:INTERVIEWS]- (interview:Interview {uid: $interviewUid}) -[:HAS_TRANSCRIPT]-> (t:Transcript) -[span:CONTAINS]-> (statement)
+                WITH *, string.indexOf(toLower(statement.text), toLower($queryText)) AS start
+                WHERE start <> -1
+                RETURN statement,
+                    interview,
+                    person,
+                    span
+                ORDER BY span.startTime
+            "
+        )
+        .param("queryText", query_text)
+        .param("interviewUid", interview_uid),
+    )
+    .await?;
+
+    let mut hits = Vec::new();
+    while let Some(row) = stream.next().await? {
+        let interview: neo4rs::Node = row.get("interview")?;
+        let statement: neo4rs::Node = row.get("statement")?;
+        let span: neo4rs::Relation = row.get("span")?;
+        let person: neo4rs::Node = row.get("person")?;
+
+        let statement_node: StatementNode = statement.to()?;
+
+        hits.push(SearchHit {
+            statement: Statement {
+                uid: statement_node.uid,
+                text: statement_node.text,
+                person: person.to()?,
+                start_time: span.get("startTime")?,
+                end_time: span.get("endTime")?,
+                words: None,
+            },
+            interview: interview.to()?,
         });
     }
 

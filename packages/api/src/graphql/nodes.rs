@@ -56,7 +56,7 @@ pub struct StatementMeta {
 
 /// Mirrors the (:Statement) node, with timing from the `:CONTAINS` edge and
 /// speaker attribution from `:SAYS`.
-#[derive(SimpleObject)]
+#[derive(SimpleObject, Deserialize)]
 pub struct Statement {
     pub uid: String,
     pub text: String,

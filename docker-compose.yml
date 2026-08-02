@@ -54,7 +54,7 @@ services:
     networks:
       - default
       - nginx-proxy
-    image: neo4j:2026.04.0
+    image: neo4j:latest
     environment:
       NEO4J_AUTH: neo4j/auohpauohp
       NEO4J_PLUGINS: '["apoc", "genai"]'

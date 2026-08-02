@@ -87,4 +87,13 @@ impl QueryRoot {
     ) -> async_graphql::Result<Caption> {
         captions::get_captions(ctx, &interview_number).await
     }
+
+    async fn search_interview(
+        &self,
+        ctx: &Context<'_>,
+        #[graphql(desc = "Search keyword")] query: String,
+        #[graphql(desc = "Interview UID")] uid: String,
+    ) -> async_graphql::Result<Vec<SearchHit>> {
+        search::search_interview(ctx, query, uid).await
+    }
 }

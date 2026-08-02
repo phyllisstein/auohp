@@ -11,7 +11,6 @@ import { defineAuohpEditorExtension } from "@/lexical/extensions";
 // honest way to compare Slate vs Lexical is to hold everything else constant.
 import { EDIT_STATEMENT_MUTATION, TRANSCRIPT_QUERY } from "./interview.$interviewNumber";
 
-
 // FIXME: Constructing URLs for the caption endpoint and the public video URI
 // should be a server-side concern (return a Video node, return Caption metadata).
 const {
@@ -44,9 +43,11 @@ const EditorStyle = createGlobalStyle`
         flex-direction: column;
         flex-shrink: 0;
         min-width: 6rem;
-        font-family: monospace;
-        font-size: 0.75rem;
+
         color: #888;
+        font-size: 0.75rem;
+        font-family: monospace;
+
         user-select: none;
     }
 

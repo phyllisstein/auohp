@@ -43,6 +43,27 @@ import {
     type TranscriptStatements,
 } from "@/lexical/shared";
 import { $wrapSelectionInMarkNode, MarkExtension } from "@lexical/mark";
+import { useLazyQuery } from "@apollo/client/react";
+import { graphql } from "@/gql";
+
+
+export const SEARCH_INTERVIEW_QUERY = graphql(`
+    query SearchInterview(
+        $uid: String!
+        $query: String!
+    ) {
+        searchInterview(
+            uid: $uid
+            query: $query
+        ) {
+            statement {
+                uid
+                text
+            }
+        }
+    }
+`);
+
 
 // -----------------------------------------------------------------------------
 // Extensions --- Lexical's composition model as of 0.48.
@@ -565,6 +586,7 @@ function TagButton(): JSX.Element {
 // happens to nest in the right order.
 function EditorChrome({ contentEditable, children }: EditorChildrenComponentProps): JSX.Element {
     const Meter = useExtensionComponent(LatencyExtension);
+    const [searchInterview, searchInterviewState] = useLazyQuery(SEARCH_INTERVIEW_QUERY);
 
     return (
         <>
