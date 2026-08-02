@@ -1,14 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useEffect, useRef, useMemo } from "react";
-import { type BaseEditor, createEditor, Editor, Element, Range } from "slate";
-import { Slate, Editable, type ReactEditor, withReact } from "slate-react";
-import { withHistory } from "slate-history";
-import { graphql } from "@/gql";
+import { useMemo, useRef, type RefObject } from "react";
+import { LexicalExtensionComposer } from "@lexical/react/LexicalExtensionComposer";
 import { useMutation, useReadQuery } from "@apollo/client/react";
-import { flow, debounce, throttle } from "es-toolkit/function";
-import { useVirtualizer } from "@tanstack/react-virtual";
 import { useSignalEffect } from "@preact/signals-react";
+import { createGlobalStyle } from "styled-components";
 import { playhead } from "@/playhead";
+import { defineAuohpEditorExtension } from "@/lexical/extensions";
+import { graphql } from "@/gql";
 
 
 // FIXME: Constructing URLs for the caption endpoint and the public video URI
@@ -30,7 +28,6 @@ export const EDIT_STATEMENT_MUTATION = graphql(`
     }
 `);
 
-
 export const TRANSCRIPT_QUERY = graphql(`
     query Transcript($interviewNumber: Int!) {
         health
@@ -50,32 +47,49 @@ export const TRANSCRIPT_QUERY = graphql(`
 `);
 
 
-type BaseText = { text: string };
-
-
-interface StatementNode {
-    type: string;
-    uid: string;
-    startTime: number | null | undefined;
-    endTime: number | null | undefined;
-    children: Array<BaseText>;
-}
-
-interface TranscriptNode {
-    type: string;
-    uid: string;
-    children: Array<StatementNode>;
+// Drives the <video> from the shared playhead. Identical machinery to the Slate
+// route --- kept here rather than in an extension because it needs the video ref.
+function useVideoSync(player: RefObject<HTMLVideoElement | null>) {
+    useSignalEffect(() => {
+        !!player.current && (player.current.currentTime = playhead.seek.value);
+    });
 }
 
 
-declare module "slate" {
-    interface CustomTypes {
-        Editor: BaseEditor & ReactEditor;
-        Element: StatementNode | TranscriptNode;
-        Text: BaseText;
+// Styles for the statement wrapper, its non-editable chrome column, and the
+// editable content element (see StatementNode.createDOM / getDOMSlot).
+const EditorStyle = createGlobalStyle`
+    .auohp-statement {
+        display: flex;
+        gap: 0.75rem;
+        align-items: flex-start;
+        padding: 0.25rem 0;
     }
-}
 
+    .auohp-statement__chrome {
+        display: flex;
+        flex-direction: column;
+        flex-shrink: 0;
+        min-width: 6rem;
+
+        color: #888;
+        font-size: 0.75rem;
+        font-family: monospace;
+
+        user-select: none;
+    }
+
+    .auohp-statement__content {
+        flex: 1;
+    }
+`;
+
+
+// The trailing underscore on `$interviewNumber_` is TanStack's DE-NESTING
+// convention: the URL stays `/interview/:n/lexical`, but the route opts OUT of
+// rendering inside the Slate route (`interview.$interviewNumber.tsx`), which has
+// no <Outlet/>. So this is a sibling under root, not a child --- the Slate route
+// stays untouched. The generator maintains the `_` in this path string for us.
 export const Route = createFileRoute("/interview/$interviewNumber")({
     component: Page,
     // FIXME: Handle errors gracefully
@@ -96,220 +110,50 @@ export const Route = createFileRoute("/interview/$interviewNumber")({
 });
 
 
-const formatTimestamp = (timestamp: number) =>
-    Temporal.Duration.from({ seconds: Math.round(timestamp) })
-        .round({
-            largestUnit: "hours",
-            smallestUnit: "seconds",
-        })
-        .toLocaleString("en-US", {
-            style: "digital",
-            hoursDisplay: "auto",
-            hours: "numeric",
-        });
-
-
-const DefaultElement = props => {
-    return <div { ...props.attributes }>{ props.children }</div>;
-};
-
-
-const StatementElement = ({ attributes, children, element }) => {
-    const handleClick = () => {
-        playhead.seek.value = element.startTime;
-        console.debug(`Clicked on statement: ${ element.uid } (${ element.startTime })`);
-    };
-
-    return (
-        <div key={ element.uid } onClick={ handleClick } { ...attributes }>
-            <div contentEditable={ false } style={{ userSelect: "none" }}>
-                { formatTimestamp(element.startTime) }
-                { " " }
-                -
-                { formatTimestamp(element.endTime) }
-            </div>
-            { children }
-        </div>
-    );
-};
-
-
-const wihCaptionSplit = editor => {
-    const { insertBreak } = editor; ;
-
-    editor.insertBreak = () => {
-        const { selection } = editor;
-        if (selection) {
-            const [statement] = Editor.nodes(editor, {
-                match: n =>
-                    !Editor.isEditor(n)
-                    && Element.isElement(n)
-                    && n.type === "statement",
-            });
-        }
-    };
-};
-
-
-const TranscriptElement = ({ attributes, children, element }) => {
-    const parentRef = useRef<null | HTMLElement>(null);
-    const lastIndex = useRef(0);
-
-    const childVirtualizer = useVirtualizer({
-        count: element.children.length,
-        estimateSize: () => 64,
-        getScrollElement: () => parentRef.current,
-        useScrollendEvent: true,
-        getItemKey: index => element.children[index].uid,
-        onChange: (instance, sync) => {
-            const items = instance.getVirtualItems();
-
-            const item = items.find(item => item.start >= instance.scrollOffset);
-            const index = item ? item.index : -1;
-
-            if (instance.isScrolling || index === lastIndex.current || index === -1) {
-                return;
-            }
-
-            playhead.seek.value = element.children[index].startTime;
-            lastIndex.current = index;
-
-            console.debug(`Virtualizer scrolled to statement: ${ element.children[index].uid } (${ element.children[index].startTime })`);
-        },
-    });
-
-    const setRefs = useCallback(node => {
-        parentRef.current = node;
-        attributes.ref(node);
-    }, []);
-
-    useSignalEffect(() => {
-        const index = element.children.findIndex(node => node.startTime <= playhead.timestamp.value && playhead.timestamp.value < node.endTime);
-
-        if (childVirtualizer.isScrolling || lastIndex.current === index) {
-            return;
-        }
-
-        lastIndex.current = index;
-
-        console.debug(`childVirtualizer scrolling to statement: ${ element.children[index].uid } (${ element.children[index].startTime })`);
-        childVirtualizer.scrollToIndex(index, {
-            align: "center",
-            behavior: "smooth",
-        });
-    });
-
-
-    return (
-        <div { ...attributes } ref={ setRefs } style={{ height: "400px", overflow: "auto", position: "relative" }}>
-            <div style={{ position: "relative", height: `${ childVirtualizer.getTotalSize() }px` }}>
-                { childVirtualizer.getVirtualItems().map(virtualItem => {
-                    const component = children[virtualItem.index];
-                    return (
-                        <div
-                            key={ virtualItem.key }
-                            style={{
-                                height: `${ virtualItem.size }px`,
-                                transform: `translateY(${ virtualItem.start }px)`,
-                                position: "absolute",
-                                left: 0,
-                                top: 0,
-                                width: "100%",
-                            }}>
-                            { component }
-                        </div>
-                    );
-                }) }
-            </div>
-        </div>
-    );
-};
-
-
-const renderElement = props => {
-    switch (props.element.type) {
-        case "statement":
-            return <StatementElement { ...props } />;
-        case "transcript":
-            return <TranscriptElement { ...props } />;
-        default:
-            return <DefaultElement { ...props } />;
-    }
-};
-
-
-const withPersistence = editStatement => (editor: Editor) => {
-    editStatement = debounce(editStatement, 1_000);
-    const { onChange } = editor;
-
-    editor.onChange = args => {
-        onChange(args);
-
-        if (args?.operation.type?.includes("text")) {
-            const [parent] = Editor.parent(editor, args.operation.path);
-
-            editStatement({
-                variables: {
-                    uid: parent.uid,
-                    text: parent.children[0].text,
-                },
-                onCompleted: data => {
-                    console.debug(`Edit completed for statement ${ data.editStatement.uid }:`, data.editStatement);
-                },
-            });
-        }
-    };
-    return editor;
-};
-
-
 function Page() {
     const interviewNumber = Number.parseInt(Route.useParams().interviewNumber);
     const { transcriptQueryRef } = Route.useLoaderData();
     const { data: transcriptData } = useReadQuery(transcriptQueryRef);
 
-    const [editStatement, { data: editStatementData }] = useMutation(EDIT_STATEMENT_MUTATION);
-
-    const withPlugins = flow(
-        withReact,
-        withHistory,
-        withPersistence(editStatement),
-    );
-    const editor = useMemo<Editor>(() => withPlugins(createEditor()), []);
+    const [editStatement] = useMutation(EDIT_STATEMENT_MUTATION);
 
     const player = useRef<HTMLVideoElement>(null);
-    useSignalEffect(() => {
-        !!player.current && (player.current.currentTime = playhead.seek.value);
-    });
+    useVideoSync(player);
 
-    const { statements, interview, uid: transcriptUid } = transcriptData.interviewTranscript;
-    const statementNodes = statements.map(statement => ({
-        type: "statement",
-        uid: statement.uid,
-        startTime: statement.startTime,
-        endTime: statement.endTime,
-        children: [
-            { text: statement.text },
-        ],
-    }));
+    const { statements, interview } = transcriptData.interviewTranscript;
 
-    const transcriptNode = {
-        type: "transcript",
-        uid: transcriptUid,
-        children: statementNodes,
-    };
+    // The whole editor is now ONE value. Everything the old route spelled out in
+    // JSX --- namespace, node registration, onError, RichTextPlugin, HistoryPlugin,
+    // and the five bespoke plugins --- folds into `defineAuohpEditorExtension`.
+    //
+    // This also replaces the Slate route's `key` remount trick. LexicalExtensionComposer
+    // memoises on the extension's IDENTITY and disposes the old editor when it
+    // changes, so the memo deps ARE the editor's lifetime --- a fresh editor and a
+    // fresh seed accompany each interview, and nothing else.
+    //
+    // Depending on `interview.uid` rather than on `statements` is load-bearing:
+    // `statements` is an Apollo cache object that gets a new identity every time a
+    // save writes back, so keying off it would tear down the user's editor on every
+    // autosave. `editStatement` is likewise captured deliberately --- see
+    // PersistenceExtension, which reads it back out of a signal at fire time.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const extension = useMemo(() => defineAuohpEditorExtension({ editStatement, statements }), [interview.uid]);
 
     return (
         <div>
-            <video ref={ player } controls crossOrigin="anonymous" onTimeUpdate={ ev => playhead.timestamp.value = ev.target.currentTime }>
+            <EditorStyle />
+            <video
+                ref={ player }
+                controls
+                crossOrigin="anonymous"
+                onTimeUpdate={ ev => playhead.timestamp.value = (ev.target as HTMLVideoElement).currentTime }>
                 <source src={ `${ AUOHP_PUBLIC }/videos/${ interviewNumber }.mp4` } type="video/mp4" />
                 {
                     interview.uid && <track kind="captions" src={ `${ AUOHP_API_URI }/interview/${ interview.uid }/vtt` } srcLang="en" label="English" />
                 }
             </video>
-            <Slate editor={ editor } initialValue={ [transcriptNode] } key={ interview.uid }>
-                <Editable renderElement={ renderElement } />
-            </Slate>
+
+            <LexicalExtensionComposer extension={ extension } />
         </div>
     );
 }

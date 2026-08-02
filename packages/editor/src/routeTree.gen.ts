@@ -10,7 +10,6 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as InterviewInterviewNumberRouteImport } from './routes/interview.$interviewNumber'
-import { Route as InterviewInterviewNumberLexicalRouteImport } from './routes/interview.$interviewNumber_.lexical'
 
 const InterviewInterviewNumberRoute =
   InterviewInterviewNumberRouteImport.update({
@@ -18,42 +17,27 @@ const InterviewInterviewNumberRoute =
     path: '/interview/$interviewNumber',
     getParentRoute: () => rootRouteImport,
   } as any)
-const InterviewInterviewNumberLexicalRoute =
-  InterviewInterviewNumberLexicalRouteImport.update({
-    id: '/interview/$interviewNumber_/lexical',
-    path: '/interview/$interviewNumber/lexical',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/interview/$interviewNumber': typeof InterviewInterviewNumberRoute
-  '/interview/$interviewNumber/lexical': typeof InterviewInterviewNumberLexicalRoute
 }
 export interface FileRoutesByTo {
   '/interview/$interviewNumber': typeof InterviewInterviewNumberRoute
-  '/interview/$interviewNumber/lexical': typeof InterviewInterviewNumberLexicalRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/interview/$interviewNumber': typeof InterviewInterviewNumberRoute
-  '/interview/$interviewNumber_/lexical': typeof InterviewInterviewNumberLexicalRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | '/interview/$interviewNumber'
-    | '/interview/$interviewNumber/lexical'
+  fullPaths: '/interview/$interviewNumber'
   fileRoutesByTo: FileRoutesByTo
-  to: '/interview/$interviewNumber' | '/interview/$interviewNumber/lexical'
-  id:
-    | '__root__'
-    | '/interview/$interviewNumber'
-    | '/interview/$interviewNumber_/lexical'
+  to: '/interview/$interviewNumber'
+  id: '__root__' | '/interview/$interviewNumber'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   InterviewInterviewNumberRoute: typeof InterviewInterviewNumberRoute
-  InterviewInterviewNumberLexicalRoute: typeof InterviewInterviewNumberLexicalRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -65,19 +49,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InterviewInterviewNumberRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/interview/$interviewNumber_/lexical': {
-      id: '/interview/$interviewNumber_/lexical'
-      path: '/interview/$interviewNumber/lexical'
-      fullPath: '/interview/$interviewNumber/lexical'
-      preLoaderRoute: typeof InterviewInterviewNumberLexicalRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   InterviewInterviewNumberRoute: InterviewInterviewNumberRoute,
-  InterviewInterviewNumberLexicalRoute: InterviewInterviewNumberLexicalRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
