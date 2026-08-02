@@ -34,7 +34,7 @@ pub fn run_with(input_path: &Path, cfg: &TranscribeConfig) -> Result<Transcripti
     let decoded = audio::decode_file_with(input_path, &cfg.audio)
         .with_context(|| format!("failed to decode {}", input_path.display()))?;
 
-    eprintln!(
+    tracing::debug!(
         "Audio: {} Hz / {} ch source -> {} samples at {} Hz mono ({:.1}s){}",
         decoded.source_sample_rate,
         decoded.source_channels,

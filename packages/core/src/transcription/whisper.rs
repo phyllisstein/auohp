@@ -175,7 +175,7 @@ pub fn apply_vad(
         // Silero found no speech at all. Returning the original audio unfiltered
         // is the safe failure: a transcript of everything beats a transcript of
         // nothing, and the caller can see `segments == 0` in the log.
-        eprintln!("Whisper: VAD found no speech; passing audio through unfiltered");
+        tracing::warn!("Whisper: VAD found no speech; passing audio through unfiltered");
         return Ok((samples.to_vec(), VadTimeline::identity()));
     }
 
@@ -228,7 +228,7 @@ pub fn apply_vad(
     }
 
     let kept = filtered.len() as f64 / SAMPLE_RATE;
-    eprintln!(
+    tracing::debug!(
         "Whisper: VAD kept {} speech regions, {:.1}s of {:.1}s ({:.0}% dropped)",
         regions.len(),
         kept,
@@ -270,7 +270,7 @@ pub struct WhisperModel {
 /// calling this function.  `vad_model_path` is stored in the returned
 /// `WhisperModel` and referenced on every `transcribe` call.
 pub fn load_model(model_path: &Path, vad_model_path: &Path) -> Result<WhisperModel> {
-    eprintln!("Whisper: loading model from {}", model_path.display());
+    tracing::debug!("Whisper: loading model from {}", model_path.display());
 
     // WhisperContextParameters::default() already sets use_gpu based on whether
     // the `metal` / `cuda` feature compiled in, so this call is belt-and-
@@ -289,7 +289,7 @@ pub fn load_model(model_path: &Path, vad_model_path: &Path) -> Result<WhisperMod
     let ctx = WhisperContext::new_with_params(model_path, ctx_params)
         .context("failed to load Whisper model")?;
 
-    eprintln!("Whisper: model loaded");
+    tracing::debug!("Whisper: model loaded");
     Ok(WhisperModel {
         ctx,
         vad_model_path: vad_model_path.to_path_buf(),
@@ -373,14 +373,14 @@ pub fn transcribe(
     // no-op through `whisper_full_with_state`, so setting them would only make
     // the config look honoured when it is not. `apply_vad` above did the work.
 
-    eprintln!("Whisper: running inference on {} samples", audio.len());
+    tracing::debug!("Whisper: running inference on {} samples", audio.len());
     state
         .full(params, &audio)
         .context("Whisper inference failed")?;
 
     // full_n_segments returns a bare c_int --- no Result, no ? needed.
     let n_segs = state.full_n_segments();
-    eprintln!("Whisper: {} segments", n_segs);
+    tracing::debug!("Whisper: {} segments", n_segs);
 
     let mut segments = Vec::with_capacity(n_segs as usize);
     for i in 0..n_segs {

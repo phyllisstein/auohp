@@ -11,7 +11,6 @@ use crate::neo4j::Db;
 use anyhow::Result;
 use chrono::TimeDelta;
 use neo4rs::query;
-use rand::Rng;
 
 // FIXME: reaching up into `graphql::nodes` for `StatementNode` is the wrong
 // direction --- a transport-agnostic module should not depend on the GraphQL
