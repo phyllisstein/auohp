@@ -30,23 +30,21 @@
         }
     ],
     "settings": {
-        "js/ts.tsdk.path": "./node_modules/typescript/lib",
         "editor.tabSize": 4,
         "search.exclude": {
             "**/node_modules": true,
             "**/.yarn": true
         },
         "editor.formatOnSave": false,
-        "eslint.format.enable": true,
-        "eslint.lintTask.enable": true,
+        "eslint.enable": false,
         "[rust]": {
             "editor.defaultFormatter": "rust-lang.rust-analyzer",
             "editor.formatOnSave": true
         },
         "[javascript][typescript][javascriptreact][typescriptreact]": {
-            "editor.defaultFormatter": "dbaeumer.vscode-eslint",
+            "editor.defaultFormatter": "oxc.oxc-vscode",
             "editor.codeActionsOnSave": {
-                "source.fixAll.eslint": "always",
+                "source.fixAll.oxc": "always",
                 "source.fixAll.stylelint": "always"
             }
         },
@@ -55,12 +53,6 @@
                 "source.fixAll.stylelint": "always"
             }
         },
-        "eslint.validate": [
-            "javascript",
-            "typescript",
-            "javascriptreact",
-            "typescriptreact"
-        ],
         "stylelint.enable": true,
         "stylelint.validate": [
             "javascript",
@@ -68,5 +60,9 @@
             "javascriptreact",
             "typescriptreact"
         ],
+        "oxc.enable.oxlint": true,
+        "oxc.path.tsgolint": "./node_modules/.bin/tsgolint",
+        "oxc.path.oxlint": "./node_modules/.bin/oxlint",
+        "js/ts.experimental.useTsgo": true
     }
 }
