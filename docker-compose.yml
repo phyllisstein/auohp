@@ -37,18 +37,31 @@ services:
       - type: bind
         source: .
         target: /app
+        # Forces this into the API's Mounts list instead of legacy Binds, so it
+        # is ordered against the node_modules volume below rather than mounted
+        # after it (which would bury the volume and expose the host's tree).
+        bind:
+          propagation: rprivate
       - type: volume
         source: node_modules
         target: /app/node_modules
+        volume:
+          nocopy: true
       - type: volume
         source: rust_target
         target: /app/target
+        volume:
+          nocopy: true
       - type: volume
         source: auohp_models
         target: /models
+        volume:
+          nocopy: true
       - type: volume
         source: cargo_registry
         target: /usr/local/cargo/registry
+        volume:
+          nocopy: true
 
   neo4j:
     networks:
