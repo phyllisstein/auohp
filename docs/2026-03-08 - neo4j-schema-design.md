@@ -1,5 +1,13 @@
 # Neo4j Schema Design for AUOHP Seed Layer
 
+> **Superseded 2026-08-21** --- implemented in
+> `packages/api/src/graphql/mutations/seed_interview.rs`. The headline decision
+> (§2.1, dropping the `:Speaker` indirection) shipped: the seed mutation now
+> writes `(person)-[:SAYS]->(statement)` directly. Retained for the decision
+> record. Note the doc refers to `packages/auohp-api`, since renamed to
+> `packages/api`. The pre-existing `:Speaker` model survives only in
+> `packages/scripts/*.ts`, which this schema was written to replace.
+
 ## 1. Overview
 
 This document proposes a clean Neo4j graph schema for the ACT UP Oral History Project, resolving the FIXMEs in the existing `whisper-to-neo4j.ts` seed script. The new schema will be consumed by a Rust seed endpoint in `packages/auohp-api`.

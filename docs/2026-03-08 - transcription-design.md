@@ -1,5 +1,14 @@
 # Transcription Pipeline Design for Rust
 
+> **Superseded 2026-08-21** --- implemented in
+> `packages/core/src/transcription/` (`pipeline.rs`, `whisper.rs`, `audio.rs`,
+> `config.rs`, `types.rs`). The doc places inference in `packages/auohp-api`;
+> it actually landed in `packages/core`, with `packages/api` reduced to the
+> GraphQL surface. Decoder parameter tuning has since moved well past this
+> document --- see `2026-07-30 - transcription-tuning-log.md` for the current
+> recipe. Retained for the stage-by-stage rationale, especially the decision to
+> drop the spaCy semantic-chunking stage.
+
 ## Status
 
 Proposed (revised) -- not yet implemented.

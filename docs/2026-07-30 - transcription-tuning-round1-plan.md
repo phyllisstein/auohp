@@ -1,5 +1,14 @@
 # Round 1 tuning plan
 
+> **Superseded 2026-08-21** --- round 1 ran and its results are recorded in
+> `2026-07-30 - transcription-tuning-log.md`, which is the authoritative,
+> append-only record. The question this plan was designed to answer is settled:
+> `no_context` + `entropy_thold` 3.0--3.3 + `beam_size` 5 resolved the
+> hallucination loops, and the audio chain was exonerated. Retained for the
+> source-reading in §0, which explains *why* those parameters were the ones
+> worth varying. Note the paths in this document are from the L4 host
+> (`/home/ubuntu/auohp`), not this checkout.
+
 Produced by the `whisper-tuner` agent from the ledger and the vendored whisper.cpp source.
 
 I have what I need. Here is the round-1 design.

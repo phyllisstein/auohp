@@ -1,5 +1,19 @@
 # GraphQL Mutation Design: Interview Seeding
 
+> **Superseded 2026-08-21** --- implemented as
+> `packages/api/src/graphql/mutations/{seed_interview,edit_statement,add_asset}.rs`
+> with a `MutationRoot` in `mutations/root.rs`.
+>
+> Those modules are **dead by fiat**: `schema.rs` builds
+> `Schema<Query, EmptyMutation, EmptySubscription>`, so nothing under
+> `mutations/` is reachable. They are retained deliberately, as worked examples
+> to crib from, and will be removed on the next refactoring pass --- the same
+> status as `graphql/queries/root.rs`. Do not treat either as a spec for
+> current behaviour, and do not "fix" the unused imports that keep them
+> compiling.
+>
+> Note the doc refers to `packages/auohp-api`, since renamed to `packages/api`.
+
 ## Status
 
 Design document -- no Rust code yet. Depends on:
