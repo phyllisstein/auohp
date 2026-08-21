@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.7-labs
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Watchman Binaries ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
-FROM phyllisstein/watchman:v2025.07.21.00 AS watchman
+FROM phyllisstein/watchman:v2026.03.02.00-arm64 AS watchman
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ App ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 FROM ubuntu:24.04 AS app
