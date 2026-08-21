@@ -3,6 +3,7 @@
     ".git",
     ".next",
     ".yarn",
-    "node_modules"
+    "node_modules",
+    "target"
   ]
 }
