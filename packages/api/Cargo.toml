@@ -38,8 +38,8 @@ http = "1.4.0"
 
 # GraphQL --- async-graphql is code-driven: you define Rust types and derive the
 # schema from them via macros. async-graphql-axum bridges the two frameworks.
-async-graphql = { version = "7", features = ["tracing", "graphiql", "chrono"] }
-async-graphql-axum = "7"
+async-graphql = { version = "8.0.0-rc.5", features = ["graphiql", "chrono"] }
+async-graphql-axum = "8.0.0-rc.5"
 
 # Error handling --- thiserror generates Error impls for your own types;
 # anyhow provides a flexible Result<T, anyhow::Error> for application code.
