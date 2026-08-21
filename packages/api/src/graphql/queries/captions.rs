@@ -1,10 +1,6 @@
-use crate::captions;
-use crate::graphql::error::gql_err;
 use crate::graphql::nodes::{Statement, StatementNode};
 use crate::neo4j::Db;
-use anyhow::Context;
-use async_graphql::{Context, Object, SimpleObject};
-use axum::extract::State;
+use async_graphql::{Context, Object};
 use neo4rs::query;
 
 pub struct Captions {
