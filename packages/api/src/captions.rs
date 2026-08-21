@@ -76,6 +76,7 @@ pub async fn generate_vtt(db: &Db, interview_uid: &str) -> Result<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use rand::Rng;
 
     #[test]
     fn creates_timestamp_from_fractional_seconds() {
