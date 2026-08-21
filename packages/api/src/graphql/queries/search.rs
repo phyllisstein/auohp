@@ -10,7 +10,6 @@ use std::sync::Arc;
 use async_graphql::{Context, SimpleObject};
 use neo4rs::{BoltType, query};
 
-use crate::graphql::error::gql_err;
 use crate::graphql::nodes::{Interview, Statement, StatementNode};
 use crate::neo4j::Db;
 use auohp_core::EmbedderHandle;
@@ -47,8 +46,7 @@ pub async fn search_statements(
     // ── Embed query text (CPU-bound: run off the async executor) ──────────────
     let vector: Vec<f32> = embedder
         .embed(texts.clone())
-        .await
-        .map_err(gql_err)?
+        .await?
         .into_iter()
         .next()
         .ok_or_else(|| async_graphql::Error::new("embedding produced no vectors"))?;
@@ -73,28 +71,27 @@ pub async fn search_statements(
                 .param("sourceK", 100)
                 .param("limit", limit),
         )
-        .await
-        .map_err(gql_err)?;
+        .await?;
 
     let mut hits = Vec::new();
 
-    while let Some(row) = stream.next().await.map_err(gql_err)? {
-        let interview: neo4rs::Node = row.get("interview").map_err(gql_err)?;
-        let statement: neo4rs::Node = row.get("statement").map_err(gql_err)?;
-        let person: neo4rs::Node = row.get("person").map_err(gql_err)?;
-        let span: neo4rs::Relation = row.get("span").map_err(gql_err)?;
-        let sn: StatementNode = statement.to().map_err(gql_err)?;
+    while let Some(row) = stream.next().await? {
+        let interview: neo4rs::Node = row.get("interview")?;
+        let statement: neo4rs::Node = row.get("statement")?;
+        let person: neo4rs::Node = row.get("person")?;
+        let span: neo4rs::Relation = row.get("span")?;
+        let sn: StatementNode = statement.to()?;
 
         hits.push(SearchHit {
             statement: Statement {
                 uid: sn.uid,
                 text: sn.text,
-                person: person.to().map_err(gql_err)?,
-                start_time: span.get("startTime").map_err(gql_err)?,
-                end_time: span.get("endTime").map_err(gql_err)?,
+                person: person.to()?,
+                start_time: span.get("startTime")?,
+                end_time: span.get("endTime")?,
                 words: sn.words,
             },
-            interview: interview.to().map_err(gql_err)?,
+            interview: interview.to()?,
         });
     }
 

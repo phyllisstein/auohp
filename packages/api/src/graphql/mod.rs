@@ -1,4 +1,3 @@
-mod error;
 mod mutations;
 // pub(crate): node projections are shared crate-wide (graphql resolvers *and*
 // the transport-agnostic `captions` module read them). See the FIXME in
