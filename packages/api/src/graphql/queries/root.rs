@@ -1,7 +1,7 @@
 use super::captions::{self, Caption};
 use super::interviews;
 use super::search::{self, SearchHit};
-use crate::graphql::nodes::{Interview, Transcript};
+use crate::graphql::nodes::{Interview, Statement, StatementNode, Transcript};
 use crate::neo4j::Db;
 use async_graphql::{Context, Object};
 use neo4rs::{BoltType, query};
@@ -95,5 +95,22 @@ impl QueryRoot {
         #[graphql(desc = "Interview UID")] uid: String,
     ) -> async_graphql::Result<Vec<SearchHit>> {
         search::search_interview(ctx, query, uid).await
+    }
+
+    async fn span_at_time(
+        &self,
+        ctx: &Context<'_>,
+        #[graphql(desc = "Find span at this time")] timestamp: f64,
+        #[graphql(desc = "Find spans from interview")] interview_number: i64,
+    ) -> async_graphql::Result<Statement> {
+        let span = captions::span_at_time(ctx, timestamp, interview_number).await?;
+        tracing::info!(
+            start_time = span.start_time,
+            end_time = span.end_time,
+            uid = span.uid,
+            "returned span to graphql"
+        );
+
+        Ok(span)
     }
 }

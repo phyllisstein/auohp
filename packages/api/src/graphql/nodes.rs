@@ -40,7 +40,7 @@ pub struct Person {
 /// the node itself. `#[serde(default)]` on `words` means serde substitutes
 /// `None` for absent keys rather than erroring---older transcripts were seeded
 /// without word-level timing, so the property may not exist on the node at all.
-#[derive(Deserialize)]
+#[derive(Deserialize, SimpleObject, Clone)]
 pub struct StatementNode {
     pub uid: String,
     pub text: String,
@@ -61,7 +61,7 @@ pub struct Statement {
     pub uid: String,
     pub text: String,
     /// The person who said this (via `:SAYS`).
-    pub person: Person,
+    pub person: Option<Person>,
     /// Seconds from start of recording. Null for non-media statements
     /// (e.g. broadsheet text).
     pub start_time: Option<f64>,
