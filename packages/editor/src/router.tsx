@@ -10,7 +10,7 @@ import {
 import { HttpLink } from "@apollo/client";
 
 
-export function getRouter() {
+export function getRouter () {
     const apolloClient = new ApolloClient({
         link: new HttpLink({
             uri: import.meta.env.VITE_AUOHP_API_URI?.replace(/\/+$/, "") + "/graphql",

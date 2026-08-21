@@ -9,11 +9,11 @@ import {
 
 export const accentFamily = css`
   font-family:
-    'Charlie',
-    'Georgia',
-    'Garamond',
-    'Times New Roman',
-    'Times',
+    Charlie,
+    Georgia,
+    Garamond,
+    "Times New Roman",
+    Times,
     serif !important;
 `;
 
@@ -24,11 +24,11 @@ export const accent = (plumberOpts: Partial<PlumberProps> = {}) => css`
 
 export const primaryFamily = css`
   font-family:
-    'Maison Neue',
+    "Maison Neue",
     -apple-system,
     BlinkMacSystemFont,
-    'Helvetica Neue',
-    'Helvetica',
+    "Helvetica Neue",
+    Helvetica,
     sans-serif !important;
 `;
 
@@ -39,8 +39,8 @@ export const primary = (plumberOpts: Partial<PlumberProps> = {}) => css`
 
 export const monoFamily = css`
   font-family:
-    'PragmataPro',
-    'Courier New',
+    PragmataPro,
+    "Courier New",
     Courier,
     monospace !important;
 `;

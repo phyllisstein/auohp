@@ -21,7 +21,7 @@ export const Route = createRootRouteWithContext<ApolloClientIntegration.RouterCo
     }),
 });
 
-function RootComponent() {
+function RootComponent () {
     const { apolloClient } = Route.useRouteContext();
     const router = useRouter();
 

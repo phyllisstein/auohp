@@ -12,7 +12,7 @@ export interface ResultsProps {
     width?: number;
 }
 
-export function Results({
+export function Results ({
     bottom = 0,
     children,
     height = 0,

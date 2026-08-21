@@ -51,22 +51,22 @@ export class StatementNode extends ElementNode {
     __startTime: number | null;
     __endTime: number | null;
 
-    static getType(): string {
+    static getType (): string {
         return "statement";
     }
 
     // `clone` is how Lexical produces the next immutable version of a node during
     // an update --- it MUST copy every custom field AND the key, or edits to one
     // version silently drop the graph identity of the next.
-    static clone(node: StatementNode): StatementNode {
+    static clone (node: StatementNode): StatementNode {
         return new StatementNode(node.__uid, node.__startTime, node.__endTime, node.__key);
     }
 
-    static importJSON(serialized: SerializedStatementNode): StatementNode {
+    static importJSON (serialized: SerializedStatementNode): StatementNode {
         return $createStatementNode(serialized.uid, serialized.startTime, serialized.endTime);
     }
 
-    constructor(uid: string, startTime: number | null, endTime: number | null, key?: NodeKey) {
+    constructor (uid: string, startTime: number | null, endTime: number | null, key?: NodeKey) {
         super(key);
         this.__uid = uid;
         this.__startTime = startTime;
@@ -75,15 +75,15 @@ export class StatementNode extends ElementNode {
 
     // Getters route through `getLatest()` so reads always see the current version
     // of the node within an update, never a stale snapshot captured by closure.
-    getUid(): string {
+    getUid (): string {
         return this.getLatest().__uid;
     }
 
-    getStartTime(): number | null {
+    getStartTime (): number | null {
         return this.getLatest().__startTime;
     }
 
-    getEndTime(): number | null {
+    getEndTime (): number | null {
         return this.getLatest().__endTime;
     }
 
@@ -96,7 +96,7 @@ export class StatementNode extends ElementNode {
     // statement from getTextContent() and therefore destroyed every chip in it.
     //
     // Return null to refuse the split (what CodeNode does).
-    insertNewAfter(selection: RangeSelection, restoreSelection = true): ElementNode | null {
+    insertNewAfter (selection: RangeSelection, restoreSelection = true): ElementNode | null {
         const newUid = `${ this.getUid() }${ SYNTHETIC_UID_MARKER }${ Date.now() }`;
         // FIXME: New node's startTime, old node's endTime = current position of the playhead
         const continuation = $createStatementNode(newUid, this.getStartTime(), this.getEndTime());
@@ -106,7 +106,7 @@ export class StatementNode extends ElementNode {
         return continuation;
     }
 
-    createDOM(_config: EditorConfig): HTMLElement {
+    createDOM (_config: EditorConfig): HTMLElement {
         const dom = document.createElement("div");
         dom.className = "auohp-statement";
         dom.setAttribute("data-uid", this.__uid);
@@ -134,14 +134,14 @@ export class StatementNode extends ElementNode {
     // rather than the wrapper, so managed children never mingle with the chrome.
     // `ElementDOMSlot.resolveLeafPosition` handles DOM-caret -> lexical-offset
     // mapping for this wrap pattern, so selection needs no hand-rolled math.
-    getDOMSlot(element: HTMLElement) {
+    getDOMSlot (element: HTMLElement) {
         const content = element.querySelector<HTMLElement>(".auohp-statement__content") ?? element;
         return super.getDOMSlot(element).withElement(content);
     }
 
     // Return `false` --- Lexical keeps managing our text children --- but first
     // refresh the chrome timestamps if the caption window shifted (e.g. a split).
-    updateDOM(prevNode: StatementNode, dom: HTMLElement): boolean {
+    updateDOM (prevNode: StatementNode, dom: HTMLElement): boolean {
         if (prevNode.__startTime !== this.__startTime || prevNode.__endTime !== this.__endTime) {
             const times = dom.querySelectorAll<HTMLElement>(
                 ".auohp-statement__chrome > .auohp-statement__time",
@@ -156,7 +156,7 @@ export class StatementNode extends ElementNode {
         return false;
     }
 
-    exportJSON(): SerializedStatementNode {
+    exportJSON (): SerializedStatementNode {
         return {
             ...super.exportJSON(),
             type: "statement",
@@ -167,7 +167,7 @@ export class StatementNode extends ElementNode {
         };
     }
 
-    #timeElement(time: number | null): HTMLElement {
+    #timeElement (time: number | null): HTMLElement {
         const el = document.createElement("span");
         el.className = "auohp-statement__time";
         el.textContent = formatTimestamp(time ?? 0);
@@ -175,7 +175,7 @@ export class StatementNode extends ElementNode {
     }
 }
 
-export function $createStatementNode(
+export function $createStatementNode (
     uid: string,
     startTime: number | null,
     endTime: number | null,
@@ -186,7 +186,7 @@ export function $createStatementNode(
     return $applyNodeReplacement(new StatementNode(uid, startTime, endTime));
 }
 
-export function $isStatementNode(node: LexicalNode | null | undefined): node is StatementNode {
+export function $isStatementNode (node: LexicalNode | null | undefined): node is StatementNode {
     return node instanceof StatementNode;
 }
 
@@ -213,34 +213,37 @@ export function $isStatementNode(node: LexicalNode | null | undefined): node is 
 // true.
 // -----------------------------------------------------------------------------
 const TagChipContainer = styled.span`
+    user-select: none;
+
     position: absolute;
+    z-index: -1;
     top: 0;
     left: -1em;
-    z-index: -1;
 
     display: block;
+
     width: calc(100% + 1.6em);
     height: 100%;
 
-    color: #0B0B0B;
-    font-weight: 600;
     font-size: 100%;
+    font-weight: 600;
+    color: #0B0B0B;
 
     background: #7DD3FC;
 
-    user-select: none;
-
     &::before {
+        content: ${ () => `url("${ numberSignSVG }") ` };
+
         position: absolute;
         left: 0;
 
         display: block;
+
         width: 0.8em;
         height: 0.8em;
 
         color: #000 !important;
 
-        content: ${ () => `url("${ numberSignSVG }") ` };
         fill: #000 !important;
         stroke: #000 !important;
     }
@@ -249,10 +252,8 @@ const TagChipContainer = styled.span`
 export const TagMarkStyles = createGlobalStyle`
     .auohp-tag-chip {
         position: relative;
-
         display: inline-block;
         margin: 0 1.5rem;
-
         background: none;
     }
 `;
@@ -271,7 +272,7 @@ export const BADGE_CLASS = "auohp-tag-chip__badge";
 // It receives only a NodeKey. Everything else is read back out of EditorState
 // via `editor.read()` / `editor.update()`, which keeps the component a pure
 // function of editor state rather than a second copy of it.
-export function TagChip({ nodeKey }: { nodeKey: NodeKey }): JSX.Element {
+export function TagChip ({ nodeKey }: { nodeKey: NodeKey }): JSX.Element {
     return (
         <>
             <TagChipContainer className="tag-chip__container" />
@@ -280,11 +281,11 @@ export function TagChip({ nodeKey }: { nodeKey: NodeKey }): JSX.Element {
 }
 
 export class TagChipNode extends MarkNode {
-    static clone(node: TagChipNode): TagChipNode {
+    static clone (node: TagChipNode): TagChipNode {
         return new TagChipNode(node.__ids, node.__key);
     }
 
-    constructor(
+    constructor (
         ids: readonly string[] = NO_IDS,
         key?: NodeKey,
     ) {
@@ -292,22 +293,22 @@ export class TagChipNode extends MarkNode {
         this.__ids = ids;
     }
 
-    $config() {
+    $config () {
         return this.config("tag-chip", {
             extends: MarkNode,
         });
     }
 
-    afterCloneFrom(prevNode: this): void {
+    afterCloneFrom (prevNode: this): void {
         super.afterCloneFrom(prevNode);
         this.__ids = prevNode.__ids;
     }
 
-    updateFromJSON(serializedNode: LexicalUpdateJSON<SerializedTagChipNode>): this {
+    updateFromJSON (serializedNode: LexicalUpdateJSON<SerializedTagChipNode>): this {
         return super.updateFromJSON(serializedNode).setIDs(serializedNode.ids);
     }
 
-    insertNewAfter(selection: RangeSelection, restoreSelection: boolean = true): ElementNode | null {
+    insertNewAfter (selection: RangeSelection, restoreSelection: boolean = true): ElementNode | null {
         const tagChipNode = $createTagChipNode(this.__ids);
         this.insertAfter(tagChipNode, restoreSelection);
         return tagChipNode;
@@ -322,7 +323,7 @@ export class TagChipNode extends MarkNode {
     // Lexical's mutation-attribution up-walk terminate here
     // (LexicalMutations.ts:127), so React may render arbitrarily deep inside it
     // without the observer evicting the DOM as foreign.
-    createDOM(config: EditorConfig): HTMLElement {
+    createDOM (config: EditorConfig): HTMLElement {
         const mark = super.createDOM(config);
         addClassNamesToElement(mark, "auohp-tag-chip");
 
@@ -342,7 +343,7 @@ export class TagChipNode extends MarkNode {
     // Re-find the badge from `element` rather than closing over the one
     // createDOM built: getDOMSlot runs against the latest node version, and
     // clone() mints new instances constantly.
-    getDOMSlot(element: HTMLElement) {
+    getDOMSlot (element: HTMLElement) {
         const badge = element.querySelector<HTMLElement>(`:scope > .${ BADGE_CLASS }`);
         return badge ? super.getDOMSlot(element).withAfter(badge) : super.getDOMSlot(element);
     }
@@ -351,19 +352,19 @@ export class TagChipNode extends MarkNode {
     // the overlap class as __ids crosses 1 <-> 2, and returns false so our DOM
     // is never rebuilt.
 
-    collapseAtStart(): true {
+    collapseAtStart (): true {
         return true;
     }
 
-    getIDs(): string[] {
+    getIDs (): string[] {
         return [...this.getLatest().__ids];
     }
 }
 
-export function $createTagChipNode(ids: readonly string[] = NO_IDS, key?: NodeKey): TagChipNode {
+export function $createTagChipNode (ids: readonly string[] = NO_IDS, key?: NodeKey): TagChipNode {
     return $applyNodeReplacement(new TagChipNode(ids, key));
 }
 
-export function $isTagChipNode(node?: LexicalNode | null | undefined): node is TagChipNode {
+export function $isTagChipNode (node?: LexicalNode | null | undefined): node is TagChipNode {
     return node instanceof TagChipNode;
 }

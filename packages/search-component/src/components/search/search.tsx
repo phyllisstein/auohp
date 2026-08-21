@@ -42,7 +42,7 @@ const formatTimestamp = (timestamp: number) =>
         });
 
 
-export function Search() {
+export function Search () {
     const searchBox = useRef<HTMLInputElement>(null);
     const [boxRect, setBoxRect] = useState<DOMRect | null>(null);
     const [executeSearch, searchQuery] = useLazyQuery(SEARCH_QUERY, {

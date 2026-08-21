@@ -1,6 +1,6 @@
 import { useRef, useEffect, useId } from "react";
 
-export function usePortal() {
+export function usePortal () {
     const portal = useRef<HTMLDivElement>(null);
     const portalID = useId();
 

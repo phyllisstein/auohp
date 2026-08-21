@@ -5,7 +5,7 @@ interface PlayerProps {
     url: string;
 }
 
-export function Player({ url }: PlayerProps) {
+export function Player ({ url }: PlayerProps) {
     const player = useRef<HTMLVideoElement>(null);
     const hasSetTimestamp = useRef<boolean>(false);
 
@@ -20,8 +20,8 @@ export function Player({ url }: PlayerProps) {
             const parsedURL = queryString.parseUrl(window.location.href);
             const localStorageTimestamp = localStorage.getItem("last-timestamp");
 
-            currentPlayer.currentTime
-                = typeof parsedURL.query.timestamp === "string"
+            currentPlayer.currentTime =
+                typeof parsedURL.query.timestamp === "string"
                     ? Number.parseFloat(parsedURL.query.timestamp)
                     : localStorageTimestamp !== null
                         ? Number.parseFloat(localStorageTimestamp)

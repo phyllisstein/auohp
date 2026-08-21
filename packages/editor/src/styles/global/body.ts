@@ -6,25 +6,24 @@ export const Body = createGlobalStyle`
         margin: 0;
         padding: 0;
 
-        font-size: 112.5%;
         font-family:
             "Adobe Clean",
             -apple-system,
             BlinkMacSystemFont,
             "Segoe UI",
-            "Roboto",
+            Roboto,
             "Helvetica Neue",
-            "Arial",
+            Arial,
             "Noto Sans",
             sans-serif,
             "Apple Color Emoji",
             "Segoe UI Emoji",
             "Segoe UI Symbol",
             "Noto Color Emoji" !important;
-
-        font-kerning: normal;
+        font-size: 112.5%;
         font-variant-ligatures: common-ligatures;
         font-variant-numeric: lining-nums proportional-nums;
-        text-rendering: geometricPrecision;
+        font-kerning: normal;
+        text-rendering: geometricprecision;
     }
 `;

@@ -14,7 +14,7 @@ const client = new ApolloClient({
 import { Player } from "components/player";
 import { Search } from "components/search";
 
-export function renderSearch(element: HTMLElement) {
+export function renderSearch (element: HTMLElement) {
     const root = createRoot(element);
     root.render(
         <StrictMode>
@@ -25,7 +25,7 @@ export function renderSearch(element: HTMLElement) {
     );
 }
 
-export function renderPlayer(url: string, element: HTMLElement) {
+export function renderPlayer (url: string, element: HTMLElement) {
     const root = createRoot(element);
     root.render(
         <StrictMode>

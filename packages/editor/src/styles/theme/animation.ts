@@ -33,7 +33,7 @@ export interface CSSParams {
     properties?: string[] | string;
 }
 
-export function css({
+export function css ({
     curve = AnimationCurve.MaterialStandard,
     duration = AnimationDuration.Entering,
     properties = ["all"],

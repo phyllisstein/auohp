@@ -53,7 +53,7 @@ const getPlumber = ({
     lineHeight: LINE_HEIGHT,
     useBaselineOrigin: USE_BASELINE_ORIGIN = false,
 }: PlumberProps) => {
-    function plumber({
+    function plumber ({
         baseline = B,
         fontSize = FONT_SIZE,
         gridHeight = GRID_HEIGHT,
