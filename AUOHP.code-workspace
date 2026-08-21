@@ -35,18 +35,18 @@
             "**/node_modules": true,
             "**/.yarn": true
         },
-        "editor.formatOnSave": false,
         "eslint.enable": false,
         "[rust]": {
             "editor.defaultFormatter": "rust-lang.rust-analyzer",
             "editor.formatOnSave": true
         },
         "[javascript][typescript][javascriptreact][typescriptreact]": {
+            "editor.formatOnSave": false,
             "editor.defaultFormatter": "oxc.oxc-vscode",
-            "editor.codeActionsOnSave": {
-                "source.fixAll.oxc": "always",
-                "source.fixAll.stylelint": "always"
-            }
+            "editor.codeActionsOnSave": [
+                "source.fixAll.stylelint",
+                "source.fixAll.oxc"
+            ],
         },
         "[scss]": {
             "editor.codeActionsOnSave": {
@@ -61,8 +61,6 @@
             "typescriptreact"
         ],
         "oxc.enable.oxlint": true,
-        "oxc.path.tsgolint": "./node_modules/.bin/tsgolint",
-        "oxc.path.oxlint": "./node_modules/.bin/oxlint",
         "js/ts.experimental.useTsgo": true
     }
 }

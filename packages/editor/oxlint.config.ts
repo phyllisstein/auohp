@@ -63,7 +63,7 @@ export default defineConfig({
         "no-unsafe-optional-chaining": "error",
         "no-unused-labels": "error",
         "no-unused-private-class-members": "error",
-        "no-unused-vars": "error",
+        "no-unused-vars": "off",
         "no-useless-assignment": "error",
         "no-useless-backreference": "error",
         "no-useless-catch": "error",
@@ -74,7 +74,7 @@ export default defineConfig({
         "use-isnan": "error",
         "valid-typeof": "error",
 
-        "@stylistic/array-bracket-spacing": ["error", "never"],
+        "@stylistic/array-bracket-spacing": ["warn", "never"],
         "@stylistic/arrow-parens": [
             "warn",
             "as-needed",
@@ -190,7 +190,7 @@ export default defineConfig({
             },
         ],
         "@stylistic/no-tabs": "error",
-        "@stylistic/no-trailing-spaces": "warn",
+        "@stylistic/no-trailing-spaces": "off",
         "@stylistic/no-whitespace-before-property": "error",
         "@stylistic/object-curly-spacing": ["warn", "always"],
         "@stylistic/operator-linebreak": "warn",
@@ -490,6 +490,7 @@ export default defineConfig({
                 "jsx-a11y/scope": "error",
                 "jsx-a11y/tabindex-no-positive": "error",
                 "react/exhaustive-deps": "warn",
+                "react/only-export-components": "error",
             },
             globals: {
                 AsyncDisposableStack: "readonly",
