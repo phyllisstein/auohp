@@ -1,4 +1,4 @@
-use super::captions::{self, Caption};
+use super::captions::{self, Captions};
 use super::interviews;
 use super::search::{self, SearchHit};
 use crate::graphql::nodes::{Interview, Statement, StatementNode, Transcript};
@@ -84,8 +84,8 @@ impl QueryRoot {
         &self,
         ctx: &Context<'_>,
         #[graphql(desc = "Interview UID")] interview_number: String,
-    ) -> async_graphql::Result<Caption> {
-        captions::get_captions(ctx, &interview_number).await
+    ) -> async_graphql::Result<Captions> {
+        todo!()
     }
 
     async fn search_interview(
@@ -103,14 +103,6 @@ impl QueryRoot {
         #[graphql(desc = "Find span at this time")] timestamp: f64,
         #[graphql(desc = "Find spans from interview")] interview_number: i64,
     ) -> async_graphql::Result<Statement> {
-        let span = captions::span_at_time(ctx, timestamp, interview_number).await?;
-        tracing::info!(
-            start_time = span.start_time,
-            end_time = span.end_time,
-            uid = span.uid,
-            "returned span to graphql"
-        );
-
-        Ok(span)
+        todo!()
     }
 }

@@ -1,4 +1,4 @@
-mod captions;
+pub mod captions;
 mod interviews;
 mod root;
 mod search;

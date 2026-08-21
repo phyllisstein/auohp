@@ -2,68 +2,82 @@ use crate::captions;
 use crate::graphql::error::gql_err;
 use crate::graphql::nodes::{Statement, StatementNode};
 use crate::neo4j::Db;
-use async_graphql::{Context, SimpleObject};
+use anyhow::Context;
+use async_graphql::{Context, Object, SimpleObject};
+use axum::extract::State;
 use neo4rs::query;
 
-#[derive(SimpleObject)]
-pub struct Caption {
-    vtt: String,
-}
-
-/// Thin GraphQL adapter over the transport-agnostic `captions::generate_vtt`:
-/// pull the db out of the request context, delegate, and wrap the VTT string in
-/// the GraphQL `Caption` object.
-pub async fn get_captions(
-    ctx: &Context<'_>,
-    interview_uid: &str,
-) -> async_graphql::Result<Caption> {
-    let db = ctx.data::<Db>()?;
-    let vtt = captions::generate_vtt(db, &interview_uid)
-        .await
-        .map_err(gql_err)?;
-    Ok(Caption { vtt })
-}
-
-pub async fn span_at_time(
-    ctx: &Context<'_>,
-    timestamp: f64,
+pub struct Captions {
     interview_number: i64,
-) -> async_graphql::Result<Statement> {
-    let db = ctx.data::<Db>()?;
+}
 
-    tracing::info!(timestamp, interview_number, "span at time");
+#[Object]
+impl Captions {
+    async fn span_at_time(
+        &self,
+        ctx: &Context<'_>,
+        timestamp: f64,
+    ) -> async_graphql::Result<Option<Statement>> {
+        let db = ctx.data::<Db>()?;
+        let interview_number = self.interview_number;
 
-    let mut span_stream = db
-        .execute(
-            query(
-                "
+        tracing::info!(timestamp, interview_number, "span at time");
+
+        let mut span_stream = db
+            .execute(
+                query(
+                    "
                     MATCH
                         (:Interview {number: $interviewNumber})-[:HAS_TRANSCRIPT]->
                         ()-[meta:CONTAINS]->
                         (span:Statement)
-                    WHERE meta.startTime >= $timestamp
+                    WHERE meta.startTime <= $timestamp AND meta.endTime >= $timestamp
                     RETURN span, meta
-                    ORDER BY meta.startTime
+                    ORDER BY meta.startTime DESC
                     LIMIT 1
             ",
+                )
+                .param("interviewNumber", interview_number)
+                .param("timestamp", timestamp),
             )
-            .param("interviewNumber", interview_number)
-            .param("timestamp", timestamp),
-        )
-        .await
-        .map_err(gql_err)?;
+            .await?;
 
-    let s_row = span_stream.single().await.map_err(gql_err)?;
-    let statement: neo4rs::Node = s_row.get("span").map_err(gql_err)?;
-    let meta: neo4rs::Relation = s_row.get("meta").map_err(gql_err)?;
-    let sn: StatementNode = statement.to().map_err(gql_err)?;
+        let s_row = span_stream.next().await?;
 
-    Ok(Statement {
-        uid: sn.uid,
-        text: sn.text,
-        person: None,
-        start_time: meta.get("startTime").map_err(gql_err)?,
-        end_time: meta.get("endTime").map_err(gql_err)?,
-        words: None,
-    })
+        let row = match s_row {
+            Some(r) => r,
+            None => {
+                return Err(async_graphql::Error {
+                    message: format!("No span returned at {timestamp}"),
+                    source: None,
+                    extensions: None,
+                });
+            }
+        };
+
+        let statement: neo4rs::Node = row.get("span")?;
+        let meta: neo4rs::Relation = row.get("meta")?;
+        let sn: StatementNode = statement.to()?;
+
+        Ok(Some({
+            Statement {
+                uid: sn.uid,
+                text: sn.text,
+                person: None,
+                start_time: meta.get("startTime")?,
+                end_time: meta.get("endTime")?,
+                words: None,
+            }
+        }))
+    }
+}
+
+#[derive(Default)]
+pub struct CaptionsQuery;
+
+#[Object]
+impl CaptionsQuery {
+    async fn captions(&self, interview_number: i64) -> Captions {
+        Captions { interview_number }
+    }
 }
