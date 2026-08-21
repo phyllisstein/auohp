@@ -86,7 +86,7 @@ function Page () {
     const { transcriptQueryRef } = Route.useLoaderData();
     const { data: transcriptData } = useReadQuery(transcriptQueryRef);
 
-    const [editStatement] = useMutation(EDIT_STATEMENT_MUTATION);
+    const [editStatement, editStatementResult] = useMutation(EDIT_STATEMENT_MUTATION);
 
     const player = useRef<HTMLVideoElement>(null);
     useVideoSync(player);
@@ -123,6 +123,8 @@ function Page () {
             statements,
         }), [interview.uid]);
 
+    const statementHash = editStatementResult.data?.editStatement?.newHash;
+
     return (
         <div>
             <EditorStyle />
@@ -133,7 +135,7 @@ function Page () {
                 onTimeUpdate={ ev => playhead.timestamp.value = (ev.target as HTMLVideoElement).currentTime }>
                 <source src={ `${ AUOHP_PUBLIC }/videos/${ interviewNumber }.mp4` } type="video/mp4" />
                 {
-                    interview.uid && <track kind="captions" src={ `${ AUOHP_API_URI }/interview/${ interview.uid }/vtt` } srcLang="en" label="English" />
+                    interview.uid && <track default key={ statementHash } kind="captions" src={ `${ AUOHP_API_URI }/interview/${ interview.uid }/vtt` } srcLang="en" label="English" />
                 }
             </video>
 
