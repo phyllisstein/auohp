@@ -5,6 +5,7 @@
         "name": "search-restart",
         "expression": [
             "allof",
+            ["not", ["match", "**/node_modules/**", "wholename"]],
             ["dirname", "packages/search-component"],
             ["name",
                 [

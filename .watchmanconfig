@@ -4,6 +4,12 @@
     ".next",
     ".yarn",
     "node_modules",
-    "target"
+    "target",
+    "packages/api/node_modules",
+    "packages/core/node_modules",
+    "packages/desktop/node_modules",
+    "packages/editor/node_modules",
+    "packages/scripts/node_modules",
+    "packages/search-component/node_modules"
   ]
 }

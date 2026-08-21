@@ -4,10 +4,13 @@
     {
         "name": "yarn-install",
         "expression": [
-            "name",
-            [
-                "yarn.lock",
-                ".yarnrc.yml"
+            "allof",
+            ["not", ["match", "**/node_modules/**", "wholename"]],
+            ["name",
+                [
+                    "yarn.lock",
+                    ".yarnrc.yml"
+                ]
             ]
         ],
         "command": [

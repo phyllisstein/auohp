@@ -102,19 +102,27 @@ stop_service() {
 }
 
 restart_editor() {
+    pushd packages/editor >/dev/null
+
     echo "Terminate existing editor..."
     stop_service editor
 
     echo "Starting editor development server..."
     start_service editor yarn editor:dev
+
+    popd >/dev/null
 }
 
 restart_search() {
+    pushd packages/search >/dev/null
+
     echo "Terminate existing search component server..."
     stop_service search
 
     echo "Starting search component development server..."
     start_service search yarn search:dev
+
+    popd >/dev/null
 }
 
 restart_api() {
@@ -156,7 +164,7 @@ yarn_install() {
 
 
 [[ -e "/run/secrets/environment" ]] || { echo "Missing secret environment file." && exit 0; }
-. /run/secrets/environment && export NEO4J_PASSWORD NEO4J_USERNAME NEO4J_URI NEO4J_DATABASE HF_TOKEN
+source /run/secrets/environment && export NEO4J_PASSWORD NEO4J_USERNAME NEO4J_URI NEO4J_DATABASE HF_TOKEN
 
 # Tracing is opt-in, and deliberately switched on only *after* the secret is
 # sourced. `set -x` traces the assignments inside a sourced file, so enabling it

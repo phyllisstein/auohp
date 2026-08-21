@@ -5,6 +5,7 @@
         "name": "api-restart",
         "expression": [
             "allof",
+            ["not", ["match", "**/node_modules/**", "wholename"]],
             ["anyof",
                 ["dirname", "packages/api"],
                 ["dirname", "packages/core"]
