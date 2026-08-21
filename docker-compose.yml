@@ -31,12 +31,37 @@ services:
       - "3030"
       - "4040"
       - "6060"
-    ports:
-      - "6060:6060"
     volumes:
+      # FIXME: this bind mount is the root of an exception cascade. Because the
+      # source tree lives on the host and every tool runs in the container, we
+      # pay virtiofs for all of it, and each consequence has needed its own
+      # workaround: `CARGO_TARGET_DIR=/target` (volumes nested under a virtiofs
+      # bind are torn down ~1s after start), `enableGlobalCache: false` (Yarn's
+      # pnpm linker hardlinks, and hardlinks can't cross the fuseblk/overlayfs
+      # boundary --- EXDEV), `target` and six `packages/*/node_modules` entries
+      # in `.watchmanconfig` plus four `wholename` guards (inotify-over-virtiofs
+      # floods and recrawls; vendored files trip triggers), and ~200 lines of
+      # process-group supervision in `scripts/develop.sh`.
+      #
+      # The accounting is upside down: all of that manages one sentence of
+      # actual behaviour --- edit a file, the right dev server picks it up.
+      # Worse, the `editor-restart` and `search-restart` triggers cold-start
+      # Vite to accomplish what Vite already does natively on `.env`,
+      # `tsconfig.json`, and `vite.config.ts` changes, losing HMR state to do
+      # it. Those two are the first things to delete.
+      #
+      # The fix is not more mount topology (inverting the nesting so no volume
+      # sits under a bind is exception #10, not a solution). It is to revisit
+      # the premise: either run the JS toolchain on the host natively, or move
+      # the source *into* the container on a named volume. Both delete virtiofs
+      # rather than route around it. Deferred deliberately --- `nodeLinker: pnp`
+      # is the other escape, previously declined on tooling-compat grounds.
       - type: bind
         source: .
         target: /app
+      # No longer load-bearing: this volume is destroyed ~1s after start (it is
+      # nested under the bind above), so installs land on the host tree either
+      # way. Kept only so the topology is visible at the point of the FIXME.
       - type: volume
         source: node_modules
         target: /app/node_modules
