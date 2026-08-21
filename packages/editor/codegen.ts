@@ -2,7 +2,7 @@ import type { CodegenConfig } from "@graphql-codegen/cli";
 
 
 const {
-    CODEGEN_GRAPHQL_ENDPOINT = "http://localhost:6060/graphql",
+    CODEGEN_GRAPHQL_ENDPOINT = "http://api.auohp.localhost/graphql",
 } = process.env;
 
 

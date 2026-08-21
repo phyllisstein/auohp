@@ -56,7 +56,7 @@ export class StatementNode extends ElementNode {
     }
 
     // `clone` is how Lexical produces the next immutable version of a node during
-    // an update --- it MUST copy every custom field AND the key, or edits to one
+    // an update --- it must copy every custom field and the key, or edits to one
     // version silently drop the graph identity of the next.
     static clone (node: StatementNode): StatementNode {
         return new StatementNode(node.__uid, node.__startTime, node.__endTime, node.__key);
@@ -263,9 +263,9 @@ type SerializedTagChipNode = Spread<{ ids: string[] }, SerializedElementNode>;
 // Shared by createDOM (which writes it) and getDOMSlot (which must re-find the
 // element it names) --- keeping them in sync by construction rather than by
 // two matching string literals.
-export const BADGE_CLASS = "auohp-tag-chip__badge";
+export const TAG_CHIP_BADGE_CLASS = "auohp-tag-chip__badge";
 
-// The chip's React face. It is NOT rendered in place by Lexical --- MarkNode is
+// The chip's React face. It is not rendered in place by Lexical --- MarkNode is
 // an ElementNode, so there is no `decorate()` hook --- it is portalled into the
 // unmanaged badge span that TagChipNode.createDOM builds (see TagChipPortals).
 //
@@ -328,7 +328,7 @@ export class TagChipNode extends MarkNode {
         addClassNamesToElement(mark, "auohp-tag-chip");
 
         const badge = document.createElement("span");
-        badge.className = BADGE_CLASS;
+        badge.className = TAG_CHIP_BADGE_CLASS;
         setDOMUnmanaged(badge);
         mark.prepend(badge);
 
@@ -344,7 +344,7 @@ export class TagChipNode extends MarkNode {
     // createDOM built: getDOMSlot runs against the latest node version, and
     // clone() mints new instances constantly.
     getDOMSlot (element: HTMLElement) {
-        const badge = element.querySelector<HTMLElement>(`:scope > .${ BADGE_CLASS }`);
+        const badge = element.querySelector<HTMLElement>(`:scope > .${ TAG_CHIP_BADGE_CLASS }`);
         return badge ? super.getDOMSlot(element).withAfter(badge) : super.getDOMSlot(element);
     }
 
@@ -367,4 +367,164 @@ export function $createTagChipNode (ids: readonly string[] = NO_IDS, key?: NodeK
 
 export function $isTagChipNode (node?: LexicalNode | null | undefined): node is TagChipNode {
     return node instanceof TagChipNode;
+}
+
+// -----------------------------------------------------------------------------
+// TagChipNode --- React-in-editor, the hard way.
+//
+// The obvious move is a DecoratorNode, whose `decorate()` returns JSX that the
+// reconciler mounts at the node's own position. We can't use it. A DecoratorNode
+// is a LEAF: `LexicalNode.getTextContent()` returns "" for one, and
+// PersistenceExtension ships `statement.getTextContent()` to the server as the
+// authoritative Statement.text. A decorator chip would silently delete the words
+// it was tagging.
+//
+// So the chip extends MarkNode (hence ElementNode) and its children ARE the
+// tagged text --- transparent to getTextContent, copy/paste, and search. That
+// costs us `decorate()`, since only DecoratorNodes have one. React gets in by
+// the other door instead: createDOM builds an unmanaged badge span, and
+// TagChipPortals (extensions.tsx) portals <TagChip/> into it, driven by a
+// mutation listener. Pull becomes push.
+//
+// MarkNode also brings semantics we would otherwise hand-roll: __ids with
+// overlap merging, canInsertTextBefore/After() === false and canBeEmpty() ===
+// false (so the chip is already sealed at its boundaries), and isInline() ===
+// true.
+// -----------------------------------------------------------------------------
+const SearchResultContainer = styled.span`
+    user-select: none;
+
+    position: absolute;
+    z-index: -1;
+    top: 0;
+    left: -1em;
+
+    display: block;
+
+    width: calc(100% + 1.6em);
+    height: 100%;
+
+    font-size: 100%;
+    font-weight: 600;
+    color: #0B0B0B;
+`;
+
+export const SearchResultStyles = createGlobalStyle`
+    .auohp-search-result {
+        position: relative;
+        display: inline-block;
+        margin: 0 1.5rem;
+        background: none;
+    }
+`;
+
+type SerializedSearchResultNode = Spread<{ ids: string[] }, SerializedElementNode>;
+
+// Shared by createDOM (which writes it) and getDOMSlot (which must re-find the
+// element it names) --- keeping them in sync by construction rather than by
+// two matching string literals.
+export const SEARCH_RESULT_BADGE_CLASS = "auohp-search-result__badge";
+
+// The chip's React face. It is not rendered in place by Lexical --- MarkNode is
+// an ElementNode, so there is no `decorate()` hook --- it is portalled into the
+// unmanaged badge span that TagChipNode.createDOM builds (see TagChipPortals).
+//
+// It receives only a NodeKey. Everything else is read back out of EditorState
+// via `editor.read()` / `editor.update()`, which keeps the component a pure
+// function of editor state rather than a second copy of it.
+export function SearchResult ({ nodeKey }: { nodeKey: NodeKey }): JSX.Element {
+    return (
+        <>
+            <SearchResultContainer className="auohp-search-result__container" />
+        </>
+    );
+}
+
+export class SearchResultNode extends MarkNode {
+    static clone (node: SearchResultNode): SearchResultNode {
+        return new SearchResultNode(node.__ids, node.__key);
+    }
+
+    constructor (
+        ids: readonly string[] = NO_IDS,
+        key?: NodeKey,
+    ) {
+        super(ids, key);
+        this.__ids = ids;
+    }
+
+    $config () {
+        return this.config("search-result", {
+            extends: MarkNode,
+        });
+    }
+
+    afterCloneFrom (prevNode: this): void {
+        super.afterCloneFrom(prevNode);
+        this.__ids = prevNode.__ids;
+    }
+
+    updateFromJSON (serializedNode: LexicalUpdateJSON<SerializedSearchResultNode>): this {
+        return super.updateFromJSON(serializedNode).setIDs(serializedNode.ids);
+    }
+
+    insertNewAfter (selection: RangeSelection, restoreSelection: boolean = true): ElementNode | null {
+        const searchResultNode = $createSearchResultNode(this.__ids);
+        this.insertAfter(searchResultNode, restoreSelection);
+        return searchResultNode;
+    }
+
+    // Defer to MarkNode for the <mark> itself: it applies `config.theme.mark`
+    // AND `config.theme.markOverlap` when __ids.length > 1, which is free
+    // multi-tag styling we would lose by hand-rolling the element. We only add
+    // our own class and the badge host on top.
+    //
+    // The badge is REAL chrome, not a pseudo-element: `setDOMUnmanaged` makes
+    // Lexical's mutation-attribution up-walk terminate here
+    // (LexicalMutations.ts:127), so React may render arbitrarily deep inside it
+    // without the observer evicting the DOM as foreign.
+    createDOM (config: EditorConfig): HTMLElement {
+        const mark = super.createDOM(config);
+        addClassNamesToElement(mark, "auohp-search-result");
+
+        const badge = document.createElement("span");
+        badge.className = SEARCH_RESULT_BADGE_CLASS;
+        setDOMUnmanaged(badge);
+        mark.prepend(badge);
+
+        return mark;
+    }
+
+    // Tell the reconciler its managed range starts AFTER the badge. `after` is a
+    // boundary node reference rather than an index (LexicalDOMSlot.ts:64), so
+    // nothing needs recomputing when children churn --- and `resolveChildIndex`
+    // then handles DOM-caret -> lexical-offset mapping for free.
+    //
+    // Re-find the badge from `element` rather than closing over the one
+    // createDOM built: getDOMSlot runs against the latest node version, and
+    // clone() mints new instances constantly.
+    getDOMSlot (element: HTMLElement) {
+        const badge = element.querySelector<HTMLElement>(`:scope > .${ SEARCH_RESULT_BADGE_CLASS }`);
+        return badge ? super.getDOMSlot(element).withAfter(badge) : super.getDOMSlot(element);
+    }
+
+    // NOTE: no updateDOM override --- MarkNode's own implementation maintains
+    // the overlap class as __ids crosses 1 <-> 2, and returns false so our DOM
+    // is never rebuilt.
+
+    collapseAtStart (): true {
+        return true;
+    }
+
+    getIDs (): string[] {
+        return [...this.getLatest().__ids];
+    }
+}
+
+export function $createSearchResultNode (ids: readonly string[] = NO_IDS, key?: NodeKey): SearchResultNode {
+    return $applyNodeReplacement(new SearchResultNode(ids, key));
+}
+
+export function $isSearchResultNode (node?: LexicalNode | null | undefined): node is SearchResultNode {
+    return node instanceof SearchResultNode;
 }
