@@ -3,5 +3,11 @@
     "workspaces": [
         "packages/*"
     ],
-    "packageManager": "yarn@4.18.0"
+    "packageManager": "yarn@4.18.0",
+    "license": "AGPL-3.0-or-later",
+    "author": {
+        "email": "contact@actupny.com",
+        "name": "ACT UP New York",
+        "url": "https://actupny.com"
+    }
 }

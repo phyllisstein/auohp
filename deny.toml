@@ -1,0 +1,124 @@
+# cargo-deny configuration for the AUOHP workspace.
+#
+# Run locally with `cargo deny check`. Each section below is an independent
+# check and can be run alone, e.g. `cargo deny check licenses`.
+#
+# The licenses check guards our AGPL posture: it walks every crate in the
+# resolved dependency graph, parses its SPDX expression, and fails if the
+# expression cannot be satisfied by the allow-list. This is what stops a future
+# `cargo add` from quietly dragging in a GPLv2-only crate, which we would have
+# no lawful way to combine with our own AGPLv3 code.
+
+[graph]
+# Only evaluate targets we actually ship. Without this, cargo-deny walks the
+# graph for every platform in the universe --- that is how a crate like `r-efi`
+# (a UEFI shim, reachable only through `getrandom` on exotic targets) lands in
+# the report despite never being compiled for anything we build. Windows is
+# included because `desktop` is a Tauri app and we may well ship there.
+targets = [
+    "aarch64-apple-darwin",
+    "x86_64-apple-darwin",
+    "x86_64-unknown-linux-gnu",
+    "x86_64-pc-windows-msvc",
+]
+all-features = true
+
+[licenses]
+version = 2
+
+# How certain the SPDX text-matcher must be before it trusts a license file it
+# found on disk. The default of 0.8 is lenient; at 0.93 a crate whose LICENSE
+# has been reworded or truncated gets flagged for review rather than silently
+# matched to the nearest known license.
+confidence-threshold = 0.93
+
+# The allow-list is deliberately narrow: it names what the graph needs today and
+# nothing more. Anything new fails CI and forces a decision. That is noisier
+# than a broad list, but a guard nobody has looked at in a year is not a guard.
+#
+# Ordering matters for disjunctions. A crate licensed `MIT OR Apache-2.0` is
+# satisfied by the first match in this list, so MIT leads: it carries no NOTICE
+# retention duty and no patent-termination clause, making it the lighter
+# compliance burden where the choice is genuinely ours.
+allow = [
+    # Our own crates. Listed rather than skipped via `private.ignore` so that a
+    # workspace member with a stale GPL-3.0-or-later field fails the check
+    # instead of passing silently.
+    "AGPL-3.0-or-later",
+
+    # Permissive. Compatible with AGPLv3 one-way: we absorb them, they impose
+    # only notice retention.
+    "MIT",
+    "MIT-0",
+    "Apache-2.0",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Zlib",
+    "0BSD",
+    "BSL-1.0",
+    "CC0-1.0",
+    "Unlicense",
+    "Unicode-3.0",
+    "CDLA-Permissive-2.0",
+
+    # Apache-2.0 plus the LLVM exception, which only subtracts obligations
+    # (it waives the runtime-library attribution requirement). Must be named
+    # separately: under SPDX, `X WITH Y` is its own expression, not `X`.
+    "Apache-2.0 WITH LLVM-exception",
+
+    # Weak, file-scoped copyleft. Allowed graph-wide rather than per-crate via
+    # `exceptions` because symphonia alone accounts for a dozen crates and the
+    # exception list would churn on every version bump.
+    #
+    # Note the duty this carries: MPL section 3.3 lets these files ship inside
+    # our AGPL larger work, but modifications to an MPL file stay MPL and owe
+    # source under Mozilla's terms, independent of what we do with AUOHP's
+    # license. Relevant if we ever patch symphonia's decode path in `core`.
+    "MPL-2.0",
+]
+
+# Per-crate escape hatches, for licenses we are unwilling to bless graph-wide
+# but will accept from a specific, reviewed dependency.
+exceptions = []
+
+[bans]
+# Duplicate versions are a binary-size and correctness smell rather than a legal
+# problem --- there are already five copies of `windows-sys` and four of
+# `hashbrown`. Warn so they stay visible without blocking work.
+multiple-versions = "warn"
+wildcards = "deny"
+# Intra-workspace `path` dependencies carry no version requirement, which reads
+# as a wildcard. That is normal for an unpublished workspace, not a finding.
+#
+# This flag only applies to crates that have opted out of publishing, since
+# crates.io disallows path dependencies outright. `api` and `desktop` carry
+# `publish = false`, so they qualify. `core` deliberately does not --- it is the
+# one crate we might publish if the embeddings work is extracted --- but it has
+# no path dependencies of its own, so it never trips this.
+allow-wildcard-paths = true
+
+[advisories]
+version = 2
+# Security vulnerabilities fail the build (this is the default and stays so).
+#
+# Unmaintained crates only fail when we depend on them directly. Ten of the
+# current hits are gtk-rs GTK3 bindings pulled in transitively by Tauri --- real
+# information, but not ours to fix, and failing CI on them just trains everyone
+# to ignore the check.
+unmaintained = "workspace"
+
+# Yanked crates warn rather than fail: a yank is often an upstream publishing
+# accident and can land without any change on our side.
+yanked = "warn"
+
+# Add specific advisory IDs here only with a comment explaining why the advisory
+# does not reach our usage.
+ignore = []
+
+[sources]
+# Everything must come from crates.io. A dependency pointing at an arbitrary git
+# remote is both a supply-chain risk and a licensing blind spot, since
+# cargo-deny cannot reliably resolve license metadata for unpublished crates.
+unknown-registry = "deny"
+unknown-git = "deny"

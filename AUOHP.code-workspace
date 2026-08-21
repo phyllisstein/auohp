@@ -30,6 +30,9 @@
         }
     ],
     "settings": {
+        "licenser.author": "ACT UP New York <contact@actupny.com>",
+        "licenser.projectName": "ACT UP Oral History Project",
+        "licenser.license": "AGPLv3",
         "editor.tabSize": 4,
         "search.exclude": {
             "**/node_modules": true,
@@ -61,6 +64,7 @@
             "typescriptreact"
         ],
         "oxc.enable.oxlint": true,
-        "js/ts.experimental.useTsgo": true
+        "js/ts.experimental.useTsgo": true,
+        "licenser.useSingleLineStyle": false
     }
 }

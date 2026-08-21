@@ -2,8 +2,8 @@
 name = "auohp-core"
 version = "0.0.0"
 edition = "2024"
-license = "GPL-3.0-or-later"
-authors = ["ACT UP New York <contact@auohp.org>"]
+license = "AGPL-3.0-or-later"
+authors = ["ACT UP New York <contact@actupny.com>"]
 
 [features]
 default = []

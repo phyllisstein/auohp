@@ -1,11 +1,11 @@
 {
     "version": "0.0.0",
     "author": {
-        "email": "contact@auohp.org",
-        "name": "ACT UP Oral History Project",
-        "url": "https://auohp.org"
+        "email": "contact@actupny.com",
+        "name": "ACT UP New York",
+        "url": "https://actupny.com"
     },
-    "license": "GPL-3.0-or-later",
+    "license": "AGPL-3.0-or-later",
     "name": "@auohp/scripts",
     "packageManager": "yarn@3.5.1",
     "type": "module",
