@@ -89,19 +89,57 @@ Error type: return `neo4rs::DeError` unchanged. Do not convert to
 about the transport, and `?` at the call site already bridges it via the blanket
 `From` impl described above.
 
-## Phase 2 --- `Statement` assembly, built on Phase 1
+## Phase 2 --- `Statement` assembly via `TryFrom`
 
-A constructor on `Statement` (`graphql/nodes.rs`) taking a row plus the
-relationship alias, returning an assembled `Statement`, using `RowExt` internally.
+Implement the standard-library conversion trait on `Statement`
+(`graphql/nodes.rs`) rather than adding an inherent constructor:
+`impl TryFrom<..> for Statement`, using `RowExt` internally and reusing the
+existing `StatementNode` projection rather than introducing a new intermediate.
 
-Deliberately **not** a trait. With exactly one implementor, a trait is a function
-in a costume --- an inherent `impl Statement` is the honest shape. Phase 2 exists
-to test whether Phase 1 *composes*: if the assembly code isn't visibly shorter and
-clearer than the block it replaces in `captions.rs`, that is evidence against the
-whole abstraction, and the correct response is to delete both phases.
+**Why this shape and not an inherent `fn from_row`.** An inherent constructor is
+a function, and functions are already familiar. `TryFrom` is the one direction
+Phase 1 never exercised: **implementing a foreign trait on a local type.** Phase 1
+was forced into the extension-trait pattern because `neo4rs::Row` is foreign and
+`E0116` forbids inherent impls on it. Phase 2 approaches the orphan rule from its
+other, permissive face --- `Statement` is local, so any trait may be implemented
+for it. Seeing both halves is the point; the assembled `Statement` is incidental.
 
-Reuse the existing `StatementNode` projection (`graphql/nodes.rs`) rather than
-introducing a new intermediate type.
+Three mechanisms come along that Phase 1 did not touch:
+
+- **An associated type rather than a type parameter.** `TryFrom` fixes `Error`
+  per impl, so the conversion can fail exactly one way. Contrast `RowExt`'s
+  methods, which are generic over `T` at each call site.
+- **Free machinery.** `.try_into()` and `?` both work against the impl without
+  any further code, and inference picks the target type from the destination ---
+  the same backwards inference that let `rel_prop` drop its turbofish in
+  `captions.rs`.
+- **Coherence from the permissive side.** Worth confirming by experiment that a
+  second, overlapping `TryFrom` impl is rejected, and reading the error.
+
+**The design tension to resolve, and the actual exercise.** `TryFrom::try_from`
+takes exactly one argument, but assembling a `Statement` needs both a row *and*
+the relationship alias, which varies by query (`meta` in `captions.rs`,
+`span` in `search.rs`). Two ways out, and choosing between them is the work:
+fix the alias by convention and accept that queries must name their edge
+consistently, or implement the conversion from a tuple, which is legal and is the
+standard idiom for multi-input conversions. The tuple version keeps the queries
+free and costs a slightly odd call site.
+
+Note that `Statement` carries fields no row provides uniformly --- `person` is
+absent in `captions.rs` and present in `search.rs`. Deciding whether the
+conversion produces those as `None` and lets callers fill them in, or whether the
+input type has to carry them, is part of the same question.
+
+## Phase 2 --- assessment before starting
+
+The utility case for Phase 2 is weak and should not be the justification. There is
+currently **one** assembly site (`captions.rs`); the duplication that motivated
+this section lives in `search.rs` and `interviews.rs`, which the spike scope
+deliberately leaves unconverted. If the goal were removing duplication, converting
+`search.rs` first would be the honest order of operations.
+
+The kill criteria below still apply, but read them as "does this read better," not
+"does this pay for itself."
 
 ## Verification
 

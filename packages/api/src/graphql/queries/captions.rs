@@ -39,17 +39,14 @@ impl Captions {
             )
             .await?;
 
-        let s_row = span_stream.next().await?;
-
-        let row = match s_row {
-            Some(r) => r,
-            None => {
-                return Err(async_graphql::Error {
-                    message: format!("No span returned at {timestamp}"),
-                    source: None,
-                    extensions: None,
-                });
-            }
+        // No statement spans this timestamp. That is a legitimate answer, not a
+        // failure, so it becomes a null rather than an entry in the `errors`
+        // array --- which is the whole reason this resolver returns
+        // `Result<Option<Statement>>` rather than `Result<Statement>`. An error
+        // here would propagate up to the nearest nullable ancestor, and with a
+        // non-null field it would erase all of `data`.
+        let Some(row) = span_stream.next().await? else {
+            return Ok(None);
         };
 
         let sn = row.node_as::<StatementNode>("span")?;
