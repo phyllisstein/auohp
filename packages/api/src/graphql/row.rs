@@ -160,7 +160,10 @@ mod tests {
         // on the field is what turns that absence into `None` instead of an error.
         let row = row(vec![(
             "span",
-            node(vec![("uid", "statement-2".into()), ("text", "act up".into())]),
+            node(vec![
+                ("uid", "statement-2".into()),
+                ("text", "act up".into()),
+            ]),
         )]);
 
         let statement = row
@@ -199,7 +202,10 @@ mod tests {
             "meta",
             relation(
                 "CONTAINS",
-                vec![("startTime", 12.5_f64.into()), ("endTime", 19.25_f64.into())],
+                vec![
+                    ("startTime", 12.5_f64.into()),
+                    ("endTime", 19.25_f64.into()),
+                ],
             ),
         )]);
 

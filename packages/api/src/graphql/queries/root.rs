@@ -18,7 +18,7 @@ impl QueryRoot {
 
     /// Lists all interviews in the archive, ordered by date.
     async fn interviews(&self, ctx: &Context<'_>) -> async_graphql::Result<Vec<Interview>> {
-        interviews::list_interviews(ctx).await
+        todo!()
     }
 
     /// Fetches one interview by number

@@ -1,32 +1,106 @@
-use async_graphql::Context;
-use neo4rs::query;
-
-use crate::graphql::nodes::{Interview, Statement, StatementNode, Transcript};
+use crate::graphql::nodes::{Interview as GqlInterview, Statement, StatementNode, Transcript};
+use crate::graphql::row::{RowExt, RowStreamExt};
 use crate::neo4j::Db;
+use async_graphql::{Context, Object, ScalarType, SimpleObject};
+use chrono::NaiveDate;
+use neo4rs::query;
+use serde::Deserialize;
 
-// ---------------------------------------------------------------------------
-// Resolver functions---called from QueryRoot in queries/root.rs.
-// ---------------------------------------------------------------------------
+#[derive(Deserialize, Default, Debug, Clone)]
+pub struct Interview {
+    number: Option<i64>,
+    uid: String,
+}
 
-pub async fn list_interviews(ctx: &Context<'_>) -> async_graphql::Result<Vec<Interview>> {
-    let db = ctx.data::<Db>()?;
+#[Object]
+impl Interview {
+    async fn transcript(&self, ctx: &Context<'_>) -> async_graphql::Result<Option<Transcript>> {
+        let db = ctx.data::<Db>()?;
 
-    let mut stream = db
-        .execute(query(
-            "MATCH (interview:Interview)
-             RETURN interview
-             ORDER BY interview.date ASC",
-        ))
-        .await?;
+        tracing::debug!("starting transcript fn");
 
-    let mut interviews = Vec::new();
+        // TODO: Each interview should have exactly one transcript, but LIMIT 1
+        // is a poor enforcement strategy, swallowing up drift in the schema
+        // state and giving not-wholly-deterministic responses based on that
+        // state.
+        let mut stream = db
+            .execute(
+                query(
+                    "MATCH (interview:Interview {number: $number})
+                       -[:HAS_TRANSCRIPT]->(transcript:Transcript)
+                       -[contains:CONTAINS]->(statement:Statement)
+                       <-[:SAYS]-(person:Person)
+                 OPTIONAL MATCH (interview)-[:INTERVIEWS]->(interviewer:Person)
+                   WHERE interviewer = person
 
-    while let Some(row) = stream.next().await? {
-        let node: neo4rs::Node = row.get("interview")?;
-        interviews.push(node.to()?);
+                 RETURN interview, transcript, statement, person, contains
+                 ORDER BY contains.startTime
+                 LIMIT 1
+                 ",
+                )
+                .param("number", self.number),
+            )
+            .await?;
+
+        tracing::debug!("Neo4j query returned");
+
+        let ts = stream.first_as::<Transcript>("transcript").await?;
+        Ok(ts)
+    }
+}
+
+// pub struct Interviews;
+//
+// #[Object]
+// impl Interviews {}
+
+#[derive(Default)]
+pub struct InterviewQuery;
+
+#[Object]
+impl InterviewQuery {
+    async fn interview(
+        &self,
+        ctx: &Context<'_>,
+        number: i64,
+    ) -> async_graphql::Result<Option<Interview>> {
+        let db = ctx.data::<Db>()?;
+
+        let mut stream = db
+            .execute(query!(
+                "
+                MATCH (interview:Interview {{number: {number}}}) RETURN interview LIMIT 1
+            ",
+                number = number
+            ))
+            .await?;
+
+        Ok(stream.first_as::<Interview>("interview").await?)
     }
 
-    Ok(interviews)
+    async fn interviews(&self, ctx: &Context<'_>) -> async_graphql::Result<Vec<Interview>> {
+        let db = ctx.data::<Db>()?;
+
+        let mut stream = db
+            .execute(query(
+                "
+                    MATCH (interview:Interview)
+                    RETURN interview
+                    ORDER BY interview.date ASC
+                    LIMIT 5
+                ",
+            ))
+            .await?;
+
+        let mut interviews = Vec::new();
+
+        while let Some(row) = stream.next().await? {
+            let node = row.node_as::<Interview>("interview")?;
+            interviews.push(node);
+        }
+
+        Ok(interviews)
+    }
 }
 
 pub async fn get_transcript(ctx: &Context<'_>, number: i64) -> async_graphql::Result<Transcript> {
@@ -48,7 +122,7 @@ pub async fn get_transcript(ctx: &Context<'_>, number: i64) -> async_graphql::Re
         )
         .await?;
 
-    let mut interview_opt: Option<Interview> = None;
+    let mut interview_opt: Option<GqlInterview> = None;
     let mut transcript_uid = String::new();
     let mut statements: Vec<Statement> = Vec::new();
 
@@ -68,11 +142,7 @@ pub async fn get_transcript(ctx: &Context<'_>, number: i64) -> async_graphql::Re
         statements.push(Statement {
             uid: sn.uid,
             text: sn.text,
-            // Person can be deserialized directly---its fields match the
-            // node properties exactly (uid, name).
             person: person.to()?,
-            // Timing lives on the :CONTAINS relationship, not the Statement
-            // node. Relation::get() works just like Node::get().
             start_time: contains.get("startTime")?,
             end_time: contains.get("endTime")?,
             words: sn.words,
