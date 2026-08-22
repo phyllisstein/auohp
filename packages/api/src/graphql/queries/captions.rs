@@ -1,4 +1,5 @@
 use crate::graphql::nodes::{Statement, StatementNode};
+use crate::graphql::row::RowExt;
 use crate::neo4j::Db;
 use async_graphql::{Context, Object};
 use neo4rs::query;
@@ -51,17 +52,17 @@ impl Captions {
             }
         };
 
-        let statement: neo4rs::Node = row.get("span")?;
-        let meta: neo4rs::Relation = row.get("meta")?;
-        let sn: StatementNode = statement.to()?;
+        let sn = row.node_as::<StatementNode>("span")?;
+        let start_time = row.rel_prop("meta", "startTime")?;
+        let end_time = row.rel_prop("meta", "endTime")?;
 
         Ok(Some({
             Statement {
                 uid: sn.uid,
                 text: sn.text,
                 person: None,
-                start_time: meta.get("startTime")?,
-                end_time: meta.get("endTime")?,
+                start_time,
+                end_time,
                 words: None,
             }
         }))
