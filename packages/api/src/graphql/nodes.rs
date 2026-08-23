@@ -77,8 +77,6 @@ pub struct Statement {
 #[derive(SimpleObject, Clone)]
 pub struct Transcript {
     pub uid: String,
-    /// The interview this transcript belongs to (via `:HAS_TRANSCRIPT`).
-    pub interview: Interview,
     /// Statements in transcript order (via the `:NEXT` linked list).
     pub statements: Vec<Statement>,
 }

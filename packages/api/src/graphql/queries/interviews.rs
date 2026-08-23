@@ -1,5 +1,7 @@
-use crate::graphql::nodes::{Interview as GqlInterview, Statement, StatementNode, Transcript};
-use crate::graphql::row::{RowExt, RowStreamExt};
+use crate::graphql::nodes::{
+    Interview as GqlInterview, Person, Statement, StatementNode, Transcript,
+};
+use crate::graphql::row::*;
 use crate::neo4j::Db;
 use async_graphql::{Context, Object, ScalarType, SimpleObject};
 use chrono::NaiveDate;
@@ -30,12 +32,9 @@ impl Interview {
                        -[:HAS_TRANSCRIPT]->(transcript:Transcript)
                        -[contains:CONTAINS]->(statement:Statement)
                        <-[:SAYS]-(person:Person)
-                 OPTIONAL MATCH (interview)-[:INTERVIEWS]->(interviewer:Person)
-                   WHERE interviewer = person
 
                  RETURN interview, transcript, statement, person, contains
                  ORDER BY contains.startTime
-                 LIMIT 1
                  ",
                 )
                 .param("number", self.number),
@@ -44,8 +43,32 @@ impl Interview {
 
         tracing::debug!("Neo4j query returned");
 
-        let ts = stream.first_as::<Transcript>("transcript").await?;
-        Ok(ts)
+        let mut statements: Vec<Statement> = Vec::new();
+        let mut transcript_uid = String::new();
+
+        while let Some(row) = stream.next().await? {
+            let statement_node = row.node_as::<StatementNode>("statement")?;
+            let person = row.node_as::<Person>("person")?;
+            let start_time = row.rel_prop::<f64>("contains", "startTime")?;
+            let end_time = row.rel_prop::<f64>("contains", "endTime")?;
+
+            statements.push(Statement {
+                uid: statement_node.uid,
+                text: statement_node.text,
+                person: Some(person),
+                start_time: Some(start_time),
+                end_time: Some(end_time),
+                words: statement_node.words,
+            });
+
+            let transcript_node: neo4rs::Node = row.get("transcript")?;
+            let transcript_uid: String = transcript_node.get("uid")?;
+        }
+
+        Ok(Some(Transcript {
+            uid: "ididid".into(),
+            statements,
+        }))
     }
 }
 
@@ -154,7 +177,6 @@ pub async fn get_transcript(ctx: &Context<'_>, number: i64) -> async_graphql::Re
 
     Ok(Transcript {
         uid: transcript_uid,
-        interview,
         statements,
     })
 }
