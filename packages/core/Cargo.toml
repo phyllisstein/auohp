@@ -14,11 +14,13 @@ metal = [
     "ort/coreml",
     "whisper-rs/metal",
     "fastembed/metal",
+    "candle-core/metal",
 ]
 cuda = [
     "ort/cuda",
     "whisper-rs/cuda",
     "fastembed/cuda",
+    "candle-core/cuda",
 ]
 
 [dependencies]
@@ -49,6 +51,7 @@ audioadapter-buffers = "2"
 # constraint from the other direction; this keeps them in sync.
 fastembed = { version = "6" }
 kodama = "0.3.0"
+candle-core = "0.11.0"
 
 # Structured logging --- tracing instruments async code; tracing-subscriber
 # formats and emits those events (to stdout, to files, etc.)
