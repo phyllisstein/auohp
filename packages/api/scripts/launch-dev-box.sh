@@ -165,12 +165,12 @@ sudo dpkg -i cuda-keyring_1.1-1_all.deb
 rm -f cuda-keyring_1.1-1_all.deb
 
 sudo apt-get update
-sudo apt-get install -y cuda-toolkit-12-9 cuda-drivers
+sudo apt-get install -y cuda-toolkit-12 cuda-drivers
 
 # Make the chosen toolkit easy to find in fresh login shells.
-grep -q cuda-12.9 ~/.bashrc || cat >> ~/.bashrc <<EOF
-export PATH=/usr/local/cuda-12.9/bin:\$PATH
-export LD_LIBRARY_PATH=/usr/local/cuda-12.9/lib64:\$LD_LIBRARY_PATH
+grep -q cuda ~/.bashrc || cat >> ~/.bashrc <<EOF
+export PATH=/usr/local/cuda-12/bin:\$PATH
+export LD_LIBRARY_PATH=/usr/local/cuda-12/lib64:\$LD_LIBRARY_PATH
 EOF
 
 echo
@@ -186,8 +186,8 @@ echo "Stage 2: verify GPU/toolchain, install Rust, and prepare the repo."
 ssh_box bash -s <<EOF
 set -euo pipefail
 
-export PATH=/usr/local/cuda-12.9/bin:$PATH
-export LD_LIBRARY_PATH=/usr/local/cuda-12.9/lib64:$LD_LIBRARY_PATH
+export PATH=/usr/local/cuda-12/bin:$PATH
+export LD_LIBRARY_PATH=/usr/local/cuda-12/lib64:$LD_LIBRARY_PATH
 
 echo "== nvcc =="
 nvcc --version
@@ -254,3 +254,13 @@ mkdir /scratch/models /scratch/in /scratch/out /scratch/logs
 
 # Rust
 # curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- --profile complete -y
+
+# node.js + yarn
+# sudo mkdir -p /etc/apt/keyrings
+# curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
+#     | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
+# echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_26.x nodistro main" \
+#     | sudo tee /etc/apt/sources.list.d/nodesource.list
+# curl -sL https://dl.yarnpkg.com/debian/pubkey.gpg | gpg --dearmor | sudo tee /usr/share/keyrings/yarnkey.gpg >/dev/null
+# echo "deb [signed-by=/usr/share/keyrings/yarnkey.gpg] https://dl.yarnpkg.com/debian stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
+# sudo apt-get update && sudo apt-get install -y nodejs yarn
