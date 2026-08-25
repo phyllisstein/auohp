@@ -153,7 +153,7 @@ sudo apt-get install -y \
     libsoup-3.0-dev \
     libssl-dev \
     libwebkit2gtk-4.1-dev \
-    linux-headers-aws \
+    linux-headers-$(uname -r) \
     lsb-release \
     pciutils \
     pkg-config \
@@ -228,7 +228,7 @@ Build:
     cd ${AUOHP_REPO_DIR}/packages/auohp-api
     cargo build --release --features cuda
 
-Stop when finished to avoid surprise cost:
+Stop when finixshed to avoid surprise cost:
     ${AWS_BASE[*]} ec2 stop-instances --instance-ids ${INSTANCE_ID}
 
 Terminate when you are done for good:
@@ -246,7 +246,7 @@ mkdir /scratch/models /scratch/in /scratch/out /scratch/logs
 
 # Legacy Python
 # sudo add-apt-repository ppa:deadsnakes/ppa
-# sudo apt-get update
+# sudo apt-get Updater1
 # sudo apt-get install -y python3.10 python3.10-venv python3.10-dev
 
 # uv
