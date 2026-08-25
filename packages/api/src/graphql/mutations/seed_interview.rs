@@ -4,7 +4,6 @@ use async_graphql::{Context, Enum, InputObject, SimpleObject};
 use neo4rs::{BoltMap, BoltString, BoltType, query};
 use serde::{Deserialize, Serialize};
 
-use crate::graphql::error::gql_err;
 use crate::graphql::nodes::Interview;
 use crate::neo4j::Db;
 use crate::uid;
@@ -227,7 +226,7 @@ pub async fn seed_interview(
     // Rust enforces this at the type level: `txn.commit()` takes ownership
     // of `self` (it's `fn commit(mut self)`), so the borrow checker won't
     // let you accidentally use the transaction after committing.
-    let mut txn = db.start_txn().await.map_err(gql_err)?;
+    let mut txn = db.start_txn().await?;
 
     let interview_uid = uid::generate();
     let transcript_uid = uid::generate();
@@ -270,8 +269,7 @@ pub async fn seed_interview(
         interviewDate = input.date.clone(),
         transcriptUid = transcript_uid.clone()
     ))
-    .await
-    .map_err(gql_err)?;
+    .await?;
 
     tracing::info!(
         interview_uid,
@@ -378,8 +376,7 @@ pub async fn seed_interview(
             transcriptUid = transcript_uid.clone(),
             statements = stmt_params,
         ))
-        .await
-        .map_err(gql_err)?;
+        .await?;
     }
 
     // ── Phase 3: attach caption files (optional) ────────────────────────
@@ -398,8 +395,7 @@ pub async fn seed_interview(
                 vttUrl = assets.vtt_url.clone().unwrap_or_default(),
                 vttText = assets.vtt_text.clone().unwrap_or_default(),
             ))
-            .await
-            .map_err(gql_err)?;
+            .await?;
         }
 
         if has_json {
@@ -412,8 +408,7 @@ pub async fn seed_interview(
                 jsonUrl = assets.json_caption_url.clone().unwrap_or_default(),
                 jsonText = assets.json_caption_text.clone().unwrap_or_default(),
             ))
-            .await
-            .map_err(gql_err)?;
+            .await?;
         }
     }
 
@@ -429,7 +424,7 @@ pub async fn seed_interview(
         interviewee = input.interviewee.clone(),
         "committing transaction..."
     );
-    txn.commit().await.map_err(gql_err)?;
+    txn.commit().await?;
     tracing::info!(
         interview_uid,
         transcript_uid,
@@ -487,7 +482,7 @@ pub async fn seed_interview(
             uid: interview_uid,
             number: input.number,
             interviewee: input.interviewee,
-            date: input.date.parse().map_err(gql_err)?,
+            date: input.date.parse()?,
         },
         statement_count: segments.len() as i64,
         speaker_count,

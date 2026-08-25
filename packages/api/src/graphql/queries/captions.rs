@@ -1,10 +1,7 @@
-use crate::captions;
-use crate::graphql::error::gql_err;
 use crate::graphql::nodes::{Statement, StatementNode};
+use crate::graphql::row::RowExt;
 use crate::neo4j::Db;
-use anyhow::Context;
-use async_graphql::{Context, Object, SimpleObject};
-use axum::extract::State;
+use async_graphql::{Context, Object};
 use neo4rs::query;
 
 pub struct Captions {
@@ -42,30 +39,27 @@ impl Captions {
             )
             .await?;
 
-        let s_row = span_stream.next().await?;
-
-        let row = match s_row {
-            Some(r) => r,
-            None => {
-                return Err(async_graphql::Error {
-                    message: format!("No span returned at {timestamp}"),
-                    source: None,
-                    extensions: None,
-                });
-            }
+        // No statement spans this timestamp. That is a legitimate answer, not a
+        // failure, so it becomes a null rather than an entry in the `errors`
+        // array --- which is the whole reason this resolver returns
+        // `Result<Option<Statement>>` rather than `Result<Statement>`. An error
+        // here would propagate up to the nearest nullable ancestor, and with a
+        // non-null field it would erase all of `data`.
+        let Some(row) = span_stream.next().await? else {
+            return Ok(None);
         };
 
-        let statement: neo4rs::Node = row.get("span")?;
-        let meta: neo4rs::Relation = row.get("meta")?;
-        let sn: StatementNode = statement.to()?;
+        let sn = row.node_as::<StatementNode>("span")?;
+        let start_time = row.rel_prop("meta", "startTime")?;
+        let end_time = row.rel_prop("meta", "endTime")?;
 
         Ok(Some({
             Statement {
                 uid: sn.uid,
                 text: sn.text,
                 person: None,
-                start_time: meta.get("startTime")?,
-                end_time: meta.get("endTime")?,
+                start_time,
+                end_time,
                 words: None,
             }
         }))

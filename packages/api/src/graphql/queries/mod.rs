@@ -1,5 +1,5 @@
 pub mod captions;
-mod interviews;
+pub mod interviews;
 mod root;
 mod search;
 

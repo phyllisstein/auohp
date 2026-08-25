@@ -1,4 +1,3 @@
-use crate::graphql::error::gql_err;
 use crate::neo4j::Db;
 use async_graphql::{Context, Enum, InputObject, SimpleObject};
 use neo4rs::query;
@@ -36,7 +35,7 @@ pub async fn add_asset(
 ) -> async_graphql::Result<AddAssetPayload> {
     let db = ctx.data::<Db>()?;
 
-    let mut txn = db.start_txn().await.map_err(gql_err)?;
+    let mut txn = db.start_txn().await?;
 
     let node_label = match input.kind {
         AssetKind::Video => "Video",
@@ -58,11 +57,10 @@ pub async fn add_asset(
             uid = asset_uid.clone(),
             parentUid = input.parent_id,
         ))
-        .await
-        .map_err(gql_err)?;
+        .await?;
 
     let asset = match create_stream.single(&mut txn).await {
-        Ok(row) => row.get("asset").map_err(gql_err).unwrap(),
+        Ok(row) => row.get("asset").unwrap(),
         Err(_) => Asset {
             uid: "".into(),
             uri: "".into(),
@@ -70,7 +68,7 @@ pub async fn add_asset(
         },
     };
 
-    txn.commit().await.map_err(gql_err)?;
+    txn.commit().await?;
 
     Ok(AddAssetPayload { asset })
 }

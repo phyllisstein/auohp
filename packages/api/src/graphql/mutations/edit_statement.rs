@@ -1,4 +1,3 @@
-use crate::graphql::error::gql_err;
 use crate::graphql::nodes::StatementNode;
 use crate::neo4j::Db;
 use async_graphql::{Context, InputObject, SimpleObject};
@@ -44,7 +43,7 @@ pub async fn edit_statement(
 
     let wrote_embedding = embedding.is_some();
 
-    let mut tx = db.start_txn().await.map_err(gql_err)?;
+    let mut tx = db.start_txn().await?;
     let mut edit_stream = tx
         .execute(
             query(
@@ -61,19 +60,17 @@ pub async fn edit_statement(
             .param("uid", input.uid.clone())
             .param("text", input.text),
         )
-        .await
-        .map_err(gql_err)?;
+        .await?;
 
     let row = edit_stream
         .next(&mut tx)
-        .await
-        .map_err(gql_err)?
+        .await?
         .into_iter()
         .next()
         .ok_or_else(|| async_graphql::Error::new("statement not found"))?;
 
-    let statement_node: StatementNode = row.get("statement").map_err(gql_err)?;
-    let old_text: String = row.get("oldText").map_err(gql_err)?;
+    let statement_node: StatementNode = row.get("statement")?;
+    let old_text: String = row.get("oldText")?;
 
     if let Some(v) = embedding {
         let bolt_vector: Vec<BoltType> = v.iter().map(|&v| BoltType::from(v as f64)).collect();
@@ -88,11 +85,10 @@ pub async fn edit_statement(
             .param("uid", input.uid)
             .param("vector", bolt_vector),
         )
-        .await
-        .map_err(gql_err)?;
+        .await?
     }
 
-    tx.commit().await.map_err(gql_err)?;
+    tx.commit().await?;
 
     let old_hash = md5::compute(old_text);
     let new_hash = md5::compute(statement_node.text);
