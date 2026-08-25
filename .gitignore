@@ -667,3 +667,4 @@ tags
 
 # Machine-local Claude Code settings (permissions, MCP toggles).
 .claude/settings.local.json
+TODO.md
