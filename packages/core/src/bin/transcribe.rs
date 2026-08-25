@@ -56,8 +56,9 @@ fn main() -> Result<()> {
     let transcription = transcription::run_with(&cli.file, &config)?;
 
     let git_hash = Command::new("git")
-        .arg("status")
+        .arg("rev-parse")
         .arg("--short")
+        .arg("HEAD")
         .output()
         .map_or("#######".into(), {
             |oe| {
