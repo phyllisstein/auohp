@@ -126,20 +126,27 @@ function Page () {
     const statementHash = editStatementResult.data?.editStatement?.newHash;
 
     return (
-        <div>
-            <EditorStyle />
-            <video
-                ref={ player }
-                controls
-                crossOrigin="anonymous"
-                onTimeUpdate={ ev => playhead.timestamp.value = (ev.target as HTMLVideoElement).currentTime }>
-                <source src={ `${ AUOHP_PUBLIC }/videos/${ interviewNumber }.mp4` } type="video/mp4" />
-                {
-                    interview.uid && <track default key={ statementHash } kind="captions" src={ `${ AUOHP_API_URI }/interview/${ interview.uid }/vtt` } srcLang="en" label="English" />
-                }
-            </video>
+        <>
+            {
+                transcriptData.interview?.interviewee
+                    ? <title>{ transcriptData.interview.interviewee } | AUOHP Editor</title>
+                    : <title>AUOHP Editor</title>
+            }
+            <div>
+                <EditorStyle />
+                <video
+                    ref={ player }
+                    controls
+                    crossOrigin="anonymous"
+                    onTimeUpdate={ ev => playhead.timestamp.value = (ev.target as HTMLVideoElement).currentTime }>
+                    <source src={ `${ AUOHP_PUBLIC }/videos/${ interviewNumber }.mp4` } type="video/mp4" />
+                    {
+                        interview.uid && <track default key={ statementHash } kind="captions" src={ `${ AUOHP_API_URI }/interview/${ interview.uid }/vtt` } srcLang="en" label="English" />
+                    }
+                </video>
 
-            <LexicalExtensionComposer extension={ extension } />
-        </div>
+                <LexicalExtensionComposer extension={ extension } />
+            </div>
+        </>
     );
 }

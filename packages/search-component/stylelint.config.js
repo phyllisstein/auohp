@@ -41,6 +41,7 @@ const config = {
         "@stylistic/string-quotes": "double",
 
         "media-feature-range-notation": "prefix",
+        "selector-class-pattern": null,
     },
 };
 
