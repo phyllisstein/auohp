@@ -33,6 +33,10 @@ export const EDIT_STATEMENT_MUTATION = graphql(`
 export const TRANSCRIPT_QUERY = graphql(`
     query Transcript($interviewNumber: Int!) {
         health
+        interview(interviewNumber: $interviewNumber) {
+            uid
+            interviewee
+        }
         interviewTranscript(number: $interviewNumber) {
             uid
             interview {
