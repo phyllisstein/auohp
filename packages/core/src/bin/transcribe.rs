@@ -19,25 +19,28 @@ use std::{
 };
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 
+#[derive(Serialize)]
+struct ResultsWithConfig {
+    transcription: TranscriptionResult,
+    config: TranscribeConfig,
+    git_hash: String,
+}
+
+#[derive(Serialize)]
+struct TranscriptionManifest {}
+
 #[derive(Parser, Debug)]
 struct Cli {
     /// Result output path (defaults to stdout)
     #[arg(short, long)]
     output: Option<PathBuf>,
 
-    /// TranscribeConfig JSON. Defaults to the baseline configuration.
+    /// Path to a transcription task manifest (see tests/fixtures/transcribe_manifest.example.yaml)
     #[arg(short, long)]
-    config: Option<PathBuf>,
+    manifest: Option<PathBuf>,
 
     /// File to transcribe
     file: PathBuf,
-}
-
-#[derive(Serialize)]
-struct ResultsWithConfig {
-    transcription: TranscriptionResult,
-    config: TranscribeConfig,
-    git_hash: &str,
 }
 
 fn main() -> Result<()> {
@@ -55,7 +58,7 @@ fn main() -> Result<()> {
 
     let transcription = transcription::run_with(&cli.file, &config)?;
 
-    let git_hash = Command::new("git")
+    let git_hash: String = Command::new("git")
         .arg("rev-parse")
         .arg("--short")
         .arg("HEAD")
@@ -69,7 +72,8 @@ fn main() -> Result<()> {
                 }
             }
         })
-        .trim();
+        .trim()
+        .into();
 
     let results = ResultsWithConfig {
         transcription,

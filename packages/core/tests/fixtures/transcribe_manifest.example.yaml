@@ -1,0 +1,25 @@
+# A `TranscribeConfig` partial (transcription/config.rs#L149-L153).
+config:
+  vad:
+    enabled: true
+  decode:
+    initial_prompt: ACT UP. FIGHT BACK. FIGHT AIDS.
+
+# Run configuration for the `Transcribe` pipeline (transcription/pipeline.rs#L31-L35).
+run:
+  asset_path: /home/user/transcribe_assets
+  output_path: /home/user/transcribe_output
+
+interviews:
+  - number: 1
+    interviewee: John Donne
+    date: 1624-01-09
+    filename: devotions_upon_emergent_occasions.mp4
+  - number: 2
+    interviewee: Susan Sontag
+    date: 1978-01-01
+    filename: illness_as_metaphor.mp4
+  - number: 3
+    interviewee: Leo Bersani
+    date: 1987-12-01
+    filename: is_the_rectum_a_grave.mp4

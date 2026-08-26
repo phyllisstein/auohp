@@ -156,4 +156,8 @@ impl TranscribeConfig {
     pub fn from_json(s: &str) -> Result<Self, serde_json::Error> {
         serde_json::from_str(s)
     }
+
+    pub fn from_yaml(s: &str) -> Result<Self, serde_yaml::Error> {
+        serde_yaml::from_str(s)
+    }
 }

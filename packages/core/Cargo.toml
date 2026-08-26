@@ -71,3 +71,4 @@ clap = { version = "4.6.1", features = ["derive"] }
 # so we don't have to add individual features as they're needed.
 tokio = { version = "1", features = ["full"] }
 whisper-rs = "0.16.0"
+serde_yaml = "0.9.34"
