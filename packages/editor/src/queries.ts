@@ -35,9 +35,6 @@ export const TRANSCRIPT_QUERY = graphql(`
         health
         interviewTranscript(number: $interviewNumber) {
             uid
-            interview {
-                uid
-            }
             statements {
                 uid
                 startTime

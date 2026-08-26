@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useRef, type RefObject } from "react";
+import { useId, useMemo, useRef, type RefObject } from "react";
 import { LexicalExtensionComposer } from "@lexical/react/LexicalExtensionComposer";
 import { useMutation, useReadQuery } from "@apollo/client/react";
 import { useSignalEffect } from "@preact/signals-react";
@@ -88,9 +88,11 @@ function Page () {
 
     const [editStatement, editStatementResult] = useMutation(EDIT_STATEMENT_MUTATION);
 
+    const fallbackId = useId();
     const player = useRef<HTMLVideoElement>(null);
     useVideoSync(player);
 
+    const interviewUid = transcriptData?.interview?.uid ?? fallbackId;
     const { statements, interview } = transcriptData.interviewTranscript;
 
     // The whole editor is now one value. Everything the old route spelled out in
@@ -121,25 +123,32 @@ function Page () {
         defineAuohpEditorExtension({
             editStatement,
             statements,
-        }), [interview.uid]);
+        }), [interviewUid]);
 
     const statementHash = editStatementResult.data?.editStatement?.newHash;
 
     return (
-        <div>
-            <EditorStyle />
-            <video
-                ref={ player }
-                controls
-                crossOrigin="anonymous"
-                onTimeUpdate={ ev => playhead.timestamp.value = (ev.target as HTMLVideoElement).currentTime }>
-                <source src={ `${ AUOHP_PUBLIC }/videos/${ interviewNumber }.mp4` } type="video/mp4" />
-                {
-                    interview.uid && <track default key={ statementHash } kind="captions" src={ `${ AUOHP_API_URI }/interview/${ interview.uid }/vtt` } srcLang="en" label="English" />
-                }
-            </video>
+        <>
+            {
+                transcriptData?.interview?.interviewee
+                    ? <title>{ transcriptData.interview.interviewee } | AUOHP Editor</title>
+                    : <title>AUOHP Editor</title>
+            }
+            <div>
+                <EditorStyle />
+                <video
+                    ref={ player }
+                    controls
+                    crossOrigin="anonymous"
+                    onTimeUpdate={ ev => playhead.timestamp.value = (ev.target as HTMLVideoElement).currentTime }>
+                    <source src={ `${ AUOHP_PUBLIC }/videos/${ interviewNumber }.mp4` } type="video/mp4" />
+                    {
+                        interviewUid && <track default key={ statementHash } kind="captions" src={ `${ AUOHP_API_URI }/interview/${ interviewNumber }/vtt` } srcLang="en" label="English" />
+                    }
+                </video>
 
-            <LexicalExtensionComposer extension={ extension } />
-        </div>
+                <LexicalExtensionComposer extension={ extension } />
+            </div>
+        </>
     );
 }

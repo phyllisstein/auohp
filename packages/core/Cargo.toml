@@ -14,11 +14,13 @@ metal = [
     "ort/coreml",
     "whisper-rs/metal",
     "fastembed/metal",
+    "candle-core/metal",
 ]
 cuda = [
     "ort/cuda",
     "whisper-rs/cuda",
     "fastembed/cuda",
+    "candle-core/cuda",
 ]
 
 [dependencies]
@@ -36,7 +38,7 @@ thiserror = "2"
 # `metal` / `cuda` feature gates below can activate `ort/coreml` and
 # `ort/cuda` on the shared crate instance that fastembed also pulls in.
 # Pinned to rc.10 because fastembed ~5.8 requires it.
-ort = "=2.0.0-rc.10"
+ort = "2.0.0-rc.13"
 symphonia = { version = "0.5", features = ["isomp4", "aac", "wav", "pcm"] }
 rubato = "1"
 audioadapter-buffers = "2"
@@ -47,8 +49,9 @@ audioadapter-buffers = "2"
 # pyannote-rs --- its ndarray TensorArrayData trait changed between rc.10
 # and rc.11. The `ort = "=2.0.0-rc.10"` pin above enforces the same
 # constraint from the other direction; this keeps them in sync.
-fastembed = { version = "~5.8", default-features = false, features = ["ort-download-binaries", "hf-hub-native-tls"] }
+fastembed = { version = "6" }
 kodama = "0.3.0"
+candle-core = "0.11.0"
 
 # Structured logging --- tracing instruments async code; tracing-subscriber
 # formats and emits those events (to stdout, to files, etc.)

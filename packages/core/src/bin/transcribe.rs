@@ -37,7 +37,7 @@ struct Cli {
 struct ResultsWithConfig {
     transcription: TranscriptionResult,
     config: TranscribeConfig,
-    git_hash: String,
+    git_hash: &str,
 }
 
 fn main() -> Result<()> {
@@ -68,7 +68,8 @@ fn main() -> Result<()> {
                     String::from_utf8_lossy(&oe.stdout).into_owned()
                 }
             }
-        });
+        })
+        .trim();
 
     let results = ResultsWithConfig {
         transcription,

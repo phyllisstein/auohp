@@ -56,7 +56,7 @@ pub struct StatementMeta {
 
 /// Mirrors the (:Statement) node, with timing from the `:CONTAINS` edge and
 /// speaker attribution from `:SAYS`.
-#[derive(SimpleObject, Deserialize)]
+#[derive(SimpleObject, Deserialize, Clone)]
 pub struct Statement {
     pub uid: String,
     pub text: String,
@@ -74,11 +74,9 @@ pub struct Statement {
 
 /// Mirrors the (:Transcript) node, with its ordered statements and the
 /// Interview it belongs to.
-#[derive(SimpleObject)]
+#[derive(SimpleObject, Clone)]
 pub struct Transcript {
     pub uid: String,
-    /// The interview this transcript belongs to (via `:HAS_TRANSCRIPT`).
-    pub interview: Interview,
     /// Statements in transcript order (via the `:NEXT` linked list).
     pub statements: Vec<Statement>,
 }
@@ -91,6 +89,7 @@ pub struct Transcript {
 /// ("2003-05-05")---so the GraphQL API still returns a string, but
 /// the Rust code works with a typed date value.
 #[derive(SimpleObject, Clone, Deserialize)]
+#[graphql(name = "GqlInterview")]
 pub struct Interview {
     pub uid: String,
     pub number: i64,

@@ -44,6 +44,7 @@ function RootComponent () {
                 }}>
                 <head>
                     <HeadContent />
+                    <title>AUOHP Editor</title>
                 </head>
                 <body>
                     <main>

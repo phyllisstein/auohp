@@ -100,7 +100,7 @@ PAYLOAD=$(jq -n \
                 number: $number,
                 date: $date,
                 interviewee: $interviewee,
-                segmentsJson: ($segmentsFile[0].segments | tojson)
+                segmentsJson: ($segmentsFile[0].transcription.segments | tojson)
             }
         }
     }')

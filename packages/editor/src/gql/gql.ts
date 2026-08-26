@@ -15,12 +15,12 @@ import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-
  */
 type Documents = {
     "\n    mutation EditStatement($uid: String!, $text: String!) {\n        editStatement(input: { uid: $uid, text: $text }) {\n            uid\n            oldHash\n            newHash\n            wroteEmbedding\n        }\n    }\n": typeof types.EditStatementDocument,
-    "\n    query Transcript($interviewNumber: Int!) {\n        health\n        interviewTranscript(number: $interviewNumber) {\n            uid\n            interview {\n                uid\n            }\n            statements {\n                uid\n                startTime\n                endTime\n                text\n            }\n        }\n    }\n": typeof types.TranscriptDocument,
+    "\n    query Transcript($interviewNumber: Int!) {\n        health\n        interviewTranscript(number: $interviewNumber) {\n            uid\n            statements {\n                uid\n                startTime\n                endTime\n                text\n            }\n        }\n    }\n": typeof types.TranscriptDocument,
     "\n    query SearchStatements(\n        $query: String!\n    ) {\n        searchStatements(\n            query: $query\n        ) {\n            statement {\n                uid\n                text\n            }\n        }\n    }\n": typeof types.SearchStatementsDocument,
 };
 const documents: Documents = {
     "\n    mutation EditStatement($uid: String!, $text: String!) {\n        editStatement(input: { uid: $uid, text: $text }) {\n            uid\n            oldHash\n            newHash\n            wroteEmbedding\n        }\n    }\n": types.EditStatementDocument,
-    "\n    query Transcript($interviewNumber: Int!) {\n        health\n        interviewTranscript(number: $interviewNumber) {\n            uid\n            interview {\n                uid\n            }\n            statements {\n                uid\n                startTime\n                endTime\n                text\n            }\n        }\n    }\n": types.TranscriptDocument,
+    "\n    query Transcript($interviewNumber: Int!) {\n        health\n        interviewTranscript(number: $interviewNumber) {\n            uid\n            statements {\n                uid\n                startTime\n                endTime\n                text\n            }\n        }\n    }\n": types.TranscriptDocument,
     "\n    query SearchStatements(\n        $query: String!\n    ) {\n        searchStatements(\n            query: $query\n        ) {\n            statement {\n                uid\n                text\n            }\n        }\n    }\n": types.SearchStatementsDocument,
 };
 
@@ -45,7 +45,7 @@ export function graphql(source: "\n    mutation EditStatement($uid: String!, $te
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n    query Transcript($interviewNumber: Int!) {\n        health\n        interviewTranscript(number: $interviewNumber) {\n            uid\n            interview {\n                uid\n            }\n            statements {\n                uid\n                startTime\n                endTime\n                text\n            }\n        }\n    }\n"): (typeof documents)["\n    query Transcript($interviewNumber: Int!) {\n        health\n        interviewTranscript(number: $interviewNumber) {\n            uid\n            interview {\n                uid\n            }\n            statements {\n                uid\n                startTime\n                endTime\n                text\n            }\n        }\n    }\n"];
+export function graphql(source: "\n    query Transcript($interviewNumber: Int!) {\n        health\n        interviewTranscript(number: $interviewNumber) {\n            uid\n            statements {\n                uid\n                startTime\n                endTime\n                text\n            }\n        }\n    }\n"): (typeof documents)["\n    query Transcript($interviewNumber: Int!) {\n        health\n        interviewTranscript(number: $interviewNumber) {\n            uid\n            statements {\n                uid\n                startTime\n                endTime\n                text\n            }\n        }\n    }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

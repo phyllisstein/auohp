@@ -34,18 +34,18 @@ fn format_millisecond_timestamp(t: i64) -> String {
 }
 
 /// Build a WebVTT document for an interview's statements, ordered by start time.
-pub async fn generate_vtt(db: &Db, interview_uid: &str) -> Result<String> {
+pub async fn generate_vtt(db: &Db, interview_number: i64) -> Result<String> {
     let mut statement_stream = db
         .execute(query!(
             "
             MATCH
-                (int:Interview {{uid: {uid}}})-[:HAS_TRANSCRIPT]->
+                (int:Interview {{number: {number}}})-[:HAS_TRANSCRIPT]->
                 (:Transcript)-[meta:CONTAINS]->
                 (statement:Statement)
             RETURN statement, meta.startTime as startTime, meta.endTime as endTime
             ORDER BY meta.startTime ASCENDING
         ",
-            uid = interview_uid,
+            number = interview_number,
         ))
         .await?;
 
@@ -58,9 +58,8 @@ pub async fn generate_vtt(db: &Db, interview_uid: &str) -> Result<String> {
         let start_time: neo4rs::BoltFloat = row.get("startTime")?;
         let end_time: neo4rs::BoltFloat = row.get("endTime")?;
 
-        let start_timestamp =
-            format_millisecond_timestamp((start_time.value * 1_000.0).round() as i64);
-        let end_timestamp = format_millisecond_timestamp((end_time.value * 1_000.0).round() as i64);
+        let start_timestamp = format_millisecond_timestamp((start_time.value * 1_800.0) as i64);
+        let end_timestamp = format_millisecond_timestamp((end_time.value * 1_000.0) as i64);
 
         let text = sn.text.clone();
 
