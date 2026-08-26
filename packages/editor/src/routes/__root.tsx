@@ -26,47 +26,45 @@ function RootComponent () {
     const router = useRouter();
 
     return (
-        <html lang="en">
-            <ApolloProvider client={ apolloClient }>
-                <SpectrumProvider
-                    background="base"
-                    colorScheme="dark"
-                    elementType="html"
-                    locale="en-US"
-                    router={{
-                        navigate: (href, options) => {
-                            if (typeof href === "string") return;
-                            return router.navigate({ ...href, ...options });
-                        },
-                        useHref: href => {
-                            if (typeof href === "string") return href;
-                            return router.buildLocation(href).href;
-                        },
-                    }}>
-                    <head>
-                        <HeadContent />
-                        <title>AUOHP Editor</title>
-                    </head>
-                    <body>
-                        <main>
-                            <StyledThemeProvider theme={ theme }>
-                                <Body />
-                                <ErrorBoundary
-                                    fallback={
-                                        ({ error, reset }) => {
-                                            console.error("Error occurred: %o", error);
-                                            return <div>Error: { error.message }</div>;
-                                        }
-                                    }>
-                                    <Outlet />
-                                </ErrorBoundary>
-                            </StyledThemeProvider>
-                        </main>
-                        <Scripts />
-                    </body>
-                </SpectrumProvider>
-            </ApolloProvider>
-        </html>
+        <ApolloProvider client={ apolloClient }>
+            <SpectrumProvider
+                background="base"
+                colorScheme="dark"
+                elementType="html"
+                locale="en-US"
+                router={{
+                    navigate: (href, options) => {
+                        if (typeof href === "string") return;
+                        return router.navigate({ ...href, ...options });
+                    },
+                    useHref: href => {
+                        if (typeof href === "string") return href;
+                        return router.buildLocation(href).href;
+                    },
+                }}>
+                <head>
+                    <HeadContent />
+                    <title>AUOHP Editor</title>
+                </head>
+                <body>
+                    <main>
+                        <StyledThemeProvider theme={ theme }>
+                            <Body />
+                            <ErrorBoundary
+                                fallback={
+                                    ({ error, reset }) => {
+                                        console.error("Error occurred: %o", error);
+                                        return <div>Error: { error.message }</div>;
+                                    }
+                                }>
+                                <Outlet />
+                            </ErrorBoundary>
+                        </StyledThemeProvider>
+                    </main>
+                    <Scripts />
+                </body>
+            </SpectrumProvider>
+        </ApolloProvider>
     );
 }
 

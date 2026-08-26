@@ -3,10 +3,12 @@ use super::interviews;
 use super::search::{self, SearchHit};
 use crate::graphql::nodes::{Interview, Statement, StatementNode, Transcript};
 use crate::neo4j::Db;
-use async_graphql::{Context, Object};
+use anyhow::Result;
+use async_graphql::{Context, Error as GqlErr, Object};
 use neo4rs::{BoltType, query};
 use std::collections::HashMap;
 
+#[derive(Default)]
 pub struct QueryRoot;
 
 #[Object]
@@ -52,7 +54,11 @@ impl QueryRoot {
 
         let _ = db.execute(query(&query_str).param("rs", param_map)).await?;
 
-        todo!();
+        Err(GqlErr {
+            message: "Not implemented".into(),
+            source: None,
+            extensions: None,
+        })
     }
 
     /// Returns the full transcript for a single interview, statements ordered
@@ -85,7 +91,11 @@ impl QueryRoot {
         ctx: &Context<'_>,
         #[graphql(desc = "Interview UID")] interview_number: String,
     ) -> async_graphql::Result<Captions> {
-        todo!()
+        Err(GqlErr {
+            message: "Not implemented".into(),
+            source: None,
+            extensions: None,
+        })
     }
 
     async fn search_interview(
@@ -103,6 +113,10 @@ impl QueryRoot {
         #[graphql(desc = "Find span at this time")] timestamp: f64,
         #[graphql(desc = "Find spans from interview")] interview_number: i64,
     ) -> async_graphql::Result<Statement> {
-        todo!()
+        Err(GqlErr {
+            message: "Not implemented".into(),
+            source: None,
+            extensions: None,
+        })
     }
 }

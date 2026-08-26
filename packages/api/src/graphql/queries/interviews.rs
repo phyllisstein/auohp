@@ -135,8 +135,6 @@ pub async fn get_transcript(ctx: &Context<'_>, number: i64) -> async_graphql::Re
                        -[:HAS_TRANSCRIPT]->(transcript:Transcript)
                        -[contains:CONTAINS]->(statement:Statement)
                        <-[:SAYS]-(person:Person)
-                 OPTIONAL MATCH (interview)-[:INTERVIEWED_BY]->(interviewer:Person)
-                   WHERE interviewer = person
 
                  RETURN interview, transcript, statement, person, contains
                  ORDER BY contains.startTime",
@@ -165,9 +163,9 @@ pub async fn get_transcript(ctx: &Context<'_>, number: i64) -> async_graphql::Re
         statements.push(Statement {
             uid: sn.uid,
             text: sn.text,
-            person: person.to()?,
-            start_time: contains.get("startTime")?,
-            end_time: contains.get("endTime")?,
+            person: Some(person.to()?),
+            start_time: Some(contains.get("startTime")?),
+            end_time: Some(contains.get("endTime")?),
             words: sn.words,
         });
     }

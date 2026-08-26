@@ -34,18 +34,18 @@ fn format_millisecond_timestamp(t: i64) -> String {
 }
 
 /// Build a WebVTT document for an interview's statements, ordered by start time.
-pub async fn generate_vtt(db: &Db, interview_uid: &str) -> Result<String> {
+pub async fn generate_vtt(db: &Db, interview_number: i64) -> Result<String> {
     let mut statement_stream = db
         .execute(query!(
             "
             MATCH
-                (int:Interview {{uid: {uid}}})-[:HAS_TRANSCRIPT]->
+                (int:Interview {{number: {number}}})-[:HAS_TRANSCRIPT]->
                 (:Transcript)-[meta:CONTAINS]->
                 (statement:Statement)
             RETURN statement, meta.startTime as startTime, meta.endTime as endTime
             ORDER BY meta.startTime ASCENDING
         ",
-            uid = interview_uid,
+            number = interview_number,
         ))
         .await?;
 
