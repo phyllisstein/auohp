@@ -11,7 +11,7 @@ use axum::{Json, Router, http, response::IntoResponse};
 use serde::{Deserialize, Serialize};
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
 use tauri::tray::TrayIconBuilder;
-use tauri::{AppHandle, Emitter, Manager};
+use tauri::{AppHandle, Emitter};
 use tokio::net::TcpListener;
 use tokio::sync::broadcast;
 use tokio_stream::wrappers::BroadcastStream;
@@ -123,6 +123,7 @@ fn main() {
             Ok(())
         })
         .run(tauri::generate_context!())
+        // "The last line that executes; everything else is a callback or a task""
         .expect("failed to start app");
 }
 
@@ -192,8 +193,12 @@ async fn transcribe_cancel(
 }
 
 #[tauri::command]
-async fn transcribe_status(state: tauri::State<'_, Arc<Registry>>) -> JobStatus {
-    state.status().await
+async fn transcribe_status(state: tauri::State<'_, Arc<Registry>>) -> Result<JobStatus, ()> {
+    // The `Result` is not about fallibility --- `status()` cannot fail. It is
+    // what lets the command borrow `State<'_, _>`: tauri's macro dispatches
+    // Result-returning futures to a code path with no `'static` bound, while
+    // plain-value futures are spawned and must outlive the IPC message.
+    Ok(state.status().await)
 }
 
 // ---- HTTP handlers ----------------------------------------------------

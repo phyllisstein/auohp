@@ -73,10 +73,7 @@ pub enum Event {
 #[serde(tag = "state", rename_all = "snake_case")]
 pub enum Status {
     Idle,
-    Running {
-        id: JobId,
-        source: TranscribeSource,
-    },
+    Running { id: JobId, source: TranscribeSource },
 }
 
 #[derive(Debug, Error, Serialize)]
@@ -141,7 +138,11 @@ impl Registry {
     /// Each subscriber is independent --- the SSE handler and the
     /// Tauri-event bridge each call this and own their own receiver.
     pub async fn subscribe(&self) -> Option<broadcast::Receiver<Event>> {
-        self.slot.lock().await.as_ref().map(|r| r.events.subscribe())
+        self.slot
+            .lock()
+            .await
+            .as_ref()
+            .map(|r| r.events.subscribe())
     }
 
     /// Flip the cancel token. Returns immediately; the worker observes
@@ -203,6 +204,8 @@ impl Registry {
         let events_for_worker = events.clone();
         let cancel_for_worker = cancel.clone();
 
+        // "Submit is always called from inside a task already running on
+        // Tokio's global runtime"
         tokio::spawn(async move {
             // The first event subscribers see. Sent from inside the
             // wrapper rather than `submit` because we want it to come
