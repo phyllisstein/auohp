@@ -37,7 +37,7 @@ struct Cli {
 struct ResultsWithConfig {
     transcription: TranscriptionResult,
     config: TranscribeConfig,
-    git_hash: &str,
+    git_hash: String,
 }
 
 fn main() -> Result<()> {
@@ -69,7 +69,8 @@ fn main() -> Result<()> {
                 }
             }
         })
-        .trim();
+        .trim()
+        .into();
 
     let results = ResultsWithConfig {
         transcription,
