@@ -34,9 +34,19 @@
         "licenser.projectName": "ACT UP Oral History Project",
         "licenser.license": "AGPLv3",
         "editor.tabSize": 4,
-        "search.exclude": {
+        "files.exclude": {
             "**/node_modules": true,
-            "**/.yarn": true
+            "**/.yarn": true,
+            "**/target": true
+        },
+        "search.exclude": {
+            "**/assets/**": true
+        },
+        "files.watcherExclude": {
+            "**/node_modules/**": true,
+            "**/.yarn/**": true,
+            "**/target/**": true,
+            "**/assets/**": true
         },
         "eslint.enable": false,
         "[rust]": {
@@ -65,6 +75,12 @@
         ],
         "oxc.enable.oxlint": true,
         "js/ts.experimental.useTsgo": true,
-        "licenser.useSingleLineStyle": false
+        "licenser.useSingleLineStyle": false,
+        "rust-analyzer.files.exclude": [
+            "**/node_modules/**",
+            "**/.yarn/**",
+            "**/target/**",
+            "**/assets/**"
+        ]
     }
 }

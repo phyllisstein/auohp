@@ -1,0 +1,13 @@
+1	stop the church
+1	st\.? ?patrick
+1	saint patrick
+1	cardinal o.?connor
+1	the cathedral
+2	o.?connor
+2	communion
+2	wafer
+2	archdiocese
+2	desecrat
+2	catholic church
+2	the church demo
+2	december 1989

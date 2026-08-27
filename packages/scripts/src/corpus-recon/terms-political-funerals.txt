@@ -1,0 +1,17 @@
+1	political funeral
+1	ashes action
+1	open casket
+1	tim bailey
+1	mark lowe fisher
+1	mark fisher
+1	wojnarowicz
+2	carry(ing)? (his |the )?body
+2	scatter(ing)? (the |his )?ashes
+2	the ashes
+2	his ashes
+2	coffin
+2	casket
+2	hearse
+2	funeral procession
+2	throw(ing)? (the |his )?ashes
+2	white house lawn

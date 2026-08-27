@@ -236,13 +236,13 @@ Terminate when you are done for good:
 EOF
 
 # Ephemeral storage
-lsblk -o NAME,SIZE,MODEL,SERIAL
-sudo nvme id-ctrl /dev/nvme1n1 | grep -i "Amazon EC2 NVMe Instance Storage"
-sudo mkfs.ext4 -E lazy_itable_init=0,lazy_journal_init=0 /dev/nvme1n1
-sudo mkdir -p /scratch
-sudo mount /dev/nvme1n1 /scratch
-sudo chown ubuntu:ubuntu /scratch
-mkdir /scratch/models /scratch/in /scratch/out /scratch/logs
+# lsblk -o NAME,SIZE,MODEL,SERIAL
+# sudo nvme id-ctrl /dev/nvme1n1 | grep -i "Amazon EC2 NVMe Instance Storage"
+# sudo mkfs.ext4 -E lazy_itable_init=0,lazy_journal_init=0 /dev/nvme1n1
+# sudo mkdir -p /scratch
+# sudo mount /dev/nvme1n1 /scratch
+# sudo chown ubuntu:ubuntu /scratch
+# mkdir /scratch/models /scratch/in /scratch/out /scratch/logs
 
 # Legacy Python
 # sudo add-apt-repository ppa:deadsnakes/ppa
