@@ -104,7 +104,11 @@ impl QueryRoot {
         #[graphql(desc = "Search keyword")] query: String,
         #[graphql(desc = "Interview UID")] uid: String,
     ) -> async_graphql::Result<Vec<SearchHit>> {
-        search::search_interview(ctx, query, uid).await
+        Err(GqlErr {
+            message: "Deprecated".into(),
+            source: None,
+            extensions: None,
+        })
     }
 
     async fn span_at_time(

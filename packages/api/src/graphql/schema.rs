@@ -1,5 +1,5 @@
 use super::mutations::MutationRoot;
-use super::queries::{QueryRoot, captions, interviews};
+use super::queries::{QueryRoot, captions, interviews, search};
 use crate::neo4j::Db;
 use async_graphql::{EmptySubscription, MergedObject, Schema};
 use auohp_core::embeddings::EmbedderHandle;
@@ -9,6 +9,7 @@ use std::sync::Arc;
 pub struct Query(
     captions::CaptionsQuery,
     interviews::InterviewQuery,
+    search::SearchQuery,
     QueryRoot,
 );
 
