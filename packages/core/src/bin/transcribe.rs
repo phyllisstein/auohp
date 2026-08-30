@@ -11,12 +11,7 @@ use anyhow::Result;
 use auohp_core::transcription::{self, TranscribeConfig, TranscriptionResult};
 use clap::Parser;
 use serde::Serialize;
-use std::{
-    fs::File,
-    io::{Write, stderr},
-    path::{Path, PathBuf},
-    process::Command,
-};
+use std::{fs::File, io::Write, path::PathBuf, process::Command};
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 
 #[derive(Parser, Debug)]
@@ -55,22 +50,28 @@ fn main() -> Result<()> {
 
     let transcription = transcription::run_with(&cli.file, &config)?;
 
-    let git_hash = Command::new("git")
+    let git_hash = match Command::new("git")
         .arg("rev-parse")
         .arg("--short")
         .arg("HEAD")
         .output()
-        .map_or("#######".into(), {
-            |oe| {
-                if oe.stderr.len() > 0 {
-                    String::from_utf8_lossy(&oe.stderr).into_owned()
-                } else {
-                    String::from_utf8_lossy(&oe.stdout).into_owned()
-                }
+    {
+        Ok(o) => {
+            if o.status.success() {
+                String::from_utf8_lossy(&o.stdout).into_owned()
+            } else {
+                let err = String::from_utf8_lossy(&o.stderr).into_owned();
+                tracing::error!(err, "git rev-parse failed");
+                "#######".into()
             }
-        })
-        .trim()
-        .into();
+        }
+        Err(e) => {
+            tracing::error!(err = e.to_string(), "git rev-parse failed");
+            "#######".into()
+        }
+    }
+    .trim()
+    .into();
 
     let results = ResultsWithConfig {
         transcription,
