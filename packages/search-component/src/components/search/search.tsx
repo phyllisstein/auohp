@@ -3,30 +3,29 @@ import { useEffect, useRef, useState } from "react";
 import { SearchContainer, SearchResult, SearchResults, ResultMatch, ResultSource, ResultTimestamp, SearchInput } from "./search-styles";
 import { Results } from "./results";
 import deepEqual from "fast-deep-equal";
-import { gql } from "@apollo/client";
+import { graphql } from "~/gql";
 import { useLazyQuery } from "@apollo/client/react";
 
 
-const SEARCH_QUERY = gql`
+const SEARCH_QUERY = graphql(`
     query SearchStatements($search: String!) {
-        searchStatements(
-            query: $search
-            limit: 15
-        ) {
-            interview {
-                number
-            }
-            statement {
-                text
-                startTime
-                endTime
-                person {
-                    name
+        search {
+            interviews(query: $search) {
+                statement {
+                    uid
+                    startTime
+                    text
+                    person {
+                        name
+                    }
+                }
+                interview {
+                    number
                 }
             }
         }
     }
-`;
+`);
 
 
 const formatTimestamp = (timestamp: number) =>
@@ -81,7 +80,7 @@ export function Search () {
             <Results { ...boxRect }>
                 <SearchResults>
                     {
-                        searchQuery.data?.searchStatements.map(hit => (
+                        searchQuery.data?.search.interviews.map(hit => (
                             <SearchResult key={ `${ hit.statement.startTime }-${ hit.statement.uid }` } onClick={ () => handleResultClick(hit) }>
                                 <ResultMatch>{ hit.statement.text }</ResultMatch>
                                 <ResultSource>{ hit.statement.person.name }</ResultSource>

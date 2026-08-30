@@ -91,7 +91,7 @@ impl Search {
     async fn interviews(
         &self,
         ctx: &Context<'_>,
-        query_text: String,
+        #[graphql(name = "query")] query_text: String,
         limit: Option<i64>,
     ) -> async_graphql::Result<Vec<SearchHit>> {
         let db = ctx.data::<Db>()?;
