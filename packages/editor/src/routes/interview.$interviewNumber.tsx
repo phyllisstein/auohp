@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useLoaderData } from "@tanstack/react-router";
 import { useId, useMemo, useRef, type RefObject } from "react";
 import { LexicalExtensionComposer } from "@lexical/react/LexicalExtensionComposer";
 import { useMutation, useReadQuery } from "@apollo/client/react";
@@ -62,27 +62,36 @@ const EditorStyle = createGlobalStyle`
 export const Route = createFileRoute("/interview/$interviewNumber")({
     component: Page,
     // FIXME: Handle errors gracefully
-    loader: ({ context: { preloadQuery }, params }) => {
+    loader: async ({ context: { apolloClient }, params }) => {
         const interviewNumber = Number.parseInt(params.interviewNumber);
         if (Number.isNaN(interviewNumber)) {
             throw new Error("Invalid interview number");
         }
 
-        const transcriptQueryRef = preloadQuery(TRANSCRIPT_QUERY, {
+        const transcriptQuery = await apolloClient.query({
+            query: TRANSCRIPT_QUERY,
             variables: {
                 interviewNumber,
             },
         });
 
-        return { transcriptQueryRef };
+        return { transcriptQuery };
+    },
+    head: async ctx => {
+        const name = ctx.loaderData.transcriptQuery?.data?.interview?.interviewee;
+        return {
+            meta: [
+                { title: `#${ ctx.params.interviewNumber } - ${ name } | AUOHP Editor` },
+            ],
+        };
     },
 });
 
 
 function Page () {
     const interviewNumber = Number.parseInt(Route.useParams().interviewNumber);
-    const { transcriptQueryRef } = Route.useLoaderData();
-    const { data: transcriptData } = useReadQuery(transcriptQueryRef);
+    const { transcriptQuery } = Route.useLoaderData();
+    const transcriptData = transcriptQuery.data;
 
     const [editStatement, editStatementResult] = useMutation(EDIT_STATEMENT_MUTATION);
 
@@ -128,11 +137,6 @@ function Page () {
 
     return (
         <>
-            {
-                transcriptData?.interview?.interviewee
-                    ? <title>{ transcriptData.interview.interviewee } | AUOHP Editor</title>
-                    : <title>AUOHP Editor</title>
-            }
             <div>
                 <EditorStyle />
                 {

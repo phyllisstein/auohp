@@ -101,6 +101,8 @@ export const StatementSeekExtension = /* @__PURE__ */ defineExtension({
     dependencies: [StatementExtension],
     name: "@auohp/statement-seek",
     register: editor =>
+        // FIXME: Fires before selection change, so the selection is still on the clicked statement.
+        // FIXME: Doesn't respond to keyboard navigation. SELECTION_CHANGE_COMMAND fires too often, slowing down normal typing.
         editor.registerCommand(
             CLICK_COMMAND,
             () => {
