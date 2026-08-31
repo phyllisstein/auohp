@@ -1,12 +1,13 @@
-import { createRootRouteWithContext, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
+import "@react-spectrum/s2/page.css";
+import { createRootRouteWithContext, HeadContent, Outlet, Scripts, type ToOptions, type NavigateOptions } from "@tanstack/react-router";
 import { Provider as SpectrumProvider } from "@react-spectrum/s2/Provider";
 import { ApolloProvider } from "@apollo/client/react";
 import type { ApolloClientIntegration } from "@apollo/client-integration-tanstack-start";
 import { useRouter } from "@tanstack/react-router";
 import { ThemeProvider as StyledThemeProvider } from "styled-components";
 import theme from "@/styles/theme";
-import { Body } from "@/styles/global";
-import { Button as SButton } from "@react-spectrum/s2";
+import { Body, StyledComponentsRegistry } from "@/styles/global";
+import { AdobeClean } from "@/styles/assets/fonts";
 import { ErrorBoundary } from "@suspensive/react";
 
 
@@ -26,44 +27,47 @@ function RootComponent () {
     const router = useRouter();
 
     return (
-        <ApolloProvider client={ apolloClient }>
-            <SpectrumProvider
-                background="base"
-                colorScheme="dark"
-                elementType="html"
-                locale="en-US"
-                router={{
-                    navigate: (href, options) => {
-                        if (typeof href === "string") return;
-                        return router.navigate({ ...href, ...options });
-                    },
-                    useHref: href => {
-                        if (typeof href === "string") return href;
-                        return router.buildLocation(href).href;
-                    },
-                }}>
-                <head>
-                    <HeadContent />
-                </head>
-                <body>
-                    <main>
-                        <StyledThemeProvider theme={ theme }>
-                            <Body />
-                            <ErrorBoundary
-                                fallback={
-                                    ({ error, reset }) => {
-                                        console.error("Error occurred: %o", error);
-                                        return <div>Error: { error.message }</div>;
-                                    }
-                                }>
-                                <Outlet />
-                            </ErrorBoundary>
-                        </StyledThemeProvider>
-                    </main>
-                    <Scripts />
-                </body>
-            </SpectrumProvider>
-        </ApolloProvider>
+        <StyledComponentsRegistry>
+            <ApolloProvider client={ apolloClient }>
+                <SpectrumProvider
+                    background="layer-1"
+                    colorScheme="dark"
+                    elementType="html"
+                    locale="en-US"
+                    router={{
+                        navigate: (href, options) => {
+                            if (typeof href === "string") return;
+                            return router.navigate({ ...href, ...options });
+                        },
+                        useHref: href => {
+                            if (typeof href === "string") return href;
+                            return router.buildLocation(href).href;
+                        },
+                    }}>
+                    <head>
+                        <HeadContent />
+                    </head>
+                    <body>
+                        <main>
+                            <StyledThemeProvider theme={ theme }>
+                                <AdobeClean />
+                                <Body />
+                                <ErrorBoundary
+                                    fallback={
+                                        ({ error, reset }) => {
+                                            console.error("Error occurred: %o", error);
+                                            return <div>Error: { error.message }</div>;
+                                        }
+                                    }>
+                                    <Outlet />
+                                </ErrorBoundary>
+                            </StyledThemeProvider>
+                        </main>
+                        <Scripts />
+                    </body>
+                </SpectrumProvider>
+            </ApolloProvider>
+        </StyledComponentsRegistry>
     );
 }
 

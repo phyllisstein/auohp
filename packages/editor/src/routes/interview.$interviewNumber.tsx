@@ -3,10 +3,11 @@ import { useId, useMemo, useRef, type RefObject } from "react";
 import { LexicalExtensionComposer } from "@lexical/react/LexicalExtensionComposer";
 import { useMutation, useReadQuery } from "@apollo/client/react";
 import { useSignalEffect } from "@preact/signals-react";
-import { createGlobalStyle } from "styled-components";
+import styled, { createGlobalStyle } from "styled-components";
 import { playhead } from "@/playhead";
 import { defineAuohpEditorExtension } from "@/lexical/extensions";
 import { TRANSCRIPT_QUERY, EDIT_STATEMENT_MUTATION, CREATE_STATEMENT_MUTATION, DESTROY_STATEMENT_MUTATION } from "@/queries";
+import { style } from "@react-spectrum/s2/style" with { type: "macro" };
 
 // FIXME: Constructing URLs for the caption endpoint and the public video URI
 // should be a server-side concern (return a Video node, return Caption metadata).
@@ -62,6 +63,25 @@ const EditorStyle = createGlobalStyle`
     .auohp-statement__content {
         flex: 1;
     }
+`;
+
+const EditorContainer = styled.div`
+    overflow-y: auto;
+`;
+
+const PageContainer = styled.div`
+    overflow: hidden;
+    display: grid;
+    grid-template-rows: 1fr auto;
+
+    width: 100vw;
+    height: 100vh;
+`;
+
+const VideoContainer = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: center;
 `;
 
 
@@ -156,10 +176,15 @@ function Page () {
     const statementHash = editStatementResult.data?.editStatement?.newHash;
     const videoUri = transcriptData?.interview?.videos?.[0]?.uri;
 
+    const editorContainerStyle = style({
+        backgroundColor: "layer-2",
+        padding: 12,
+    });
+
     return (
-        <>
-            <div>
-                <EditorStyle />
+        <PageContainer>
+            <EditorStyle />
+            <VideoContainer>
                 {
                     videoUri && (
                         <video
@@ -174,9 +199,11 @@ function Page () {
                         </video>
                     )
                 }
+            </VideoContainer>
 
+            <EditorContainer className={ editorContainerStyle }>
                 <LexicalExtensionComposer extension={ extension } />
-            </div>
-        </>
+            </EditorContainer>
+        </PageContainer>
     );
 }
