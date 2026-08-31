@@ -304,6 +304,7 @@ export interface PersistenceConfig {
     editStatement: EditStatementFn | null;
     /** Per-statement debounce window, in milliseconds. */
     delay: number;
+    destroyDelay: number;
     createStatement: CreateStatementFn | null;
     destroyStatement: DestroyStatementFn | null;
     interviewUid: string | null | undefined;
@@ -312,6 +313,7 @@ export interface PersistenceConfig {
 export const PersistenceExtension = /* @__PURE__ */ defineExtension({
     config: /* @__PURE__ */ safeCast<PersistenceConfig>({
         delay: 1_000,
+        destroyDelay: 2_000,
         editStatement: null,
         createStatement: null,
         destroyStatement: null,
@@ -328,7 +330,7 @@ export const PersistenceExtension = /* @__PURE__ */ defineExtension({
     build: (_editor, config) => namedSignals(config),
 
     afterRegistration (editor, _config, state) {
-        const { delay, editStatement, destroyStatement, createStatement, interviewUid } = state.getOutput();
+        const { delay, destroyDelay, editStatement, destroyStatement, createStatement, interviewUid } = state.getOutput();
 
         const createDebouncedUpdate = (uid: string) =>
             debounce((text: string, startTime: number, endTime: number) => {
@@ -352,7 +354,7 @@ export const PersistenceExtension = /* @__PURE__ */ defineExtension({
                         console.debug(`Destroy completed for statement ${ data.destroyStatement.statement.uid }:`, data.destroyStatement);
                     },
                 });
-            }, delay.peek());
+            }, destroyDelay.peek());
 
         // Takes a NodeKey, never a StatementNode. A node object is a snapshot of one
         // EditorState; this fires from a timer and resolves after a network round
@@ -509,9 +511,25 @@ export const PersistenceExtension = /* @__PURE__ */ defineExtension({
                                 // A non-synthetic uid is precisely the signal that
                                 // this row already exists server-side, so the correct
                                 // response is to cancel the pending destroy and treat
-                                // the resurrection as a no-op. If the destroy already
-                                // flushed, the debounce window was too short to save
-                                // us --- see the note on `delay`.
+                                // the resurrection as a no-op.
+                                //
+                                // `destroyDelay` is therefore the entire undo window,
+                                // and deliberately longer than `delay`: an undone
+                                // deletion is recoverable only while the destroy is
+                                // still queued. Past that, the row is gone and an undo
+                                // leaves the statement visible in the editor but absent
+                                // from the graph --- it takes neither branch below,
+                                // since re-creating it would mint a duplicate under a
+                                // fresh uid, orphaning its span and :SAYS edge.
+                                //
+                                // Closing that gap properly needs a tombstone and a
+                                // restore mutation. Declined at statement granularity:
+                                // it buys seconds of undo for a permanent obligation on
+                                // every read path. The intended answer is a draft /
+                                // explicit-save model, where deletions stay local until
+                                // committed and this race stops existing --- with
+                                // tombstones reserved for whole transcripts, where the
+                                // loss actually warrants them.
                                 const pendingDestroy = destroyDebouncers.get(uid);
                                 if (pendingDestroy && !uid.includes(SYNTHETIC_UID_MARKER)) {
                                     pendingDestroy.cancel();
