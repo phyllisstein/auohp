@@ -1,38 +1,44 @@
 {
-  "mcpServers": {
-    "neo4j-mcp": {
-      "type": "stdio",
-      "command": "uvx",
-      "args": [
-        "neo4j-mcp-server@1.5.3"
-      ],
-      "env": {
-        "NEO4J_READ_ONLY": "false",
-        "NEO4J_TELEMETRY": "false",
-        "NEO4J_LOG_LEVEL": "info",
-        "NEO4J_LOG_FORMAT": "text",
-        "NEO4J_SCHEMA_SAMPLE_SIZE": "100"
-      }
-    },
-    "neo4j-data-modeling": {
-      "type": "stdio",
-      "command": "uvx",
-      "args": [
-        "mcp-neo4j-data-modeling@0.8.2",
-        "--transport",
-        "stdio",
-        "--transport",
-        "stdio"
-      ]
-    },
-    "neo4j-database": {
-      "type": "stdio",
-      "command": "uvx",
-      "args": [
-        "mcp-neo4j-cypher@0.6.0",
-        "--transport",
-        "stdio"
-      ]
+    "mcpServers": {
+        "neo4j-mcp": {
+            "type": "stdio",
+            "command": "uvx",
+            "args": [
+                "neo4j-mcp-server@1.5.3"
+            ],
+            "env": {
+                "NEO4J_READ_ONLY": "false",
+                "NEO4J_TELEMETRY": "false",
+                "NEO4J_LOG_LEVEL": "info",
+                "NEO4J_LOG_FORMAT": "text",
+                "NEO4J_SCHEMA_SAMPLE_SIZE": "100"
+            }
+        },
+        "neo4j-data-modeling": {
+            "type": "stdio",
+            "command": "uvx",
+            "args": [
+                "mcp-neo4j-data-modeling@0.8.2",
+                "--transport",
+                "stdio",
+                "--transport",
+                "stdio"
+            ]
+        },
+        "neo4j-database": {
+            "type": "stdio",
+            "command": "uvx",
+            "args": [
+                "mcp-neo4j-cypher@0.6.0",
+                "--transport",
+                "stdio"
+            ]
+        },
+        "React Spectrum (S2)": {
+            "command": "npx",
+            "args": [
+                "@react-spectrum/mcp@latest"
+            ]
+        }
     }
-  }
 }
