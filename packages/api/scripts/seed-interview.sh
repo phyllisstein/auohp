@@ -82,7 +82,10 @@ mutation SeedInterview($input: SeedInterviewInput!) {
     embeddingsQueued
     interview {
       date
-      interviewee
+      interviewee {
+        name
+        uid
+      }
       number
       uid
     }

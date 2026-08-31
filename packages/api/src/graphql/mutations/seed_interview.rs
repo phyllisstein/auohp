@@ -498,7 +498,6 @@ pub async fn seed_interview(
         interview: Interview {
             uid: interview_uid,
             number: input.number,
-            interviewee: input.interviewee,
             date: input.date.parse()?,
         },
         statement_count: segments.len() as i64,

@@ -25,7 +25,7 @@ use serde::Deserialize;
 /// This is the idiomatic neo4rs pattern: return whole nodes from Cypher
 /// (`RETURN p`) rather than destructuring properties into arbitrary column
 /// aliases (`RETURN p.uid AS person_uid, p.name AS person_name`).
-#[derive(SimpleObject, Clone, Deserialize)]
+#[derive(SimpleObject, Clone, Deserialize, Debug)]
 pub struct Person {
     pub uid: String,
     pub name: String,
@@ -49,7 +49,7 @@ pub struct StatementNode {
 
 /// Mirrors the (:Statement) node, with timing from the `:CONTAINS` edge and
 /// speaker attribution from `:SAYS`.
-#[derive(SimpleObject, Deserialize, Clone)]
+#[derive(SimpleObject, Deserialize, Clone, Debug)]
 pub struct Statement {
     pub uid: String,
     pub text: String,
