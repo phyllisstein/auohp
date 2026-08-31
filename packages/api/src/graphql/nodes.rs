@@ -74,19 +74,3 @@ pub struct Transcript {
     /// Statements in transcript order (via the `:NEXT` linked list).
     pub statements: Vec<Statement>,
 }
-
-/// Mirrors the (:Interview) node.
-///
-/// The `date` field is stored as a Neo4j Date and deserialized into
-/// `chrono::NaiveDate`. async-graphql's `"chrono"` feature registers
-/// NaiveDate as a GraphQL scalar that serializes to ISO 8601 strings
-/// ("2003-05-05")---so the GraphQL API still returns a string, but
-/// the Rust code works with a typed date value.
-#[derive(SimpleObject, Clone, Deserialize)]
-#[graphql(name = "GqlInterview")]
-pub struct Interview {
-    pub uid: String,
-    pub number: i64,
-    pub interviewee: String,
-    pub date: NaiveDate,
-}

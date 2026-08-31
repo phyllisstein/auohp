@@ -4,7 +4,7 @@ use async_graphql::{Context, Enum, InputObject, SimpleObject};
 use neo4rs::{BoltMap, BoltString, BoltType, query};
 use serde::{Deserialize, Serialize};
 
-use crate::graphql::nodes::Interview;
+use crate::graphql::queries::interviews::Interview;
 use crate::neo4j::Db;
 use crate::uid;
 use auohp_core::embeddings::EmbedderHandle;

@@ -7,7 +7,8 @@
 
 use std::sync::Arc;
 
-use crate::graphql::nodes::{Interview, Person, Statement, StatementNode};
+use super::interviews::Interview;
+use crate::graphql::nodes::{Person, Statement, StatementNode};
 use crate::neo4j::Db;
 use async_graphql::{Context, Object, SimpleObject};
 use auohp_core::EmbedderHandle;
