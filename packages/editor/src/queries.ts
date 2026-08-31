@@ -1,4 +1,6 @@
-import { graphql } from "@/gql";
+import { gql } from "@apollo/client";
+import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
+import type { EditStatementMutation, EditStatementMutationVariables, TranscriptQuery, TranscriptQueryVariables, SearchStatementsQuery, SearchStatementsQueryVariables } from "./gql/schema";
 
 
 // -----------------------------------------------------------------------------
@@ -19,7 +21,7 @@ import { graphql } from "@/gql";
 // the types resolve again.
 // -----------------------------------------------------------------------------
 
-export const EDIT_STATEMENT_MUTATION = graphql(`
+export const EDIT_STATEMENT_MUTATION: TypedDocumentNode<EditStatementMutation, EditStatementMutationVariables> = gql`
     mutation EditStatement($uid: String!, $text: String!) {
         editStatement(input: { uid: $uid, text: $text }) {
             uid
@@ -28,34 +30,39 @@ export const EDIT_STATEMENT_MUTATION = graphql(`
             wroteEmbedding
         }
     }
-`);
+`;
 
-export const TRANSCRIPT_QUERY = graphql(`
+export const TRANSCRIPT_QUERY: TypedDocumentNode<TranscriptQuery, TranscriptQueryVariables> = gql`
     query Transcript($interviewNumber: Int!) {
         health
-        interviewTranscript(number: $interviewNumber) {
+        interview(number: $interviewNumber) {
             uid
-            statements {
+            number
+            interviewee
+            transcript {
                 uid
-                startTime
-                endTime
-                text
+                statements {
+                    uid
+                    startTime
+                    endTime
+                    text
+                }
             }
         }
     }
-`);
+`;
 
-export const SEARCH_STATEMENTS_QUERY = graphql(`
+export const SEARCH_STATEMENTS_QUERY: TypedDocumentNode<SearchStatementsQuery, SearchStatementsQueryVariables> = gql`
     query SearchStatements(
-        $query: String!
+        $fragment: String!
     ) {
-        searchStatements(
-            query: $query
-        ) {
-            statement {
-                uid
-                text
+        search {
+            statementText(fragment: $fragment) {
+                statement {
+                    uid
+                    text
+                }
             }
         }
     }
-`);
+`;

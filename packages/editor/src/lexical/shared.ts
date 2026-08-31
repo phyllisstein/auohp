@@ -1,5 +1,5 @@
 import { useLazyQuery, useMutation } from "@apollo/client/react";
-import type { EditStatementMutation, EditStatementMutationVariables, TranscriptQuery, SearchStatementsQuery, SearchStatementsQueryVariables } from "@/gql/graphql";
+import type { EditStatementMutation, EditStatementMutationVariables, TranscriptQuery, SearchStatementsQuery, SearchStatementsQueryVariables } from "@/gql/schema";
 
 
 // A split-on-Enter produces a second statement the backend knows nothing about:
@@ -24,7 +24,7 @@ export const formatTimestamp = (timestamp: number) =>
 
 
 // ---- GraphQL result-shape aliases (derived from the reused operations) --------
-export type TranscriptStatements = TranscriptQuery["interviewTranscript"]["statements"];
+export type TranscriptStatements = TranscriptQuery["interview"]["transcript"]["statements"];
 export type EditStatementFn = ReturnType<typeof useMutation<EditStatementMutation, EditStatementMutationVariables>>[0];
 
 // Only the data shape survives. The executor and state-tuple aliases existed

@@ -6,8 +6,7 @@ import { useSignalEffect } from "@preact/signals-react";
 import { createGlobalStyle } from "styled-components";
 import { playhead } from "@/playhead";
 import { defineAuohpEditorExtension } from "@/lexical/extensions";
-import { EDIT_STATEMENT_MUTATION, TRANSCRIPT_QUERY } from "@/queries";
-
+import { TRANSCRIPT_QUERY, EDIT_STATEMENT_MUTATION } from "@/queries";
 
 // FIXME: Constructing URLs for the caption endpoint and the public video URI
 // should be a server-side concern (return a Video node, return Caption metadata).
@@ -93,7 +92,7 @@ function Page () {
     useVideoSync(player);
 
     const interviewUid = transcriptData?.interview?.uid ?? fallbackId;
-    const { statements, interview } = transcriptData.interviewTranscript;
+    const { statements } = transcriptData.interview.transcript;
 
     // The whole editor is now one value. Everything the old route spelled out in
     // JSX --- namespace, node registration, onError, RichTextPlugin, HistoryPlugin,

@@ -3,11 +3,13 @@ import { useEffect, useRef, useState } from "react";
 import { SearchContainer, SearchResult, SearchResults, ResultMatch, ResultSource, ResultTimestamp, SearchInput } from "./search-styles";
 import { Results } from "./results";
 import deepEqual from "fast-deep-equal";
-import { graphql } from "~/gql";
+import { gql } from "@apollo/client";
 import { useLazyQuery } from "@apollo/client/react";
+import type { SearchStatementsQuery, SearchStatementsQueryVariables, SearchHit } from "~/gql/schema";
+import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
 
 
-const SEARCH_QUERY = graphql(`
+export const SEARCH_QUERY: TypedDocumentNode<SearchStatementsQuery, SearchStatementsQueryVariables> = gql`
     query SearchStatements($search: String!) {
         search {
             interviews(query: $search) {
@@ -25,7 +27,7 @@ const SEARCH_QUERY = graphql(`
             }
         }
     }
-`);
+`;
 
 
 const formatTimestamp = (timestamp: number) =>
@@ -48,12 +50,12 @@ export function Search () {
         fetchPolicy: "network-only",
     });
 
-    const handleResultClick = result => {
-        const url = `/${ result.interview.number }`;
+    const handleResultClick = (result: { startTime: number; interviewNumber: number }) => {
+        const url = `/${ result.interviewNumber }`;
 
         const nextURL = queryString.stringifyUrl({
             query: {
-                timestamp: result.statement.startTime,
+                timestamp: result.startTime,
             },
             url: url,
         });
@@ -81,7 +83,7 @@ export function Search () {
                 <SearchResults>
                     {
                         searchQuery.data?.search.interviews.map(hit => (
-                            <SearchResult key={ `${ hit.statement.startTime }-${ hit.statement.uid }` } onClick={ () => handleResultClick(hit) }>
+                            <SearchResult key={ `${ hit.statement.startTime }-${ hit.statement.uid }` } onClick={ () => handleResultClick({ startTime: hit.statement.startTime, interviewNumber: hit.interview.number }) }>
                                 <ResultMatch>{ hit.statement.text }</ResultMatch>
                                 <ResultSource>{ hit.statement.person.name }</ResultSource>
                                 <ResultTimestamp>{ formatTimestamp(hit.statement.startTime) }</ResultTimestamp>

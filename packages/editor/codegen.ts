@@ -9,11 +9,14 @@ const {
 const config: CodegenConfig = {
     schema: CODEGEN_GRAPHQL_ENDPOINT,
     documents: ["src/**/*.{ts,tsx}"],
+    allowPartialOutputs: true,
     generates: {
-        "./src/gql/": {
-            preset: "client",
+        "./src/gql/schema.ts": {
+            plugins: ["typescript", "typescript-operations"],
             config: {
+                avoidOptionals: true,
                 useTypeImports: true,
+                maybeValue: "T | null | undefined",
             },
         },
         "./schema.graphql": {

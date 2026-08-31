@@ -155,8 +155,9 @@ __metadata:
     "@apollo/client-integration-tanstack-start": "npm:^0.14.5-rc.0"
     "@eslint/js": "npm:^10.0.1"
     "@graphql-codegen/cli": "npm:^7.2.0"
-    "@graphql-codegen/client-preset": "npm:^6.1.3"
     "@graphql-codegen/schema-ast": "npm:^6.1.0"
+    "@graphql-codegen/typescript-operations": "npm:^6.1.6"
+    "@graphql-typed-document-node/core": "npm:^3.2.0"
     "@lexical/extension": "npm:^0.49.0"
     "@lexical/history": "npm:^0.49.0"
     "@lexical/mark": "npm:^0.49.0"
@@ -172,7 +173,6 @@ __metadata:
     "@stylistic/eslint-plugin": "npm:^5.10.0"
     "@stylistic/stylelint-config": "npm:^5.0.0"
     "@suspensive/react": "npm:^3.21.3"
-    "@swc-contrib/plugin-graphql-codegen-client-preset": "npm:^0.32.0"
     "@swc/plugin-styled-components": "npm:^13.0.0"
     "@tanstack/eslint-plugin-router": "npm:^1.162.0"
     "@tanstack/react-router": "npm:^1.170.31"
@@ -262,13 +262,13 @@ __metadata:
     "@apollo/client": "npm:^4.2.12"
     "@eslint/js": "npm:^10.0.1"
     "@graphql-codegen/cli": "npm:^7.3.1"
-    "@graphql-codegen/client-preset": "npm:^6.1.3"
     "@graphql-codegen/schema-ast": "npm:^6.1.0"
+    "@graphql-codegen/typescript-operations": "npm:^6.1.6"
+    "@graphql-typed-document-node/core": "npm:^3.2.0"
     "@rollup/plugin-node-resolve": "npm:^16.0.3"
     "@stylelint/postcss-css-in-js": "npm:^0.38.0"
     "@stylistic/eslint-plugin": "npm:^5.10.0"
     "@stylistic/stylelint-config": "npm:^5.0.0"
-    "@swc-contrib/plugin-graphql-codegen-client-preset": "npm:^0.32.0"
     "@swc/plugin-styled-components": "npm:^13.0.0"
     "@types/react": "npm:^19"
     "@types/react-dom": "npm:^19"
@@ -4234,13 +4234,6 @@ __metadata:
   peerDependencies:
     "@svgr/core": "*"
   checksum: 10c0/07b4d9e00de795540bf70556fa2cc258774d01e97a12a26234c6fdf42b309beb7c10f31ee24d1a71137239347b1547b8bb5587d3a6de10669f95dcfe99cddc56
-  languageName: node
-  linkType: hard
-
-"@swc-contrib/plugin-graphql-codegen-client-preset@npm:^0.32.0":
-  version: 0.32.0
-  resolution: "@swc-contrib/plugin-graphql-codegen-client-preset@npm:0.32.0"
-  checksum: 10c0/d26a5b842ed991589d6a2df3612b7610ba49bfd67652c896d4df058f3c7c3d7765ff6e663289ab35c2276e12093450aca27d55882c4019933648aea8865cf305
   languageName: node
   linkType: hard
 

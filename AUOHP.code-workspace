@@ -36,7 +36,8 @@
         "editor.tabSize": 4,
         "search.exclude": {
             "**/node_modules": true,
-            "**/.yarn": true
+            "**/.yarn": true,
+            "**/gql/**": true,
         },
         "eslint.enable": false,
         "[rust]": {
