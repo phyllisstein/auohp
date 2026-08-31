@@ -51,13 +51,12 @@ export function Search () {
     });
 
     const handleResultClick = (result: { startTime: number; interviewNumber: number }) => {
-        const url = `/${ result.interviewNumber }`;
-
         const nextURL = queryString.stringifyUrl({
             query: {
                 timestamp: result.startTime,
+                interview: result.interviewNumber,
             },
-            url: url,
+            url: "/player",
         });
 
         window.location.href = nextURL;

@@ -8,7 +8,6 @@
 // `auohp-core` alongside the rest of the graph model.
 
 use async_graphql::SimpleObject;
-use chrono::NaiveDate;
 use serde::Deserialize;
 
 // Each struct below mirrors one node label in the Neo4j graph. The mapping is
@@ -66,11 +65,16 @@ pub struct Statement {
     pub words: Option<String>,
 }
 
-/// Mirrors the (:Transcript) node, with its ordered statements and the
-/// Interview it belongs to.
-#[derive(SimpleObject, Clone)]
+// FIXME: Transcript as a full-fledged Object should fetch statements lazily, in
+// a separate resolver.
+#[derive(SimpleObject, Clone, Deserialize)]
 pub struct Transcript {
     pub uid: String,
     /// Statements in transcript order (via the `:NEXT` linked list).
     pub statements: Vec<Statement>,
+}
+
+#[derive(SimpleObject, Deserialize)]
+pub struct Video {
+    pub uri: String,
 }

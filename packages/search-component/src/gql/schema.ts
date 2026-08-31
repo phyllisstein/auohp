@@ -67,6 +67,7 @@ export type Interview = {
   number: Scalars['Int']['output'];
   transcript: Transcript;
   uid: Scalars['String']['output'];
+  videos: Array<Video>;
 };
 
 /** Optional media assets to attach to the interview. */
@@ -128,11 +129,6 @@ export type Query = {
   /** Returns "ok". Useful for readiness and liveness probes. */
   health: Scalars['String']['output'];
   interview: Interview;
-  /**
-   * Returns the full transcript for a single interview, statements ordered
-   * by start time (via the `startTime` property on the `:CONTAINS` relationship).
-   */
-  interviewTranscript: Transcript;
   interviews: Array<Interview>;
   search: Search;
 };
@@ -146,11 +142,6 @@ export type QueryCaptionsArgs = {
 export type QueryInterviewArgs = {
   number: InputMaybe<Scalars['Int']['input']>;
   uid: InputMaybe<Scalars['String']['input']>;
-};
-
-
-export type QueryInterviewTranscriptArgs = {
-  number: Scalars['Int']['input'];
 };
 
 export type Search = {
@@ -262,10 +253,6 @@ export type Statement = {
   words: Maybe<Scalars['String']['output']>;
 };
 
-/**
- * Mirrors the (:Transcript) node, with its ordered statements and the
- * Interview it belongs to.
- */
 export type Transcript = {
   __typename?: 'Transcript';
   /** Statements in transcript order (via the `:NEXT` linked list). */
@@ -287,6 +274,11 @@ export type TranscriptSegmentInput = {
   words: InputMaybe<Array<WordTimingInput>>;
 };
 
+export type Video = {
+  __typename?: 'Video';
+  uri: Scalars['String']['output'];
+};
+
 /** Word-level timing from the transcription pipeline. */
 export type WordTimingInput = {
   end: Scalars['Float']['input'];
@@ -295,6 +287,13 @@ export type WordTimingInput = {
   start: Scalars['Float']['input'];
   word: Scalars['String']['input'];
 };
+
+export type PlayerInterviewQueryVariables = Exact<{
+  interviewNumber: number;
+}>;
+
+
+export type PlayerInterviewQuery = { interview: { videos: Array<{ uri: string }> } };
 
 export type SearchStatementsQueryVariables = Exact<{
   search: string;

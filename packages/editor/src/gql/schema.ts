@@ -2,7 +2,6 @@
 type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
 /** Internal type. DO NOT USE DIRECTLY. */
 export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
-import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type Maybe<T> = T | null | undefined;
 export type InputMaybe<T> = T | null | undefined;
 /** All built-in and custom scalars, mapped to their actual values */
@@ -68,6 +67,7 @@ export type Interview = {
   number: Scalars['Int']['output'];
   transcript: Transcript;
   uid: Scalars['String']['output'];
+  videos: Array<Video>;
 };
 
 /** Optional media assets to attach to the interview. */
@@ -129,11 +129,6 @@ export type Query = {
   /** Returns "ok". Useful for readiness and liveness probes. */
   health: Scalars['String']['output'];
   interview: Interview;
-  /**
-   * Returns the full transcript for a single interview, statements ordered
-   * by start time (via the `startTime` property on the `:CONTAINS` relationship).
-   */
-  interviewTranscript: Transcript;
   interviews: Array<Interview>;
   search: Search;
 };
@@ -147,11 +142,6 @@ export type QueryCaptionsArgs = {
 export type QueryInterviewArgs = {
   number: InputMaybe<Scalars['Int']['input']>;
   uid: InputMaybe<Scalars['String']['input']>;
-};
-
-
-export type QueryInterviewTranscriptArgs = {
-  number: Scalars['Int']['input'];
 };
 
 export type Search = {
@@ -263,10 +253,6 @@ export type Statement = {
   words: Maybe<Scalars['String']['output']>;
 };
 
-/**
- * Mirrors the (:Transcript) node, with its ordered statements and the
- * Interview it belongs to.
- */
 export type Transcript = {
   __typename?: 'Transcript';
   /** Statements in transcript order (via the `:NEXT` linked list). */
@@ -286,6 +272,11 @@ export type TranscriptSegmentInput = {
   text: Scalars['String']['input'];
   /** Per-word timing data. Optional---some segments may lack word alignment. */
   words: InputMaybe<Array<WordTimingInput>>;
+};
+
+export type Video = {
+  __typename?: 'Video';
+  uri: Scalars['String']['output'];
 };
 
 /** Word-level timing from the transcription pipeline. */
@@ -310,7 +301,7 @@ export type TranscriptQueryVariables = Exact<{
 }>;
 
 
-export type TranscriptQuery = { health: string, interview: { uid: string, number: number, interviewee: string, transcript: { uid: string, statements: Array<{ uid: string, startTime: number | null | undefined, endTime: number | null | undefined, text: string }> } } };
+export type TranscriptQuery = { health: string, interview: { uid: string, number: number, interviewee: string, transcript: { uid: string, statements: Array<{ uid: string, startTime: number | null | undefined, endTime: number | null | undefined, text: string }> }, videos: Array<{ uri: string }> } };
 
 export type SearchStatementsQueryVariables = Exact<{
   fragment: string;
@@ -318,8 +309,3 @@ export type SearchStatementsQueryVariables = Exact<{
 
 
 export type SearchStatementsQuery = { search: { statementText: Array<{ statement: { uid: string, text: string } }> } };
-
-
-export const EditStatementDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"EditStatement"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"uid"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"text"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"editStatement"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"uid"},"value":{"kind":"Variable","name":{"kind":"Name","value":"uid"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"text"},"value":{"kind":"Variable","name":{"kind":"Name","value":"text"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"uid"}},{"kind":"Field","name":{"kind":"Name","value":"oldHash"}},{"kind":"Field","name":{"kind":"Name","value":"newHash"}},{"kind":"Field","name":{"kind":"Name","value":"wroteEmbedding"}}]}}]}}]} as unknown as DocumentNode<EditStatementMutation, EditStatementMutationVariables>;
-export const TranscriptDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"Transcript"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"interviewNumber"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"health"}},{"kind":"Field","name":{"kind":"Name","value":"interview"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"number"},"value":{"kind":"Variable","name":{"kind":"Name","value":"interviewNumber"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"uid"}},{"kind":"Field","name":{"kind":"Name","value":"number"}},{"kind":"Field","name":{"kind":"Name","value":"interviewee"}},{"kind":"Field","name":{"kind":"Name","value":"transcript"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"uid"}},{"kind":"Field","name":{"kind":"Name","value":"statements"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"uid"}},{"kind":"Field","name":{"kind":"Name","value":"startTime"}},{"kind":"Field","name":{"kind":"Name","value":"endTime"}},{"kind":"Field","name":{"kind":"Name","value":"text"}}]}}]}}]}}]}}]} as unknown as DocumentNode<TranscriptQuery, TranscriptQueryVariables>;
-export const SearchStatementsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"SearchStatements"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"fragment"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"search"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"statementText"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"fragment"},"value":{"kind":"Variable","name":{"kind":"Name","value":"fragment"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"statement"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"uid"}},{"kind":"Field","name":{"kind":"Name","value":"text"}}]}}]}}]}}]}}]} as unknown as DocumentNode<SearchStatementsQuery, SearchStatementsQueryVariables>;

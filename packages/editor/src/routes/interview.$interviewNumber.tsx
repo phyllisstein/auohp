@@ -11,7 +11,6 @@ import { TRANSCRIPT_QUERY, EDIT_STATEMENT_MUTATION } from "@/queries";
 // FIXME: Constructing URLs for the caption endpoint and the public video URI
 // should be a server-side concern (return a Video node, return Caption metadata).
 const {
-    VITE_AUOHP_PUBLIC: AUOHP_PUBLIC,
     VITE_AUOHP_API_URI: AUOHP_API_URI,
 } = import.meta.env;
 
@@ -125,6 +124,7 @@ function Page () {
         }), [interviewUid]);
 
     const statementHash = editStatementResult.data?.editStatement?.newHash;
+    const videoUri = transcriptData?.interview?.videos?.[0]?.uri;
 
     return (
         <>
@@ -135,16 +135,20 @@ function Page () {
             }
             <div>
                 <EditorStyle />
-                <video
-                    ref={ player }
-                    controls
-                    crossOrigin="anonymous"
-                    onTimeUpdate={ ev => playhead.timestamp.value = (ev.target as HTMLVideoElement).currentTime }>
-                    <source src={ `${ AUOHP_PUBLIC }/videos/${ interviewNumber }.mp4` } type="video/mp4" />
-                    {
-                        interviewUid && <track default key={ statementHash } kind="captions" src={ `${ AUOHP_API_URI }/interview/${ interviewNumber }/vtt` } srcLang="en" label="English" />
-                    }
-                </video>
+                {
+                    videoUri && (
+                        <video
+                            ref={ player }
+                            controls
+                            crossOrigin="anonymous"
+                            onTimeUpdate={ ev => playhead.timestamp.value = (ev.target as HTMLVideoElement).currentTime }>
+                            <source src={ videoUri } type="video/mp4" />
+                            {
+                                interviewUid && <track default key={ statementHash } kind="captions" src={ `${ AUOHP_API_URI }/interview/${ interviewNumber }/vtt` } srcLang="en" label="English" />
+                            }
+                        </video>
+                    )
+                }
 
                 <LexicalExtensionComposer extension={ extension } />
             </div>

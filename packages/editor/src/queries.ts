@@ -48,6 +48,9 @@ export const TRANSCRIPT_QUERY: TypedDocumentNode<TranscriptQuery, TranscriptQuer
                     text
                 }
             }
+            videos {
+                uri
+            }
         }
     }
 `;

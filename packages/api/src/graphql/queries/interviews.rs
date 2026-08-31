@@ -1,4 +1,4 @@
-use crate::graphql::nodes::{Person, Statement, StatementNode, Transcript};
+use crate::graphql::nodes::{Person, Statement, StatementNode, Transcript, Video};
 use crate::neo4j::Db;
 use async_graphql::{Context, Error, Object};
 use chrono::NaiveDate;
@@ -87,6 +87,30 @@ impl Interview {
             statements,
         })
     }
+
+    async fn videos(&self, ctx: &Context<'_>) -> async_graphql::Result<Vec<Video>> {
+        let db = ctx.data::<Db>()?;
+
+        let mut stream = db
+            .execute_read(query!(
+                r#"
+                    MATCH (interview:Interview)-[:HAS_ASSET]->(video:Video)
+                    WHERE interview.uid = {uid}
+                    RETURN video
+                "#,
+                uid = self.uid.clone()
+            ))
+            .await?;
+
+        let mut videos: Vec<Video> = Vec::new();
+
+        while let Some(row) = stream.next().await? {
+            let v = row.get::<Video>("video")?;
+            videos.push(v);
+        }
+
+        Ok(videos)
+    }
 }
 
 // pub struct Interviews;
@@ -156,57 +180,4 @@ impl InterviewQuery {
 
         Ok(interviews)
     }
-}
-
-pub async fn get_transcript(ctx: &Context<'_>, number: i64) -> async_graphql::Result<Transcript> {
-    let db = ctx.data::<Db>()?;
-    let mut stream = db
-        .execute(
-            query(
-                "MATCH (interview:Interview {number: $number})
-                       -[:HAS_TRANSCRIPT]->(transcript:Transcript)
-                       -[contains:CONTAINS]->(statement:Statement)
-                       <-[:SAYS]-(person:Person)
-
-                 RETURN interview, transcript, statement, person, contains
-                 ORDER BY contains.startTime",
-            )
-            .param("number", number),
-        )
-        .await?;
-
-    let mut interview_opt: Option<Interview> = None;
-    let mut transcript_uid = String::new();
-    let mut statements: Vec<Statement> = Vec::new();
-
-    while let Some(row) = stream.next().await? {
-        if interview_opt.is_none() {
-            let node: neo4rs::Node = row.get("interview")?;
-            let t_node: neo4rs::Node = row.get("transcript")?;
-            interview_opt = Some(node.to()?);
-            transcript_uid = t_node.get("uid")?;
-        }
-
-        let statement: neo4rs::Node = row.get("statement")?;
-        let person: neo4rs::Node = row.get("person")?;
-        let contains: neo4rs::Relation = row.get("contains")?;
-        let sn: StatementNode = statement.to()?;
-
-        statements.push(Statement {
-            uid: sn.uid,
-            text: sn.text,
-            person: Some(person.to()?),
-            start_time: Some(contains.get("startTime")?),
-            end_time: Some(contains.get("endTime")?),
-            words: sn.words,
-        });
-    }
-
-    let interview = interview_opt
-        .ok_or_else(|| async_graphql::Error::new(format!("interview #{number} not found")))?;
-
-    Ok(Transcript {
-        uid: transcript_uid,
-        statements,
-    })
 }
