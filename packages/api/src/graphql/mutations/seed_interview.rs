@@ -89,7 +89,7 @@ pub struct WordTimingInput {
     pub start: f64,
     pub end: f64,
     /// Confidence score (0.0–1.0). Optional.
-    pub score: Option<f64>,
+    pub p: Option<f64>,
 }
 
 /// Optional media assets to attach to the interview.
@@ -234,13 +234,6 @@ pub async fn seed_interview(
 
     // ── Phase 1: interview scaffold ──────────────────────────────────────
 
-    let video_uid = uid::generate();
-    let video_url = input
-        .assets
-        .as_ref()
-        .and_then(|a| a.video_url.clone())
-        .unwrap_or_default();
-
     tracing::info!(
         interview_uid,
         transcript_uid,
@@ -267,9 +260,33 @@ pub async fn seed_interview(
         interviewUid = interview_uid.clone(),
         interviewNumber = input.number,
         interviewDate = input.date.clone(),
-        transcriptUid = transcript_uid.clone()
+        transcriptUid = transcript_uid.clone(),
     ))
     .await?;
+
+    let video_uid = uid::generate();
+    let video_url = input.assets.as_ref().and_then(|a| a.video_url.clone());
+    tracing::debug!(
+        video_uid = video_uid.clone(),
+        video_url = video_url.clone(),
+        interviewee = input.interviewee.clone(),
+        interview_number = input.number,
+        "seeding with video"
+    );
+
+    if video_url.is_some() {
+        txn.run(query!(
+            r#"
+                MATCH (i:Interview {{uid: {interviewUid}}})
+                CREATE (i)-[:HAS_ASSET]->(video:Video:Asset {{uri: {uri}, uid: {videoUid}}})
+                RETURN video
+            "#,
+            uri = video_url.clone(),
+            videoUid = video_uid.clone(),
+            interviewUid = interview_uid.clone(),
+        ))
+        .await?
+    }
 
     tracing::info!(
         interview_uid,
