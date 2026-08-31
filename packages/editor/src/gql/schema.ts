@@ -47,7 +47,26 @@ export type CaptionsSpanAtTimeArgs = {
   timestamp: Scalars['Float']['input'];
 };
 
+export type CreateStatementInput = {
+  endTime: Scalars['Float']['input'];
+  startTime: Scalars['Float']['input'];
+  text: Scalars['String']['input'];
+};
+
+export type CreateStatementPayload = {
+  __typename?: 'CreateStatementPayload';
+  statement: Statement;
+};
+
+export type DestroyStatementPayload = {
+  __typename?: 'DestroyStatementPayload';
+  ok: Scalars['Boolean']['output'];
+  statement: StatementNode;
+};
+
 export type EditStatementInput = {
+  endTime: Scalars['Float']['input'];
+  startTime: Scalars['Float']['input'];
   text: Scalars['String']['input'];
   uid: Scalars['String']['input'];
 };
@@ -56,14 +75,14 @@ export type EditStatementPayload = {
   __typename?: 'EditStatementPayload';
   newHash: Scalars['String']['output'];
   oldHash: Scalars['String']['output'];
-  uid: Scalars['String']['output'];
+  statement: Statement;
   wroteEmbedding: Scalars['Boolean']['output'];
 };
 
 export type Interview = {
   __typename?: 'Interview';
   date: Scalars['NaiveDate']['output'];
-  interviewee: Scalars['String']['output'];
+  interviewee: Person;
   number: Scalars['Int']['output'];
   transcript: Transcript;
   uid: Scalars['String']['output'];
@@ -82,6 +101,8 @@ export type InterviewAssetsInput = {
 export type MutationRoot = {
   __typename?: 'MutationRoot';
   addAsset: AddAssetPayload;
+  createStatement: CreateStatementPayload;
+  destroyStatement: DestroyStatementPayload;
   editStatement: EditStatementPayload;
   /**
    * Seeds a complete interview: creates Interview, Person, Transcript, and
@@ -94,6 +115,17 @@ export type MutationRoot = {
 
 export type MutationRootAddAssetArgs = {
   input: AddAssetInput;
+};
+
+
+export type MutationRootCreateStatementArgs = {
+  interviewUid: Scalars['String']['input'];
+  statement: CreateStatementInput;
+};
+
+
+export type MutationRootDestroyStatementArgs = {
+  uid: Scalars['String']['input'];
 };
 
 
@@ -253,6 +285,23 @@ export type Statement = {
   words: Maybe<Scalars['String']['output']>;
 };
 
+/**
+ * The node-native properties of a (:Statement) node.
+ *
+ * Separated from `Statement` because `Statement` mixes node properties with
+ * data from relationships (`:CONTAINS` timing, `:SAYS` speaker), making a
+ * full `Deserialize` derive impossible. This struct covers only what lives on
+ * the node itself. `#[serde(default)]` on `words` means serde substitutes
+ * `None` for absent keys rather than erroring---older transcripts were seeded
+ * without word-level timing, so the property may not exist on the node at all.
+ */
+export type StatementNode = {
+  __typename?: 'StatementNode';
+  text: Scalars['String']['output'];
+  uid: Scalars['String']['output'];
+  words: Maybe<Scalars['String']['output']>;
+};
+
 export type Transcript = {
   __typename?: 'Transcript';
   /** Statements in transcript order (via the `:NEXT` linked list). */
@@ -283,25 +332,48 @@ export type Video = {
 export type WordTimingInput = {
   end: Scalars['Float']['input'];
   /** Confidence score (0.0–1.0). Optional. */
-  score: InputMaybe<Scalars['Float']['input']>;
+  p: InputMaybe<Scalars['Float']['input']>;
   start: Scalars['Float']['input'];
   word: Scalars['String']['input'];
+};
+
+export type CreateStatementInput = {
+  endTime: number;
+  startTime: number;
+  text: string;
 };
 
 export type EditStatementMutationVariables = Exact<{
   uid: string;
   text: string;
+  startTime: number;
+  endTime: number;
 }>;
 
 
-export type EditStatementMutation = { editStatement: { uid: string, oldHash: string, newHash: string, wroteEmbedding: boolean } };
+export type EditStatementMutation = { editStatement: { oldHash: string, newHash: string, wroteEmbedding: boolean, statement: { uid: string, text: string, startTime: number | null | undefined, endTime: number | null | undefined } } };
+
+export type CreateStatementMutationVariables = Exact<{
+  statement: CreateStatementInput;
+  interviewUid: string;
+}>;
+
+
+export type CreateStatementMutation = { createStatement: { statement: { uid: string, text: string, startTime: number | null | undefined, endTime: number | null | undefined } } };
+
+export type DestroyStatementMutationVariables = Exact<{
+  uid: string;
+}>;
+
+
+export type DestroyStatementMutation = { destroyStatement: { ok: boolean, statement: { uid: string } } };
 
 export type TranscriptQueryVariables = Exact<{
   interviewNumber: number;
 }>;
 
 
-export type TranscriptQuery = { health: string, interview: { uid: string, number: number, interviewee: string, transcript: { uid: string, statements: Array<{ uid: string, startTime: number | null | undefined, endTime: number | null | undefined, text: string }> }, videos: Array<{ uri: string }> } };
+export type TranscriptQuery = { health: string, interview: { uid: string, number: number, interviewee: { uid: string, name: string }, transcript: { uid: string, statements: Array<{ uid: string, startTime: number | null | undefined, endTime: number | null | undefined, text: string }> }, videos: Array<{ uri: string }> } };
 
 export type SearchStatementsQueryVariables = Exact<{
   fragment: string;

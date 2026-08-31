@@ -1,6 +1,17 @@
 import { gql } from "@apollo/client";
 import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
-import type { EditStatementMutation, EditStatementMutationVariables, TranscriptQuery, TranscriptQueryVariables, SearchStatementsQuery, SearchStatementsQueryVariables } from "./gql/schema";
+import type {
+    EditStatementMutation,
+    EditStatementMutationVariables,
+    TranscriptQuery,
+    TranscriptQueryVariables,
+    SearchStatementsQuery,
+    SearchStatementsQueryVariables,
+    CreateStatementMutation,
+    CreateStatementMutationVariables,
+    DestroyStatementMutationVariables,
+    DestroyStatementMutation,
+} from "./gql/schema";
 
 
 // -----------------------------------------------------------------------------
@@ -22,12 +33,41 @@ import type { EditStatementMutation, EditStatementMutationVariables, TranscriptQ
 // -----------------------------------------------------------------------------
 
 export const EDIT_STATEMENT_MUTATION: TypedDocumentNode<EditStatementMutation, EditStatementMutationVariables> = gql`
-    mutation EditStatement($uid: String!, $text: String!) {
-        editStatement(input: { uid: $uid, text: $text }) {
-            uid
+    mutation EditStatement($uid: String!, $text: String!, $startTime: Float!, $endTime: Float!) {
+        editStatement(input: { uid: $uid, text: $text, startTime: $startTime, endTime: $endTime }) {
             oldHash
             newHash
             wroteEmbedding
+            statement {
+                uid
+                text
+                startTime
+                endTime
+            }
+        }
+    }
+`;
+
+export const CREATE_STATEMENT_MUTATION: TypedDocumentNode<CreateStatementMutation, CreateStatementMutationVariables> = gql`
+    mutation CreateStatement($statement: CreateStatementInput!, $interviewUid: String!) {
+        createStatement(statement: $statement, interviewUid: $interviewUid) {
+            statement {
+                uid
+                text
+                startTime
+                endTime
+            }
+        }
+    }
+`;
+
+export const DESTROY_STATEMENT_MUTATION: TypedDocumentNode<DestroyStatementMutation, DestroyStatementMutationVariables> = gql`
+    mutation DestroyStatement($uid: String!) {
+        destroyStatement(uid: $uid) {
+            ok
+            statement {
+                uid
+            }
         }
     }
 `;
@@ -38,7 +78,10 @@ export const TRANSCRIPT_QUERY: TypedDocumentNode<TranscriptQuery, TranscriptQuer
         interview(number: $interviewNumber) {
             uid
             number
-            interviewee
+            interviewee {
+                uid
+                name
+            }
             transcript {
                 uid
                 statements {

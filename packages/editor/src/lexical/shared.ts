@@ -1,5 +1,5 @@
 import { useLazyQuery, useMutation } from "@apollo/client/react";
-import type { EditStatementMutation, EditStatementMutationVariables, TranscriptQuery, SearchStatementsQuery, SearchStatementsQueryVariables } from "@/gql/schema";
+import type { EditStatementMutation, EditStatementMutationVariables, TranscriptQuery, SearchStatementsQuery, SearchStatementsQueryVariables, CreateStatementMutation, CreateStatementMutationVariables, DestroyStatementMutationVariables, DestroyStatementMutation } from "@/gql/schema";
 
 
 // A split-on-Enter produces a second statement the backend knows nothing about:
@@ -37,3 +37,11 @@ export type EditStatementFn = ReturnType<typeof useMutation<EditStatementMutatio
 // returns and pulls the field off it, so this alias tracks any future change to
 // `useLazyQuery`'s result type without us restating it.
 export type SearchStatementsData = ReturnType<typeof useLazyQuery<SearchStatementsQuery, SearchStatementsQueryVariables>>[1]["data"];
+export type DestroyStatementFn = ReturnType<typeof useMutation<DestroyStatementMutation, DestroyStatementMutationVariables>>[0];
+export type CreateStatementFn = ReturnType<typeof useMutation<CreateStatementMutation, CreateStatementMutationVariables>>[0];
+
+// Derived from the operation's variables rather than imported as the standalone
+// `CreateStatementInput`, for the same reason as the aliases above: the indexed
+// access tracks the mutation's actual signature, so renaming the argument or
+// tightening the input shape surfaces here instead of drifting silently.
+export type CreateStatementInput = CreateStatementMutationVariables["statement"];

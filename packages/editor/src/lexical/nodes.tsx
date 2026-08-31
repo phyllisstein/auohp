@@ -1,7 +1,5 @@
 import {
     $applyNodeReplacement,
-    $findMatchingParent,
-    $isTextNode,
     addClassNamesToElement,
     ElementNode,
     setDOMUnmanaged,
@@ -15,9 +13,10 @@ import {
 } from "lexical";
 import { type JSX } from "react";
 import { formatTimestamp, SYNTHETIC_UID_MARKER } from "@/lexical/shared";
-import styled, { createGlobalStyle, css } from "styled-components";
+import styled, { createGlobalStyle } from "styled-components";
 import numberSignSVG from "./number.sign.square.svgo.svg?inline";
 import { MarkNode } from "@lexical/mark";
+import { playhead } from "@/playhead";
 
 const NO_IDS: readonly string[] = [];
 
@@ -40,16 +39,21 @@ const NO_IDS: readonly string[] = [];
 type SerializedStatementNode = Spread<
     {
         uid: string;
-        startTime: number | null;
-        endTime: number | null;
+        startTime: number | null | undefined;
+        endTime: number | null | undefined;
     },
     SerializedElementNode
 >;
 
+const STATEMENT_NODE_CLASS = "auohp-statement";
+const STATEMENT_CHROME_CLASS = "auohp-statement__chrome";
+const STATEMENT_CONTENT_CLASS = "auohp-statement__content";
+const STATEMENT_TIME_CLASS = "auohp-statement__time";
+
 export class StatementNode extends ElementNode {
     __uid: string;
-    __startTime: number | null;
-    __endTime: number | null;
+    __startTime: number | null | undefined;
+    __endTime: number | null | undefined;
 
     static getType (): string {
         return "statement";
@@ -66,7 +70,7 @@ export class StatementNode extends ElementNode {
         return $createStatementNode(serialized.uid, serialized.startTime, serialized.endTime);
     }
 
-    constructor (uid: string, startTime: number | null, endTime: number | null, key?: NodeKey) {
+    constructor (uid: string, startTime: number | null | undefined, endTime: number | null | undefined, key?: NodeKey) {
         super(key);
         this.__uid = uid;
         this.__startTime = startTime;
@@ -79,12 +83,30 @@ export class StatementNode extends ElementNode {
         return this.getLatest().__uid;
     }
 
-    getStartTime (): number | null {
+    getStartTime (): number | null | undefined {
         return this.getLatest().__startTime;
     }
 
-    getEndTime (): number | null {
+    getEndTime (): number | null | undefined {
         return this.getLatest().__endTime;
+    }
+
+    setStartTime (startTime: number | null | undefined): this {
+        const writable = this.getWritable();
+        writable.__startTime = startTime;
+        return writable;
+    }
+
+    setEndTime (endTime: number | null | undefined): this {
+        const writable = this.getWritable();
+        writable.__endTime = endTime;
+        return writable;
+    }
+
+    setUid (uid: string): this {
+        const writable = this.getWritable();
+        writable.__uid = uid;
+        return writable;
     }
 
     // Called by RangeSelection.insertParagraph() (LexicalSelection.ts:1597) when
@@ -99,7 +121,9 @@ export class StatementNode extends ElementNode {
     insertNewAfter (selection: RangeSelection, restoreSelection = true): ElementNode | null {
         const newUid = `${ this.getUid() }${ SYNTHETIC_UID_MARKER }${ Date.now() }`;
         // FIXME: New node's startTime, old node's endTime = current position of the playhead
-        const continuation = $createStatementNode(newUid, this.getStartTime(), this.getEndTime());
+        const currentTime = playhead.timestamp.peek();
+        const continuation = $createStatementNode(newUid, currentTime, this.getEndTime());
+        this.setEndTime(currentTime);
 
         this.insertAfter(continuation, restoreSelection);
 
@@ -108,7 +132,7 @@ export class StatementNode extends ElementNode {
 
     createDOM (_config: EditorConfig): HTMLElement {
         const dom = document.createElement("div");
-        dom.className = "auohp-statement";
+        dom.className = STATEMENT_NODE_CLASS;
         dom.setAttribute("data-uid", this.__uid);
 
         // Non-editable chrome column: two stacked timestamps (start over end),
@@ -116,7 +140,7 @@ export class StatementNode extends ElementNode {
         // pseudo-element cannot. `setDOMUnmanaged` tells the reconciler this DOM
         // is not its concern; contentEditable=false keeps the caret out.
         const chrome = document.createElement("div");
-        chrome.className = "auohp-statement__chrome";
+        chrome.className = STATEMENT_CHROME_CLASS;
         chrome.contentEditable = "false";
         chrome.append(this.#timeElement(this.__startTime), this.#timeElement(this.__endTime));
         setDOMUnmanaged(chrome);
@@ -124,7 +148,7 @@ export class StatementNode extends ElementNode {
         // The content element the reconciler DOES manage (see getDOMSlot): the
         // editable TextNode children live here, beside --- not inside --- the chrome.
         const content = document.createElement("div");
-        content.className = "auohp-statement__content";
+        content.className = STATEMENT_CONTENT_CLASS;
 
         dom.append(chrome, content);
         return dom;
@@ -135,16 +159,26 @@ export class StatementNode extends ElementNode {
     // `ElementDOMSlot.resolveLeafPosition` handles DOM-caret -> lexical-offset
     // mapping for this wrap pattern, so selection needs no hand-rolled math.
     getDOMSlot (element: HTMLElement) {
-        const content = element.querySelector<HTMLElement>(".auohp-statement__content") ?? element;
+        const content = element.querySelector<HTMLElement>(`.${ STATEMENT_CONTENT_CLASS }`) ?? element;
         return super.getDOMSlot(element).withElement(content);
     }
 
     // Return `false` --- Lexical keeps managing our text children --- but first
     // refresh the chrome timestamps if the caption window shifted (e.g. a split).
     updateDOM (prevNode: StatementNode, dom: HTMLElement): boolean {
+        // The uid changes exactly once in a node's life: when the server answers
+        // `createStatement` and the synthetic uid gives way to the real one. That
+        // used to ride in on a full node replacement, which rebuilt this DOM (and
+        // called `createDOM` again) as a side effect; now that the adoption is an
+        // in-place field update, the attribute has to be synced here or the DOM
+        // keeps advertising a uid the backend has never heard of.
+        if (prevNode.__uid !== this.__uid) {
+            dom.setAttribute("data-uid", this.__uid);
+        }
+
         if (prevNode.__startTime !== this.__startTime || prevNode.__endTime !== this.__endTime) {
             const times = dom.querySelectorAll<HTMLElement>(
-                ".auohp-statement__chrome > .auohp-statement__time",
+                `.${ STATEMENT_TIME_CLASS }`,
             );
             if (times[0]) {
                 times[0].textContent = formatTimestamp(this.__startTime ?? 0);
@@ -167,9 +201,9 @@ export class StatementNode extends ElementNode {
         };
     }
 
-    #timeElement (time: number | null): HTMLElement {
+    #timeElement (time: number | null | undefined): HTMLElement {
         const el = document.createElement("span");
-        el.className = "auohp-statement__time";
+        el.className = STATEMENT_TIME_CLASS;
         el.textContent = formatTimestamp(time ?? 0);
         return el;
     }
@@ -177,13 +211,33 @@ export class StatementNode extends ElementNode {
 
 export function $createStatementNode (
     uid: string,
-    startTime: number | null,
-    endTime: number | null,
+    startTime: number | null | undefined,
+    endTime: number | null | undefined,
 ): StatementNode {
     // `$applyNodeReplacement` runs any registered node-replacement hooks and is
     // the idiomatic constructor wrapper --- cheap insurance even when we register
     // no replacements today.
     return $applyNodeReplacement(new StatementNode(uid, startTime, endTime));
+}
+
+// Adopts the server's identity and timings onto an existing statement, in place.
+//
+// This deliberately does NOT go through `clone` + `replace`, which is the shape
+// it originally had. `clone` copies `__key` (see above), so the "replacement" is
+// not an independent node at all: the first `getWritable()` inside `setUid`
+// resolves that key against the active EditorState and hands back the canonical
+// node from the tree. The clone is discarded, the setters mutate the original,
+// and `node.replace(replacement)` then replaces the node with itself --- pure
+// churn that also re-parents every child, which is precisely how tag chips get
+// destroyed (see `insertNewAfter`).
+//
+// Replacement is for changing a node's TYPE. Changing its fields is what the
+// setters are for, and they already handle versioning correctly.
+export function $adoptStatementIdentity (
+    node: StatementNode,
+    { uid, startTime, endTime }: { uid: string; startTime: number | null | undefined; endTime: number | null | undefined },
+): StatementNode {
+    return node.setUid(uid).setStartTime(startTime).setEndTime(endTime);
 }
 
 export function $isStatementNode (node: LexicalNode | null | undefined): node is StatementNode {
@@ -275,7 +329,7 @@ export const TAG_CHIP_BADGE_CLASS = "auohp-tag-chip__badge";
 export function TagChip ({ nodeKey }: { nodeKey: NodeKey }): JSX.Element {
     return (
         <>
-            <TagChipContainer className="tag-chip__container" />
+            <TagChipContainer data-node-key={ nodeKey } className="tag-chip__container" />
         </>
     );
 }
@@ -435,7 +489,7 @@ export const SEARCH_RESULT_BADGE_CLASS = "auohp-search-result__badge";
 export function SearchResult ({ nodeKey }: { nodeKey: NodeKey }): JSX.Element {
     return (
         <>
-            <SearchResultContainer className="auohp-search-result__container" />
+            <SearchResultContainer data-node-key={ nodeKey } className="auohp-search-result__container" />
         </>
     );
 }
