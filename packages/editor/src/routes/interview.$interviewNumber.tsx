@@ -1,13 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useRef, type RefObject } from "react";
 import { LexicalExtensionComposer } from "@lexical/react/LexicalExtensionComposer";
-import { useMutation } from "@apollo/client/react";
+import { useMutation, useReadQuery } from "@apollo/client/react";
 import { useSignalEffect } from "@preact/signals-react";
 import styled, { createGlobalStyle } from "styled-components";
 import { playhead } from "@/playhead";
 import { defineAuohpEditorExtension } from "@/lexical/extensions";
 import { TRANSCRIPT_QUERY, EDIT_STATEMENT_MUTATION, CREATE_STATEMENT_MUTATION, DESTROY_STATEMENT_MUTATION } from "@/queries";
 import { style } from "@react-spectrum/s2/style" with { type: "macro" };
+import { gql } from "@apollo/client";
+import type { HeaderQuery, HeaderQueryVariables } from "./interview.$interviewNumber.gql";
+import type { TypedDocumentNode } from "@apollo/client";
 
 // FIXME: Constructing URLs for the caption endpoint and the public video URI
 // should be a server-side concern (return a Video node, return Caption metadata).
@@ -93,26 +96,44 @@ const VideoContainer = styled.div`
 export const Route = createFileRoute("/interview/$interviewNumber")({
     component: Page,
     // FIXME: Handle errors gracefully
-    loader: async ({ context: { apolloClient }, params }) => {
+    loader: async ({ context: { apolloClient, preloadQuery }, params }) => {
         const interviewNumber = Number.parseInt(params.interviewNumber);
         if (Number.isNaN(interviewNumber)) {
             throw new Error("Invalid interview number");
         }
 
-        const transcriptQuery = await apolloClient.query({
-            query: TRANSCRIPT_QUERY,
+        const HEADER_QUERY: TypedDocumentNode<HeaderQuery, HeaderQueryVariables> = gql`
+            query Header($interviewNumber: Int!) {
+                interview(number: $interviewNumber) {
+                    interviewee {
+                        name
+                    }
+                }
+            }
+        `;
+        const { data: headerQuery } = await apolloClient.query({
+            query: HEADER_QUERY,
             variables: {
                 interviewNumber,
             },
         });
 
-        return { transcriptQuery };
+        const transcriptQuery = preloadQuery(TRANSCRIPT_QUERY, {
+            variables: {
+                interviewNumber,
+            },
+        });
+
+        return { transcriptQuery, headerQuery };
     },
-    head: async ctx => {
-        const name = ctx.loaderData?.transcriptQuery?.data?.interview?.interviewee?.name ?? "Unknown Interviewee";
+    head: ({ params, loaderData }) => {
+        const interviewNumber = Number.parseInt(params.interviewNumber);
+
+        const name = loaderData?.headerQuery?.interview?.interviewee?.name ?? "Unknown Interviewee";
+
         return {
             meta: [
-                { title: `#${ ctx.params.interviewNumber } - ${ name } | AUOHP Editor` },
+                { title: `#${ interviewNumber } - ${ name } | AUOHP Editor` },
             ],
         };
     },
@@ -122,7 +143,7 @@ export const Route = createFileRoute("/interview/$interviewNumber")({
 function Page () {
     const interviewNumber = Number.parseInt(Route.useParams().interviewNumber);
     const { transcriptQuery } = Route.useLoaderData();
-    const transcriptData = transcriptQuery.data;
+    const { data: transcriptData } = useReadQuery(transcriptQuery);
 
     const [editStatement, editStatementResult] = useMutation(EDIT_STATEMENT_MUTATION, {
         fetchPolicy: "no-cache",

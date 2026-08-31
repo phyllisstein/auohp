@@ -1,5 +1,5 @@
 import { gql } from "@apollo/client";
-import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
+import type { TypedDocumentNode } from "@apollo/client";
 import type {
     EditStatementMutation,
     EditStatementMutationVariables,
