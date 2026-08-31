@@ -58,7 +58,7 @@ pub async fn generate_vtt(db: &Db, interview_number: i64) -> Result<String> {
         let start_time: neo4rs::BoltFloat = row.get("startTime")?;
         let end_time: neo4rs::BoltFloat = row.get("endTime")?;
 
-        let start_timestamp = format_millisecond_timestamp((start_time.value * 1_800.0) as i64);
+        let start_timestamp = format_millisecond_timestamp((start_time.value * 1_000.0) as i64);
         let end_timestamp = format_millisecond_timestamp((end_time.value * 1_000.0) as i64);
 
         let text = sn.text.clone();
