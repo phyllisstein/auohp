@@ -37,11 +37,11 @@
         "files.exclude": {
             "**/node_modules": true,
             "**/.yarn": true,
-            "**/gql/**": true,
             "**/target": true
         },
         "search.exclude": {
-            "**/assets/**": true
+            "**/assets/**": true,
+            "**/gql/**": true
         },
         "files.watcherExclude": {
             "**/node_modules/**": true,
@@ -53,14 +53,6 @@
         "[rust]": {
             "editor.defaultFormatter": "rust-lang.rust-analyzer",
             "editor.formatOnSave": true
-        },
-        "[javascript][typescript][javascriptreact][typescriptreact]": {
-            "editor.formatOnSave": false,
-            "editor.defaultFormatter": "oxc.oxc-vscode",
-            "editor.codeActionsOnSave": [
-                "source.fixAll.stylelint",
-                "source.fixAll.oxc"
-            ],
         },
         "[scss]": {
             "editor.codeActionsOnSave": {
@@ -82,6 +74,38 @@
             "**/.yarn/**",
             "**/target/**",
             "**/assets/**"
-        ]
+        ],
+        "[typescriptreact]": {
+            "editor.formatOnSave": false,
+            "editor.defaultFormatter": "oxc.oxc-vscode",
+            "editor.codeActionsOnSave": [
+                "source.fixAll.stylelint",
+                "source.fixAll.oxc"
+            ],
+        },
+        "[javascriptreact]": {
+            "editor.formatOnSave": false,
+            "editor.defaultFormatter": "oxc.oxc-vscode",
+            "editor.codeActionsOnSave": [
+                "source.fixAll.stylelint",
+                "source.fixAll.oxc"
+            ],
+        },
+        "[javascript]": {
+            "editor.formatOnSave": false,
+            "editor.defaultFormatter": "oxc.oxc-vscode",
+            "editor.codeActionsOnSave": [
+                "source.fixAll.stylelint",
+                "source.fixAll.oxc"
+            ],
+        },
+        "[typescript]": {
+            "editor.formatOnSave": false,
+            "editor.defaultFormatter": "oxc.oxc-vscode",
+            "editor.codeActionsOnSave": [
+                "source.fixAll.stylelint",
+                "source.fixAll.oxc"
+            ],
+        }
     }
 }

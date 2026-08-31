@@ -3,20 +3,39 @@ import type { CodegenConfig } from "@graphql-codegen/cli";
 
 const {
     CODEGEN_GRAPHQL_ENDPOINT = "http://api.auohp.localhost/graphql",
-} = process.env;
+} = import.meta.env;
 
 
 const config: CodegenConfig = {
     schema: CODEGEN_GRAPHQL_ENDPOINT,
-    documents: ["src/**/*.{ts,tsx}"],
+    documents: ["src/**/!(*.gql).{ts,tsx}"],
     allowPartialOutputs: true,
     generates: {
         "./src/gql/schema.ts": {
-            plugins: ["typescript", "typescript-operations"],
+            plugins: ["typescript"],
             config: {
                 avoidOptionals: true,
                 useTypeImports: true,
-                maybeValue: "T | null | undefined",
+                extractAllFieldsToTypesCompact: true,
+            },
+            hooks: {
+                afterOneFileWrite: ["oxlint --fix"],
+            },
+        },
+        "./src/": {
+            preset: "near-operation-file",
+            presetConfig: {
+                extension: ".gql.ts",
+                baseTypesPath: "gql/schema.ts",
+            },
+            plugins: ["typescript-operations"],
+            config: {
+                avoidOptionals: true,
+                useTypeImports: true,
+                extractAllFieldsToTypesCompact: true,
+            },
+            hooks: {
+                afterOneFileWrite: ["oxlint --fix"],
             },
         },
         "./schema.graphql": {

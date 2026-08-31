@@ -15,7 +15,6 @@ import { namedSignals, type Signal } from "@lexical/extension";
 import { HistoryExtension } from "@lexical/history";
 import { RichTextExtension } from "@lexical/rich-text";
 import { ReactExtension, type EditorChildrenComponentProps } from "@lexical/react/ReactExtension";
-
 import { $findMatchingParent, mergeRegister } from "@lexical/utils";
 import { debounce } from "es-toolkit/function";
 import { playhead } from "@/playhead";
@@ -56,6 +55,7 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import { useExtensionComponent, useExtensionDependency } from "@lexical/react/useExtensionComponent";
 import { createPortal } from "react-dom";
 import { useEffect, useState, type JSX, useEffectEvent } from "react";
+import { Button } from "@react-spectrum/s2/Button";
 
 
 // -----------------------------------------------------------------------------
@@ -172,7 +172,7 @@ export const StatementSeekExtension = /* @__PURE__ */ defineExtension({
                     const startTime = editor.read(() => {
                         const statement = $getRoot()
                             .getChildren()
-                            .find(node => $isStatementNode(node) && node.getUid() === uid);
+                            .find(node => $isStatementNode(node) && node.getUid() === uid)!;
 
                         return $isStatementNode(statement) ? statement.getStartTime() : null;
                     });
@@ -278,7 +278,7 @@ export const TagSplitBoundaryExtension = /* @__PURE__ */ defineExtension({
                 const anchor = selection.anchor.getNode();
                 const chip = $isTagChipNode(anchor)
                     ? anchor
-                    : $findMatchingParent(anchor, $isTagChipNode);
+                    : $findMatchingParent(anchor, $isTagChipNode)!;
 
                 // Caret is not inside a proper noun --- nothing to consolidate.
                 if (!$isTagChipNode(chip)) {
@@ -378,7 +378,7 @@ export interface PersistenceConfig {
     destroyDelay: number;
     createStatement: CreateStatementFn | null;
     destroyStatement: DestroyStatementFn | null;
-    interviewUid: string | null | undefined;
+    interviewUid: string;
 }
 
 export const PersistenceExtension = /* @__PURE__ */ defineExtension({
@@ -388,7 +388,7 @@ export const PersistenceExtension = /* @__PURE__ */ defineExtension({
         editStatement: null,
         createStatement: null,
         destroyStatement: null,
-        interviewUid: null,
+        interviewUid: "",
     }),
     dependencies: [StatementExtension],
     name: "@auohp/persistence",
@@ -440,7 +440,7 @@ export const PersistenceExtension = /* @__PURE__ */ defineExtension({
         const createDebouncedCreate = (_uid: string) =>
             debounce((key: NodeKey) => {
                 const payload = editor.read((): CreateStatementInput | null => {
-                    const node = $getNodeByKey(key);
+                    const node = $getNodeByKey(key)!;
                     if (!$isStatementNode(node)) {
                         return null;
                     }
@@ -468,7 +468,7 @@ export const PersistenceExtension = /* @__PURE__ */ defineExtension({
                     onCompleted: data => {
                         console.debug(`Create completed for statement ${ data.createStatement.statement.uid }:`, data.createStatement);
                         editor.update(() => {
-                            const node = $getNodeByKey(key);
+                            const node = $getNodeByKey(key)!;
                             if (!$isStatementNode(node)) {
                                 return;
                             }
@@ -564,7 +564,7 @@ export const PersistenceExtension = /* @__PURE__ */ defineExtension({
                             }
                             const statement = $isStatementNode(node)
                                 ? node
-                                : $findMatchingParent(node, $isStatementNode);
+                                : $findMatchingParent(node, $isStatementNode)!;
                             if (!$isStatementNode(statement) || seen.has(statement.getKey())) {
                                 return;
                             }
@@ -633,7 +633,7 @@ export const PersistenceExtension = /* @__PURE__ */ defineExtension({
                     if (destroyedKeys.length) {
                         prevEditorState.read(() => {
                             for (const key of destroyedKeys) {
-                                const node = $getNodeByKey(key);
+                                const node = $getNodeByKey(key)!;
 
                                 // Only statements are persisted, and --- unlike the
                                 // pass above --- we deliberately do NOT walk up to a
@@ -993,7 +993,7 @@ export interface AuohpEditorOptions {
     editStatement: EditStatementFn;
     createStatement: CreateStatementFn;
     destroyStatement: DestroyStatementFn;
-    interviewUid: string | null | undefined;
+    interviewUid: string;
 }
 
 export function defineAuohpEditorExtension ({ statements, editStatement, createStatement, destroyStatement, interviewUid }: AuohpEditorOptions) {
@@ -1079,11 +1079,12 @@ function TagButton (): JSX.Element {
     // __ids then genuinely means "this range mentions these entities", and
     // $getMarkIDs answers that question directly. No signature change needed.
     return (
-        <button
+        <Button
+            id="insert-tag-chip"
             type="button"
-            onClick={ () => editor.dispatchCommand(INSERT_TAG_CHIP_COMMAND, crypto.randomUUID()) }>
+            onPress={ () => editor.dispatchCommand(INSERT_TAG_CHIP_COMMAND, crypto.randomUUID()) }>
             Insert #person chip
-        </button>
+        </Button>
     );
 }
 
@@ -1096,12 +1097,13 @@ function SearchButton (): JSX.Element {
     const loading = useExtensionSignalValue(SearchInterviewExtension, "loading");
 
     return (
-        <button
+        <Button
+            id="perform-search"
             type="button"
-            disabled={ loading }
-            onClick={ () => editor.dispatchCommand(PERFORM_SEARCH_COMMAND, undefined) }>
+            isDisabled={ loading }
+            onPress={ () => editor.dispatchCommand(PERFORM_SEARCH_COMMAND, undefined) }>
             { loading ? "Searching..." : "Search for selection" }
-        </button>
+        </Button>
     );
 }
 

@@ -30,7 +30,7 @@ export default defineConfig({
         strictPort: true,
     },
     plugins: [
-        // withNormalizedMacroIds(macros.vite()), // Must come first!
+        withNormalizedMacroIds(macros.vite()), // Must come first!
         tanstackStart(),
         // viteReact must come after tanstackStart
         viteReact(),

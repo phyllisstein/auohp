@@ -11,7 +11,7 @@ import type {
     CreateStatementMutationVariables,
     DestroyStatementMutationVariables,
     DestroyStatementMutation,
-} from "./gql/schema";
+} from "./queries.gql";
 
 
 // -----------------------------------------------------------------------------

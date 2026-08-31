@@ -1,4 +1,4 @@
-import { css } from "styled-components";
+import { css, type RuleSet } from "styled-components";
 
 const breakpoints = {
     lg: "1056px",

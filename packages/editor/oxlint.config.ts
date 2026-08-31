@@ -1,7 +1,7 @@
 import { defineConfig } from "oxlint";
 
 export default defineConfig({
-    plugins: [],
+    plugins: ["react"],
     jsPlugins: ["@stylistic/eslint-plugin"],
     categories: {
         correctness: "off",
@@ -74,7 +74,7 @@ export default defineConfig({
         "use-isnan": "error",
         "valid-typeof": "error",
 
-        "react(only-export-components)": "off",
+        "react/only-export-components": "off",
 
         "@stylistic/array-bracket-spacing": ["warn", "never"],
         "@stylistic/arrow-parens": [

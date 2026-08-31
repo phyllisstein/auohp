@@ -1,7 +1,7 @@
-import { createFileRoute, useLoaderData } from "@tanstack/react-router";
-import { useId, useMemo, useRef, type RefObject } from "react";
+import { createFileRoute } from "@tanstack/react-router";
+import { useMemo, useRef, type RefObject } from "react";
 import { LexicalExtensionComposer } from "@lexical/react/LexicalExtensionComposer";
-import { useMutation, useReadQuery } from "@apollo/client/react";
+import { useMutation } from "@apollo/client/react";
 import { useSignalEffect } from "@preact/signals-react";
 import styled, { createGlobalStyle } from "styled-components";
 import { playhead } from "@/playhead";
@@ -109,7 +109,7 @@ export const Route = createFileRoute("/interview/$interviewNumber")({
         return { transcriptQuery };
     },
     head: async ctx => {
-        const name = ctx.loaderData.transcriptQuery?.data?.interview?.interviewee?.name ?? "Unknown Interviewee";
+        const name = ctx.loaderData?.transcriptQuery?.data?.interview?.interviewee?.name ?? "Unknown Interviewee";
         return {
             meta: [
                 { title: `#${ ctx.params.interviewNumber } - ${ name } | AUOHP Editor` },
@@ -137,8 +137,8 @@ function Page () {
     const player = useRef<HTMLVideoElement>(null);
     useVideoSync(player);
 
-    const interviewUid = transcriptData?.interview?.uid;
-    const { statements } = transcriptData.interview.transcript;
+    const interviewUid = transcriptData?.interview?.uid ?? "";
+    const { statements } = transcriptData?.interview.transcript ?? { statements: [] };
 
     // The whole editor is now one value. Everything the old route spelled out in
     // JSX --- namespace, node registration, onError, RichTextPlugin, HistoryPlugin,

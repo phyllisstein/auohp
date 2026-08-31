@@ -39,8 +39,8 @@ const NO_IDS: readonly string[] = [];
 type SerializedStatementNode = Spread<
     {
         uid: string;
-        startTime: number | null | undefined;
-        endTime: number | null | undefined;
+        startTime: number;
+        endTime: number;
     },
     SerializedElementNode
 >;
@@ -56,8 +56,8 @@ const STATEMENT_TIME_CLASS = "auohp-statement__time";
 
 export class StatementNode extends ElementNode {
     __uid: string;
-    __startTime: number | null | undefined;
-    __endTime: number | null | undefined;
+    __startTime: number;
+    __endTime: number;
 
     static getType (): string {
         return "statement";
@@ -74,11 +74,11 @@ export class StatementNode extends ElementNode {
         return $createStatementNode(serialized.uid, serialized.startTime, serialized.endTime);
     }
 
-    constructor (uid: string, startTime: number | null | undefined, endTime: number | null | undefined, key?: NodeKey) {
+    constructor (uid: string, startTime: number | null, endTime: number | null, key?: NodeKey) {
         super(key);
         this.__uid = uid;
-        this.__startTime = startTime;
-        this.__endTime = endTime;
+        this.__startTime = startTime ?? 0;
+        this.__endTime = endTime ?? 0;
     }
 
     // Getters route through `getLatest()` so reads always see the current version
@@ -87,23 +87,23 @@ export class StatementNode extends ElementNode {
         return this.getLatest().__uid;
     }
 
-    getStartTime (): number | null | undefined {
+    getStartTime (): number {
         return this.getLatest().__startTime;
     }
 
-    getEndTime (): number | null | undefined {
+    getEndTime (): number {
         return this.getLatest().__endTime;
     }
 
-    setStartTime (startTime: number | null | undefined): this {
+    setStartTime (startTime: number | null): this {
         const writable = this.getWritable();
-        writable.__startTime = startTime;
+        writable.__startTime = startTime ?? 0;
         return writable;
     }
 
-    setEndTime (endTime: number | null | undefined): this {
+    setEndTime (endTime: number | null): this {
         const writable = this.getWritable();
-        writable.__endTime = endTime;
+        writable.__endTime = endTime ?? 0;
         return writable;
     }
 
@@ -205,7 +205,7 @@ export class StatementNode extends ElementNode {
         };
     }
 
-    #timeElement (time: number | null | undefined): HTMLElement {
+    #timeElement (time: number): HTMLElement {
         const el = document.createElement("span");
         el.className = STATEMENT_TIME_CLASS;
         el.textContent = formatTimestamp(time ?? 0);
@@ -215,8 +215,8 @@ export class StatementNode extends ElementNode {
 
 export function $createStatementNode (
     uid: string,
-    startTime: number | null | undefined,
-    endTime: number | null | undefined,
+    startTime: number | null,
+    endTime: number | null,
 ): StatementNode {
     // `$applyNodeReplacement` runs any registered node-replacement hooks and is
     // the idiomatic constructor wrapper --- cheap insurance even when we register
@@ -239,12 +239,12 @@ export function $createStatementNode (
 // setters are for, and they already handle versioning correctly.
 export function $adoptStatementIdentity (
     node: StatementNode,
-    { uid, startTime, endTime }: { uid: string; startTime: number | null | undefined; endTime: number | null | undefined },
+    { uid, startTime, endTime }: { uid: string; startTime: number | null; endTime: number | null },
 ): StatementNode {
     return node.setUid(uid).setStartTime(startTime).setEndTime(endTime);
 }
 
-export function $isStatementNode (node: LexicalNode | null | undefined): node is StatementNode {
+export function $isStatementNode (node: LexicalNode): node is StatementNode {
     return node instanceof StatementNode;
 }
 
@@ -423,7 +423,7 @@ export function $createTagChipNode (ids: readonly string[] = NO_IDS, key?: NodeK
     return $applyNodeReplacement(new TagChipNode(ids, key));
 }
 
-export function $isTagChipNode (node?: LexicalNode | null | undefined): node is TagChipNode {
+export function $isTagChipNode (node?: LexicalNode): node is TagChipNode {
     return node instanceof TagChipNode;
 }
 
@@ -583,6 +583,6 @@ export function $createSearchResultNode (ids: readonly string[] = NO_IDS, key?: 
     return $applyNodeReplacement(new SearchResultNode(ids, key));
 }
 
-export function $isSearchResultNode (node?: LexicalNode | null | undefined): node is SearchResultNode {
+export function $isSearchResultNode (node?: LexicalNode): node is SearchResultNode {
     return node instanceof SearchResultNode;
 }

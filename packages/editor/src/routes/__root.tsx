@@ -35,10 +35,12 @@ function RootComponent () {
                     elementType="html"
                     locale="en-US"
                     router={{
-                        navigate: (href, options) => {
-                            if (typeof href === "string") return;
-                            return router.navigate({ ...href, ...options });
-                        },
+                        // S2's `Router` type declares `navigate(path: string, ...)`
+                        // outright --- unlike `useHref`, its first parameter is not
+                        // wired to the augmentable `Href`, so the `RouterConfig`
+                        // augmentation below never reaches it. `href` really is a
+                        // string here, so navigate by `to` rather than spreading it.
+                        navigate: (href, options) => router.navigate({ to: href, ...options }),
                         useHref: href => {
                             if (typeof href === "string") return href;
                             return router.buildLocation(href).href;

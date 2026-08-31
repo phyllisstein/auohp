@@ -155,6 +155,7 @@ __metadata:
     "@apollo/client-integration-tanstack-start": "npm:^0.14.5-rc.0"
     "@eslint/js": "npm:^10.0.1"
     "@graphql-codegen/cli": "npm:^7.2.0"
+    "@graphql-codegen/near-operation-file-preset": "npm:^5.2.2"
     "@graphql-codegen/schema-ast": "npm:^6.1.0"
     "@graphql-codegen/typescript-operations": "npm:^6.1.6"
     "@graphql-typed-document-node/core": "npm:^3.2.0"
@@ -179,6 +180,8 @@ __metadata:
     "@tanstack/react-router-devtools": "npm:^1.167.1"
     "@tanstack/react-start": "npm:^1.168.48"
     "@tanstack/react-virtual": "npm:^3.14.10"
+    "@types/chai": "npm:^5.2.3"
+    "@types/react": "npm:^19.2.18"
     "@vitejs/plugin-react": "npm:^6.1.0"
     "@vitejs/plugin-react-swc": "npm:^4.3.3"
     "@vitest/browser": "npm:^4.1.11"
@@ -1459,7 +1462,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@graphql-codegen/add@npm:^7.1.0":
+"@graphql-codegen/add@npm:^7.0.0, @graphql-codegen/add@npm:^7.1.0":
   version: 7.1.0
   resolution: "@graphql-codegen/add@npm:7.1.0"
   dependencies:
@@ -1637,6 +1640,37 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@graphql-codegen/near-operation-file-preset@npm:^5.2.2":
+  version: 5.2.2
+  resolution: "@graphql-codegen/near-operation-file-preset@npm:5.2.2"
+  dependencies:
+    "@graphql-codegen/add": "npm:^7.0.0"
+    "@graphql-codegen/plugin-helpers": "npm:^7.0.0"
+    "@graphql-codegen/visitor-plugin-common": "npm:^7.2.2"
+    "@graphql-tools/utils": "npm:^11.0.0"
+    parse-filepath: "npm:^1.0.2"
+    tslib: "npm:^2.8.1"
+  peerDependencies:
+    graphql: ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0
+  checksum: 10c0/ab17e677caa8facbd39245c65ec4b04acdd7c94ed720fcaa7504aa9b68d1f49a96438d615ab60828a50bb700aec7dd1a0b7c83d009d02ad2a345c2fdcd7d1c43
+  languageName: node
+  linkType: hard
+
+"@graphql-codegen/plugin-helpers@npm:^7.0.0, @graphql-codegen/plugin-helpers@npm:^7.2.1":
+  version: 7.2.1
+  resolution: "@graphql-codegen/plugin-helpers@npm:7.2.1"
+  dependencies:
+    "@graphql-tools/utils": "npm:^11.2.0"
+    change-case-all: "npm:^2.1.0"
+    common-tags: "npm:1.8.2"
+    import-from: "npm:4.0.0"
+    tslib: "npm:^2.8.0"
+  peerDependencies:
+    graphql: ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0
+  checksum: 10c0/e6d3f5b9bf1b4284fdff663563aee5495b95edd49769aaf6fb9b598e6f1418d8526fcf1cf0cee422ea406e4e65738d35e810bcbbde97a8cb4fe1c5ae24b77a85
+  languageName: node
+  linkType: hard
+
 "@graphql-codegen/plugin-helpers@npm:^7.1.0":
   version: 7.1.0
   resolution: "@graphql-codegen/plugin-helpers@npm:7.1.0"
@@ -1649,21 +1683,6 @@ __metadata:
   peerDependencies:
     graphql: ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0
   checksum: 10c0/f8a4bdb94f23eddfad86fecfab40528a68aabb93228e2eece512152ea70fed55a3d3d636bb1e0e224ea2c4508445073ea1fedb989e94d42ccb084b071050f19b
-  languageName: node
-  linkType: hard
-
-"@graphql-codegen/plugin-helpers@npm:^7.2.1":
-  version: 7.2.1
-  resolution: "@graphql-codegen/plugin-helpers@npm:7.2.1"
-  dependencies:
-    "@graphql-tools/utils": "npm:^11.2.0"
-    change-case-all: "npm:^2.1.0"
-    common-tags: "npm:1.8.2"
-    import-from: "npm:4.0.0"
-    tslib: "npm:^2.8.0"
-  peerDependencies:
-    graphql: ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0
-  checksum: 10c0/e6d3f5b9bf1b4284fdff663563aee5495b95edd49769aaf6fb9b598e6f1418d8526fcf1cf0cee422ea406e4e65738d35e810bcbbde97a8cb4fe1c5ae24b77a85
   languageName: node
   linkType: hard
 
@@ -1729,7 +1748,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@graphql-codegen/visitor-plugin-common@npm:^7.2.0, @graphql-codegen/visitor-plugin-common@npm:^7.2.5":
+"@graphql-codegen/visitor-plugin-common@npm:^7.2.0, @graphql-codegen/visitor-plugin-common@npm:^7.2.2, @graphql-codegen/visitor-plugin-common@npm:^7.2.5":
   version: 7.2.5
   resolution: "@graphql-codegen/visitor-plugin-common@npm:7.2.5"
   dependencies:
@@ -4762,7 +4781,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/chai@npm:^5.2.2":
+"@types/chai@npm:^5.2.2, @types/chai@npm:^5.2.3":
   version: 5.2.3
   resolution: "@types/chai@npm:5.2.3"
   dependencies:
@@ -4890,7 +4909,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react@npm:^19":
+"@types/react@npm:^19, @types/react@npm:^19.2.18":
   version: 19.2.18
   resolution: "@types/react@npm:19.2.18"
   dependencies:

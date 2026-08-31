@@ -1,9 +1,5 @@
-/** Internal type. DO NOT USE DIRECTLY. */
-type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
-/** Internal type. DO NOT USE DIRECTLY. */
-export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
-export type Maybe<T> = T | null | undefined;
-export type InputMaybe<T> = T | null | undefined;
+export type Maybe<T> = T | null;
+export type InputMaybe<T> = Maybe<T>;
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
   ID: { input: string; output: string; }
@@ -336,48 +332,3 @@ export type WordTimingInput = {
   start: Scalars['Float']['input'];
   word: Scalars['String']['input'];
 };
-
-export type CreateStatementInput = {
-  endTime: number;
-  startTime: number;
-  text: string;
-};
-
-export type EditStatementMutationVariables = Exact<{
-  uid: string;
-  text: string;
-  startTime: number;
-  endTime: number;
-}>;
-
-
-export type EditStatementMutation = { editStatement: { oldHash: string, newHash: string, wroteEmbedding: boolean, statement: { uid: string, text: string, startTime: number | null | undefined, endTime: number | null | undefined } } };
-
-export type CreateStatementMutationVariables = Exact<{
-  statement: CreateStatementInput;
-  interviewUid: string;
-}>;
-
-
-export type CreateStatementMutation = { createStatement: { statement: { uid: string, text: string, startTime: number | null | undefined, endTime: number | null | undefined } } };
-
-export type DestroyStatementMutationVariables = Exact<{
-  uid: string;
-}>;
-
-
-export type DestroyStatementMutation = { destroyStatement: { ok: boolean, statement: { uid: string } } };
-
-export type TranscriptQueryVariables = Exact<{
-  interviewNumber: number;
-}>;
-
-
-export type TranscriptQuery = { health: string, interview: { uid: string, number: number, interviewee: { uid: string, name: string }, transcript: { uid: string, statements: Array<{ uid: string, startTime: number | null | undefined, endTime: number | null | undefined, text: string }> }, videos: Array<{ uri: string }> } };
-
-export type SearchStatementsQueryVariables = Exact<{
-  fragment: string;
-}>;
-
-
-export type SearchStatementsQuery = { search: { statementText: Array<{ statement: { uid: string, text: string } }> } };

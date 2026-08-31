@@ -117,16 +117,16 @@ const getPlumber = ({
         );
         const [borderTop, borderBottom] = border;
 
-        marginTop = `${ round(marginTop) }${ gridHeightUnit }`;
-        marginBottom = `${ round(marginBottom) }${ gridHeightUnit }`;
-        paddingTop = `calc(${ round(paddingTop) }${ gridHeightUnit } - ${ borderTop })`;
-        paddingBottom = `calc(${ round(paddingBottom) }${ gridHeightUnit } - ${ borderBottom })`;
+        const marginTopCss = `${ round(marginTop) }${ gridHeightUnit }`;
+        const marginBottomCss = `${ round(marginBottom) }${ gridHeightUnit }`;
+        const paddingTopCss = `calc(${ round(paddingTop) }${ gridHeightUnit } - ${ borderTop })`;
+        const paddingBottomCss = `calc(${ round(paddingBottom) }${ gridHeightUnit } - ${ borderBottom })`;
 
         return css`
-            margin-top: ${ marginTop };
-            margin-bottom: ${ marginBottom };
-            padding-top: ${ paddingTop };
-            padding-bottom: ${ paddingBottom };
+            margin-top: ${ marginTopCss };
+            margin-bottom: ${ marginBottomCss };
+            padding-top: ${ paddingTopCss };
+            padding-bottom: ${ paddingBottomCss };
         `;
     };
 
