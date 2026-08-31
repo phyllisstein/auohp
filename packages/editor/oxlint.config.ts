@@ -74,6 +74,8 @@ export default defineConfig({
         "use-isnan": "error",
         "valid-typeof": "error",
 
+        "react(only-export-components)": "off",
+
         "@stylistic/array-bracket-spacing": ["warn", "never"],
         "@stylistic/arrow-parens": [
             "warn",

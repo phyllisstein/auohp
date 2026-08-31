@@ -9,7 +9,6 @@ use serde::Deserialize;
 pub struct Interview {
     pub number: i64,
     pub uid: String,
-    pub interviewee: String,
     pub date: NaiveDate,
 }
 
@@ -19,12 +18,31 @@ impl Interview {
         &self.uid
     }
 
-    fn interviewee(&self) -> &str {
-        &self.interviewee
+    async fn interviewee(&self, ctx: &Context<'_>) -> async_graphql::Result<Person> {
+        let db = ctx.data::<Db>()?;
+
+        let mut stream = db
+            .execute(
+                query(
+                    r#"
+                        MATCH (interview:Interview {uid: $uid})-[:INTERVIEWS]->(interviewee:Person)
+                        RETURN interviewee
+                    "#,
+                )
+                .param("uid", self.uid.clone()),
+            )
+            .await?;
+
+        if let Some(row) = stream.next().await? {
+            let interviewee = row.get::<Person>("interviewee")?;
+            Ok(interviewee)
+        } else {
+            Err(async_graphql::Error::new("could not find interviewee"))
+        }
     }
 
-    fn date(&self) -> NaiveDate {
-        self.date
+    fn date(&self) -> &NaiveDate {
+        &self.date
     }
 
     fn number(&self) -> i64 {

@@ -4,13 +4,12 @@ import {
     $getRoot,
     $getSelection,
     $isRangeSelection,
-    CLICK_COMMAND,
     COMMAND_PRIORITY_LOW,
     KEY_ENTER_COMMAND,
+    SELECTION_CHANGE_COMMAND,
     configExtension,
     defineExtension,
     safeCast,
-    type LexicalNode,
     type NodeKey,
 } from "lexical";
 import { namedSignals, type Signal } from "@lexical/extension";
@@ -23,6 +22,7 @@ import { debounce } from "es-toolkit/function";
 import { playhead } from "@/playhead";
 import {
     $createStatementNode,
+    $adoptStatementIdentity,
     $createTagChipNode,
     $isStatementNode,
     $isTagChipNode,
@@ -43,8 +43,11 @@ import {
     type EditStatementFn,
     type TranscriptStatements,
     type SearchStatementsData,
+    type DestroyStatementFn,
+    type CreateStatementFn,
+    type CreateStatementInput,
 } from "@/lexical/shared";
-import { $isMarkNode, $unwrapMarkNode, $wrapSelectionInMarkNode, MarkExtension } from "@lexical/mark";
+import { $unwrapMarkNode, $wrapSelectionInMarkNode, MarkExtension } from "@lexical/mark";
 import { useExtensionSignalValue, useSignalValue } from "@lexical/react/useExtensionSignalValue";
 import { SEARCH_STATEMENTS_QUERY } from "@/queries";
 import { useLazyQuery } from "@apollo/client/react";
@@ -104,7 +107,7 @@ export const StatementSeekExtension = /* @__PURE__ */ defineExtension({
         // FIXME: Fires before selection change, so the selection is still on the clicked statement.
         // FIXME: Doesn't respond to keyboard navigation. SELECTION_CHANGE_COMMAND fires too often, slowing down normal typing.
         editor.registerCommand(
-            CLICK_COMMAND,
+            SELECTION_CHANGE_COMMAND,
             () => {
                 const selection = $getSelection();
                 if (!$isRangeSelection(selection)) {
@@ -220,10 +223,55 @@ export const TagSplitBoundaryExtension = /* @__PURE__ */ defineExtension({
         ),
 });
 
+export const UpdateTimestampExtension = /* @__PURE__ */ defineExtension({
+    dependencies: [StatementExtension],
+    name: "@auohp/update-timestamp",
+    register: editor =>
+        editor.registerCommand(
+            KEY_ENTER_COMMAND,
+            event => {
+                console.log("UpdateTimestampExtension: KEY_ENTER_COMMAND fired");
+                const selection = $getSelection();
+
+                if (!$isRangeSelection(selection) || !selection.isCollapsed()) {
+                    return false;
+                }
+
+                const anchor = selection.anchor.getNode();
+                const statement = $isStatementNode(anchor)
+                    ? anchor!
+                    : $findMatchingParent(anchor, $isStatementNode)!;
+
+                if (selection.anchor.offset === 0) {
+                    console.log("UpdateTimestampExtension: caret at start of statement, updating startTime");
+                    editor.update(() => {
+                        const currentTime = playhead.timestamp.peek();
+                        statement.setStartTime(currentTime);
+                    });
+                    event?.preventDefault();
+                    return true;
+                }
+
+                if (selection.anchor.offset === anchor.getTextContentSize()) {
+                    console.log("UpdateTimestampExtension: caret at end of statement, updating endTime");
+                    editor.update(() => {
+                        const currentTime = playhead.timestamp.peek();
+                        statement.setEndTime(currentTime);
+                    });
+                    event?.preventDefault();
+                    return true;
+                }
+
+                return false;
+            },
+            COMMAND_PRIORITY_LOW,
+        ),
+});
+
 // -----------------------------------------------------------------------------
 // PersistenceExtension --- the write path.
 //
-// Two things changed in the port beyond the mechanical de-componentisation:
+// Two things  changed in the port beyond the mechanical de-componentisation:
 //
 // 1. It registers in `afterRegistration`, not `register`. Beware the tempting
 //    inference here --- it is wrong, and it cost us a bug. The lifecycle is
@@ -256,12 +304,18 @@ export interface PersistenceConfig {
     editStatement: EditStatementFn | null;
     /** Per-statement debounce window, in milliseconds. */
     delay: number;
+    createStatement: CreateStatementFn | null;
+    destroyStatement: DestroyStatementFn | null;
+    interviewUid: string | null | undefined;
 }
 
 export const PersistenceExtension = /* @__PURE__ */ defineExtension({
     config: /* @__PURE__ */ safeCast<PersistenceConfig>({
         delay: 1_000,
         editStatement: null,
+        createStatement: null,
+        destroyStatement: null,
+        interviewUid: null,
     }),
     dependencies: [StatementExtension],
     name: "@auohp/persistence",
@@ -274,16 +328,79 @@ export const PersistenceExtension = /* @__PURE__ */ defineExtension({
     build: (_editor, config) => namedSignals(config),
 
     afterRegistration (editor, _config, state) {
-        const { delay, editStatement } = state.getOutput();
+        const { delay, editStatement, destroyStatement, createStatement, interviewUid } = state.getOutput();
 
-        const createDebouncer = (uid: string) =>
-            debounce((text: string) => {
+        const createDebouncedUpdate = (uid: string) =>
+            debounce((text: string, startTime: number, endTime: number) => {
                 // `.peek()` reads the signal without subscribing --- we want the
                 // value as of the moment the debounce fires, not as of registration.
                 editStatement.peek()?.({
-                    variables: { uid, text },
+                    variables: { uid, text, startTime, endTime },
                     onCompleted: data => {
-                        console.debug(`Edit completed for statement ${ data.editStatement.uid }:`, data.editStatement);
+                        console.debug(`Edit completed for statement ${ data.editStatement.statement.uid }:`, data.editStatement);
+                    },
+                });
+            }, delay.peek());
+
+        const createDebouncedDestroy = (uid: string) =>
+            debounce(() => {
+                // `.peek()` reads the signal without subscribing --- we want the
+                // value as of the moment the debounce fires, not as of registration.
+                destroyStatement.peek()?.({
+                    variables: { uid },
+                    onCompleted: data => {
+                        console.debug(`Destroy completed for statement ${ data.destroyStatement.statement.uid }:`, data.destroyStatement);
+                    },
+                });
+            }, delay.peek());
+
+        // Takes a NodeKey, never a StatementNode. A node object is a snapshot of one
+        // EditorState; this fires from a timer and resolves after a network round
+        // trip, so any captured node is stale twice over. The key is the only
+        // identity stable across states --- `$getNodeByKey` re-resolves it against
+        // whichever state is active at the moment we actually need the node.
+        //
+        // Note also that `getTextContent()` and friends are `$`-functions wearing a
+        // method's clothes: they call `getLatest()`, which requires an active editor
+        // state. Hence the `editor.read()` wrapper --- reading the payload out here,
+        // unwrapped, is what threw "Unable to find an active editor state".
+        const createDebouncedCreate = (_uid: string) =>
+            debounce((key: NodeKey) => {
+                const payload = editor.read((): CreateStatementInput | null => {
+                    const node = $getNodeByKey(key);
+                    if (!$isStatementNode(node)) {
+                        return null;
+                    }
+                    const startTime = node.getStartTime();
+                    const endTime = node.getEndTime();
+                    // The schema types both as non-null Float. A statement without
+                    // times is not creatable --- narrow here rather than asserting at
+                    // the call site.
+                    if (startTime === null || endTime === null) {
+                        return null;
+                    }
+                    return { text: node.getTextContent(), startTime, endTime };
+                });
+
+                const uid = interviewUid.peek();
+
+                // Either the statement vanished between the edit and the debounce
+                // firing, or we have no interview to attach it to.
+                if (!payload || !uid) {
+                    return;
+                }
+
+                createStatement.peek()?.({
+                    variables: { statement: payload, interviewUid: uid },
+                    onCompleted: data => {
+                        console.debug(`Create completed for statement ${ data.createStatement.statement.uid }:`, data.createStatement);
+                        editor.update(() => {
+                            const node = $getNodeByKey(key);
+                            if (!$isStatementNode(node)) {
+                                return;
+                            }
+                            $adoptStatementIdentity(node, data.createStatement.statement);
+                        }, { tag: "history-merge" });
                     },
                 });
             }, delay.peek());
@@ -292,62 +409,195 @@ export const PersistenceExtension = /* @__PURE__ */ defineExtension({
         // port used a single shared debouncer, which meant fast edits across two
         // statements cancelled each other's save --- a latent data-loss bug this
         // shape simply cannot have.
-        const debouncers = new Map<string, ReturnType<typeof createDebouncer>>();
+        //
+        // One map PER OPERATION, though, not one keyed by uid alone. A single map
+        // would put create/update/destroy for the same statement in the same slot,
+        // so a statement edited before its create had flushed would find the create
+        // debouncer under its uid and invoke it with the update's arguments --- a
+        // NodeKey parameter receiving a text string. The union type of a shared map
+        // reports this as an arity error, which is the type system describing a real
+        // aliasing bug rather than an inconvenience to be cast away.
+        const updateDebouncers = new Map<string, ReturnType<typeof createDebouncedUpdate>>();
+        const destroyDebouncers = new Map<string, ReturnType<typeof createDebouncedDestroy>>();
+        const createDebouncers = new Map<string, ReturnType<typeof createDebouncedCreate>>();
 
-        const persist = (uid: string, text: string) => {
-            let flush = debouncers.get(uid);
+        const persistUpdate = (uid: string, text: string, startTime: number, endTime: number) => {
+            let flush = updateDebouncers.get(uid);
             if (!flush) {
-                flush = createDebouncer(uid);
-                debouncers.set(uid, flush);
+                flush = createDebouncedUpdate(uid);
+                updateDebouncers.set(uid, flush);
             }
-            flush(text);
+            flush(text, startTime, endTime);
         };
 
-        const unregister = editor.registerUpdateListener(
-            ({ dirtyLeaves, dirtyElements, editorState, tags }) => {
-                if (tags.has("history-merge")) {
-                    return;
-                }
+        const persistDestroy = (uid: string) => {
+            let flush = destroyDebouncers.get(uid);
+            if (!flush) {
+                flush = createDebouncedDestroy(uid);
+                destroyDebouncers.set(uid, flush);
+            }
+            flush();
+        };
 
-                if (dirtyLeaves.size === 0 && dirtyElements.size === 0) {
-                    return;
-                }
+        const persistCreate = (statementNode: StatementNode) => {
+            const uid = statementNode.getUid();
+            let flush = createDebouncers.get(uid);
+            if (!flush) {
+                flush = createDebouncedCreate(uid);
+                createDebouncers.set(uid, flush);
+            }
+            // Hand over the key, not the node --- see createDebouncedCreate.
+            flush(statementNode.getKey());
+        };
 
-                editorState.read(() => {
-                    const seen = new Set<NodeKey>();
-
-                    const collect = (node: LexicalNode | null) => {
-                        if (!node) {
-                            return;
-                        }
-                        const statement = $isStatementNode(node)
-                            ? node
-                            : $findMatchingParent(node, $isStatementNode);
-                        if (!$isStatementNode(statement) || seen.has(statement.getKey())) {
-                            return;
-                        }
-                        seen.add(statement.getKey());
-
-                        const uid = statement.getUid();
-                        // Visual-only split products have no backend row --- skip them.
-                        if (uid.includes(SYNTHETIC_UID_MARKER)) {
-                            return;
-                        }
-                        persist(uid, statement.getTextContent());
-                    };
-
-                    for (const key of dirtyLeaves) {
-                        const dirtyLeaf = $getNodeByKey(key);
-                        // console.log({ dirtyLeaf });
-                        collect(dirtyLeaf);
+        const unregister = mergeRegister(
+            editor.registerUpdateListener(
+                ({ dirtyLeaves, dirtyElements, editorState, tags, mutatedNodes, prevEditorState }) => {
+                    console.log(`PersistenceExtension: %o mutations, ${ dirtyLeaves?.size } dirty leaves, ${ dirtyElements?.size } dirty elements, tags: ${ Array.from(tags).join(", ") }`, mutatedNodes);
+                    if (tags.has("history-merge")) {
+                        return;
                     }
-                    for (const [key] of dirtyElements) {
-                        const dirtyNode = $getNodeByKey(key);
-                        // console.log({ dirtyNode });
-                        collect(dirtyNode);
+
+                    if (!mutatedNodes?.size) {
+                        return;
                     }
-                });
-            },
+
+                    // A destroyed node cannot be resolved against `editorState` ---
+                    // being absent from it is what "destroyed" MEANS. But Lexical's
+                    // states are persistent data structures: the previous tree is
+                    // intact and structurally shared, so the node is still fully
+                    // readable in `prevEditorState` under the same key. That is where
+                    // its uid --- the only identifier the server knows --- survives.
+                    //
+                    // Hence two passes over two states rather than one. `read()`
+                    // installs its state as the active one for the duration of the
+                    // callback, so a key can only be resolved from inside the pass
+                    // for the state that contains it; flipping mid-walk would be
+                    // both confusing and wrong.
+                    const destroyedKeys: NodeKey[] = [];
+
+                    editorState.read(() => {
+                        const seen = new Set<NodeKey>();
+
+                        const collect = (key: NodeKey, update: "updated" | "created" | "destroyed") => {
+                            if (update === "destroyed") {
+                                destroyedKeys.push(key);
+                                return;
+                            }
+
+                            const node = $getNodeByKey(key);
+                            if (!node) {
+                                return;
+                            }
+                            const statement = $isStatementNode(node)
+                                ? node
+                                : $findMatchingParent(node, $isStatementNode);
+                            if (!$isStatementNode(statement) || seen.has(statement.getKey())) {
+                                return;
+                            }
+                            seen.add(statement.getKey());
+
+                            const uid = statement.getUid();
+
+                            if (update === "created") {
+                                // "Created" is also what an undone deletion looks
+                                // like: the statement reappears with the real uid it
+                                // already had on the server. Sending `createStatement`
+                                // for it would mint a duplicate row while the queued
+                                // destroy went ahead and removed the original.
+                                //
+                                // A non-synthetic uid is precisely the signal that
+                                // this row already exists server-side, so the correct
+                                // response is to cancel the pending destroy and treat
+                                // the resurrection as a no-op. If the destroy already
+                                // flushed, the debounce window was too short to save
+                                // us --- see the note on `delay`.
+                                const pendingDestroy = destroyDebouncers.get(uid);
+                                if (pendingDestroy && !uid.includes(SYNTHETIC_UID_MARKER)) {
+                                    pendingDestroy.cancel();
+                                    destroyDebouncers.delete(uid);
+                                    console.log(`PersistenceExtension: statement ${ uid } restored before its destroy flushed, cancelling`);
+                                    return;
+                                }
+
+                                console.log(`PersistenceExtension: statement ${ uid } created, persisting`);
+                                persistCreate(statement);
+                                return;
+                            }
+
+                            if (update === "updated") {
+                                console.log(`PersistenceExtension: statement ${ uid } updated, persisting`);
+                                const text = statement.getTextContent();
+                                const startTime = statement.getStartTime()!;
+                                const endTime = statement.getEndTime()!;
+                                persistUpdate(uid, text, startTime, endTime);
+                            }
+                        };
+
+                        for (const [_klass, val] of mutatedNodes.entries()) {
+                            for (const [key, status] of val.entries()) {
+                                collect(key, status);
+                            }
+                        }
+                    });
+
+                    if (destroyedKeys.length) {
+                        prevEditorState.read(() => {
+                            for (const key of destroyedKeys) {
+                                const node = $getNodeByKey(key);
+
+                                // Only statements are persisted, and --- unlike the
+                                // pass above --- we deliberately do NOT walk up to a
+                                // parent statement. Deleting a word destroys TextNodes
+                                // inside a statement that is still very much alive;
+                                // that arrives separately as an `updated` mutation on
+                                // the statement itself. Treating a destroyed child as
+                                // a destroyed statement would delete the row the user
+                                // was merely editing.
+                                if (!$isStatementNode(node)) {
+                                    continue;
+                                }
+
+                                const uid = node.getUid();
+
+                                // A statement born of a split carries a synthetic uid
+                                // until `createStatement` answers with a real one. Two
+                                // cases, and they need opposite handling:
+                                if (uid.includes(SYNTHETIC_UID_MARKER)) {
+                                    // The uid is still synthetic, so the server has
+                                    // never heard of this statement --- `destroyStatement`
+                                    // would 404. But a create may be pending in the
+                                    // debounce window, and letting it fire would create
+                                    // a row for a statement that no longer exists.
+                                    // Cancelling is the whole of the work here: the
+                                    // create never happens, so no destroy is needed.
+                                    const pendingCreate = createDebouncers.get(uid);
+                                    pendingCreate?.cancel();
+                                    createDebouncers.delete(uid);
+
+                                    console.log(`PersistenceExtension: synthetic statement ${ uid } destroyed before creation, cancelling pending create`);
+                                    continue;
+                                }
+
+                                // A real uid: either seeded from the server, or adopted
+                                // by `$adoptStatementIdentity` when a create completed.
+                                // Cancel any pending create anyway --- harmless if
+                                // absent, and it closes the window where a create that
+                                // has not yet flushed races the destroy.
+                                createDebouncers.get(uid)?.cancel();
+                                createDebouncers.delete(uid);
+
+                                // Any queued edit is moot once the row is going away.
+                                updateDebouncers.get(uid)?.cancel();
+                                updateDebouncers.delete(uid);
+
+                                console.log(`PersistenceExtension: statement ${ uid } destroyed, persisting`);
+                                persistDestroy(uid);
+                            }
+                        });
+                    }
+                },
+            ),
         );
 
         // The old plugin leaked here: its useEffect cleanup dropped the Map
@@ -355,10 +605,12 @@ export const PersistenceExtension = /* @__PURE__ */ defineExtension({
         // natural place to do that properly.
         return () => {
             unregister();
-            for (const flush of debouncers.values()) {
-                flush.cancel();
+            for (const map of [updateDebouncers, destroyDebouncers, createDebouncers]) {
+                for (const flush of map.values()) {
+                    flush.cancel();
+                }
+                map.clear();
             }
-            debouncers.clear();
         };
     },
 });
@@ -417,7 +669,7 @@ export interface SearchOutput {
 // document holding exactly the marks that set implies --- nothing stale from the
 // previous search, nothing missing from this one.
 function $applySearchResults (results: SearchStatementsData): void {
-    const uids = new Set(results?.searchStatements.map(({ statement }) => statement.uid) ?? []);
+    const uids = new Set(results?.search.statementText.map(({ statement }) => statement.uid) ?? []);
 
     const root = $getRoot();
     const children = root.getChildren();
@@ -650,21 +902,25 @@ export const LatencyExtension = /* @__PURE__ */ defineExtension({
 export interface AuohpEditorOptions {
     statements: TranscriptStatements;
     editStatement: EditStatementFn;
+    createStatement: CreateStatementFn;
+    destroyStatement: DestroyStatementFn;
+    interviewUid: string | null | undefined;
 }
 
-export function defineAuohpEditorExtension ({ statements, editStatement }: AuohpEditorOptions) {
+export function defineAuohpEditorExtension ({ statements, editStatement, createStatement, destroyStatement, interviewUid }: AuohpEditorOptions) {
     return defineExtension({
         dependencies: [
-            configExtension(PersistenceExtension, { editStatement }),
+            configExtension(PersistenceExtension, { editStatement, createStatement, destroyStatement, interviewUid }),
             SearchInterviewExtension,
             configExtension(ReactExtension, { EditorChildrenComponent: EditorChrome }),
             HistoryExtension,
             LatencyExtension,
             RichTextExtension,
             StatementExtension,
-            StatementSeekExtension,
+            // StatementSeekExtension,
             TagChipExtension,
             TagSplitBoundaryExtension,
+            UpdateTimestampExtension,
         ],
         name: "@auohp/editor",
         namespace: "auohp-lexical-spike",
@@ -969,11 +1225,11 @@ function SearchDriver (): JSX.Element | null {
         if (searchState.error) {
             console.error("SearchDriver: search error", searchState.error);
         }
-        if (searchData && !searchData.searchStatements) {
-            console.warn("SearchDriver: onSearchUpdate fired with data but no searchStatements field", searchData);
+        if (searchData && !searchData.search.statementText) {
+            console.warn("SearchDriver: onSearchUpdate fired with data but no search.statementText field", searchData);
         }
-        if (searchData && searchData.searchStatements) {
-            console.log("SearchDriver: onSearchUpdate fired with results", searchData.searchStatements);
+        if (searchData && searchData.search.statementText) {
+            console.log("SearchDriver: onSearchUpdate fired with results", searchData.search.statementText);
             data.value = searchData;
             console.log("SearchDriver: data.value updated to", data.peek());
         }

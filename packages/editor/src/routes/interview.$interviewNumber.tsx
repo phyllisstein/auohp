@@ -6,7 +6,7 @@ import { useSignalEffect } from "@preact/signals-react";
 import { createGlobalStyle } from "styled-components";
 import { playhead } from "@/playhead";
 import { defineAuohpEditorExtension } from "@/lexical/extensions";
-import { TRANSCRIPT_QUERY, EDIT_STATEMENT_MUTATION } from "@/queries";
+import { TRANSCRIPT_QUERY, EDIT_STATEMENT_MUTATION, CREATE_STATEMENT_MUTATION, DESTROY_STATEMENT_MUTATION } from "@/queries";
 
 // FIXME: Constructing URLs for the caption endpoint and the public video URI
 // should be a server-side concern (return a Video node, return Caption metadata).
@@ -93,13 +93,20 @@ function Page () {
     const { transcriptQuery } = Route.useLoaderData();
     const transcriptData = transcriptQuery.data;
 
-    const [editStatement, editStatementResult] = useMutation(EDIT_STATEMENT_MUTATION);
+    const [editStatement, editStatementResult] = useMutation(EDIT_STATEMENT_MUTATION, {
+        fetchPolicy: "no-cache",
+    });
+    const [createStatement] = useMutation(CREATE_STATEMENT_MUTATION, {
+        fetchPolicy: "no-cache",
+    });
+    const [destroyStatement] = useMutation(DESTROY_STATEMENT_MUTATION, {
+        fetchPolicy: "no-cache",
+    });
 
-    const fallbackId = useId();
     const player = useRef<HTMLVideoElement>(null);
     useVideoSync(player);
 
-    const interviewUid = transcriptData?.interview?.uid ?? fallbackId;
+    const interviewUid = transcriptData?.interview?.uid;
     const { statements } = transcriptData.interview.transcript;
 
     // The whole editor is now one value. Everything the old route spelled out in
@@ -129,6 +136,9 @@ function Page () {
     const extension = useMemo(() =>
         defineAuohpEditorExtension({
             editStatement,
+            destroyStatement,
+            createStatement,
+            interviewUid,
             statements,
         }), [interviewUid]);
 

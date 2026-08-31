@@ -13,6 +13,7 @@
 #   --number N             Interview number (integer).
 #   --date YYYY-MM-DD      ISO 8601 date.
 #   --interviewee NAME     Display name of the interviewee.
+#   --video URL         Optional video URL (default: null).
 #   --endpoint URL         GraphQL endpoint (default: $SEED_ENDPOINT or
 #                          http://localhost:6060/graphql).
 #
@@ -25,6 +26,7 @@ JSON_FILE=""
 NUMBER=""
 DATE=""
 INTERVIEWEE=""
+VIDEO=""
 
 usage() {
     sed -n '/^# seed-interview/,/^$/{ s/^# \{0,1\}//; p; }' "$0"
@@ -36,6 +38,7 @@ while [[ $# -gt 0 ]]; do
         --number) NUMBER="$2"; shift 2;;
         --date) DATE="$2"; shift 2;;
         --interviewee) INTERVIEWEE="$2"; shift 2;;
+        --video) VIDEO="$2"; shift 2;;
         --endpoint) ENDPOINT="$2"; shift 2;;
         -h|--help) usage 0;;
         --) shift; break;;
@@ -56,6 +59,9 @@ while [[ $# -gt 0 ]]; do
 done
 
 for var in JSON_FILE NUMBER DATE INTERVIEWEE; do
+    if [[ -z "${VIDEO:-}" ]]; then
+        VIDEO=null
+    fi
     if [[ -z "${!var}" ]]; then
         echo "missing required argument: $var" >&2
         usage 1
@@ -76,7 +82,10 @@ mutation SeedInterview($input: SeedInterviewInput!) {
     embeddingsQueued
     interview {
       date
-      interviewee
+      interviewee {
+        name
+        uid
+      }
       number
       uid
     }
@@ -93,6 +102,7 @@ PAYLOAD=$(jq -n \
     --argjson number "$NUMBER" \
     --arg date "$DATE" \
     --arg interviewee "$INTERVIEWEE" \
+    --arg video "$VIDEO" \
     '{
         query: $query,
         variables: {
@@ -100,6 +110,9 @@ PAYLOAD=$(jq -n \
                 number: $number,
                 date: $date,
                 interviewee: $interviewee,
+                assets: {
+                    videoUrl: $video
+                },
                 segmentsJson: ($segmentsFile[0].transcription.segments | tojson)
             }
         }

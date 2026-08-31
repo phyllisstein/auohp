@@ -1,4 +1,4 @@
-use crate::graphql::nodes::StatementNode;
+use crate::graphql::nodes::{Statement, StatementNode};
 use crate::neo4j::Db;
 use async_graphql::{Context, InputObject, SimpleObject};
 use auohp_core::embeddings::EmbedderHandle;
@@ -9,14 +9,16 @@ use std::sync::Arc;
 pub struct EditStatementInput {
     pub uid: String,
     pub text: String,
+    pub start_time: f64,
+    pub end_time: f64,
 }
 
 #[derive(Debug, SimpleObject)]
 pub struct EditStatementPayload {
-    pub uid: String,
     pub old_hash: String,
     pub new_hash: String,
     pub wrote_embedding: bool,
+    pub statement: Statement,
 }
 
 pub async fn edit_statement(
@@ -24,6 +26,39 @@ pub async fn edit_statement(
     input: EditStatementInput,
 ) -> async_graphql::Result<EditStatementPayload> {
     let db = ctx.data::<Db>()?;
+    let mut txn = db.start_txn().await?;
+
+    let mut edit_stream = txn
+        .execute(
+            query(
+                // FIXME: Scanning all Statements for a UID breaks Neo4j graph
+                // idioms. Consider a scan for the Transcript with edges to
+                // Statements.
+                "
+                MATCH (statement:Statement {uid: $uid})<-[span:CONTAINS]-()
+                LET oldText = statement.text
+                SET statement.text = $text, span.startTime = $startTime, span.endTime = $endTime
+                RETURN statement, oldText, span
+            ",
+            )
+            .param("uid", input.uid.clone())
+            .param("text", input.text.clone())
+            .param("startTime", input.start_time)
+            .param("endTime", input.end_time),
+        )
+        .await?;
+
+    let row = edit_stream
+        .next(&mut txn)
+        .await?
+        .into_iter()
+        .next()
+        .ok_or_else(|| async_graphql::Error::new("statement not found"))?;
+
+    let statement_node: StatementNode = row.get("statement")?;
+    let old_text: String = row.get("oldText")?;
+    let span: neo4rs::Relation = row.get("span")?;
+
     let embedder = ctx.data::<Arc<EmbedderHandle>>()?.clone();
     let embedding = match embedder
         .embed(vec![input.text.clone()])
@@ -41,41 +76,10 @@ pub async fn edit_statement(
         }
     };
 
-    let wrote_embedding = embedding.is_some();
-
-    let mut tx = db.start_txn().await?;
-    let mut edit_stream = tx
-        .execute(
-            query(
-                // FIXME: Scanning all Statements for a UID breaks Neo4j graph
-                // idioms. Consider a scan for the Transcript with edges to
-                // Statements.
-                "
-                MATCH (statement:Statement {uid: $uid})
-                WITH statement, statement.text AS oldText
-                SET statement.text = $text
-                RETURN statement, oldText
-            ",
-            )
-            .param("uid", input.uid.clone())
-            .param("text", input.text),
-        )
-        .await?;
-
-    let row = edit_stream
-        .next(&mut tx)
-        .await?
-        .into_iter()
-        .next()
-        .ok_or_else(|| async_graphql::Error::new("statement not found"))?;
-
-    let statement_node: StatementNode = row.get("statement")?;
-    let old_text: String = row.get("oldText")?;
-
-    if let Some(v) = embedding {
+    if let Some(v) = &embedding {
         let bolt_vector: Vec<BoltType> = v.iter().map(|&v| BoltType::from(v as f64)).collect();
 
-        tx.run(
+        txn.run(
             query(
                 "
                 MATCH (statement:Statement {uid: $uid})
@@ -88,15 +92,24 @@ pub async fn edit_statement(
         .await?
     }
 
-    tx.commit().await?;
+    let wrote_embedding = embedding.is_some();
+
+    txn.commit().await?;
 
     let old_hash = md5::compute(old_text);
-    let new_hash = md5::compute(statement_node.text);
+    let new_hash = md5::compute(statement_node.text.clone());
 
     Ok(EditStatementPayload {
         old_hash: format!("{:x}", old_hash),
         new_hash: format!("{:x}", new_hash),
-        uid: statement_node.uid,
         wrote_embedding,
+        statement: Statement {
+            uid: statement_node.uid,
+            text: statement_node.text,
+            person: None,
+            start_time: span.get("startTime")?,
+            end_time: span.get("endTime")?,
+            words: None,
+        },
     })
 }
