@@ -35,6 +35,11 @@ const EditorStyle = createGlobalStyle`
     }
 
     .auohp-statement__chrome {
+        /* Seeking moved off selection-change and onto a click here specifically
+           (see StatementSeekExtension), so the chrome has to advertise itself as
+           the target --- otherwise the only way to discover the gesture is to
+           perform it by accident. */
+        cursor: pointer;
         user-select: none;
 
         display: flex;
@@ -46,6 +51,12 @@ const EditorStyle = createGlobalStyle`
         font-family: monospace;
         font-size: 0.75rem;
         color: #888;
+
+        transition: color 0.12s ease;
+
+        &:hover {
+            color: #333;
+        }
     }
 
     .auohp-statement__content {
@@ -78,7 +89,7 @@ export const Route = createFileRoute("/interview/$interviewNumber")({
         return { transcriptQuery };
     },
     head: async ctx => {
-        const name = ctx.loaderData.transcriptQuery?.data?.interview?.interviewee;
+        const name = ctx.loaderData.transcriptQuery?.data?.interview?.interviewee?.name ?? "Unknown Interviewee";
         return {
             meta: [
                 { title: `#${ ctx.params.interviewNumber } - ${ name } | AUOHP Editor` },

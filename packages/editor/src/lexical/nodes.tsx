@@ -45,8 +45,12 @@ type SerializedStatementNode = Spread<
     SerializedElementNode
 >;
 
-const STATEMENT_NODE_CLASS = "auohp-statement";
-const STATEMENT_CHROME_CLASS = "auohp-statement__chrome";
+// Exported because StatementSeekExtension delegates a single click listener from
+// the editor root and needs these to identify the chrome and walk back to the
+// statement wrapper carrying `data-uid` --- the same reason TAG_CHIP_BADGE_CLASS
+// is exported below.
+export const STATEMENT_NODE_CLASS = "auohp-statement";
+export const STATEMENT_CHROME_CLASS = "auohp-statement__chrome";
 const STATEMENT_CONTENT_CLASS = "auohp-statement__content";
 const STATEMENT_TIME_CLASS = "auohp-statement__time";
 

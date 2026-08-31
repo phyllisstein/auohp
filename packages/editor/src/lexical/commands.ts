@@ -15,3 +15,5 @@ export const INSERT_SEARCH_RESULT_COMMAND: LexicalCommand<string> = createComman
 // handler then ignored. Typing the payload as `void` makes the command's real
 // contract ("search for whatever is selected") checkable at the call site.
 export const PERFORM_SEARCH_COMMAND: LexicalCommand<void> = createCommand("PERFORM_SEARCH_COMMAND");
+
+export const SEEK_VIDEO_COMMAND: LexicalCommand<string> = createCommand("SEEK_VIDEO_COMMAND");
