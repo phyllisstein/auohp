@@ -232,6 +232,16 @@ pub async fn seed_interview(
     let transcript_uid = uid::generate();
     let interviewee_uid = uid::generate();
 
+    txn.run(
+        query(
+            r#"
+                MATCH (p)<-[:INTERVIEWS]-(i:Interview {number: $interviewNumber})-[:HAS_TRANSCRIPT]->(t)-[:CONTAINS]->(s)
+                MATCH (i)-[:HAS_ASSET]->(a)
+                DETACH DELETE a, i, s, t, p
+            "#
+        ).param("interviewNumber", input.number),
+    ).await?;
+
     // ── Phase 1: interview scaffold ──────────────────────────────────────
 
     tracing::info!(
