@@ -988,7 +988,7 @@ function SearchDriver (): JSX.Element | null {
                     console.log("SearchDriver: queryHandler running with query", pendingQuery);
                     const res = await runSearch({
                         variables: {
-                            query: pendingQuery,
+                            fragment: pendingQuery,
                         },
                     });
                     console.log("SearchDriver: runSearch returned", res);

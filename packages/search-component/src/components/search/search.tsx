@@ -5,23 +5,24 @@ import { Results } from "./results";
 import deepEqual from "fast-deep-equal";
 import { gql } from "@apollo/client";
 import { useLazyQuery } from "@apollo/client/react";
+import type { SearchStatementsQuery, SearchStatementsQueryVariables, SearchHit } from "~/gql/schema";
+import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
 
 
-const SEARCH_QUERY = gql`
+export const SEARCH_QUERY: TypedDocumentNode<SearchStatementsQuery, SearchStatementsQueryVariables> = gql`
     query SearchStatements($search: String!) {
-        searchStatements(
-            query: $search
-            limit: 15
-        ) {
-            interview {
-                number
-            }
-            statement {
-                text
-                startTime
-                endTime
-                person {
-                    name
+        search {
+            interviews(query: $search) {
+                statement {
+                    uid
+                    startTime
+                    text
+                    person {
+                        name
+                    }
+                }
+                interview {
+                    number
                 }
             }
         }
@@ -49,14 +50,13 @@ export function Search () {
         fetchPolicy: "network-only",
     });
 
-    const handleResultClick = result => {
-        const url = `/${ result.interview.number }`;
-
+    const handleResultClick = (result: { startTime: number; interviewNumber: number }) => {
         const nextURL = queryString.stringifyUrl({
             query: {
-                timestamp: result.statement.startTime,
+                timestamp: result.startTime,
+                interview: result.interviewNumber,
             },
-            url: url,
+            url: "/player",
         });
 
         window.location.href = nextURL;
@@ -81,8 +81,8 @@ export function Search () {
             <Results { ...boxRect }>
                 <SearchResults>
                     {
-                        searchQuery.data?.searchStatements.map(hit => (
-                            <SearchResult key={ `${ hit.statement.startTime }-${ hit.statement.uid }` } onClick={ () => handleResultClick(hit) }>
+                        searchQuery.data?.search.interviews.map(hit => (
+                            <SearchResult key={ `${ hit.statement.startTime }-${ hit.statement.uid }` } onClick={ () => handleResultClick({ startTime: hit.statement.startTime, interviewNumber: hit.interview.number }) }>
                                 <ResultMatch>{ hit.statement.text }</ResultMatch>
                                 <ResultSource>{ hit.statement.person.name }</ResultSource>
                                 <ResultTimestamp>{ formatTimestamp(hit.statement.startTime) }</ResultTimestamp>

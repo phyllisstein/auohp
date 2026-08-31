@@ -1,13 +1,32 @@
 import queryString from "query-string";
 import { useEffect, useRef } from "react";
+import { gql } from "@apollo/client";
+import { useQuery } from "@apollo/client/react";
+import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
+import type { PlayerInterviewQuery, PlayerInterviewQueryVariables } from "~/gql/schema";
+
+export const PLAYER_INTERVIEW_QUERY: TypedDocumentNode<PlayerInterviewQuery, PlayerInterviewQueryVariables> = gql`
+    query PlayerInterview($interviewNumber: Int!) {
+        interview(number: $interviewNumber) {
+            videos {
+                uri
+            }
+        }
+    }
+`;
 
 interface PlayerProps {
-    url: string;
+    interviewNumber: number;
 }
 
-export function Player ({ url }: PlayerProps) {
+export function Player ({ interviewNumber }: PlayerProps) {
     const player = useRef<HTMLVideoElement>(null);
     const hasSetTimestamp = useRef<boolean>(false);
+    const { data } = useQuery(PLAYER_INTERVIEW_QUERY, {
+        variables: { interviewNumber },
+    });
+
+    const videoUri = data?.interview?.videos?.[0]?.uri;
 
     useEffect(() => {
         const currentPlayer = player.current;
@@ -36,7 +55,7 @@ export function Player ({ url }: PlayerProps) {
         };
 
         void handler();
-    }, [player]);
+    }, [player, videoUri]);
 
     useEffect(() => {
         if (typeof window === "undefined") return;
@@ -58,13 +77,16 @@ export function Player ({ url }: PlayerProps) {
         return () => {
             unloadAbortController.abort();
         };
-    }, [player]);
+    }, [player, videoUri]);
 
     return (
         <div className="player-container">
-            <video ref={ player } src="/videos/108.mp4" controls crossOrigin="anonymous" className="player">
-                <track default kind="captions" src="https://api.auohp.localhost/interview/108/captions" />
-            </video>
+            { videoUri && (
+                <video ref={ player } controls crossOrigin="anonymous" className="player">
+                    <source src={ videoUri } type="video/mp4" />
+                    <track default kind="captions" srcLang="en" label="English" src={ `https://api.auohp.localhost/interview/${ interviewNumber }/vtt` } />
+                </video>
+            ) }
         </div>
     );
 }

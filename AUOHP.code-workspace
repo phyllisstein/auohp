@@ -37,6 +37,7 @@
         "files.exclude": {
             "**/node_modules": true,
             "**/.yarn": true,
+            "**/gql/**": true,
             "**/target": true
         },
         "search.exclude": {

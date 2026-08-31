@@ -8,7 +8,6 @@
 // `auohp-core` alongside the rest of the graph model.
 
 use async_graphql::SimpleObject;
-use chrono::NaiveDate;
 use serde::Deserialize;
 
 // Each struct below mirrors one node label in the Neo4j graph. The mapping is
@@ -48,12 +47,6 @@ pub struct StatementNode {
     pub words: Option<String>,
 }
 
-#[derive(Deserialize)]
-pub struct StatementMeta {
-    pub start_time: f64,
-    pub end_time: f64,
-}
-
 /// Mirrors the (:Statement) node, with timing from the `:CONTAINS` edge and
 /// speaker attribution from `:SAYS`.
 #[derive(SimpleObject, Deserialize, Clone)]
@@ -72,27 +65,16 @@ pub struct Statement {
     pub words: Option<String>,
 }
 
-/// Mirrors the (:Transcript) node, with its ordered statements and the
-/// Interview it belongs to.
-#[derive(SimpleObject, Clone)]
+// FIXME: Transcript as a full-fledged Object should fetch statements lazily, in
+// a separate resolver.
+#[derive(SimpleObject, Clone, Deserialize)]
 pub struct Transcript {
     pub uid: String,
     /// Statements in transcript order (via the `:NEXT` linked list).
     pub statements: Vec<Statement>,
 }
 
-/// Mirrors the (:Interview) node.
-///
-/// The `date` field is stored as a Neo4j Date and deserialized into
-/// `chrono::NaiveDate`. async-graphql's `"chrono"` feature registers
-/// NaiveDate as a GraphQL scalar that serializes to ISO 8601 strings
-/// ("2003-05-05")---so the GraphQL API still returns a string, but
-/// the Rust code works with a typed date value.
-#[derive(SimpleObject, Clone, Deserialize)]
-#[graphql(name = "GqlInterview")]
-pub struct Interview {
-    pub uid: String,
-    pub number: i64,
-    pub interviewee: String,
-    pub date: NaiveDate,
+#[derive(SimpleObject, Deserialize)]
+pub struct Video {
+    pub uri: String,
 }

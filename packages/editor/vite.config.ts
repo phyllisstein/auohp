@@ -33,14 +33,7 @@ export default defineConfig({
         // withNormalizedMacroIds(macros.vite()), // Must come first!
         tanstackStart(),
         // viteReact must come after tanstackStart
-        viteReact({
-            plugins: [
-                [
-                    "@swc-contrib/plugin-graphql-codegen-client-preset",
-                    { artifactDirectory: "./src/gql", gqlTagName: "graphql" },
-                ],
-            ],
-        }),
+        viteReact(),
         {
             ...optimizeLocales.vite({
                 locales: ["en-US"],

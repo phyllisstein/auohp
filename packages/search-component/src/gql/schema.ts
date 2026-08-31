@@ -288,24 +288,16 @@ export type WordTimingInput = {
   word: Scalars['String']['input'];
 };
 
-export type EditStatementMutationVariables = Exact<{
-  uid: string;
-  text: string;
-}>;
-
-
-export type EditStatementMutation = { editStatement: { uid: string, oldHash: string, newHash: string, wroteEmbedding: boolean } };
-
-export type TranscriptQueryVariables = Exact<{
+export type PlayerInterviewQueryVariables = Exact<{
   interviewNumber: number;
 }>;
 
 
-export type TranscriptQuery = { health: string, interview: { uid: string, number: number, interviewee: string, transcript: { uid: string, statements: Array<{ uid: string, startTime: number | null | undefined, endTime: number | null | undefined, text: string }> }, videos: Array<{ uri: string }> } };
+export type PlayerInterviewQuery = { interview: { videos: Array<{ uri: string }> } };
 
 export type SearchStatementsQueryVariables = Exact<{
-  fragment: string;
+  search: string;
 }>;
 
 
-export type SearchStatementsQuery = { search: { statementText: Array<{ statement: { uid: string, text: string } }> } };
+export type SearchStatementsQuery = { search: { interviews: Array<{ statement: { uid: string, startTime: number | null | undefined, text: string, person: { name: string } | null | undefined }, interview: { number: number } }> } };

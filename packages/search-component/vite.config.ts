@@ -1,4 +1,3 @@
-import { nodeResolve } from "@rollup/plugin-node-resolve";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
@@ -6,13 +5,11 @@ import { defineConfig } from "vite";
 export default defineConfig({
     appType: "spa",
     envDir: import.meta.dirname,
+    resolve: {
+        tsconfigPaths: true,
+    },
     plugins: [
-        react(
-        ),
-        nodeResolve({
-            extensions: [".tsx", ".ts", ".js"],
-            moduleDirectories: ["src", "node_modules"],
-        }),
+        react(),
     ],
     publicDir: "../public",
     root: "./src",

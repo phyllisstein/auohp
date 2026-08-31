@@ -1,5 +1,5 @@
 use super::mutations::MutationRoot;
-use super::queries::{QueryRoot, captions, interviews};
+use super::queries::{captions, interviews, root, search};
 use crate::neo4j::Db;
 use async_graphql::{EmptySubscription, MergedObject, Schema};
 use auohp_core::embeddings::EmbedderHandle;
@@ -7,9 +7,10 @@ use std::sync::Arc;
 
 #[derive(MergedObject, Default)]
 pub struct Query(
+    root::QueryRoot,
     captions::CaptionsQuery,
     interviews::InterviewQuery,
-    QueryRoot,
+    search::SearchQuery,
 );
 
 pub type AppSchema = Schema<Query, MutationRoot, EmptySubscription>;
