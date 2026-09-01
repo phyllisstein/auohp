@@ -265,6 +265,7 @@ __metadata:
     "@apollo/client": "npm:^4.2.12"
     "@eslint/js": "npm:^10.0.1"
     "@graphql-codegen/cli": "npm:^7.3.1"
+    "@graphql-codegen/near-operation-file-preset": "npm:^5.2.2"
     "@graphql-codegen/schema-ast": "npm:^6.1.0"
     "@graphql-codegen/typescript-operations": "npm:^6.1.6"
     "@graphql-typed-document-node/core": "npm:^3.2.0"

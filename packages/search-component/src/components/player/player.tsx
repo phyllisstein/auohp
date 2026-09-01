@@ -1,9 +1,8 @@
 import queryString from "query-string";
 import { useEffect, useRef } from "react";
-import { gql } from "@apollo/client";
+import { gql, type TypedDocumentNode } from "@apollo/client";
 import { useQuery } from "@apollo/client/react";
-import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
-import type { PlayerInterviewQuery, PlayerInterviewQueryVariables } from "~/gql/schema";
+import type { PlayerInterviewQuery, PlayerInterviewQueryVariables } from "./__generated__/player.gql";
 
 export const PLAYER_INTERVIEW_QUERY: TypedDocumentNode<PlayerInterviewQuery, PlayerInterviewQueryVariables> = gql`
     query PlayerInterview($interviewNumber: Int!) {

@@ -14,7 +14,7 @@ export default defineConfig({
         es2026: true,
         worker: true,
     },
-    ignorePatterns: ["node_modules", "dist", "public", "gql", "graphql", "schema.graphql", "schema.gql", "**/*.d.ts"],
+    ignorePatterns: ["node_modules", "dist", "public", "schema.graphql", "**/*.d.ts"],
     rules: {
         "constructor-super": "error",
         "for-direction": "error",

@@ -11,7 +11,7 @@ const config: CodegenConfig = {
     documents: ["src/**/!(*.gql).{ts,tsx}"],
     allowPartialOutputs: true,
     generates: {
-        "./src/gql/schema.ts": {
+        "./src/__generated__/schema.gql.ts": {
             plugins: ["typescript"],
             config: {
                 avoidOptionals: true,
@@ -26,7 +26,8 @@ const config: CodegenConfig = {
             preset: "near-operation-file",
             presetConfig: {
                 extension: ".gql.ts",
-                baseTypesPath: "gql/schema.ts",
+                baseTypesPath: "__generated__/schema.gql.ts",
+                folder: "__generated__",
             },
             plugins: ["typescript-operations"],
             config: {

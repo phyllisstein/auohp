@@ -3,10 +3,9 @@ import { useEffect, useRef, useState } from "react";
 import { SearchContainer, SearchResult, SearchResults, ResultMatch, ResultSource, ResultTimestamp, SearchInput } from "./search-styles";
 import { Results } from "./results";
 import deepEqual from "fast-deep-equal";
-import { gql } from "@apollo/client";
+import { gql, type TypedDocumentNode } from "@apollo/client";
 import { useLazyQuery } from "@apollo/client/react";
-import type { SearchStatementsQuery, SearchStatementsQueryVariables, SearchHit } from "~/gql/schema";
-import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
+import type { SearchStatementsQuery, SearchStatementsQueryVariables, SearchHit } from "./__generated__/search.gql";
 
 
 export const SEARCH_QUERY: TypedDocumentNode<SearchStatementsQuery, SearchStatementsQueryVariables> = gql`

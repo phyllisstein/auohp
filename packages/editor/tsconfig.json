@@ -41,7 +41,6 @@
         "./test/**/*.ts",
         "./test/**/*.tsx",
         "./test/**/*.d.ts",
-        "./eslint.config.js",
         "./*.js",
         "./*.ts"
     ],
