@@ -2,282 +2,274 @@
 
 import { createGlobalStyle } from "styled-components";
 
+// `@layer reset` isolates Spectrum's components from the reset styles.
+// (Spectrum's layer is `_`.)
 export const Preflight = createGlobalStyle`
-    *,
-    *::before,
-    *::after {
-        box-sizing: border-box;
-    }
+    @layer reset {
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
 
-    :root {
-        tab-size: 4;
-    }
+        :root {
+            tab-size: 4;
+        }
 
-    html {
-        font-family:
-            ui-sans-serif,
-            system-ui,
-            -apple-system,
-            BlinkMacSystemFont,
-            "Segoe UI",
-            "Roboto",
-            "Helvetica Neue",
-            "Arial",
-            "Noto Sans",
-            sans-serif,
-            "Apple Color Emoji",
-            "Segoe UI Emoji",
-            "Segoe UI Symbol",
-            "Noto Color Emoji";
-        line-height: 1.5;
+        html {
+            font-family:
+                ui-sans-serif,
+                system-ui,
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                Roboto,
+                "Helvetica Neue",
+                Arial,
+                "Noto Sans",
+                sans-serif,
+                "Apple Color Emoji",
+                "Segoe UI Emoji",
+                "Segoe UI Symbol",
+                "Noto Color Emoji";
+            line-height: 1.5;
+            text-size-adjust: 100%;
+        }
 
-        text-size-adjust: 100%;
-    }
+        hr {
+            height: 0;
+            border-top-width: 1px;
+            color: inherit;
+        }
 
-    hr {
-        height: 0;
+        abbr[title] {
+            text-decoration: underline dotted;
+        }
 
-        color: inherit;
+        b,
+        strong {
+            font-weight: bolder;
+        }
 
-        border-top-width: 1px;
-    }
+        code,
+        kbd,
+        samp,
+        pre {
+            font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+            font-size: 1em;
+        }
 
-    abbr[title] {
-        text-decoration: underline dotted;
-    }
+        small {
+            font-size: 80%;
+        }
 
-    b,
-    strong {
-        font-weight: bolder;
-    }
+        sub,
+        sup {
+            position: relative;
+            font-size: 75%;
+            line-height: 0;
+            vertical-align: baseline;
+        }
 
-    code,
-    kbd,
-    samp,
-    pre {
-        font-size: 1em;
-        font-family: ui-monospace, "SFMono-Regular", "Consolas", "Liberation Mono", "Menlo", monospace;
-    }
+        sub {
+            bottom: -0.25em;
+        }
 
-    small {
-        font-size: 80%;
-    }
+        sup {
+            top: -0.5em;
+        }
 
-    sub,
-    sup {
-        position: relative;
+        table {
+            border-collapse: collapse;
+            border-color: inherit;
+            text-indent: 0;
+        }
 
-        font-size: 75%;
-        line-height: 0;
-        vertical-align: baseline;
-    }
+        button,
+        input,
+        optgroup,
+        select,
+        textarea {
+            margin: 0;
 
-    sub {
-        bottom: -0.25em;
-    }
+            font-family: inherit;
+            font-size: 100%;
+            line-height: 1.15;
+            text-transform: none;
+        }
 
-    sup {
-        top: -0.5em;
-    }
+        button,
+        [type="button"],
+        [type="reset"],
+        [type="submit"] {
+            appearance: auto;
+        }
 
-    table {
-        text-indent: 0;
+        ::-moz-focus-inner {
+            padding: 0;
+            border-style: none;
+        }
 
-        border-color: inherit;
-        border-collapse: collapse;
-    }
+        :-moz-focusring {
+            outline: 1px dotted ButtonText;
+        }
 
-    button,
-    input,
-    optgroup,
-    select,
-    textarea {
-        margin: 0;
+        :-moz-ui-invalid {
+            box-shadow: none;
+        }
 
-        font-size: 100%;
-        font-family: inherit;
-        line-height: 1.15;
-        text-transform: none;
-    }
+        legend {
+            padding: 0;
+        }
 
-    button,
-    [type="button"],
-    [type="reset"],
-    [type="submit"] {
-        appearance: button;
-    }
+        progress {
+            vertical-align: baseline;
+        }
 
-    ::-moz-focus-inner {
-        padding: 0;
-        border-style: none;
-    }
+        ::-webkit-inner-spin-button,
+        ::-webkit-outer-spin-button {
+            height: auto;
+        }
 
-    :-moz-focusring {
-        outline: 1px dotted ButtonText;
-    }
+        [type="search"] {
+            appearance: textfield;
+            outline-offset: -2px;
+        }
 
-    :-moz-ui-invalid {
-        box-shadow: none;
-    }
+        ::-webkit-search-decoration {
+            appearance: none;
+        }
 
-    legend {
-        padding: 0;
-    }
+        ::-webkit-file-upload-button {
+            font: inherit;
+            appearance: auto;
+        }
 
-    progress {
-        vertical-align: baseline;
-    }
+        summary {
+            display: list-item;
+        }
 
-    ::-webkit-inner-spin-button,
-    ::-webkit-outer-spin-button {
-        height: auto;
-    }
+        blockquote,
+        dl,
+        dd,
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6,
+        hr,
+        figure,
+        p,
+        pre {
+            margin: 0;
+        }
 
-    [type="search"] {
-        outline-offset: -2px;
-        appearance: textfield;
-    }
+        button {
+            background-color: transparent;
+            background-image: none;
+        }
 
-    ::-webkit-search-decoration {
-        appearance: none;
-    }
+        button:focus {
+            outline: 1px dotted;
+            outline: 5px auto -webkit-focus-ring-color;
+        }
 
-    ::-webkit-file-upload-button {
-        font: inherit;
-        appearance: button;
-    }
+        button,
+        [role="button"] {
+            cursor: pointer;
+            padding: 0;
+            line-height: inherit;
+            color: inherit;
+        }
 
-    summary {
-        display: list-item;
-    }
+        input,
+        optgroup,
+        select,
+        textarea {
+            padding: 0;
+            line-height: inherit;
+            color: inherit;
+        }
 
-    blockquote,
-    dl,
-    dd,
-    h1,
-    h2,
-    h3,
-    h4,
-    h5,
-    h6,
-    hr,
-    figure,
-    p,
-    pre {
-        margin: 0;
-    }
+        fieldset {
+            margin: 0;
+            padding: 0;
+        }
 
-    button {
-        background-color: transparent;
-        background-image: none;
-    }
+        ol,
+        ul {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
 
-    button:focus {
-        outline: 1px dotted;
-        outline: 5px auto -webkit-focus-ring-color;
-    }
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+            line-height: inherit;
+        }
 
-    button,
-    [role="button"] {
-        padding: 0;
+        *,
+        ::before,
+        ::after {
+            box-sizing: border-box;
+            border-color: #E5E7EB;
+            border-style: solid;
+            border-width: 0;
+        }
 
-        color: inherit;
-        line-height: inherit;
+        img {
+            border-style: solid;
+        }
 
-        cursor: pointer;
-    }
+        textarea {
+            resize: vertical;
+        }
 
-    input,
-    optgroup,
-    select,
-    textarea {
-        padding: 0;
+        input::placeholder,
+        textarea::placeholder {
+            color: #9CA3AF;
+            opacity: 1;
+        }
 
-        color: inherit;
-        line-height: inherit;
-    }
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            font-size: inherit;
+            font-weight: inherit;
+        }
 
-    fieldset {
-        margin: 0;
-        padding: 0;
-    }
+        a {
+            color: inherit;
+            text-decoration: inherit;
+        }
 
-    ol,
-    ul {
-        margin: 0;
-        padding: 0;
+        code,
+        kbd,
+        samp {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        }
 
-        list-style: none;
-    }
+        img,
+        svg,
+        video,
+        canvas,
+        audio,
+        iframe,
+        embed,
+        object {
+            display: block;
+            vertical-align: middle;
+        }
 
-    body {
-        margin: 0;
-
-        font-family: system-ui, -apple-system, "Segoe UI", "Roboto", "Helvetica", "Arial", sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
-        line-height: inherit;
-    }
-
-    *,
-    ::before,
-    ::after {
-        box-sizing: border-box;
-
-        border-color: #E5E7EB;
-        border-style: solid;
-        border-width: 0;
-    }
-
-    img {
-        border-style: solid;
-    }
-
-    textarea {
-        resize: vertical;
-    }
-
-    input::placeholder,
-    textarea::placeholder {
-        color: #9CA3AF;
-        opacity: 1;
-    }
-
-    h1,
-    h2,
-    h3,
-    h4,
-    h5,
-    h6 {
-        font-weight: inherit;
-        font-size: inherit;
-    }
-
-    a {
-        color: inherit;
-        text-decoration: inherit;
-    }
-
-    code,
-    kbd,
-    samp {
-        font-family: ui-monospace, "SFMono-Regular", "Menlo", "Monaco", "Consolas", "Liberation Mono", "Courier New", monospace;
-    }
-
-    img,
-    svg,
-    video,
-    canvas,
-    audio,
-    iframe,
-    embed,
-    object {
-        display: block;
-        vertical-align: middle;
-    }
-
-    img,
-    video {
-        max-width: 100%;
-        height: auto;
-    }
-
+        img,
+        video {
+            max-width: 100%;
+            height: auto;
+        }
+    }, _;
 `;

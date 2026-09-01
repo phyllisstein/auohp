@@ -6,7 +6,7 @@ import type { ApolloClientIntegration } from "@apollo/client-integration-tanstac
 import { useRouter } from "@tanstack/react-router";
 import { ThemeProvider as StyledThemeProvider } from "styled-components";
 import theme from "@/styles/theme";
-import { Body, StyledComponentsRegistry } from "@/styles/global";
+import { Body, StyledComponentsRegistry, Preflight } from "@/styles/global";
 import { AdobeClean } from "@/styles/assets/fonts";
 import { ErrorBoundary } from "@suspensive/react";
 
@@ -53,6 +53,7 @@ function RootComponent () {
                         <main>
                             <StyledThemeProvider theme={ theme }>
                                 <AdobeClean />
+                                <Preflight />
                                 <Body />
                                 <ErrorBoundary
                                     fallback={
