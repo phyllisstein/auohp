@@ -75,3 +75,93 @@ nanoid = "0.5"
 rustls = { version = "0.23", features = ["aws-lc-rs"] }
 md5 = "0.8.1"
 rand = "0.8.5"
+# Background jobs --- apalis is a Tower-native job runner: a worker is a
+# `tower::Service<Task<Args, Ctx, IdType>>`, so every cross-cutting concern is
+# an ordinary `tower::Layer` rather than a bespoke hook system.
+#
+# default-features = false, then re-added one at a time, because the default
+# set silently pulls `tower/limit` and `tower/filter` machinery we do not use.
+# Each feature below is enabled for a stated reason:
+#
+#   retry       --- forwards to `tower/retry`. Supplies `RetryPolicy` and the
+#                   `WorkerBuilderExt::retry` combinator. This is the headline
+#                   capability the hand-rolled queue lacked, so it is not
+#                   optional for us.
+#   catch-panic --- pulls `dep:futures-util` and supplies `CatchPanicLayer`,
+#                   which converts a panicking task body into an `AbortError`
+#                   instead of poisoning the worker. The hand-rolled spike had
+#                   to write this by hand.
+#   tracing     --- forwards to `apalis-core/tracing` and gives each task an
+#                   instrumented span. The project already initializes a
+#                   `tracing-subscriber`, so this is free observability.
+#
+# Deliberately NOT enabled: `limit` (concurrency is bounded by the single ONNX
+# thread downstream, not by a Tower semaphore --- see docs/spikes/apalis-sqlite.md),
+# `timeout` (a whole-interview embedding run has no meaningful deadline),
+# `filter`, `sentry`, `prometheus`, `opentelemetry`.
+apalis = { version = "1.0.0-rc.9", default-features = false, features = [
+    "retry",
+    "catch-panic",
+    "tracing",
+] }
+
+# SQLite-backed durable storage for apalis. Default features are
+# [tokio-comp, migrate, json, chrono]; we keep all but `chrono`:
+#
+#   tokio-comp --- selects `sqlx/runtime-tokio-rustls`. Note *rustls*, not
+#                  native-tls: it resolves onto the same rustls 0.23 +
+#                  aws-lc-rs already installed as the process-wide
+#                  CryptoProvider in main.rs, so there is no second TLS stack.
+#   migrate    --- ships the embedded `Migrator` so `SqliteStorage::setup`
+#                  can create the Jobs/Workers tables on first run. This is
+#                  what makes the database file self-creating.
+#   json       --- the `JsonCodec` used to serialize task arguments into the
+#                  `job` BLOB column.
+#   chrono     --- NOT actually optional, despite being listed as a feature.
+#                  `apalis-sql`'s lib.rs does an unconditional
+#                  `pub use datetime::{DateTime, DateTimeExt}`, but datetime.rs
+#                  only *defines* those items under `#[cfg(feature = "chrono")]`
+#                  or `#[cfg(feature = "time")]`. Turning both off is therefore
+#                  a hard compile error inside the dependency:
+#                      error[E0432]: unresolved import `crate::datetime::DateTime`
+#                  We enable `chrono` (rather than `time`) because the workspace
+#                  already depends on chrono for neo4rs Bolt dates, so this adds
+#                  no new crate. See docs/spikes/apalis-sqlite.md --- this is one
+#                  of the concrete rc-skew findings.
+apalis-sqlite = { version = "1.0.0-rc.8", default-features = false, features = [
+    "tokio-comp",
+    "migrate",
+    "json",
+    "chrono",
+] }
+
+# Two dependencies we would rather not need, both forced by the same gap:
+# apalis re-exports only a curated `prelude` and does NOT re-export
+# `apalis_core` or `ulid` at its crate root, yet both appear in types we must
+# name. `Backend::IdType` for the SQLite backend is `ulid::Ulid`, and
+# `BoxDynError` / `Status` / `Worker` live in `apalis_core` under paths the
+# prelude does not cover. Declaring them directly is the supported workaround
+# and pins the same versions apalis already resolved, so neither adds a crate
+# to the tree. See docs/spikes/apalis-sqlite.md.
+apalis-core = "1.0.0-rc.9"
+ulid = "1"
+
+# A third separately-versioned apalis crate, and the clearest illustration of
+# the version-skew risk. `SqliteStorage::new` *returns*
+# `SqliteStorage<T, JsonCodec<Vec<u8>>, SqliteFetcher>`, so `JsonCodec` is
+# unavoidable in any type alias for that storage --- yet it lives in
+# `apalis-codec`, which apalis-sqlite does not re-export, and which is on an
+# entirely different version line (0.1.0-rc.9 against the 1.0.0-rc.x of the
+# others). Naming one storage type therefore means depending on four crates
+# across three version series.
+apalis-codec = { version = "0.1.0-rc.9", default-features = false, features = [
+    "json",
+] }
+
+# apalis exposes `sqlx::SqlitePool` in its public API (`SqliteStorage::new`
+# takes one), so we need a direct dependency to name the type. Features are
+# kept to exactly what apalis-sqlite already enables --- this adds no crates.
+sqlx = { version = "0.8.6", default-features = false, features = [
+    "sqlite",
+    "runtime-tokio-rustls",
+] }

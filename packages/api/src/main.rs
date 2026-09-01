@@ -1,6 +1,7 @@
 use rustls::crypto::{CryptoProvider, aws_lc_rs};
 mod captions;
 mod graphql;
+mod jobs;
 mod neo4j;
 mod uid;
 use anyhow::Result;
@@ -91,8 +92,57 @@ async fn main() -> Result<()> {
     info!("loaded embedding model ({}-dim)", &embedder.dimensions());
     let embed_handler = std::sync::Arc::new(EmbedderHandle::new(embedder));
 
+    // ── Background job queue ─────────────────────────────────────────────
+    //
+    // Opened before the schema is built, because the schema needs a handle to
+    // inject. `open_pool` creates the database file and its parent directory
+    // if missing and runs apalis's migrations, all idempotently --- there is
+    // no separate install step, and a fresh checkout boots without ceremony.
+    let jobs_config = jobs::StorageConfig::default();
+    let jobs_pool = jobs::open_pool(&jobs_config).await?;
+    info!(url = %jobs_config.url, "opened background job queue");
+
+    let queue = jobs::JobQueue::new(jobs_pool.clone(), &jobs_config);
+
+    // The worker's dependencies. Both are the same handles the resolvers hold:
+    // `Db` is an `Arc<Graph>` (a connection pool) and `EmbedderHandle` is an
+    // `Arc` around channel senders. Cloning either is a refcount bump, so the
+    // worker and the HTTP server genuinely share one Neo4j pool and one ONNX
+    // thread rather than standing up duplicates.
+    let worker_deps = jobs::embed::EmbedDeps {
+        db: Arc::clone(&db),
+        embedder: Arc::clone(&embed_handler),
+    };
+
+    // One shutdown signal, two consumers. `tokio::sync::watch` is the right
+    // primitive here rather than a oneshot: a oneshot can only be awaited
+    // once, and both axum and the worker need to observe the same edge.
+    // Awaiting `changed()` on a receiver is the "wait for the flag to flip"
+    // half; the sender is fired from `shutdown_signal` below.
+    let (shutdown_tx, mut shutdown_rx) = tokio::sync::watch::channel(false);
+
+    let worker_shutdown = {
+        let mut rx = shutdown_rx.clone();
+        async move {
+            // `changed()` errors only if every sender was dropped, which also
+            // means shutdown --- so either arm of this is "stop".
+            let _ = rx.changed().await;
+        }
+    };
+
+    // Spawn the worker. It polls the SQLite queue, so anything left `Pending`
+    // from a previous run is picked up here --- this line is where restart
+    // recovery actually happens.
+    let worker_handle = tokio::spawn(jobs::queue::run_worker(
+        jobs_pool.clone(),
+        jobs_config.clone(),
+        worker_deps,
+        worker_shutdown,
+    ));
+    info!("background embedding worker started");
+
     let captions_db = Arc::clone(&db);
-    let schema = graphql::build_schema(db, embed_handler);
+    let schema = graphql::build_schema(db, embed_handler, queue);
 
     let app =
         Router::new()
@@ -142,8 +192,37 @@ async fn main() -> Result<()> {
     info!("listening on {}", listener.local_addr()?);
 
     axum::serve(listener, app)
-        .with_graceful_shutdown(shutdown_signal())
+        .with_graceful_shutdown(async move {
+            shutdown_signal().await;
+            // Tell the worker to stop too. `send` fails only if every receiver
+            // was dropped, which would mean the worker already exited --- so a
+            // failure here is not worth reporting.
+            let _ = shutdown_tx.send(true);
+        })
         .await?;
+
+    // Wait for the worker to finish draining before the process exits.
+    //
+    // Ordering matters and is the whole point of joining here rather than
+    // letting the runtime drop the task: a task still executing when `main`
+    // returns is aborted mid-flight. Awaiting the handle lets an in-progress
+    // embedding either finish or --- if the process is killed harder --- leave
+    // its row in `Running` for the orphan reaper to reclaim on the next boot.
+    //
+    // Note the double `?`-shaped unwrapping: `JoinHandle` yields
+    // `Result<T, JoinError>` (did the task panic?) wrapping the task's own
+    // `anyhow::Result<()>` (did the work fail?). Two independent failure modes,
+    // two layers.
+    match worker_handle.await {
+        Ok(Ok(())) => info!("background embedding worker stopped cleanly"),
+        Ok(Err(e)) => error!(error = %e, "background embedding worker failed"),
+        Err(e) => error!(error = %e, "background embedding worker panicked"),
+    }
+
+    // Silence the unused-variable warning on the retained receiver; it exists
+    // so the watch channel keeps at least one receiver alive for the worker's
+    // clone to observe.
+    let _ = shutdown_rx.borrow_and_update();
 
     Ok(())
 }
