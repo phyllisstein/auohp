@@ -264,3 +264,11 @@ EOF
 # curl -sL https://dl.yarnpkg.com/debian/pubkey.gpg | gpg --dearmor | sudo tee /usr/share/keyrings/yarnkey.gpg >/dev/null
 # echo "deb [signed-by=/usr/share/keyrings/yarnkey.gpg] https://dl.yarnpkg.com/debian stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
 # sudo apt-get update && sudo apt-get install -y nodejs yarn
+
+# S3 Files
+# curl https://amazon-efs-utils.aws.com/efs-utils-installer.sh | sudo sh -s -- --install
+# sudo mkdir -p /mnt/s3/fs1
+# sudo mount -t s3files fs-<mount id> /mnt/s3/fs1
+# echo "fs-<mount id>  /mnt/s3/fs1  s3files  _netdev,nofail  0  0" | sudo tee -a /etc/fstab
+# sudo systemctl daemon-reload
+# sudo umount /mnt/s3/fs1 && sudo mount /mnt/s3/fs1

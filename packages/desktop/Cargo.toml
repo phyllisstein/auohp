@@ -54,9 +54,6 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
-# Bindings to the Metal framework. Used for extracting GPU metadata at runtime
-# on Apple Silicon devices.
-metal = "0.33"
 sysinfo = "0.38"
 machine-info = "1"
 

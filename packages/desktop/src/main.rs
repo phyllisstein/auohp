@@ -47,7 +47,6 @@ struct AvailableModels {
 struct HealthcheckResponse {
     backend: String,
     capabilities: Vec<String>,
-    gpu: GpuMeta,
     models: AvailableModels,
     status: HealthStatus,
     version: String,
@@ -291,23 +290,11 @@ async fn hello_handler() -> impl IntoResponse {
 }
 
 async fn healthcheck_handler() -> impl IntoResponse {
-    let gpu = match metal_gpu_info() {
-        Some((name, vram)) => GpuMeta {
-            name: Some(name),
-            vram: Some(vram),
-        },
-        None => GpuMeta {
-            name: None,
-            vram: None,
-        },
-    };
-
     let health = HealthcheckResponse {
         status: HealthStatus::Ok,
         version: "0.0.0".into(),
         backend: gpu_backend().into(),
         capabilities: vec!["transcribe".into(), "diarize".into(), "embed".into()],
-        gpu,
         models: AvailableModels {
             whisper: "large-v3".into(),
             diarization: "pyannote-segmentation-3.0".into(),
@@ -327,11 +314,4 @@ fn gpu_backend() -> &'static str {
     } else {
         "cpu"
     }
-}
-
-fn metal_gpu_info() -> Option<(String, u64)> {
-    let device = metal::Device::system_default()?;
-    let name = device.name().to_string();
-    let vram = device.recommended_max_working_set_size();
-    Some((name, vram))
 }
