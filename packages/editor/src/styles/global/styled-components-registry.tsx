@@ -55,7 +55,7 @@ function ServerRegistry ({ children }: { children: ReactNode }) {
  * parent would sample it before any styled component had contributed a rule.
  *
  * `getStyleElement` is used rather than v7's new `extractCSS` on purpose: it
- * keeps the `data-styled` / `/*!sc*​/` rehydration markers that the client
+ * keeps the `data-styled` / `/*!sc*\/` rehydration markers that the client
  * reads to rebuild group boundaries and skip re-injecting rules it already has.
  * `extractCSS` strips them by design (it targets shadow DOM and iframe
  * cloning), so styles would paint but then be duplicated on hydration.

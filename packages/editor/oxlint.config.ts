@@ -1,15 +1,20 @@
 import { defineConfig } from "oxlint";
 
 export default defineConfig({
-    plugins: ["react"],
-    jsPlugins: ["@stylistic/eslint-plugin"],
+    plugins: ["react", "oxc", "eslint", "jsx-a11y", "react-perf"],
+    jsPlugins: [
+        { specifier: "@stylistic/eslint-plugin", name: "stylistic-js" },
+    ],
     categories: {
         correctness: "off",
     },
     env: {
+        browser: true,
         builtin: true,
+        es2026: true,
+        worker: true,
     },
-    ignorePatterns: ["node_modules", "dist", "public", "gql", "graphql", "schema.graphql", "schema.gql"],
+    ignorePatterns: ["node_modules", "dist", "public", "gql", "graphql", "schema.graphql", "schema.gql", "**/*.d.ts"],
     rules: {
         "constructor-super": "error",
         "for-direction": "error",
@@ -75,86 +80,85 @@ export default defineConfig({
         "valid-typeof": "error",
 
         "react/only-export-components": "off",
-        "fast-refresh/exhaustive-deps": "off",
 
-        "@stylistic/array-bracket-spacing": ["warn", "never"],
-        "@stylistic/arrow-parens": [
+        "stylistic-js/array-bracket-spacing": ["warn", "never"],
+        "stylistic-js/arrow-parens": [
             "warn",
             "as-needed",
             {
                 requireForBlockBody: false,
             },
         ],
-        "@stylistic/arrow-spacing": [
+        "stylistic-js/arrow-spacing": [
             "error",
             {
                 after: true,
                 before: true,
             },
         ],
-        "@stylistic/block-spacing": ["warn", "never"],
-        "@stylistic/brace-style": [
+        "stylistic-js/block-spacing": ["warn", "never"],
+        "stylistic-js/brace-style": [
             "warn",
             "1tbs",
             {
                 allowSingleLine: true,
             },
         ],
-        "@stylistic/comma-dangle": ["warn", "always-multiline"],
-        "@stylistic/comma-spacing": [
+        "stylistic-js/comma-dangle": ["warn", "always-multiline"],
+        "stylistic-js/comma-spacing": [
             "warn",
             {
                 after: true,
                 before: false,
             },
         ],
-        "@stylistic/comma-style": ["error", "last"],
-        "@stylistic/computed-property-spacing": [
+        "stylistic-js/comma-style": ["error", "last"],
+        "stylistic-js/computed-property-spacing": [
             "error",
             "never",
             {
                 enforceForClassMembers: true,
             },
         ],
-        "@stylistic/dot-location": ["error", "property"],
-        "@stylistic/eol-last": "warn",
-        "@stylistic/generator-star-spacing": [
+        "stylistic-js/dot-location": ["error", "property"],
+        "stylistic-js/eol-last": "warn",
+        "stylistic-js/generator-star-spacing": [
             "error",
             {
                 after: true,
                 before: false,
             },
         ],
-        "@stylistic/indent": ["warn", 4],
-        "@stylistic/indent-binary-ops": ["error", 2],
-        "@stylistic/key-spacing": [
+        "stylistic-js/indent": ["warn", 4],
+        "stylistic-js/indent-binary-ops": ["error", 2],
+        "stylistic-js/key-spacing": [
             "error",
             {
                 afterColon: true,
                 beforeColon: false,
             },
         ],
-        "@stylistic/keyword-spacing": [
+        "stylistic-js/keyword-spacing": [
             "error",
             {
                 after: true,
                 before: true,
             },
         ],
-        "@stylistic/lines-between-class-members": [
+        "stylistic-js/lines-between-class-members": [
             "error",
             "always",
             {
                 exceptAfterSingleLine: true,
             },
         ],
-        "@stylistic/max-statements-per-line": [
+        "stylistic-js/max-statements-per-line": [
             "error",
             {
                 max: 1,
             },
         ],
-        "@stylistic/member-delimiter-style": [
+        "stylistic-js/member-delimiter-style": [
             "warn",
             {
                 multiline: {
@@ -167,11 +171,11 @@ export default defineConfig({
                 },
             },
         ],
-        "@stylistic/multiline-ternary": ["error", "always-multiline"],
-        "@stylistic/new-parens": "error",
-        "@stylistic/no-extra-parens": ["error", "functions"],
-        "@stylistic/no-floating-decimal": "error",
-        "@stylistic/no-mixed-operators": [
+        "stylistic-js/multiline-ternary": ["error", "always-multiline"],
+        "stylistic-js/new-parens": "error",
+        "stylistic-js/no-extra-parens": ["error", "functions"],
+        "stylistic-js/no-floating-decimal": "error",
+        "stylistic-js/no-mixed-operators": [
             "error",
             {
                 allowSamePrecedence: true,
@@ -182,9 +186,9 @@ export default defineConfig({
                 ],
             },
         ],
-        "@stylistic/no-mixed-spaces-and-tabs": "error",
-        "@stylistic/no-multi-spaces": "error",
-        "@stylistic/no-multiple-empty-lines": [
+        "stylistic-js/no-mixed-spaces-and-tabs": "error",
+        "stylistic-js/no-multi-spaces": "error",
+        "stylistic-js/no-multiple-empty-lines": [
             "warn",
             {
                 max: 2,
@@ -192,12 +196,12 @@ export default defineConfig({
                 maxEOF: 1,
             },
         ],
-        "@stylistic/no-tabs": "error",
-        "@stylistic/no-trailing-spaces": "off",
-        "@stylistic/no-whitespace-before-property": "error",
-        "@stylistic/object-curly-spacing": ["warn", "always"],
-        "@stylistic/operator-linebreak": "warn",
-        "@stylistic/padded-blocks": [
+        "stylistic-js/no-tabs": "error",
+        "stylistic-js/no-trailing-spaces": "off",
+        "stylistic-js/no-whitespace-before-property": "error",
+        "stylistic-js/object-curly-spacing": ["warn", "always"],
+        "stylistic-js/operator-linebreak": "warn",
+        "stylistic-js/padded-blocks": [
             "error",
             {
                 blocks: "never",
@@ -205,8 +209,8 @@ export default defineConfig({
                 switches: "never",
             },
         ],
-        "@stylistic/quote-props": ["warn", "consistent-as-needed"],
-        "@stylistic/quotes": [
+        "stylistic-js/quote-props": ["warn", "consistent-as-needed"],
+        "stylistic-js/quotes": [
             "warn",
             "double",
             {
@@ -214,8 +218,8 @@ export default defineConfig({
                 avoidEscape: true,
             },
         ],
-        "@stylistic/rest-spread-spacing": ["error", "never"],
-        "@stylistic/semi": [
+        "stylistic-js/rest-spread-spacing": ["error", "never"],
+        "stylistic-js/semi": [
             "warn",
             "always",
             {
@@ -223,25 +227,25 @@ export default defineConfig({
                 omitLastInOneLineClassBody: true,
             },
         ],
-        "@stylistic/semi-spacing": [
+        "stylistic-js/semi-spacing": [
             "error",
             {
                 after: true,
                 before: false,
             },
         ],
-        "@stylistic/space-before-blocks": ["error", "always"],
-        "@stylistic/space-before-function-paren": "warn",
-        "@stylistic/space-in-parens": ["error", "never"],
-        "@stylistic/space-infix-ops": "error",
-        "@stylistic/space-unary-ops": [
+        "stylistic-js/space-before-blocks": ["error", "always"],
+        "stylistic-js/space-before-function-paren": "warn",
+        "stylistic-js/space-in-parens": ["error", "never"],
+        "stylistic-js/space-infix-ops": "error",
+        "stylistic-js/space-unary-ops": [
             "error",
             {
                 nonwords: false,
                 words: true,
             },
         ],
-        "@stylistic/spaced-comment": [
+        "stylistic-js/spaced-comment": [
             "error",
             "always",
             {
@@ -256,19 +260,19 @@ export default defineConfig({
                 },
             },
         ],
-        "@stylistic/template-curly-spacing": ["warn", "always"],
-        "@stylistic/template-tag-spacing": ["error", "never"],
-        "@stylistic/type-annotation-spacing": ["error", {}],
-        "@stylistic/type-generic-spacing": "error",
-        "@stylistic/type-named-tuple-spacing": "error",
-        "@stylistic/wrap-iife": [
+        "stylistic-js/template-curly-spacing": ["warn", "always"],
+        "stylistic-js/template-tag-spacing": ["error", "never"],
+        "stylistic-js/type-annotation-spacing": ["error", {}],
+        "stylistic-js/type-generic-spacing": "error",
+        "stylistic-js/type-named-tuple-spacing": "error",
+        "stylistic-js/wrap-iife": [
             "error",
             "any",
             {
                 functionPrototypeMethods: true,
             },
         ],
-        "@stylistic/yield-star-spacing": [
+        "stylistic-js/yield-star-spacing": [
             "error",
             {
                 after: true,
@@ -276,16 +280,16 @@ export default defineConfig({
             },
         ],
 
-        "@stylistic/jsx-closing-bracket-location": ["warn", "after-props"],
-        "@stylistic/jsx-closing-tag-location": "error",
-        "@stylistic/jsx-curly-brace-presence": [
+        "stylistic-js/jsx-closing-bracket-location": ["warn", "after-props"],
+        "stylistic-js/jsx-closing-tag-location": "error",
+        "stylistic-js/jsx-curly-brace-presence": [
             "error",
             {
                 propElementValues: "always",
             },
         ],
-        "@stylistic/jsx-curly-newline": ["warn", "consistent"],
-        "@stylistic/jsx-curly-spacing": [
+        "stylistic-js/jsx-curly-newline": ["warn", "consistent"],
+        "stylistic-js/jsx-curly-spacing": [
             "warn",
             {
                 attributes: { when: "always" },
@@ -294,25 +298,25 @@ export default defineConfig({
                 when: "always",
             },
         ],
-        "@stylistic/jsx-equals-spacing": "error",
-        "@stylistic/jsx-first-prop-new-line": "error",
-        "@stylistic/jsx-function-call-newline": ["error", "multiline"],
-        "@stylistic/jsx-indent-props": ["warn", 4],
-        "@stylistic/jsx-max-props-per-line": [
+        "stylistic-js/jsx-equals-spacing": "error",
+        "stylistic-js/jsx-first-prop-new-line": "error",
+        "stylistic-js/jsx-function-call-newline": ["error", "multiline"],
+        "stylistic-js/jsx-indent-props": ["warn", 4],
+        "stylistic-js/jsx-max-props-per-line": [
             "error",
             {
                 maximum: 1,
                 when: "multiline",
             },
         ],
-        "@stylistic/jsx-one-expression-per-line": [
+        "stylistic-js/jsx-one-expression-per-line": [
             "warn",
             {
                 allow: "single-line",
             },
         ],
-        "@stylistic/jsx-quotes": ["warn", "prefer-double"],
-        "@stylistic/jsx-tag-spacing": [
+        "stylistic-js/jsx-quotes": ["warn", "prefer-double"],
+        "stylistic-js/jsx-tag-spacing": [
             "warn",
             {
                 afterOpening: "never",
@@ -321,7 +325,7 @@ export default defineConfig({
                 closingSlash: "never",
             },
         ],
-        "@stylistic/jsx-wrap-multilines": [
+        "stylistic-js/jsx-wrap-multilines": [
             "error",
             {
                 arrow: "parens-new-line",
@@ -334,178 +338,165 @@ export default defineConfig({
                 return: "parens-new-line",
             },
         ],
+
+        "react/react-in-jsx-scope": "off",
+        "jsx-a11y/alt-text": "error",
+        "jsx-a11y/anchor-ambiguous-text": "off",
+        "jsx-a11y/anchor-has-content": "error",
+        "jsx-a11y/anchor-is-valid": "error",
+        "jsx-a11y/aria-activedescendant-has-tabindex": "error",
+        "jsx-a11y/aria-props": "error",
+        "jsx-a11y/aria-proptypes": "error",
+        "jsx-a11y/aria-role": "error",
+        "jsx-a11y/aria-unsupported-elements": "error",
+        "jsx-a11y/autocomplete-valid": "error",
+        "jsx-a11y/click-events-have-key-events": "error",
+        "jsx-a11y/control-has-associated-label": [
+            "off",
+            {
+                ignoreElements: [
+                    "audio",
+                    "canvas",
+                    "embed",
+                    "input",
+                    "textarea",
+                    "tr",
+                    "video",
+                ],
+                ignoreRoles: [
+                    "grid",
+                    "listbox",
+                    "menu",
+                    "menubar",
+                    "radiogroup",
+                    "row",
+                    "tablist",
+                    "toolbar",
+                    "tree",
+                    "treegrid",
+                ],
+                // NOTE: `includeRoles` is an eslint-plugin-jsx-a11y option that
+                // oxlint's native implementation doesn't support.
+            },
+        ],
+        "jsx-a11y/heading-has-content": "error",
+        "jsx-a11y/html-has-lang": "error",
+        "jsx-a11y/iframe-has-title": "error",
+        "jsx-a11y/img-redundant-alt": "error",
+        "jsx-a11y/interactive-supports-focus": [
+            "error",
+            {
+                tabbable: [
+                    "button",
+                    "checkbox",
+                    "link",
+                    "searchbox",
+                    "spinbutton",
+                    "switch",
+                    "textbox",
+                ],
+            },
+        ],
+        "jsx-a11y/label-has-associated-control": "error",
+        "jsx-a11y/media-has-caption": "error",
+        "jsx-a11y/mouse-events-have-key-events": "error",
+        "jsx-a11y/no-access-key": "error",
+        "jsx-a11y/no-autofocus": "error",
+        "jsx-a11y/no-distracting-elements": "error",
+        "jsx-a11y/no-interactive-element-to-noninteractive-role": [
+            "error",
+            {
+                tr: ["none", "presentation"],
+                canvas: ["img"],
+            },
+        ],
+        "jsx-a11y/no-noninteractive-element-interactions": [
+            "error",
+            {
+                handlers: [
+                    "onClick",
+                    "onError",
+                    "onLoad",
+                    "onMouseDown",
+                    "onMouseUp",
+                    "onKeyPress",
+                    "onKeyDown",
+                    "onKeyUp",
+                ],
+                alert: ["onKeyUp", "onKeyDown", "onKeyPress"],
+                body: ["onError", "onLoad"],
+                dialog: ["onKeyUp", "onKeyDown", "onKeyPress"],
+                iframe: ["onError", "onLoad"],
+                img: ["onError", "onLoad"],
+            },
+        ],
+        "jsx-a11y/no-noninteractive-element-to-interactive-role": [
+            "error",
+            {
+                ul: [
+                    "listbox",
+                    "menu",
+                    "menubar",
+                    "radiogroup",
+                    "tablist",
+                    "tree",
+                    "treegrid",
+                ],
+                ol: [
+                    "listbox",
+                    "menu",
+                    "menubar",
+                    "radiogroup",
+                    "tablist",
+                    "tree",
+                    "treegrid",
+                ],
+                li: [
+                    "menuitem",
+                    "menuitemradio",
+                    "menuitemcheckbox",
+                    "option",
+                    "row",
+                    "tab",
+                    "treeitem",
+                ],
+                table: ["grid"],
+                td: ["gridcell"],
+                fieldset: ["radiogroup", "presentation"],
+            },
+        ],
+        "jsx-a11y/no-noninteractive-tabindex": [
+            "error",
+            {
+                tags: [],
+                roles: ["tabpanel"],
+                allowExpressionValues: true,
+            },
+        ],
+        "jsx-a11y/no-redundant-roles": "error",
+        "jsx-a11y/no-static-element-interactions": [
+            "error",
+            {
+                allowExpressionValues: true,
+                handlers: [
+                    "onClick",
+                    "onMouseDown",
+                    "onMouseUp",
+                    "onKeyPress",
+                    "onKeyDown",
+                    "onKeyUp",
+                ],
+            },
+        ],
+        "jsx-a11y/role-has-required-aria-props": "error",
+        "jsx-a11y/role-supports-aria-props": "error",
+        "jsx-a11y/scope": "error",
+        "jsx-a11y/tabindex-no-positive": "error",
+        "react/exhaustive-deps": "warn",
     },
-    overrides: [
-        {
-            files: ["**/*.{js,jsx,mjs,cjs,ts,tsx}"],
-            rules: {
-                "react/react-in-jsx-scope": "off",
-                "jsx-a11y/alt-text": "error",
-                "jsx-a11y/anchor-ambiguous-text": "off",
-                "jsx-a11y/anchor-has-content": "error",
-                "jsx-a11y/anchor-is-valid": "error",
-                "jsx-a11y/aria-activedescendant-has-tabindex": "error",
-                "jsx-a11y/aria-props": "error",
-                "jsx-a11y/aria-proptypes": "error",
-                "jsx-a11y/aria-role": "error",
-                "jsx-a11y/aria-unsupported-elements": "error",
-                "jsx-a11y/autocomplete-valid": "error",
-                "jsx-a11y/click-events-have-key-events": "error",
-                "jsx-a11y/control-has-associated-label": [
-                    "off",
-                    {
-                        ignoreElements: [
-                            "audio",
-                            "canvas",
-                            "embed",
-                            "input",
-                            "textarea",
-                            "tr",
-                            "video",
-                        ],
-                        ignoreRoles: [
-                            "grid",
-                            "listbox",
-                            "menu",
-                            "menubar",
-                            "radiogroup",
-                            "row",
-                            "tablist",
-                            "toolbar",
-                            "tree",
-                            "treegrid",
-                        ],
-                        // NOTE: `includeRoles` is an eslint-plugin-jsx-a11y option that
-                        // oxlint's native implementation doesn't support.
-                    },
-                ],
-                "jsx-a11y/heading-has-content": "error",
-                "jsx-a11y/html-has-lang": "error",
-                "jsx-a11y/iframe-has-title": "error",
-                "jsx-a11y/img-redundant-alt": "error",
-                "jsx-a11y/interactive-supports-focus": [
-                    "error",
-                    {
-                        tabbable: [
-                            "button",
-                            "checkbox",
-                            "link",
-                            "searchbox",
-                            "spinbutton",
-                            "switch",
-                            "textbox",
-                        ],
-                    },
-                ],
-                "jsx-a11y/label-has-associated-control": "error",
-                "jsx-a11y/media-has-caption": "error",
-                "jsx-a11y/mouse-events-have-key-events": "error",
-                "jsx-a11y/no-access-key": "error",
-                "jsx-a11y/no-autofocus": "error",
-                "jsx-a11y/no-distracting-elements": "error",
-                "jsx-a11y/no-interactive-element-to-noninteractive-role": [
-                    "error",
-                    {
-                        tr: ["none", "presentation"],
-                        canvas: ["img"],
-                    },
-                ],
-                "jsx-a11y/no-noninteractive-element-interactions": [
-                    "error",
-                    {
-                        handlers: [
-                            "onClick",
-                            "onError",
-                            "onLoad",
-                            "onMouseDown",
-                            "onMouseUp",
-                            "onKeyPress",
-                            "onKeyDown",
-                            "onKeyUp",
-                        ],
-                        alert: ["onKeyUp", "onKeyDown", "onKeyPress"],
-                        body: ["onError", "onLoad"],
-                        dialog: ["onKeyUp", "onKeyDown", "onKeyPress"],
-                        iframe: ["onError", "onLoad"],
-                        img: ["onError", "onLoad"],
-                    },
-                ],
-                "jsx-a11y/no-noninteractive-element-to-interactive-role": [
-                    "error",
-                    {
-                        ul: [
-                            "listbox",
-                            "menu",
-                            "menubar",
-                            "radiogroup",
-                            "tablist",
-                            "tree",
-                            "treegrid",
-                        ],
-                        ol: [
-                            "listbox",
-                            "menu",
-                            "menubar",
-                            "radiogroup",
-                            "tablist",
-                            "tree",
-                            "treegrid",
-                        ],
-                        li: [
-                            "menuitem",
-                            "menuitemradio",
-                            "menuitemcheckbox",
-                            "option",
-                            "row",
-                            "tab",
-                            "treeitem",
-                        ],
-                        table: ["grid"],
-                        td: ["gridcell"],
-                        fieldset: ["radiogroup", "presentation"],
-                    },
-                ],
-                "jsx-a11y/no-noninteractive-tabindex": [
-                    "error",
-                    {
-                        tags: [],
-                        roles: ["tabpanel"],
-                        allowExpressionValues: true,
-                    },
-                ],
-                "jsx-a11y/no-redundant-roles": "error",
-                "jsx-a11y/no-static-element-interactions": [
-                    "error",
-                    {
-                        allowExpressionValues: true,
-                        handlers: [
-                            "onClick",
-                            "onMouseDown",
-                            "onMouseUp",
-                            "onKeyPress",
-                            "onKeyDown",
-                            "onKeyUp",
-                        ],
-                    },
-                ],
-                "jsx-a11y/role-has-required-aria-props": "error",
-                "jsx-a11y/role-supports-aria-props": "error",
-                "jsx-a11y/scope": "error",
-                "jsx-a11y/tabindex-no-positive": "error",
-                "react/exhaustive-deps": "warn",
-                "react/only-export-components": "error",
-            },
-            globals: {
-                AsyncDisposableStack: "readonly",
-                DisposableStack: "readonly",
-                SuppressedError: "readonly",
-            },
-            env: {
-                browser: true,
-                es2026: true,
-                worker: true,
-            },
-            plugins: ["react", "jsx-a11y"],
-        },
-    ],
+    globals: {
+        AsyncDisposableStack: "readonly",
+        DisposableStack: "readonly",
+        SuppressedError: "readonly",
+    },
 });

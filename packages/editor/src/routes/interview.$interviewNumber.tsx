@@ -19,6 +19,16 @@ const {
 } = import.meta.env;
 
 
+export const HEADER_QUERY: TypedDocumentNode<HeaderQuery, HeaderQueryVariables> = gql`
+    query Header($interviewNumber: Int!) {
+        interview(number: $interviewNumber) {
+            interviewee {
+                name
+            }
+        }
+    }
+`;
+
 // Drives the <video> from the shared playhead. Identical machinery to the Slate
 // route --- kept here rather than in an extension because it needs the video ref.
 function useVideoSync (player: RefObject<HTMLVideoElement | null>) {
@@ -95,7 +105,7 @@ const VideoContainer = styled.div`
 // no <Outlet/>. So this is a sibling under root, not a child --- the Slate route
 // stays untouched. The generator maintains the `_` in this path string for us.
 export const Route = createFileRoute("/interview/$interviewNumber")({
-    component: Page,
+    component: InterviewEditorPage,
     // FIXME: Handle errors gracefully
     loader: async ({ context: { apolloClient, preloadQuery }, params }) => {
         const interviewNumber = Number.parseInt(params.interviewNumber);
@@ -103,15 +113,6 @@ export const Route = createFileRoute("/interview/$interviewNumber")({
             throw new Error("Invalid interview number");
         }
 
-        const HEADER_QUERY: TypedDocumentNode<HeaderQuery, HeaderQueryVariables> = gql`
-            query Header($interviewNumber: Int!) {
-                interview(number: $interviewNumber) {
-                    interviewee {
-                        name
-                    }
-                }
-            }
-        `;
         const { data: headerQuery } = await apolloClient.query({
             query: HEADER_QUERY,
             variables: {
@@ -141,7 +142,7 @@ export const Route = createFileRoute("/interview/$interviewNumber")({
 });
 
 
-function Page () {
+function InterviewEditorPage () {
     const interviewNumber = Number.parseInt(Route.useParams().interviewNumber);
     const { transcriptQuery } = Route.useLoaderData();
     const { data: transcriptData } = useReadQuery(transcriptQuery);
@@ -215,9 +216,7 @@ function Page () {
                             crossOrigin="anonymous"
                             onTimeUpdate={ ev => playhead.timestamp.value = (ev.target as HTMLVideoElement).currentTime }>
                             <source src={ videoUri } type="video/mp4" />
-                            {
-                                interviewUid && <track default key={ statementHash } kind="captions" src={ `${ AUOHP_API_URI }/interview/${ interviewNumber }/vtt` } srcLang="en" label="English" />
-                            }
+                            <track default key={ statementHash } kind="captions" src={ `${ AUOHP_API_URI }/interview/${ interviewNumber }/vtt` } srcLang="en" label="English" />
                         </video>
                     )
                 }
