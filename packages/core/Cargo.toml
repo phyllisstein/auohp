@@ -13,12 +13,10 @@ default = []
 metal = [
     "ort/coreml",
     "whisper-rs/metal",
-    "fastembed/metal",
 ]
 cuda = [
     "ort/cuda",
     "whisper-rs/cuda",
-    "fastembed/cuda",
 ]
 
 [dependencies]
