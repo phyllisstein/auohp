@@ -1,6 +1,7 @@
 use rustls::crypto::{CryptoProvider, aws_lc_rs};
 mod captions;
 mod graphql;
+mod jobs;
 mod neo4j;
 mod uid;
 use anyhow::Result;
@@ -91,8 +92,53 @@ async fn main() -> Result<()> {
     info!("loaded embedding model ({}-dim)", &embedder.dimensions());
     let embed_handler = std::sync::Arc::new(EmbedderHandle::new(embedder));
 
+    // ── Background job system ────────────────────────────────────────────
+    //
+    // Assembled in dependency order: state store, then backend (which writes
+    // to it), then registry (populated and frozen), then the Queue facade
+    // tying them together.
+    //
+    // Concurrency is 2, not `num_cpus`. Both real job types funnel into the
+    // single-threaded EmbedderHandle, so more workers would not buy inference
+    // parallelism --- only the ability to run an unrelated job alongside one
+    // that is embedding. See docs/spikes/bgworker-port.md.
+    let job_state = Arc::new(jobs::handle::InMemoryStateStore::with_defaults());
+
+    let job_backend = Arc::new(jobs::InProcessBackend::new(
+        2,
+        512,
+        Arc::clone(&job_state) as Arc<dyn jobs::StateStore>,
+    ));
+
+    // Registration closes here, before the pool starts, which is what lets the
+    // registry be frozen into an Arc and read lock-free on the dispatch path.
+    let job_registry = Arc::new(jobs::Registry::new().register(jobs::workers::EmbedInterviewWorker));
+
+    let queue = jobs::Queue::new(
+        job_backend,
+        job_registry,
+        Arc::clone(&job_state) as Arc<dyn jobs::StateStore>,
+    );
+
+    // The context every job body runs against. Note it holds the *same*
+    // Arc-shaped handles the HTTP side uses --- one Neo4j pool, one embedder
+    // thread, shared, not duplicated per subsystem.
+    let job_ctx = jobs::JobContext {
+        db: Arc::clone(&db),
+        embedder: Some(Arc::clone(&embed_handler)),
+        state: Arc::clone(&job_state) as Arc<dyn jobs::StateStore>,
+    };
+
+    queue.start(job_ctx)?;
+    info!("background jobs: {}", queue.describe());
+
     let captions_db = Arc::clone(&db);
-    let schema = graphql::build_schema(db, embed_handler);
+
+    // The queue is cloned rather than moved: `build_schema` hands one clone to
+    // async-graphql's `.data()` for resolvers to enqueue with, and this one
+    // stays behind in `main` to drive shutdown after the server stops.
+    let shutdown_queue = queue.clone();
+    let schema = graphql::build_schema(db, embed_handler, queue);
 
     let app =
         Router::new()
@@ -144,6 +190,30 @@ async fn main() -> Result<()> {
     axum::serve(listener, app)
         .with_graceful_shutdown(shutdown_signal())
         .await?;
+
+    // ── Shutdown ordering ────────────────────────────────────────────────
+    //
+    // This sequencing matters, and it is the reason the job pool is shut down
+    // *here* rather than inside `shutdown_signal`.
+    //
+    // `axum::serve(..).await` returns only once the graceful shutdown future
+    // has fired *and* every in-flight HTTP request has finished. So by the time
+    // control reaches this line, no new job can possibly be enqueued --- the
+    // last resolver that could have called `enqueue` has already returned.
+    // Draining the pool now is therefore draining a queue that provably cannot
+    // grow again.
+    //
+    // Had we instead raced the pool shutdown against the server's inside
+    // `shutdown_signal`, a request in flight at Ctrl+C could enqueue a job into
+    // a queue that was already closing, and get an error for work the server
+    // was still nominally accepting.
+    //
+    // What this still does not save: jobs sitting unstarted in the channel are
+    // dropped, because nothing persists them. In-flight jobs do run to
+    // completion. See the spike doc's shutdown section for the mitigation.
+    if let Err(e) = shutdown_queue.shutdown().await {
+        error!(error = %e, "background job pool did not shut down cleanly");
+    }
 
     Ok(())
 }

@@ -5,9 +5,10 @@ use neo4rs::{BoltMap, BoltString, BoltType, query};
 use serde::{Deserialize, Serialize};
 
 use crate::graphql::queries::interviews::Interview;
+use crate::jobs::workers::{EmbedInterviewArgs, EmbedInterviewWorker};
+use crate::jobs::Queue;
 use crate::neo4j::Db;
 use crate::uid;
-use auohp_core::embeddings::EmbedderHandle;
 
 /// Build a BoltMap from string-key / BoltType-value pairs.
 fn bolt_map(pairs: Vec<(&str, BoltType)>) -> BoltType {
@@ -117,92 +118,14 @@ pub struct SeedInterviewPayload {
     /// mutation returns; vector search results for this interview will not be
     /// available until that task completes.
     pub embeddings_queued: bool,
-}
 
-// ---------------------------------------------------------------------------
-// Background embedding task
-// ---------------------------------------------------------------------------
-
-/// Embeds `texts` with `embedder` and writes the resulting vectors back to
-/// the matching Statement nodes in Neo4j.
-///
-/// This function is intentionally fire-and-forget: it is spawned with
-/// `tokio::spawn` after the seed transaction commits, so the mutation can
-/// return to the caller immediately. Errors are logged rather than surfaced,
-/// because there is no live caller to receive them.
-///
-/// If the server restarts before this completes, the affected Statement nodes
-/// simply won't have embeddings yet---re-running `seedInterview` for the same
-/// interview will re-embed them (MATCH … SET is idempotent).
-///
-/// FIXME: The only reason each item has a UID at present is to support this
-/// method. Without this, a UID would be overkill. It would be ideal to match
-/// statements some other way
-async fn embed_statements(
-    db: Db,
-    embedder: Arc<EmbedderHandle>,
-    uids: Vec<String>,
-    texts: Vec<String>,
-) {
-    // `embed_background` (not `embed`) is deliberate: this path runs for a
-    // whole interview's worth of statements at once. The worker services this
-    // queue only when no search is waiting, *and* slices this batch internally
-    // so search requests are serviced between sub-batches rather than after the
-    // whole interview. See `EmbedderHandle` in `auohp_core::embeddings::worker`.
-    let embedder = embedder.clone();
-    let vectors = match embedder.embed_background(texts).await {
-        Ok(v) => v,
-        Err(e) => {
-            tracing::error!(error = %e, "embedding failed");
-            return;
-        }
-    };
-
-    tracing::info!(
-        count = vectors.len(),
-        dims = vectors.first().map(|v| v.len()).unwrap_or(0),
-        "background task: embedding complete, writing to Neo4j"
-    );
-
-    const EMBED_BATCH: usize = 500;
-    for (idx, chunk) in uids
-        .iter()
-        .zip(vectors.iter())
-        .collect::<Vec<_>>()
-        .chunks(EMBED_BATCH)
-        .enumerate()
-    {
-        tracing::info!(idx, "seeding vector batch");
-
-        let items: Vec<BoltType> = chunk
-            .iter()
-            .map(|(uid, vector)| {
-                let vec_bolt: Vec<BoltType> =
-                    vector.iter().map(|&v| BoltType::from(v as f64)).collect();
-                bolt_map(vec![
-                    ("uid", BoltType::from(uid.as_str())),
-                    ("vector", BoltType::from(vec_bolt)),
-                ])
-            })
-            .collect();
-
-        if let Err(e) = db
-            .run(query!(
-                "
-                    UNWIND {items} AS item
-                    MATCH (s:Statement {{uid: item.uid}})
-                    CALL db.create.setNodeVectorProperty(s, 'embedding', item.vector)
-                ",
-                items = items,
-            ))
-            .await
-        {
-            tracing::error!(error = %e, "failed to write embedding batch to Neo4j");
-            return;
-        }
-    }
-
-    tracing::info!("background task: embeddings written successfully");
+    /// Id of the enqueued embedding job, for polling `query { job(id:) }`.
+    ///
+    /// `None` when embedding was skipped via `SKIP_SEED_EMBEDDING`. This field
+    /// is the whole visible benefit of moving off the bare `tokio::spawn`: the
+    /// old code handed the caller no way to learn whether the work it promised
+    /// ever happened.
+    pub embedding_job_id: Option<String>,
 }
 
 // ---------------------------------------------------------------------------
@@ -464,32 +387,38 @@ pub async fn seed_interview(
     // nomic-embed-text-v1.5 is heavy enough that running it synchronously
     // would exceed any reasonable HTTP timeout for full-length interviews.
     // We commit first so the interview is immediately visible, then hand
-    // embedding off to a detached Tokio task.
+    // embedding off to the background job system.
     //
-    // `tokio::spawn` returns a `JoinHandle` that we intentionally drop here
-    // (by not binding it). The task continues running in the background
-    // independently of this async frame. Errors are logged inside
-    // `embed_statements`; if the server restarts mid-job, the affected
-    // Statement nodes will simply lack embeddings until the next seed run.
+    // This used to be a bare `tokio::spawn` whose `JoinHandle` was dropped on
+    // the floor. That worked, but bought nothing back: no id, no status, no
+    // backpressure, and a panic inside the task vanished silently. Going
+    // through the queue keeps the same non-blocking behaviour and adds all
+    // four. The failure mode it does *not* fix is durability --- a restart
+    // still loses queued work, exactly as before.
     let skip_embedding = match std::env::var("SKIP_SEED_EMBEDDING") {
         Ok(val) => !val.is_empty(),
         Err(_) => false,
     };
-    if skip_embedding {
+
+    let embedding_job_id = if skip_embedding {
         tracing::info!(
             interview_uid,
             transcript_uid,
             interviewee = input.interviewee.clone(),
             "skipping embeddings: SKIP_SEED_EMBEDDING envvar is set"
-        )
+        );
+
+        None
     } else {
-        let embedder = ctx.data::<Arc<EmbedderHandle>>()?.clone();
+        let queue = ctx.data::<Queue>()?;
+
         let texts: Vec<String> = segments
             .iter()
             .map(|s| &s.input)
             .map(|i| i.text.clone())
             .collect();
         let uids: Vec<String> = segments.iter().map(|s| s.uid.clone()).collect();
+
         tracing::info!(
             statement_count = texts.len(),
             interview_uid,
@@ -497,8 +426,18 @@ pub async fn seed_interview(
             interviewee = input.interviewee.clone(),
             "populating statement embeddings"
         );
-        tokio::spawn(embed_statements(db.clone(), embedder, uids, texts));
-    }
+
+        // The turbofish names the worker; `Args` is inferred from the value.
+        let handle = queue
+            .enqueue::<_, EmbedInterviewWorker>(EmbedInterviewArgs {
+                interview_uid: interview_uid.clone(),
+                uids,
+                texts,
+            })
+            .await?;
+
+        Some(handle.id.to_string())
+    };
 
     // ── Build response ──────────────────────────────────────────────────
 
@@ -514,5 +453,6 @@ pub async fn seed_interview(
         speaker_count,
         transcript_uid,
         embeddings_queued: !skip_embedding,
+        embedding_job_id,
     })
 }

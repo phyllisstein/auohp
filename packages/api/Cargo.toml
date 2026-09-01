@@ -28,6 +28,13 @@ auohp-core = { path = "../core" }
 tokio = { version = "1", features = ["full"] }
 tokio-retry = "0.3"
 
+# Background jobs --- tokio-util supplies CancellationToken (an awaitable,
+# clonable shutdown signal) and TaskTracker (await-all-spawned-tasks), the two
+# pieces tokio proper does not ship. futures-util supplies FutureExt::catch_unwind,
+# used to stop a panicking job from killing its worker task.
+tokio-util = { version = "0.7", features = ["rt"] }
+futures-util = "0.3"
+
 # HTTP framework --- axum is built on top of Tower middleware by the Tokio team.
 # It uses type-safe extractors and composes well with the rest of this stack.
 axum = "0.8"
