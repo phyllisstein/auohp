@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { createFileRoute, createLink } from "@tanstack/react-router";
 import { useReadQuery } from "@apollo/client/react";
 import type { TypedDocumentNode } from "@apollo/client";
-import type { ListInterviewsQuery, ListInterviewsQueryVariables } from "./index.gql";
+import type { ListInterviewsQuery, ListInterviewsQueryVariables } from "./__generated__/index.gql";
 import { Route as InterviewRoute } from "./interview.$interviewNumber";
 import { Route as SearchRoute } from "./search";
 import { style, baseColor } from "@react-spectrum/s2/style" with { type: "macro" };
