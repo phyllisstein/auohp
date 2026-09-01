@@ -9,7 +9,7 @@ import { defineAuohpEditorExtension } from "@/lexical/extensions";
 import { TRANSCRIPT_QUERY, EDIT_STATEMENT_MUTATION, CREATE_STATEMENT_MUTATION, DESTROY_STATEMENT_MUTATION } from "@/queries";
 import { style } from "@react-spectrum/s2/style" with { type: "macro" };
 import { gql } from "@apollo/client";
-import type { HeaderQuery, HeaderQueryVariables } from "./interview.$interviewNumber.gql";
+import type { HeaderQuery, HeaderQueryVariables } from "./__generated__/interview.$interviewNumber.gql";
 import type { TypedDocumentNode } from "@apollo/client";
 
 // FIXME: Constructing URLs for the caption endpoint and the public video URI

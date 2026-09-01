@@ -15,7 +15,7 @@
             "esnext"
         ],
         "allowJs": true,
-        "strict": false,
+        "strict": true,
         "forceConsistentCasingInFileNames": true,
         "noEmit": true,
         "esModuleInterop": true,
@@ -36,9 +36,9 @@
         "./src/**/*.ts",
         "./src/**/*.tsx",
         "./src/**/*.d.ts",
-        "./vite-env.d.ts",
-        "*.js",
-        "*.ts"
+        "./*.d.ts",
+        "./*.js",
+        "./*.ts"
     ],
     "exclude": [
         "node_modules"
