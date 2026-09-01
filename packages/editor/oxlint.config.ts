@@ -75,6 +75,7 @@ export default defineConfig({
         "valid-typeof": "error",
 
         "react/only-export-components": "off",
+        "fast-refresh/exhaustive-deps": "off",
 
         "@stylistic/array-bracket-spacing": ["warn", "never"],
         "@stylistic/arrow-parens": [
