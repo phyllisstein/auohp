@@ -18,7 +18,7 @@ import { HistoryExtension } from "@lexical/history";
 import { RichTextExtension } from "@lexical/rich-text";
 import { ReactExtension, type EditorChildrenComponentProps } from "@lexical/react/ReactExtension";
 import { $dfs, $findMatchingParent, mergeRegister } from "@lexical/utils";
-import { debounce } from "es-toolkit/function";
+import { debounce } from "perfect-debounce";
 import { playhead } from "@/playhead";
 import {
     $createStatementNode,
@@ -39,7 +39,7 @@ import {
     SearchResultNode,
     SEARCH_RESULT_BADGE_CLASS,
 } from "@/lexical/nodes";
-import { INSERT_TAG_CHIP_COMMAND, INSERT_SEARCH_RESULT_COMMAND, PERFORM_SEARCH_COMMAND, SEEK_VIDEO_COMMAND } from "@/lexical/commands";
+import { INSERT_TAG_CHIP_COMMAND, INSERT_SEARCH_RESULT_COMMAND, SEEK_VIDEO_COMMAND } from "@/lexical/commands";
 import {
     SYNTHETIC_UID_MARKER,
     type EditStatementFn,
@@ -56,9 +56,17 @@ import { useLazyQuery } from "@apollo/client/react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { useExtensionComponent, useExtensionDependency } from "@lexical/react/useExtensionComponent";
 import { createPortal } from "react-dom";
-import { useEffect, useState, type JSX, useEffectEvent } from "react";
+import { useEffect, useState, type JSX, useEffectEvent, useCallback, useMemo, useRef } from "react";
 import { Button } from "@react-spectrum/s2/Button";
-
+import { TextField } from "@react-spectrum/s2/TextField";
+import SearchIcon from "@react-spectrum/s2/icons/Search";
+import { ActionButton, Text } from "@react-spectrum/s2/ActionButton";
+import { ActionButtonGroup } from "@react-spectrum/s2/ActionButtonGroup";
+import styled from "styled-components";
+import { ProgressCircle } from "@react-spectrum/s2/ProgressCircle";
+import ChevronUpIcon from "@react-spectrum/s2/icons/ChevronUp";
+import ChevronDownIcon from "@react-spectrum/s2/icons/ChevronDown";
+import { style } from "@react-spectrum/s2/style" with { type: "macro" };
 
 // -----------------------------------------------------------------------------
 // Extensions --- Lexical's composition model as of 0.48.
@@ -743,12 +751,16 @@ export const PersistenceExtension = /* @__PURE__ */ defineExtension({
 // knowing anything about the network.
 // -----------------------------------------------------------------------------
 export interface SearchOutput {
-    /** The pending search string. `null` means idle --- no search requested yet. */
+    /** The pending search string. `null` means idle --- no search reques```ted yet. */
     query: Signal<string | null>;
     /** Latest results, or `undefined` before the first response. */
     data: Signal<SearchStatementsData>;
     /** Whether a search is currently in flight. */
     loading: Signal<boolean>;
+    /** The index of the result that has the caret, or `null` if none. */
+    focusedResult: Signal<number | null>;
+    /** The total number of results, or `0` if none. */
+    resultCount: Signal<number>;
 }
 
 // A character range within a statement's flattened text, half-open: `[start, end)`.
@@ -1037,6 +1049,8 @@ export const SearchInterviewExtension = /* @__PURE__ */ defineExtension({
         query: null as string | null,
         data: undefined as SearchStatementsData,
         loading: false,
+        focusedResult: null,
+        resultCount: 0,
     }),
 
     register (editor, _config, state) {
@@ -1093,27 +1107,6 @@ export const SearchInterviewExtension = /* @__PURE__ */ defineExtension({
                     // plain MarkNode --- it receives the accumulated ids, so
                     // overlapping marks merge rather than nest.
                     $wrapSelectionInMarkNode(selection, false, id, ids => $createSearchResultNode(ids));
-                    return true;
-                },
-                COMMAND_PRIORITY_LOW,
-            ),
-
-            editor.registerCommand(
-                PERFORM_SEARCH_COMMAND,
-                () => {
-                    const selection = $getSelection();
-                    if (!$isRangeSelection(selection)) {
-                        return false;
-                    }
-
-                    const text = selection.getTextContent();
-                    if (text.length === 0) {
-                        return false;
-                    }
-
-                    // The entire effect of this command. Writing the signal is the
-                    // request; SearchDriver is what makes it a network call.
-                    query.value = text;
                     return true;
                 },
                 COMMAND_PRIORITY_LOW,
@@ -1315,22 +1308,109 @@ function TagButton (): JSX.Element {
     );
 }
 
-// No payload: the command searches for whatever is currently selected, and now
-// says so in its type. The previous version passed `{ uid: "some-statement-uid",
-// query: "some search query" }`, which the handler quietly ignored --- a payload
-// type that described an intention nobody implemented.
-function SearchButton (): JSX.Element {
-    const [editor] = useLexicalComposerContext();
-    const loading = useExtensionSignalValue(SearchInterviewExtension, "loading");
+const SearchContainer = styled.div`
+    position: fixed;
+    z-index: 1000;
+    right: 0;
 
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-end;
+    justify-content: center;
+
+    width: 100%;
+    height: 4rem;
+    min-height: 4rem;
+    padding: 1rem;
+`;
+
+const SearchFieldContainer = styled.div`
+    width: 50%;
+`;
+
+const ButtonGroupContainer = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    width: max-content;
+`;
+
+function SearchBar (): JSX.Element {
+    const { query, focusedResult } = useExtensionDependency(SearchInterviewExtension).output;
+    const queryValue = useExtensionSignalValue(SearchInterviewExtension, "query");
+    const loading = useExtensionSignalValue(SearchInterviewExtension, "loading");
+    const resultCount = useExtensionSignalValue(SearchInterviewExtension, "resultCount");
+
+    const [localResult, setLocalResult] = useState<number>(focusedResult.peek() ?? 0);
+
+    const spinner = (
+        <ProgressCircle
+            aria-label="Loading…"
+            value={ 80 }
+            isIndeterminate
+            size="S"
+            staticColor="white" />
+    );
+
+    const focusNext = useCallback(() => {
+        const current = focusedResult.peek() ?? 0;
+        const next = current + 1;
+        if (next >= resultCount) {
+            focusedResult.value = 0;
+            setLocalResult(0);
+            return;
+        }
+
+        setLocalResult(next);
+        focusedResult.value = next;
+    }, [focusedResult, resultCount]);
+
+    const focusPrevious = useCallback(() => {
+        const current = focusedResult.peek() ?? 0;
+        const previous = current - 1;
+        if (previous < 0) {
+            focusedResult.value = resultCount - 1;
+            setLocalResult(resultCount - 1);
+            return;
+        }
+
+        setLocalResult(previous);
+        focusedResult.value = previous;
+    }, [focusedResult, resultCount]);
     return (
-        <Button
-            id="perform-search"
-            type="button"
-            isDisabled={ loading }
-            onPress={ () => editor.dispatchCommand(PERFORM_SEARCH_COMMAND, undefined) }>
-            { loading ? "Searching..." : "Search for selection" }
-        </Button>
+        <SearchContainer>
+            <SearchFieldContainer>
+                <TextField
+                    aria-label="Search transcript"
+                    type="search"
+                    enterKeyHint="search"
+                    inputMode="search"
+                    prefix={ loading ? spinner : <SearchIcon /> }
+                    size="M"
+                    value={ queryValue ?? "" }
+                    onChange={ value =>
+                        // Writing the signal is the request; SearchDriver is what makes it a network call.
+                        query.value = value.length > 0 ? value : null } />
+            </SearchFieldContainer>
+            <ButtonGroupContainer>
+                { resultCount > 0 && (
+                    <span style={{ padding: "0 1rem" }} className={ style({ color: "detail", fontSize: "detail" }) }>
+                        { localResult + 1 } of { resultCount }
+                    </span>
+                ) }
+                <ActionButtonGroup isDisabled={ queryValue === null || loading || !resultCount }>
+                    <ActionButton onPress={ focusPrevious }>
+                        <ChevronUpIcon />
+                        <Text>Previous</Text>
+                    </ActionButton>
+                    <ActionButton onPress={ focusNext }>
+                        <ChevronDownIcon />
+                        <Text>Next</Text>
+                    </ActionButton>
+                </ActionButtonGroup>
+            </ButtonGroupContainer>
+        </SearchContainer>
     );
 }
 
@@ -1345,9 +1425,9 @@ function EditorChrome ({ contentEditable, children }: EditorChildrenComponentPro
     return (
         <>
             <TagMarkStyles />
+            <SearchBar />
             <div style={{ display: "flex", gap: "1rem", alignItems: "center", padding: "0.5rem 0" }}>
                 <TagButton />
-                <SearchButton />
                 <Meter />
             </div>
             { contentEditable }
@@ -1447,6 +1527,7 @@ function SearchResultPortals (): JSX.Element {
     // NodeKey -> the badge span to portal into. Held in React state (not a ref)
     // because adding or dropping an entry must trigger a re-render.
     const [hosts, setHosts] = useState<ReadonlyMap<NodeKey, HTMLElement>>(new Map());
+    const focusedResult = useExtensionSignalValue(SearchInterviewExtension, "focusedResult");
 
     useEffect(
         () =>
@@ -1496,7 +1577,7 @@ function SearchResultPortals (): JSX.Element {
 
     return (
         <>
-            { Array.from(hosts, ([key, host]) => createPortal(<SearchResult nodeKey={ key } />, host, key)) }
+            { Array.from(hosts, ([key, host], i) => createPortal(<SearchResult focused={ i === focusedResult } nodeKey={ key } />, host, key)) }
         </>
     );
 }
@@ -1523,7 +1604,7 @@ function SearchResultPortals (): JSX.Element {
 // so a Lexical extension signal and a `playhead` signal are the same kind of thing.
 // -----------------------------------------------------------------------------
 function SearchDriver (): JSX.Element | null {
-    const { query, data, loading } = useExtensionDependency(SearchInterviewExtension).output;
+    const { query, data, loading, focusedResult, resultCount } = useExtensionDependency(SearchInterviewExtension).output;
 
     // Subscribing to `query` is what turns a command dispatch into a re-render of
     // this component --- and nothing else in the editor re-renders, which is the
@@ -1549,33 +1630,41 @@ function SearchDriver (): JSX.Element | null {
         if (searchData && searchData.search.statementText) {
             console.log("SearchDriver: onSearchUpdate fired with results", searchData.search.statementText);
             data.value = searchData;
+            resultCount.value = searchData.search.statementText.length;
+            focusedResult.value = searchData.search.statementText.length > 0 ? 0 : null;
             console.log("SearchDriver: data.value updated to", data.peek());
         }
     });
 
-    useEffect(() => {
-        async function queryHandler () {
-            const loadingState = loading.peek();
-            console.log({ loadingState, pendingQuery });
-
-            if (pendingQuery !== null && !loadingState) {
-                loading.value = true;
-                try {
-                    console.log("SearchDriver: queryHandler running with query", pendingQuery);
-                    const res = await runSearch({
-                        variables: {
-                            fragment: `"${ pendingQuery }"`,
-                        },
-                    });
-                    console.log("SearchDriver: runSearch returned", res);
-                    onSearchUpdate();
-                } catch (error) {
-                    console.warn("SearchDriver: runSearch error", error);
-                }
+    const debouncedQueryHandler = useRef(debounce(async (query: string) => {
+        if (query !== "") {
+            try {
+                console.log("SearchDriver: debouncedQueryHandler running with query", query);
+                const res = await runSearch({
+                    variables: {
+                        fragment: `"${ query }"`,
+                    },
+                });
+                console.log("SearchDriver: runSearch returned", res);
+                onSearchUpdate();
+            } catch (error) {
+                console.warn("SearchDriver: runSearch error", error);
+                loading.value = false;
             }
         }
+    }, 1_500, { leading: false, trailing: true }));
 
-        queryHandler();
+    useEffect(() => {
+        focusedResult.value = null;
+        resultCount.value = 0;
+
+        if (!pendingQuery) {
+            data.value = undefined;
+            loading.value = false;
+            return;
+        }
+        loading.value = true;
+        debouncedQueryHandler.current(pendingQuery);
     }, [pendingQuery]);
 
     return null;

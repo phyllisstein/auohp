@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { ClientOnly, createFileRoute } from "@tanstack/react-router";
 import { useMemo, useRef, type RefObject } from "react";
 import { LexicalExtensionComposer } from "@lexical/react/LexicalExtensionComposer";
 import { useMutation, useReadQuery } from "@apollo/client/react";
@@ -69,6 +69,7 @@ const EditorStyle = createGlobalStyle`
 `;
 
 const EditorContainer = styled.div`
+    position: relative;
     overflow-y: auto;
 `;
 
@@ -223,7 +224,45 @@ function Page () {
             </VideoContainer>
 
             <EditorContainer className={ editorContainerStyle }>
-                <LexicalExtensionComposer extension={ extension } />
+                {
+                    // The editor does not server-render, and that is a property of
+                    // Lexical's architecture rather than a configuration we have got
+                    // wrong. Lexical is UNCONTROLLED: the DOM is authoritative, and
+                    // decorators are React portals into DOM elements the editor
+                    // itself created at runtime (`editor.getElementByKey(nodeKey)`).
+                    // There is no DOM during SSR, so there are no portal targets, so
+                    // decorators cannot render server-side --- `useDecorators` in
+                    // @lexical/react concedes this with its `element !== null` guard.
+                    //
+                    // The visible symptom was a hydration mismatch on React Spectrum's
+                    // `aria-labelledby`/`aria-describedby`, which is misleading twice
+                    // over. Spectrum was never at fault (its Provider renders
+                    // deterministically --- no `typeof window`, no state, no Suspense),
+                    // and the ARIA attributes were not the defect. `useDecorators`
+                    // wraps each decorator in <ErrorBoundary><Suspense>, so the server
+                    // (zero decorators, document not yet seeded) and the client (N
+                    // decorators) built structurally different trees. React 18+'s
+                    // `useId` encodes a component's POSITION in the fiber tree, not a
+                    // counter, so an extra boundary anywhere above re-keys every id
+                    // beneath it. React Aria delegates to `useId`; the ARIA diff was
+                    // collateral damage from a structural delta several levels up.
+                    //
+                    // `ClientOnly` fixes it by making the trees agree rather than by
+                    // suppressing the warning: it renders `fallback` on the server AND
+                    // on the first client pass, so hydration compares identical trees
+                    // and the ids match. The mechanism is `useSyncExternalStore` with
+                    // divergent snapshot getters --- `getServerSnapshot` returns false
+                    // (used for SSR and for hydration), `getSnapshot` returns true
+                    // (every render after) --- which is reconciler-integrated, unlike
+                    // the useState/useEffect "mounted" idiom that can paint a frame of
+                    // fallback after hydration commits.
+                    //
+                    // Nothing is lost by not server-rendering here: the editor markup
+                    // was being discarded and regenerated on the client anyway.
+                }
+                <ClientOnly>
+                    <LexicalExtensionComposer extension={ extension } />
+                </ClientOnly>
             </EditorContainer>
         </PageContainer>
     );

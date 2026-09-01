@@ -11,7 +11,7 @@ import {
     type SerializedElementNode,
     type Spread,
 } from "lexical";
-import { type JSX } from "react";
+import { useEffect, useRef, type JSX } from "react";
 import { formatTimestamp, SYNTHETIC_UID_MARKER } from "@/lexical/shared";
 import styled, { createGlobalStyle } from "styled-components";
 import numberSignSVG from "./number.sign.square.svgo.svg?inline";
@@ -485,16 +485,14 @@ export const SearchResultStyles = createGlobalStyle`
     .auohp-search-result {
         position: relative;
 
+        margin: 0;
+        padding: 0.05em 0.15em;
         border-radius: 0.2em;
 
-        padding: 0.05em 0.15em;
-        margin: 0;
-
-        background: #FCE94F;
         color: inherit;
 
+        background: #FCE94F;
         box-decoration-break: clone;
-        -webkit-box-decoration-break: clone;
     }
 
     /* MarkNode applies theme.markOverlap when __ids.length > 1. Every mark here
@@ -520,11 +518,17 @@ export const SEARCH_RESULT_BADGE_CLASS = "auohp-search-result__badge";
 // It receives only a NodeKey. Everything else is read back out of EditorState
 // via `editor.read()` / `editor.update()`, which keeps the component a pure
 // function of editor state rather than a second copy of it.
-export function SearchResult ({ nodeKey }: { nodeKey: NodeKey }): JSX.Element {
+export function SearchResult ({ nodeKey, focused }: { nodeKey: NodeKey; focused: boolean }): JSX.Element {
+    const container = useRef<HTMLSpanElement>(null);
+
+    useEffect(() => {
+        if (focused && container.current) {
+            container.current.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+    }, [focused]);
+
     return (
-        <>
-            <SearchResultContainer data-node-key={ nodeKey } className="auohp-search-result__container" />
-        </>
+        <SearchResultContainer ref={ container } data-node-key={ nodeKey } className="auohp-search-result__container" />
     );
 }
 
