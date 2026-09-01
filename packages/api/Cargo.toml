@@ -75,3 +75,24 @@ nanoid = "0.5"
 rustls = { version = "0.23", features = ["aws-lc-rs"] }
 md5 = "0.8.1"
 rand = "0.8.5"
+# --- Loco migration spike (see docs/spikes/loco-migration.md) -----------------
+#
+# `default-features = false` is load-bearing. Loco's default feature set is
+# ["auth", "cli", "with-db", "cache_inmem", "worker"], and both `with-db` and
+# `worker` pull SQL:
+#
+#   with-db -> sea-orm 2.0, sea-orm-migration 2.0, sqlx 0.9
+#   worker  -> sqlx 0.9 (every queue backend is pg, sqlite, or redis)
+#
+# This project has no SQL database anywhere in the stack --- persistence is
+# Neo4j over Bolt via neo4rs. Turning both features off keeps sea-orm and sqlx
+# entirely out of the tree (verified: neither appears in Cargo.lock).
+#
+# Cost of what remains: 116 additional crates, 491 -> 656 unique dependencies,
+# debug binary 92M -> 138M.
+loco-rs = { version = "1.1.0", default-features = false, features = ["cli"] }
+
+# Required because `loco_rs::app::Hooks` and `Initializer` are `#[async_trait]`
+# traits. Loco predates and does not use native async-fn-in-trait, so
+# implementors must bring the macro themselves.
+async-trait = "0.1.92"

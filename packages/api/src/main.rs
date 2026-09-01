@@ -1,8 +1,8 @@
 use rustls::crypto::{CryptoProvider, aws_lc_rs};
-mod captions;
-mod graphql;
-mod neo4j;
-mod uid;
+// Spike note: these were `mod` declarations. The Loco spike needs a library
+// target (see src/lib.rs), and compiling the same modules into both the lib and
+// this binary would duplicate them, so the binary now consumes the lib.
+use auohp_api::{captions, graphql, neo4j};
 use anyhow::Result;
 use async_graphql::http::GraphiQLSource;
 use async_graphql_axum::{GraphQLRequest, GraphQLResponse};
@@ -100,7 +100,7 @@ async fn main() -> Result<()> {
             .route(
                 "/interview/{interview_number}/vtt",
                 get(async move |Path(interview_number): Path<i64>| {
-                    match crate::captions::generate_vtt(&captions_db, interview_number).await {
+                    match captions::generate_vtt(&captions_db, interview_number).await {
                         Ok(vtt) => ([(header::CONTENT_TYPE, "text/vtt")], vtt).into_response(),
                         Err(e) => {
                             error!(interview_number, error = %e, "failed to generate captions");

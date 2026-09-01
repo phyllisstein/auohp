@@ -1,0 +1,44 @@
+# Loco migration spike --- minimum viable config.
+#
+# Loco will not boot without a `config/<environment>.yaml` relative to the
+# working directory. This is a hard requirement of `Environment::load`, not a
+# convention: `cargo loco routes` fails with
+#   Error: Message("no configuration file found in folder: config")
+# before any application code runs.
+#
+# Note what is absent: no `database:` key. That section is
+# `#[cfg(feature = "with-db")]` on `loco_rs::config::Config`, so with the
+# feature off it is neither required nor accepted. That is the SeaORM question
+# answered in YAML.
+#
+# Note also what CANNOT be here: the Neo4j URI, credentials and database name.
+# `Config` is a closed struct with no extension or passthrough field, so the
+# Bolt connection parameters stay in environment variables --- read directly by
+# `loco_app::neo4j_params`, entirely outside this file. Adopting Loco therefore
+# means running two configuration systems side by side rather than replacing
+# the one that exists.
+
+logger:
+  enable: true
+  pretty_backtrace: true
+  level: debug
+  format: compact
+
+server:
+  port: 6060
+  binding: 0.0.0.0
+  host: http://localhost
+  middlewares:
+    # The body limit and CORS layers are applied in `Hooks::after_routes`
+    # instead, to keep the spike's diff readable. In a real migration they
+    # would move here --- one of the few genuine wins on offer.
+    limit_payload:
+      enable: true
+      body_limit: 16mb
+
+workers:
+  # `BackgroundQueue` would demand a queue provider, and every provider Loco
+  # ships (`pg`, `sqlt`, `redis`) is a SQL or Redis server this project does
+  # not run. `ForegroundBlocking` is the only mode available without adding
+  # infrastructure.
+  mode: ForegroundBlocking
