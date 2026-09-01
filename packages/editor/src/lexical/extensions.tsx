@@ -751,7 +751,7 @@ export const PersistenceExtension = /* @__PURE__ */ defineExtension({
 // knowing anything about the network.
 // -----------------------------------------------------------------------------
 export interface SearchOutput {
-    /** The pending search string. `null` means idle --- no search reques```ted yet. */
+    /** The pending search string. `null` means idle --- no search requested yet. */
     query: Signal<string | null>;
     /** Latest results, or `undefined` before the first response. */
     data: Signal<SearchStatementsData>;
@@ -761,6 +761,23 @@ export interface SearchOutput {
     focusedResult: Signal<number | null>;
     /** The total number of results, or `0` if none. */
     resultCount: Signal<number>;
+    /**
+     * The marks painted by the last highlight pass, in document order.
+     *
+     * This is the authority for what "result N" means, and it exists because
+     * neither of the two things that previously stood in for it is correct.
+     * `resultCount` was the number of matching STATEMENTS, but a statement
+     * saying "ACT UP ... ACT UP" carries two marks, so the counter and the
+     * highlights disagreed about the total. And `SearchResultPortals` indexed
+     * its `hosts` Map, whose insertion order is the order mutations happened to
+     * arrive from the reconciler --- not document order.
+     *
+     * Written by `$applySearchResults`, which is the one moment when the marks
+     * and their order are both known for certain.
+     */
+    resultKeys: Signal<readonly NodeKey[]>;
+    /** The replacement string. Empty is legal --- it means "delete the match". */
+    replacement: Signal<string>;
 }
 
 // A character range within a statement's flattened text, half-open: `[start, end)`.
@@ -862,6 +879,14 @@ function findMatchRanges (text: string, fragment: string): MatchRange[] {
 }
 
 
+// Stamped on the `editor.update()` that paints search highlights, so listeners
+// can tell the search's own writes apart from a human's typing. Without it the
+// re-search-on-edit listener in SearchDriver would react to the repaint it just
+// caused and spin forever --- the marks it watches are destroyed and recreated
+// on every result set.
+const SEARCH_TAG = "auohp-search-highlight";
+
+
 // Contract: given a result set (or `undefined`, meaning "no search"), leave the
 // document holding exactly the marks that set implies --- nothing stale from the
 // previous search, nothing missing from this one.
@@ -881,10 +906,19 @@ function findMatchRanges (text: string, fragment: string): MatchRange[] {
 // Highlighting a response with a query it did not answer is the classic
 // stale-closure bug, and passing both together makes them impossible to
 // desynchronise.
-function $applySearchResults (results: SearchStatementsData, fragment: string | null): void {
+// Returns the keys of every mark it painted, in document order --- the caller
+// stores this as `resultKeys`, which is what makes "jump to result N" and the
+// "N of M" counter agree with each other and with the page.
+//
+// The order is free rather than earned: `root.getChildren()` walks statements
+// top to bottom, and `$markMatchesInStatement` marks occurrences left to right
+// within one, so appending as we go is already document order. Recovering it
+// afterwards would mean a second full traversal.
+function $applySearchResults (results: SearchStatementsData, fragment: string | null): readonly NodeKey[] {
     const uids = new Set(results?.search.statementText.map(({ statement }) => statement.uid) ?? []);
 
     const root = $getRoot();
+    const keys: NodeKey[] = [];
 
     for (const child of root.getChildren()) {
         if (!$isStatementNode(child)) {
@@ -895,9 +929,11 @@ function $applySearchResults (results: SearchStatementsData, fragment: string | 
         $clearSearchResults(statement);
 
         if (fragment !== null && uids.has(statement.getUid())) {
-            $markMatchesInStatement(statement, fragment);
+            keys.push(...$markMatchesInStatement(statement, fragment));
         }
     }
+
+    return keys;
 }
 
 
@@ -960,13 +996,14 @@ function $mergeAdjacentTextNodes (statement: StatementNode): void {
 // may be interrupted by TagChipNodes. So the walk below re-derives each child's
 // span in flattened coordinates and intersects it with the ranges --- which is
 // also why ranges are processed per-child rather than per-range.
-function $markMatchesInStatement (statement: StatementNode, fragment: string): void {
+function $markMatchesInStatement (statement: StatementNode, fragment: string): readonly NodeKey[] {
     const ranges = findMatchRanges(statement.getTextContent(), fragment);
     if (ranges.length === 0) {
-        return;
+        return [];
     }
 
     const uid = statement.getUid();
+    const keys: NodeKey[] = [];
     let offset = 0;
 
     for (const child of statement.getChildren()) {
@@ -1023,11 +1060,81 @@ function $markMatchesInStatement (statement: StatementNode, fragment: string): v
             // One mark per occurrence, all carrying the statement's uid, so the
             // badge portal and any future "jump to hit N" affordance can still
             // resolve back to the statement that matched.
+            //
+            // `insertBefore` + `append`, NOT `piece.replace(mark)`, and the
+            // difference is the user's caret. `replace` is selection-aware, but
+            // its remap for a point anchored on the replaced node is
+            // `$moveSelectionPointToEnd(anchor, mark)` --- and at that instant
+            // the mark is still EMPTY, because `piece` has not been appended
+            // yet. "End of an empty element" resolves to the element-anchored
+            // point (mark, 0); the subsequent append re-homes the text but
+            // nothing re-derives the selection, so a caret sitting inside a run
+            // that becomes a match jumps to the front of its new mark. (Type
+            // "GMaichC" back to "GMHC" over a live search and watch it happen.)
+            //
+            // Reparenting sidesteps the guess entirely: `piece` is never
+            // destroyed, so no point anchored on it ever needs relocating.
+            // Same principle as preferring `splitText` to `setTextContent`
+            // above --- move nodes, never recreate the ones selection names.
             const mark = $createSearchResultNode([uid]);
-            piece.replace(mark);
+            piece.insertBefore(mark);
             mark.append(piece);
+            keys.push(mark.getKey());
         }
     }
+
+    return keys;
+}
+
+
+// Replace the text inside one mark, leaving the surrounding run intact.
+//
+// The mark is an ElementNode wrapping one or more TextNodes, so "replace the
+// match" means: put `replacement` into the first child, drop the rest, then
+// unwrap. Unwrapping is what makes this a real edit rather than a re-highlight
+// --- the mark described a match that no longer exists once the text changes,
+// and leaving it would strand a highlight around text that does not match.
+//
+// `$mergeAdjacentTextNodes` afterwards is the same healing step $clearSearchResults
+// performs, and for the same reason: the hoisted children arrive as siblings of
+// the runs they were split out of, and an unmerged paragraph shatters further
+// with every replace.
+//
+// Returns the containing statement so callers can report what changed.
+function $replaceMark (mark: SearchResultNode, replacement: string): StatementNode | null {
+    // `$findMatchingParent` already narrows to StatementNode via its type-guard
+    // overload, so this is a null check rather than a second type test --- the
+    // guard itself will not accept a nullable argument.
+    const statement = $findMatchingParent(mark, $isStatementNode);
+    if (statement === null) {
+        return null;
+    }
+
+    const children = mark.getChildren();
+    const [first, ...rest] = children;
+
+    if ($isTextNode(first)) {
+        // setTextContent on the surviving child, rather than building a fresh
+        // TextNode, so that a selection anchored inside this node is rebased by
+        // Lexical instead of being left pointing at a node that no longer exists.
+        first.setTextContent(replacement);
+        for (const child of rest) {
+            child.remove();
+        }
+    } else {
+        // No text child to reuse (a mark containing only a TagChip, say). Insert
+        // the replacement as a new node ahead of whatever is there and clear the
+        // rest, which keeps the branch total rather than silently doing nothing.
+        mark.append($createTextNode(replacement));
+        for (const child of children) {
+            child.remove();
+        }
+    }
+
+    $unwrapMarkNode(mark);
+    $mergeAdjacentTextNodes(statement);
+
+    return statement;
 }
 
 
@@ -1051,10 +1158,12 @@ export const SearchInterviewExtension = /* @__PURE__ */ defineExtension({
         loading: false,
         focusedResult: null,
         resultCount: 0,
+        resultKeys: [] as readonly NodeKey[],
+        replacement: "",
     }),
 
     register (editor, _config, state) {
-        const { query, data } = state.getOutput();
+        const { query, data, focusedResult, resultCount, resultKeys } = state.getOutput();
 
         // Preact's `subscribe` invokes its callback immediately with the current
         // value. At registration that value is `undefined` and the document is not
@@ -1090,7 +1199,37 @@ export const SearchInterviewExtension = /* @__PURE__ */ defineExtension({
                 // as a subscriber to `query` too --- so merely typing a new
                 // search would re-run the highlight pass against the OLD results.
                 // `peek` reads without subscribing.
-                editor.update(() => $applySearchResults(results, query.peek()), { tag: "history-merge" });
+                // SEARCH_TAG rides alongside: `history-merge` says "this is not a
+                // user edit" (to persistence and undo), while SEARCH_TAG says who
+                // wrote it, so SearchDriver's update listener can decline to
+                // re-search in response to its own highlight pass. Tags compose ---
+                // the two claims are orthogonal and both are needed.
+                //
+                // The highlight pass is also where the result COUNT is settled,
+                // rather than in `onSearchUpdate` where it used to live. The
+                // response only knows how many statements matched; a statement
+                // reading "ACT UP ... ACT UP" is one hit to the server and two
+                // marks on the page, and the navigation UI means the second thing.
+                // Counting what was painted is the only way the two agree.
+                editor.update(
+                    () => {
+                        const keys = $applySearchResults(results, query.peek());
+
+                        resultKeys.value = keys;
+                        resultCount.value = keys.length;
+
+                        // Clamp rather than reset. A re-search triggered by the
+                        // user editing the transcript must not throw them back to
+                        // the first hit --- they are typically standing on the hit
+                        // they just edited. Only fall back to 0 when there was no
+                        // position to keep, and to null when nothing matched.
+                        const focused = focusedResult.peek();
+                        focusedResult.value = keys.length === 0
+                            ? null
+                            : Math.min(focused ?? 0, keys.length - 1);
+                    },
+                    { tag: ["history-merge", SEARCH_TAG] },
+                );
             }),
 
             editor.registerCommand(
@@ -1320,8 +1459,8 @@ const SearchContainer = styled.div`
     justify-content: center;
 
     width: 100%;
-    height: 4rem;
-    min-height: 4rem;
+    height: max-content;
+    min-height: max-content;
     padding: 1rem;
 `;
 
@@ -1337,12 +1476,13 @@ const ButtonGroupContainer = styled.div`
 `;
 
 function SearchBar (): JSX.Element {
-    const { query, focusedResult } = useExtensionDependency(SearchInterviewExtension).output;
+    const { query, focusedResult, resultKeys, replacement } = useExtensionDependency(SearchInterviewExtension).output;
     const queryValue = useExtensionSignalValue(SearchInterviewExtension, "query");
     const loading = useExtensionSignalValue(SearchInterviewExtension, "loading");
     const resultCount = useExtensionSignalValue(SearchInterviewExtension, "resultCount");
-
-    const [localResult, setLocalResult] = useState<number>(focusedResult.peek() ?? 0);
+    const focusedResultValue = useExtensionSignalValue(SearchInterviewExtension, "focusedResult");
+    const replacementValue = useExtensionSignalValue(SearchInterviewExtension, "replacement");
+    const [editor] = useLexicalComposerContext();
 
     const spinner = (
         <ProgressCircle
@@ -1353,31 +1493,92 @@ function SearchBar (): JSX.Element {
             staticColor="white" />
     );
 
+    // Both directions wrap. `%` after adding `resultCount` keeps the operand
+    // non-negative --- JavaScript's `%` is a remainder, not a modulus, so a bare
+    // `(current - 1) % n` yields -1 at the top of the list rather than n-1.
+    //
+    // The guard matters because `resultCount` now counts painted marks, which is
+    // 0 whenever the query matches nothing; without it both handlers would
+    // compute NaN and poison the signal. The buttons are disabled in that state,
+    // but a keyboard shortcut bound to these later would not be.
     const focusNext = useCallback(() => {
-        const current = focusedResult.peek() ?? 0;
-        const next = current + 1;
-        if (next >= resultCount) {
-            focusedResult.value = 0;
-            setLocalResult(0);
+        if (resultCount === 0) {
             return;
         }
-
-        setLocalResult(next);
-        focusedResult.value = next;
+        focusedResult.value = ((focusedResult.peek() ?? -1) + 1) % resultCount;
     }, [focusedResult, resultCount]);
 
     const focusPrevious = useCallback(() => {
-        const current = focusedResult.peek() ?? 0;
-        const previous = current - 1;
-        if (previous < 0) {
-            focusedResult.value = resultCount - 1;
-            setLocalResult(resultCount - 1);
+        if (resultCount === 0) {
+            return;
+        }
+        focusedResult.value = ((focusedResult.peek() ?? 0) - 1 + resultCount) % resultCount;
+    }, [focusedResult, resultCount]);
+
+    // Replace the focused match.
+    //
+    // Note what is NOT here: no tag. Every other `editor.update` in this
+    // extension carries `history-merge` to tell PersistenceExtension "no text
+    // changed, do not save" --- true of the highlight pass, which only wraps
+    // runs in marks. Replace is the opposite and must stay untagged so that all
+    // three downstream listeners fire: persistence saves the statement, history
+    // records an undo step, and the re-search listener repaints the results.
+    //
+    // That last one is why nothing here re-runs the search by hand. Unwrapping
+    // the mark dirties a leaf, the update listener sees an untagged commit with
+    // dirty leaves, and the debounced search follows on its own.
+    const replaceFocused = useCallback(() => {
+        const index = focusedResult.peek();
+        if (index === null) {
             return;
         }
 
-        setLocalResult(previous);
-        focusedResult.value = previous;
-    }, [focusedResult, resultCount]);
+        editor.update(() => {
+            const key = resultKeys.peek()[index];
+            if (key === undefined) {
+                return;
+            }
+
+            const mark = $getNodeByKey(key) ?? undefined;
+            if (!$isSearchResultNode(mark)) {
+                return;
+            }
+
+            $replaceMark(mark, replacement.peek());
+        });
+
+        // Hold the index rather than advancing it. The replaced match leaves the
+        // result set, so the NEXT match slides into this position --- keeping the
+        // index puts the user on it, which is what repeated Replace clicks want.
+        // Clamping against the new count happens in the highlight pass.
+    }, [editor, focusedResult, resultKeys, replacement]);
+
+    // Replace every match, in one update so it is one undo step and one save per
+    // statement rather than one per occurrence.
+    //
+    // Iterating the key list is safe even though each `$replaceMark` unwraps a
+    // mark: `resultKeys` is a plain array captured before the walk, and the keys
+    // it names are independent nodes. Resolving each key inside the loop (rather
+    // than resolving all the nodes up front) means a mark already removed as a
+    // side effect of an earlier replacement simply misses.
+    const replaceAll = useCallback(() => {
+        const keys = resultKeys.peek();
+        if (keys.length === 0) {
+            return;
+        }
+
+        editor.update(() => {
+            const value = replacement.peek();
+
+            for (const key of keys) {
+                const mark = $getNodeByKey(key) ?? undefined;
+                if (!$isSearchResultNode(mark)) {
+                    continue;
+                }
+                $replaceMark(mark, value);
+            }
+        });
+    }, [editor, resultKeys, replacement]);
     return (
         <SearchContainer>
             <SearchFieldContainer>
@@ -1396,7 +1597,7 @@ function SearchBar (): JSX.Element {
             <ButtonGroupContainer>
                 { resultCount > 0 && (
                     <span style={{ padding: "0 1rem" }} className={ style({ color: "detail", fontSize: "detail" }) }>
-                        { localResult + 1 } of { resultCount }
+                        { (focusedResultValue ?? 0) + 1 } of { resultCount }
                     </span>
                 ) }
                 <ActionButtonGroup isDisabled={ queryValue === null || loading || !resultCount }>
@@ -1407,6 +1608,28 @@ function SearchBar (): JSX.Element {
                     <ActionButton onPress={ focusNext }>
                         <ChevronDownIcon />
                         <Text>Next</Text>
+                    </ActionButton>
+                </ActionButtonGroup>
+            </ButtonGroupContainer>
+            <SearchFieldContainer>
+                <TextField
+                    aria-label="Replace with"
+                    type="text"
+                    inputMode="text"
+                    size="M"
+                    value={ replacementValue }
+                    onChange={ value => replacement.value = value } />
+            </SearchFieldContainer>
+            <ButtonGroupContainer>
+                { /* Deliberately not disabled on an empty replacement: clearing
+                     a match is a legitimate edit, and "replace with nothing" is
+                     how you delete a repeated filler word across a transcript. */ }
+                <ActionButtonGroup isDisabled={ queryValue === null || loading || !resultCount }>
+                    <ActionButton onPress={ replaceFocused }>
+                        <Text>Replace</Text>
+                    </ActionButton>
+                    <ActionButton onPress={ replaceAll }>
+                        <Text>Replace All</Text>
                     </ActionButton>
                 </ActionButtonGroup>
             </ButtonGroupContainer>
@@ -1528,6 +1751,14 @@ function SearchResultPortals (): JSX.Element {
     // because adding or dropping an entry must trigger a re-render.
     const [hosts, setHosts] = useState<ReadonlyMap<NodeKey, HTMLElement>>(new Map());
     const focusedResult = useExtensionSignalValue(SearchInterviewExtension, "focusedResult");
+    const resultKeys = useExtensionSignalValue(SearchInterviewExtension, "resultKeys");
+
+    // Which NodeKey is focused, resolved through the ordered key list rather than
+    // by indexing `hosts`. `hosts` is a Map filled in mutation-arrival order ---
+    // reconciler order, not document order --- so its Nth entry is not reliably
+    // the Nth match down the page. Comparing keys sidesteps the question of what
+    // order this Map happens to be in.
+    const focusedKey = focusedResult === null ? null : resultKeys[focusedResult] ?? null;
 
     useEffect(
         () =>
@@ -1577,7 +1808,7 @@ function SearchResultPortals (): JSX.Element {
 
     return (
         <>
-            { Array.from(hosts, ([key, host], i) => createPortal(<SearchResult focused={ i === focusedResult } nodeKey={ key } />, host, key)) }
+            { Array.from(hosts, ([key, host]) => createPortal(<SearchResult focused={ key === focusedKey } nodeKey={ key } />, host, key)) }
         </>
     );
 }
@@ -1604,7 +1835,8 @@ function SearchResultPortals (): JSX.Element {
 // so a Lexical extension signal and a `playhead` signal are the same kind of thing.
 // -----------------------------------------------------------------------------
 function SearchDriver (): JSX.Element | null {
-    const { query, data, loading, focusedResult, resultCount } = useExtensionDependency(SearchInterviewExtension).output;
+    const { query, data, loading, focusedResult, resultCount, resultKeys } = useExtensionDependency(SearchInterviewExtension).output;
+    const [editor] = useLexicalComposerContext();
 
     // Subscribing to `query` is what turns a command dispatch into a re-render of
     // this component --- and nothing else in the editor re-renders, which is the
@@ -1629,9 +1861,14 @@ function SearchDriver (): JSX.Element | null {
         }
         if (searchData && searchData.search.statementText) {
             console.log("SearchDriver: onSearchUpdate fired with results", searchData.search.statementText);
+
+            // Only `data` is set here. `resultCount` and `focusedResult` used to
+            // be derived from `statementText.length` at this point, which counted
+            // matching STATEMENTS --- but every consumer of those signals means
+            // occurrences. They are now settled by the highlight pass in
+            // `register`, which is downstream of this write and can count the
+            // marks it actually painted.
             data.value = searchData;
-            resultCount.value = searchData.search.statementText.length;
-            focusedResult.value = searchData.search.statementText.length > 0 ? 0 : null;
             console.log("SearchDriver: data.value updated to", data.peek());
         }
     });
@@ -1654,9 +1891,16 @@ function SearchDriver (): JSX.Element | null {
         }
     }, 1_500, { leading: false, trailing: true }));
 
+    // Fires only when the user types in the search box --- a NEW query, for which
+    // discarding the old position is right. The re-search-on-edit listener below
+    // deliberately calls `debouncedQueryHandler` directly instead of writing
+    // `query.value`, precisely so it does not land here and reset a position the
+    // user is standing on. Routing that path through this signal would look like
+    // a simplification and would silently reintroduce the jump-to-first-hit bug.
     useEffect(() => {
         focusedResult.value = null;
         resultCount.value = 0;
+        resultKeys.value = [];
 
         if (!pendingQuery) {
             data.value = undefined;
@@ -1666,6 +1910,128 @@ function SearchDriver (): JSX.Element | null {
         loading.value = true;
         debouncedQueryHandler.current(pendingQuery);
     }, [pendingQuery]);
+
+    // Re-run the search when the human edits the transcript, so the result set
+    // and its highlights stay honest about the text actually on screen.
+    //
+    // This CANNOT be a mutation listener on SearchResultNode, for two reasons
+    // worth stating because both are easy to walk back into:
+    //
+    //   1. Mutations do not bubble. Typing inside a highlighted run mutates the
+    //      mark's TextNode child, not the mark; typing anywhere else mutates no
+    //      mark at all. The one class guaranteed NOT to see ordinary edits is
+    //      the one wrapping the matches.
+    //   2. $applySearchResults destroys and recreates every mark on each result
+    //      set. A listener that re-searches on mark mutations therefore feeds
+    //      itself --- search, repaint, mutation, search --- forever.
+    //
+    // registerUpdateListener sees every commit and, crucially, its `tags`, which
+    // is how an editor distinguishes a human's write from its own. SEARCH_TAG is
+    // stamped on the highlight pass so this listener can decline to react to it.
+    useEffect(
+        () =>
+            editor.registerUpdateListener(({ tags, dirtyLeaves }) => {
+                // Cheapest predicate first, and it is also the most decisive: with
+                // no query there is no result set to keep honest, so an edit made
+                // with the search bar closed costs nothing at all. Note this must
+                // not fall through to `debouncedQueryHandler` with an empty string
+                // --- the handler no-ops on "", but only AFTER the debounce has
+                // already scheduled a timer, which would displace a pending real
+                // search. `peek`, not `.value`: a listener is not a reactive
+                // context, and subscribing here would be meaningless anyway.
+                const pending = query.peek();
+                if (!pending) {
+                    return;
+                }
+
+                // Our own highlight pass, and the initial document seed, are not
+                // the human changing the transcript. Reacting to SEARCH_TAG in
+                // particular is the infinite loop described above.
+                if (tags.has(SEARCH_TAG) || tags.has("history-merge")) {
+                    return;
+                }
+
+                // Selection-only commits --- caret moves, clicks, focus changes ---
+                // arrive here constantly and dirty nothing. `dirtyLeaves` is the
+                // honest signal for "text actually changed"; `dirtyElements` is
+                // not, because it always contains `root` (every commit reconciles
+                // from the top), so testing it would make this gate vacuous.
+                if (dirtyLeaves.size === 0) {
+                    return;
+                }
+
+                // Deliberately unscoped: any text edit anywhere re-runs the search.
+                // The narrower "did this edit touch a mark" test cannot see the two
+                // cases that matter most --- growing a match from adjacent text
+                // ("I [ACT UP] in" -> "I [ACT UP]ped in", where the dirty leaf is
+                // the neighbour, not the mark), and typing a brand-new match into a
+                // statement that has never held one. The trailing debounce already
+                // collapses a burst of keystrokes into a single round-trip, so the
+                // cost of being permissive is one query per typing pause.
+                debouncedQueryHandler.current(pending);
+            }),
+        [editor, query],
+    );
+
+    // Move the caret to the focused result.
+    //
+    // Subscribing to the signal directly, rather than reading it through
+    // `useExtensionSignalValue`, is deliberate: this component renders nothing,
+    // and hooking the value into render would make every Next/Previous click
+    // re-render it for no visual purpose. Moving the caret is a side effect on
+    // the editor, so it belongs on the subscription, not on a render pass.
+    //
+    // Scrolling is NOT done here --- `SearchResult` already scrolls itself into
+    // view when its `focused` prop flips (see nodes.tsx). That split is worth
+    // keeping: scroll position follows declaratively from which mark is focused,
+    // while the selection is an imperative act on the document.
+    useEffect(
+        () =>
+            focusedResult.subscribe(index => {
+                if (index === null) {
+                    return;
+                }
+
+                editor.update(
+                    () => {
+                        // Re-read inside the update rather than closing over the
+                        // array. A debounced re-search may have repainted every
+                        // mark between the click and this callback, which makes
+                        // the old keys stale --- and a stale key is not an error
+                        // here, just a miss, so `$getNodeByKey` returning null is
+                        // an ordinary outcome to bail on rather than to guard
+                        // against upstream.
+                        const key = resultKeys.peek()[index];
+                        if (key === undefined) {
+                            return;
+                        }
+
+                        // `?? undefined` because the type guard is written against
+                        // `LexicalNode | undefined` while `$getNodeByKey` returns
+                        // `| null` --- the two spellings of "absent" meet here.
+                        const mark = $getNodeByKey(key) ?? undefined;
+                        if (!$isSearchResultNode(mark)) {
+                            return;
+                        }
+
+                        // Select the matched run rather than collapsing to a
+                        // caret at its edge. This is what Cmd-G does in most
+                        // editors, it makes the current hit visible as a
+                        // selection even before any highlight styling, and it
+                        // leaves the document one keystroke from replacing the
+                        // match --- which is the seam find-and-replace will use.
+                        mark.select(0, mark.getChildrenSize());
+                    },
+                    // The caret move is our write, not the human's. Untagged it
+                    // would reach the re-search listener above; that listener
+                    // happens to ignore it (a selection change dirties no
+                    // leaves), but relying on that coincidence is how the loop
+                    // comes back the next time the gate is edited.
+                    { tag: ["history-merge", SEARCH_TAG] },
+                );
+            }),
+        [editor, focusedResult, resultKeys],
+    );
 
     return null;
 }
