@@ -9,8 +9,20 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as IndexRouteImport } from './routes/index'
+import { Route as SearchRouteImport } from './routes/search'
 import { Route as InterviewInterviewNumberRouteImport } from './routes/interview.$interviewNumber'
 
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SearchRoute = SearchRouteImport.update({
+  id: '/search',
+  path: '/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const InterviewInterviewNumberRoute =
   InterviewInterviewNumberRouteImport.update({
     id: '/interview/$interviewNumber',
@@ -19,29 +31,51 @@ const InterviewInterviewNumberRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
+  '/': typeof IndexRoute
+  '/search': typeof SearchRoute
   '/interview/$interviewNumber': typeof InterviewInterviewNumberRoute
 }
 export interface FileRoutesByTo {
+  '/': typeof IndexRoute
+  '/search': typeof SearchRoute
   '/interview/$interviewNumber': typeof InterviewInterviewNumberRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
+  '/search': typeof SearchRoute
   '/interview/$interviewNumber': typeof InterviewInterviewNumberRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/interview/$interviewNumber'
+  fullPaths: '/' | '/search' | '/interview/$interviewNumber'
   fileRoutesByTo: FileRoutesByTo
-  to: '/interview/$interviewNumber'
-  id: '__root__' | '/interview/$interviewNumber'
+  to: '/' | '/search' | '/interview/$interviewNumber'
+  id: '__root__' | '/' | '/search' | '/interview/$interviewNumber'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  IndexRoute: typeof IndexRoute
+  SearchRoute: typeof SearchRoute
   InterviewInterviewNumberRoute: typeof InterviewInterviewNumberRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/search': {
+      id: '/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof SearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/interview/$interviewNumber': {
       id: '/interview/$interviewNumber'
       path: '/interview/$interviewNumber'
@@ -53,6 +87,8 @@ declare module '@tanstack/react-router' {
 }
 
 const rootRouteChildren: RootRouteChildren = {
+  IndexRoute: IndexRoute,
+  SearchRoute: SearchRoute,
   InterviewInterviewNumberRoute: InterviewInterviewNumberRoute,
 }
 export const routeTree = rootRouteImport
