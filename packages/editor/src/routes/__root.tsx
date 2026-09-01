@@ -59,7 +59,12 @@ function RootComponent () {
                                     fallback={
                                         ({ error, reset }) => {
                                             console.error("Error occurred: %o", error);
-                                            return <div>Error: { error.message }</div>;
+                                            return (
+                                                <div>
+                                                    <div>Error: { error.message }</div>
+                                                    <button onClick={ reset }>Retry</button>
+                                                </div>
+                                            );
                                         }
                                     }>
                                     <Outlet />

@@ -53,7 +53,14 @@ export default defineConfig({
         svgr(),
     ],
     ssr: {
-        noExternal: [/^@react-spectrum\//],
+        // styled-components 6 ships no `exports` map --- only legacy `main`
+        // (CJS) and `module` (ESM). Left external, SSR loads the CJS build,
+        // whose interop puts the callable at `default.default`, so a plain
+        // `import styled from "styled-components"` yields the namespace object
+        // and `styled.div` is `undefined` ("cannot read properties of undefined
+        // (reading 'withConfig')"). Inlining it makes Vite resolve `module`,
+        // where the default export is the callable it should be.
+        noExternal: [/^@react-spectrum\//, "styled-components"],
     },
     optimizeDeps: {
         exclude: ["@react-spectrum/s2/style"],

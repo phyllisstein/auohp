@@ -1,5 +1,3 @@
-"use client";
-
 import { createGlobalStyle } from "styled-components";
 
 // `@layer reset` isolates Spectrum's components from the reset styles.
@@ -271,5 +269,7 @@ export const Preflight = createGlobalStyle`
             max-width: 100%;
             height: auto;
         }
-    }, _;
+    };
+
+    @layer reset, _;
 `;

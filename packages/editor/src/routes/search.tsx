@@ -1,4 +1,3 @@
-import { ProgressCircle } from "@react-spectrum/s2/ProgressCircle";
 import { TextField } from "@react-spectrum/s2/TextField";
 import SearchIcon from "@react-spectrum/s2/icons/Search";
 import { createFileRoute, useRouterState, useRouter } from "@tanstack/react-router";
@@ -9,45 +8,47 @@ import { gql, type TypedDocumentNode } from "@apollo/client";
 import type {
     SearchAllStatementsQuery,
     SearchAllStatementsQueryVariables,
+    SearchAllStatementsQuery_search_statementText,
 } from "./__generated__/search.gql";
 import { useLazyQuery } from "@apollo/client/react";
 import { useEffect, useState } from "react";
 
-export const SEARCH_ALL_STATEMENTS_QUERY: TypedDocumentNode<SearchAllStatementsQuery, SearchAllStatementsQueryVariables> = gql`
-    query SearchAllStatements(
-        $fragment: String!
-    ) {
-        search {
-            statementText(fragment: $fragment) {
-                statement {
-                    uid
-                    text
-                    startTime
-                    endTime
-                }
-                interview {
-                    uid
-                    number
-                    interviewee {
-                        uid
-                        name
-                    }
-                }
-            }
+export const SEARCH_ALL_STATEMENTS_QUERY: TypedDocumentNode<
+    SearchAllStatementsQuery,
+    SearchAllStatementsQueryVariables
+> = gql`
+  query SearchAllStatements($fragment: String!) {
+    search {
+      statementText(fragment: $fragment) {
+        statement {
+          uid
+          text
+          startTime
+          endTime
         }
+        interview {
+          uid
+          number
+          interviewee {
+            uid
+            name
+          }
+        }
+      }
     }
+  }
 `;
 
 const ResultsContainer = styled.div`
-    display: flex;
+  display: flex;
 `;
 
 const SearchContainer = styled.div`
-    display: flex;
-    flex-direction: row;
-    gap: 1rem;
-    align-items: center;
-    justify-content: space-between;
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+  align-items: center;
+  justify-content: space-between;
 `;
 
 export const Route = createFileRoute("/search")({
@@ -61,7 +62,6 @@ function SearchPage () {
     const router = useRouter();
     const state = useRouterState();
     const [query, setQuery] = useState<string>(state?.location?.state?.query ?? "");
-    console.log("SearchPage state:", state);
 
     useEffect(() => {
         if (state?.location?.state?.query && state.location.state.query !== query) {
@@ -74,15 +74,6 @@ function SearchPage () {
         }
     }, [state?.location?.state?.query]);
 
-    const spinner = (
-        <ProgressCircle
-            aria-label="Loading…"
-            value={ 80 }
-            isIndeterminate
-            size="S"
-            staticColor="white" />
-    );
-
     async function runSearchHandler () {
         await runSearch({
             variables: {
@@ -91,7 +82,7 @@ function SearchPage () {
         });
 
         await router.buildAndCommitLocation({
-            pathname: "/search",
+            to: "/search",
             state: {
                 query,
             },
@@ -101,7 +92,14 @@ function SearchPage () {
 
     return (
         <section>
-            <SearchContainer className={ style({ backgroundColor: "layer-2", height: "full", padding: "text-to-control", margin: "text-to-control", borderRadius: "sm" }) }>
+            <SearchContainer
+                className={ style({
+                    backgroundColor: "layer-2",
+                    height: "full",
+                    padding: "text-to-control",
+                    margin: "text-to-control",
+                    borderRadius: "sm",
+                }) }>
                 <TextField
                     styles={ style({ width: "full" }) }
                     aria-label="Search transcript"
@@ -122,22 +120,50 @@ function SearchPage () {
                     <Text>Search</Text>
                 </Button>
             </SearchContainer>
-            <ResultsContainer className={ style({ backgroundColor: "layer-2", height: "full", padding: "text-to-control", margin: "text-to-control", borderRadius: "sm" }) }>
+            <ResultsContainer
+                className={ style({
+                    backgroundColor: "layer-2",
+                    height: "full",
+                    padding: "text-to-control",
+                    margin: "text-to-control",
+                    borderRadius: "sm",
+                }) }>
                 <div className={ style({ width: "max", height: "max" }) }>
                     <h3>Search results</h3>
-                    { loading && spinner }
                     { error && <p>Error: { error.message }</p> }
                     { data?.search?.statementText?.length === 0 && <p>No results found.</p> }
                     { data?.search?.statementText?.map(result => (
-                        <div key={ result.statement.uid } className={ style({ marginBottom: "text-to-control", backgroundColor: "layer-1" }) }>
-                            <p><strong>Interview { result.interview.number } - { result.interview.interviewee.name }</strong></p>
-                            <p>{ result.statement.text }</p>
-                            <p><em>Start time: { result.statement.startTime } | End time: { result.statement.endTime }</em></p>
-                            <hr />
-                        </div>
+                        <Result result={ result } />
                     )) }
                 </div>
             </ResultsContainer>
         </section>
+    );
+}
+
+function Result ({ result }: { result: SearchAllStatementsQuery_search_statementText }) {
+    return (
+        <div className={ style({ marginBottom: "text-to-control", backgroundColor: "layer-1" }) }>
+            <p>
+                <strong>
+                    Interview #{ result.interview.number } - { result.interview.interviewee.name }
+                </strong>
+            </p>
+            <p>
+                { result.statement.text }
+            </p>
+            <p>
+                <em>
+                    Start time: 
+                    { " " }
+                    { result.statement.startTime }
+                    { " " }
+                    |
+                    End time: 
+                    { " " }
+                    { result.statement.endTime }
+                </em>
+            </p>
+        </div>
     );
 }
