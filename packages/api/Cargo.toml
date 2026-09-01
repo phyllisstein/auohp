@@ -13,10 +13,9 @@ default = []
 #   cargo build --features metal    (macOS dev, Apple Silicon GPU)
 #   cargo build --features cuda     (production, NVIDIA GPU)
 #
-# candle-core/metal enables Metal GPU compute for tensor operations.
-# candle-*/accelerate enables Apple's Accelerate framework (vecLib BLAS)
-# for fast CPU matrix multiply --- used as a fallback when an op doesn't
-# have a Metal kernel, and for the mel spectrogram FFT.
+# These forward to auohp-core, which owns the actual backend selection for
+# whisper-rs (transcription) and ort (embeddings). Nothing is enabled here
+# directly --- see packages/core/Cargo.toml for what each gate switches on.
 metal = ["auohp-core/metal"]
 cuda = ["auohp-core/cuda"]
 
