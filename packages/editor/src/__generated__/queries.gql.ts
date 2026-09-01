@@ -75,4 +75,5 @@ export type SearchStatementsQuery = { search: SearchStatementsQuery_search };
 
 export type SearchStatementsQueryVariables = Exact<{
     fragment: string;
+    interviewUid: string | null | undefined;
 }>;

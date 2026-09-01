@@ -1836,6 +1836,7 @@ function SearchResultPortals (): JSX.Element {
 // -----------------------------------------------------------------------------
 function SearchDriver (): JSX.Element | null {
     const { query, data, loading, focusedResult, resultCount, resultKeys } = useExtensionDependency(SearchInterviewExtension).output;
+    const interviewUid = useExtensionSignalValue(PersistenceExtension, "interviewUid");
     const [editor] = useLexicalComposerContext();
 
     // Subscribing to `query` is what turns a command dispatch into a re-render of
@@ -1880,6 +1881,7 @@ function SearchDriver (): JSX.Element | null {
                 const res = await runSearch({
                     variables: {
                         fragment: `"${ query }"`,
+                        interviewUid,
                     },
                 });
                 console.log("SearchDriver: runSearch returned", res);
