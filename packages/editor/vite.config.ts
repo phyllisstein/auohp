@@ -5,6 +5,7 @@ import viteReact from "@vitejs/plugin-react";
 import macros from "unplugin-parcel-macros";
 import optimizeLocales from "@react-aria/optimize-locales-plugin";
 import svgr from "vite-plugin-svgr";
+import { tanstackRouter } from "@tanstack/router-plugin/vite";
 
 // See https://github.com/TanStack/router/discussions/6928#discussioncomment-16147477
 function withNormalizedMacroIds (plugin) {
@@ -31,7 +32,16 @@ export default defineConfig({
     },
     plugins: [
         withNormalizedMacroIds(macros.vite()), // Must come first!
-        tanstackStart(),
+        tanstackStart({
+            router: {
+                routeFileIgnorePattern: `(\\.styles\\.(ts|tsx)$)|(__generated__)`,
+                quoteStyle: "double",
+                semicolons: true,
+            },
+            vite: {
+                installDevServerMiddleware: true,
+            },
+        }),
         // viteReact must come after tanstackStart
         viteReact(),
         {

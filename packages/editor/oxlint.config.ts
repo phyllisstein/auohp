@@ -4,6 +4,7 @@ export default defineConfig({
     plugins: ["react", "oxc", "eslint", "jsx-a11y", "react-perf"],
     jsPlugins: [
         { specifier: "@stylistic/eslint-plugin", name: "stylistic-js" },
+        { specifier: "@tanstack/eslint-plugin-router", name: "@tanstack-router" },
     ],
     categories: {
         correctness: "off",
@@ -14,7 +15,7 @@ export default defineConfig({
         es2026: true,
         worker: true,
     },
-    ignorePatterns: ["node_modules", "dist", "public", "schema.graphql", "**/*.d.ts"],
+    ignorePatterns: ["node_modules", "dist", "public", "schema.graphql", "**/*.d.ts", "routeTree.gen.*"],
     rules: {
         "constructor-super": "error",
         "for-direction": "error",
@@ -493,6 +494,8 @@ export default defineConfig({
         "jsx-a11y/scope": "error",
         "jsx-a11y/tabindex-no-positive": "error",
         "react/exhaustive-deps": "warn",
+
+        "@tanstack-router/create-route-property-order": "error",
     },
     globals: {
         AsyncDisposableStack: "readonly",
