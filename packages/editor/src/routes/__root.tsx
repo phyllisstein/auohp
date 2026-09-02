@@ -1,6 +1,6 @@
 // Must precede every other stylesheet import: it fixes cascade-layer order
 // before any layer-using CSS (Spectrum's `page.css`, component chunks) is parsed.
-import "@/styles/global/layers.css";
+import "~/styles/global/layers.css";
 import "@react-spectrum/s2/page.css";
 import { createRootRouteWithContext, HeadContent, Outlet, Scripts, type ToOptions, type NavigateOptions } from "@tanstack/react-router";
 import { Provider as SpectrumProvider } from "@react-spectrum/s2/Provider";
@@ -8,9 +8,9 @@ import { ApolloProvider } from "@apollo/client/react";
 import type { ApolloClientIntegration } from "@apollo/client-integration-tanstack-start";
 import { useRouter } from "@tanstack/react-router";
 import { ThemeProvider as StyledThemeProvider } from "styled-components";
-import theme from "@/styles/theme";
-import { Body, StyledComponentsRegistry } from "@/styles/global";
-import { AdobeClean } from "@/styles/assets/fonts";
+import theme from "~/styles/theme";
+import { Body, StyledComponentsRegistry } from "~/styles/global";
+import { AdobeClean } from "~/styles/assets/fonts";
 import { ErrorBoundary } from "@suspensive/react";
 
 

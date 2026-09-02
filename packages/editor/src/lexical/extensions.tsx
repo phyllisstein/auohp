@@ -19,7 +19,7 @@ import { RichTextExtension } from "@lexical/rich-text";
 import { ReactExtension, type EditorChildrenComponentProps } from "@lexical/react/ReactExtension";
 import { $dfs, $findMatchingParent, mergeRegister } from "@lexical/utils";
 import { debounce } from "perfect-debounce";
-import { playhead } from "@/playhead";
+import { playhead } from "~/playhead";
 import {
     $createStatementNode,
     $adoptStatementIdentity,
@@ -38,8 +38,8 @@ import {
     SearchResult,
     SearchResultNode,
     SEARCH_RESULT_BADGE_CLASS,
-} from "@/lexical/nodes";
-import { INSERT_TAG_CHIP_COMMAND, INSERT_SEARCH_RESULT_COMMAND, SEEK_VIDEO_COMMAND } from "@/lexical/commands";
+} from "~/lexical/nodes";
+import { INSERT_TAG_CHIP_COMMAND, INSERT_SEARCH_RESULT_COMMAND, SEEK_VIDEO_COMMAND } from "~/lexical/commands";
 import {
     SYNTHETIC_UID_MARKER,
     type EditStatementFn,
@@ -48,10 +48,10 @@ import {
     type DestroyStatementFn,
     type CreateStatementFn,
     type CreateStatementInput,
-} from "@/lexical/shared";
+} from "~/lexical/shared";
 import { $unwrapMarkNode, $wrapSelectionInMarkNode, MarkExtension } from "@lexical/mark";
 import { useExtensionSignalValue, useSignalValue } from "@lexical/react/useExtensionSignalValue";
-import { SEARCH_STATEMENTS_QUERY } from "@/queries";
+import { SEARCH_STATEMENTS_QUERY } from "~/queries";
 import { useLazyQuery } from "@apollo/client/react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { useExtensionComponent, useExtensionDependency } from "@lexical/react/useExtensionComponent";

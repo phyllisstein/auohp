@@ -496,6 +496,37 @@ export default defineConfig({
         "react/exhaustive-deps": "warn",
 
         "@tanstack-router/create-route-property-order": "error",
+
+        // Enforce the `dir/index.ts` module seam: outside code imports the
+        // barrel, never a private sibling. Intra-module `./sibling` imports use
+        // relative paths and are unaffected --- the rule only sees the aliased
+        // `~/...` string that a boundary-crossing import is forced to write.
+        // The `!*.css` negations let side-effect stylesheet imports through:
+        // those files sit beside the module but are not part of its TS surface.
+        "no-restricted-imports": [
+            "error",
+            {
+                patterns: [
+                    {
+                        group: [
+                            "~/styles/global/*",
+                            "!~/styles/global/*.css",
+                            "~/styles/theme/*",
+                        ],
+                        message:
+                            "Import from the module barrel (~/styles/global, ~/styles/theme), not a private sibling module.",
+                    },
+                    {
+                        group: [
+                            "~/styles/assets/fonts/*",
+                            "~/styles/assets/fonts/*/*",
+                        ],
+                        message:
+                            "Import from ~/styles/assets/fonts, not a private font module.",
+                    },
+                ],
+            },
+        ],
     },
     globals: {
         AsyncDisposableStack: "readonly",

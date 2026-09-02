@@ -493,6 +493,26 @@ export default defineConfig({
         "jsx-a11y/scope": "error",
         "jsx-a11y/tabindex-no-positive": "error",
         "react/exhaustive-deps": "warn",
+
+        // Enforce the `dir/index.ts` module seam: outside code imports the
+        // barrel, never a private sibling. Intra-module `./sibling` imports use
+        // relative paths and are unaffected --- the rule only sees the aliased
+        // `~/...` string that a boundary-crossing import is forced to write.
+        "no-restricted-imports": [
+            "error",
+            {
+                patterns: [
+                    {
+                        group: [
+                            "~/components/player/*",
+                            "~/components/search/*",
+                        ],
+                        message:
+                            "Import from the component barrel (~/components/player, ~/components/search), not a private sibling module.",
+                    },
+                ],
+            },
+        ],
     },
     globals: {
         AsyncDisposableStack: "readonly",

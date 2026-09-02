@@ -12,11 +12,11 @@ import {
     type Spread,
 } from "lexical";
 import { useEffect, useRef, type JSX } from "react";
-import { formatTimestamp, SYNTHETIC_UID_MARKER } from "@/lexical/shared";
+import { formatTimestamp, SYNTHETIC_UID_MARKER } from "~/lexical/shared";
 import styled, { createGlobalStyle } from "styled-components";
 import numberSignSVG from "./number.sign.square.svgo.svg?inline";
 import { MarkNode } from "@lexical/mark";
-import { playhead } from "@/playhead";
+import { playhead } from "~/playhead";
 
 const NO_IDS: readonly string[] = [];
 
