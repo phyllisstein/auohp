@@ -29,27 +29,72 @@ already depends on at 0.5.3. The hypothesis was that spike 1 hand-rolled a
 re-derivation of abstractions already sitting in the dependency tree, and that
 apalis would deliver strictly more functionality in dramatically fewer lines.
 
-**That hypothesis is half right, and the wrong half is the line count.**
+**That hypothesis is right on both counts.** An earlier revision of this
+document concluded the opposite about line count; that conclusion was a
+measurement artifact, corrected below.
 
 ## Measured outcome
 
 | | spike 1 (hand-rolled) | spike 3 (apalis) |
 | --- | --- | --- |
-| New lines | 1,972 | 1,602 |
-| Wiring diff | +129 / -100 | +971 / -142 |
+| Job-module code, excl. tests | 641 | **387** |
+| Job-module comments, excl. tests | 566 | 523 |
+| Comment : code ratio | 0.88 | 1.35 |
+| Test code (`jobs/tests.rs`) | 396 | 399 |
+| Job-module files | 8 | 6 |
+| Total lines added, all `.rs` | 2,094 | 1,738 |
 | New crates | 2 | 59 |
 | Direct deps added | 2 | 5 |
-| Tests | 25 | 20 |
+| Job tests / crate tests | 17 / 25 | 12 / 20 |
 | Survives restart | no | yes |
 | Retries | no | yes |
 | Delayed / scheduled jobs | no | yes |
 | Orphan recovery | no | yes |
 
-Line counts are comparable --- 1,602 against 1,972, and both include a
-substantial test file (610 lines here, similar there). The "dramatically
-fewer lines" prediction is **false**. What differs is what those lines buy:
-three capabilities spike 1 does not have at any size, and a fourth (orphan
-re-enqueue) it did not attempt.
+Code lines are measured with `cloc`, excluding `tests.rs`, over
+`packages/api/src/jobs/` plus `graphql/queries/jobs.rs`. Test files are near
+identical in size (396 against 399) and cancel.
+
+**The apalis implementation is 40% smaller: 387 code lines against 641.** It
+delivers three capabilities spike 1 lacks at any size, and a fourth (orphan
+re-enqueue) it did not attempt --- while being the smaller of the two.
+
+### Why an earlier revision got this backwards
+
+The first pass counted *physical* lines and found parity --- 1,602 against
+1,972, "a wash." That was wrong, and the way it was wrong is worth recording.
+
+Physical lines bundle two independent variables: implementation size and
+comment density. This workspace is commented heavily by instruction, and the
+two spikes are not commented at equal density --- 1.35 comment lines per code
+line here against 0.88 there. Leaning on an unfamiliar external API requires
+more explanation per line than defining your own abstractions does, so the
+denser prose sits on precisely the branch with less code to write. The
+confound is correlated with the measured quantity and moves against it,
+which is exactly the arrangement that cancels a real 40% difference into an
+apparent tie.
+
+The general lesson: when a comparison lands suspiciously on "no difference,"
+check whether the unit of measurement is load-bearing before believing it.
+
+### Where the difference actually lives
+
+The totals understate how lopsided this is, because most of what both spikes
+write is work neither gets to skip. Spike 1's four largest files are pure
+queue machinery, and apalis has no counterpart to any of them:
+
+| spike 1 file | code | what it is |
+| --- | --- | --- |
+| `backend.rs` | 167 | the in-process backend and dispatch loop |
+| `handle.rs` | 120 | join-handle bookkeeping and shutdown |
+| `workers.rs` | 109 | the worker supervisor |
+| `registry.rs` | 75 | type-erased job registry |
+| | **471** | **machinery that the dependency replaces** |
+
+Spike 3's 387 lines are almost entirely shared work that spike 1 also pays
+for: `embed.rs` is 124 lines and mostly Neo4j boilerplate, plus the status
+query, the storage config, and the enqueue surface. Subtract the shared work
+from both sides and the machinery delta is the whole finding.
 
 The crate delta is the real cost: 807 to 866 resolved packages. That is half
 of Loco's +116, but it is not the +2 of the hand-rolled version. `sqlx`
@@ -324,11 +369,16 @@ not a load threshold.
 
 Adopt apalis with the SQLite backend.
 
-The line count is a wash against the hand-rolled version, so the case rests
-entirely on capability and maintenance: durability, retries, scheduling and
-orphan recovery are present and tested here, absent there, and each is a thing
-we would otherwise write and own. The +59 crates are the price, and the three
-extra `Cargo.toml` declarations plus the rc skew are the sharp edges.
+The case rests on capability, maintenance *and* size, which all point the same
+way. Durability, retries, scheduling and orphan recovery are present and tested
+here, absent there, and each is a thing we would otherwise write and own ---
+and the implementation that has them is the smaller one, 387 code lines against
+641, because 471 lines of spike 1 are queue machinery the dependency replaces.
+
+The +59 crates are the only real price, and they are the whole price: the three
+extra `Cargo.toml` declarations plus the rc skew are the sharp edges. That is
+the trade to weigh --- 59 crates against 471 lines of hand-owned queue
+machinery --- not a line count that was never a wash.
 
 Spike 1 is not wasted. It identified the correct seam independently --- a
 persistable-shaped `Envelope` behind a swappable backend trait is what apalis
