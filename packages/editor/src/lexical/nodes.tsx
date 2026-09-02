@@ -300,10 +300,10 @@ const TagChipContainer = styled.span`
         width: 0.8em;
         height: 0.8em;
 
-        color: #000 !important;
+        color: #000;
 
-        fill: #000 !important;
-        stroke: #000 !important;
+        fill: #000;
+        stroke: #000;
     }
 `;
 

@@ -40,15 +40,15 @@ export const SEARCH_ALL_STATEMENTS_QUERY: TypedDocumentNode<
 `;
 
 const ResultsContainer = styled.div`
-  display: flex;
+    display: flex;
 `;
 
 const SearchContainer = styled.div`
-  display: flex;
-  flex-direction: row;
-  gap: 1rem;
-  align-items: center;
-  justify-content: space-between;
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+    align-items: center;
+    justify-content: space-between;
 `;
 
 export const Route = createFileRoute("/search")({
@@ -60,7 +60,7 @@ function SearchPage () {
         fetchPolicy: "network-only",
     });
     const router = useRouter();
-    const state = useRouterState();
+        const state = useRouterState();
     const [query, setQuery] = useState<string>(state?.location?.state?.query ?? "");
 
     useEffect(() => {

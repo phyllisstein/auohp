@@ -1,3 +1,6 @@
+// Must precede every other stylesheet import: it fixes cascade-layer order
+// before any layer-using CSS (Spectrum's `page.css`, component chunks) is parsed.
+import "@/styles/global/layers.css";
 import "@react-spectrum/s2/page.css";
 import { createRootRouteWithContext, HeadContent, Outlet, Scripts, type ToOptions, type NavigateOptions } from "@tanstack/react-router";
 import { Provider as SpectrumProvider } from "@react-spectrum/s2/Provider";
@@ -6,7 +9,7 @@ import type { ApolloClientIntegration } from "@apollo/client-integration-tanstac
 import { useRouter } from "@tanstack/react-router";
 import { ThemeProvider as StyledThemeProvider } from "styled-components";
 import theme from "@/styles/theme";
-import { Body, StyledComponentsRegistry, Preflight } from "@/styles/global";
+import { Body, StyledComponentsRegistry } from "@/styles/global";
 import { AdobeClean } from "@/styles/assets/fonts";
 import { ErrorBoundary } from "@suspensive/react";
 
@@ -28,33 +31,32 @@ function RootComponent () {
 
     return (
         <StyledComponentsRegistry>
-            <ApolloProvider client={ apolloClient }>
-                <SpectrumProvider
-                    background="layer-1"
-                    colorScheme="dark"
-                    elementType="html"
-                    locale="en-US"
-                    router={{
+            <StyledThemeProvider theme={ theme }>
+                <ApolloProvider client={ apolloClient }>
+                    <AdobeClean />
+                    <Body />
+                    <SpectrumProvider
+                        background="layer-1"
+                        colorScheme="dark"
+                        elementType="html"
+                        locale="en-US"
+                        router={{
                         // S2's `Router` type declares `navigate(path: string, ...)`
                         // outright --- unlike `useHref`, its first parameter is not
                         // wired to the augmentable `Href`, so the `RouterConfig`
                         // augmentation below never reaches it. `href` really is a
                         // string here, so navigate by `to` rather than spreading it.
-                        navigate: (href, options) => router.navigate({ to: href, ...options }),
-                        useHref: href => {
-                            if (typeof href === "string") return href;
-                            return router.buildLocation(href).href;
-                        },
-                    }}>
-                    <head>
-                        <HeadContent />
-                    </head>
-                    <body>
-                        <main>
-                            <StyledThemeProvider theme={ theme }>
-                                <AdobeClean />
-                                <Preflight />
-                                <Body />
+                            navigate: (href, options) => router.navigate({ to: href, ...options }),
+                            useHref: href => {
+                                if (typeof href === "string") return href;
+                                return router.buildLocation(href).href;
+                            },
+                        }}>
+                        <head>
+                            <HeadContent />
+                        </head>
+                        <body>
+                            <main>
                                 <ErrorBoundary
                                     fallback={
                                         ({ error, reset }) => {
@@ -69,12 +71,12 @@ function RootComponent () {
                                     }>
                                     <Outlet />
                                 </ErrorBoundary>
-                            </StyledThemeProvider>
-                        </main>
-                        <Scripts />
-                    </body>
-                </SpectrumProvider>
-            </ApolloProvider>
+                            </main>
+                            <Scripts />
+                        </body>
+                    </SpectrumProvider>
+                </ApolloProvider>
+            </StyledThemeProvider>
         </StyledComponentsRegistry>
     );
 }
