@@ -9,6 +9,35 @@
 //! type. [`JobQueue`] is a thin façade that hides those parameters and exposes
 //! the two operations resolvers actually want: enqueue, and read status back.
 //!
+//! # Why it holds a pool and a config rather than a built storage
+//!
+//! The second half of that argument only works if the storage type stays out of
+//! the façade as well, so [`JobQueue`] holds `{ pool, config }` and builds a
+//! `SqliteStorage` view per call instead of keeping one as a field.
+//!
+//! The reason is that async-graphql's `.data()` is a `TypeId` map. Job kinds
+//! are distinguished by the storage's first type parameter, so
+//! `SqliteStorage<A>` and `SqliteStorage<B>` are *different keys*: a façade
+//! that stored one would need one context entry per job kind, which is the
+//! exact problem the previous paragraph says the façade exists to prevent.
+//! `SqlitePool` and [`StorageConfig`] are not generic, so the context stays at
+//! one entry no matter how many job kinds there are.
+//!
+//! Building per call is affordable because it is not really "building"
+//! anything: `SqliteStorage::new_with_config` wraps a pool handle, and
+//! `SqlitePool` is an `Arc` internally, so the cost is a refcount bump rather
+//! than a connection. `open_pool`'s own documentation already describes this
+//! arrangement --- "the enqueue side and the worker side each build their own
+//! `SqliteStorage` view over this one pool" --- and the tests have always
+//! worked this way (see `probe_storage` in `tests.rs`).
+//!
+//! Note what this does *not* do: [`enqueue_embed`](JobQueue::enqueue_embed) is
+//! still concrete, and adding a job kind still means adding methods. What the
+//! shape buys is that nothing structural stands in the way --- a generic
+//! `enqueue<T>` becomes a possible later step rather than a blocked one,
+//! because the storage type is now constructed where `T` is known instead of
+//! being frozen into a field.
+//!
 //! # Task ids and a sharp edge in apalis-sqlite
 //!
 //! `Task::parts.task_id` is an `Option<TaskId<Ulid>>`, and `push_tasks` in
@@ -55,23 +84,24 @@ pub const MAX_ATTEMPTS: u32 = 3;
 /// Handle held by GraphQL resolvers, injected via async-graphql's `.data()`.
 ///
 /// `Clone` is cheap: `SqlitePool` is internally an `Arc`, so cloning a
-/// `JobQueue` clones a reference-counted pool handle, not a connection.
+/// `JobQueue` clones a reference-counted pool handle, not a connection, and
+/// `StorageConfig` is a `String` and a `Duration`.
 #[derive(Clone)]
 pub struct JobQueue {
-    storage: EmbedStorage,
     pool: SqlitePool,
+    config: StorageConfig,
 }
 
 impl JobQueue {
     /// Build a queue handle over an already-migrated pool.
+    ///
+    /// Takes the config by reference and clones it, because callers
+    /// (`main.rs`) keep their own copy to hand to the worker.
     pub fn new(pool: SqlitePool, config: &StorageConfig) -> Self {
-        let storage = SqliteStorage::new_with_config(&pool, &config.to_apalis_config());
-        Self { storage, pool }
-    }
-
-    /// The underlying pool, for building a worker-side storage view.
-    pub fn pool(&self) -> &SqlitePool {
-        &self.pool
+        Self {
+            pool,
+            config: config.clone(),
+        }
     }
 
     /// Enqueue an embedding job to run as soon as a worker is free.
@@ -123,9 +153,15 @@ impl JobQueue {
         // ergonomic `push`/`push_bulk`/`push_task` surface is derived from it
         // generically rather than reimplemented per backend.
         //
-        // It takes `&mut self`, so we clone the storage handle rather than
-        // holding a `&mut` on shared state. The clone shares the same pool.
-        let mut storage = self.storage.clone();
+        // It takes `&mut self`, which is why the storage is built here as a
+        // local rather than held as a field: a local is trivially `mut`, where a
+        // field would need either `&mut self` on this method or a clone to
+        // dodge it. Constructing it costs a refcount bump on the pool --- see
+        // the module docs for why that, not thrift, is what makes this cheap.
+        let mut storage: EmbedStorage = SqliteStorage::new_with_config(
+            &self.pool,
+            &self.config.to_apalis_config(EmbedInterview::QUEUE),
+        );
         storage
             .push_task(task)
             .await
@@ -217,7 +253,10 @@ pub fn run_worker(
     use apalis::layers::retry::RetryPolicy;
     use apalis::prelude::{WorkerBuilder, WorkerBuilderExt};
 
-    let storage: EmbedStorage = SqliteStorage::new_with_config(&pool, &config.to_apalis_config());
+    // Same queue name as the enqueue side, derived from the same const rather
+    // than repeated as a literal --- see `EmbedInterview::QUEUE`.
+    let storage: EmbedStorage =
+        SqliteStorage::new_with_config(&pool, &config.to_apalis_config(EmbedInterview::QUEUE));
 
     let worker = WorkerBuilder::new("auohp-embedder")
         .backend(storage)

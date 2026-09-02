@@ -70,14 +70,6 @@ use sqlx::sqlite::SqliteConnectOptions;
 /// container.
 pub const DEFAULT_JOBS_URL: &str = "sqlite://./data/jobs.db";
 
-/// The queue name every task in this application is filed under.
-///
-/// apalis partitions the `Jobs` table by a `job_type` column and every fetch
-/// query filters on it, so distinct queues can share one file without seeing
-/// each other's work. One name is enough today; a second job kind that needed
-/// its own concurrency budget would get its own.
-pub const QUEUE_NAME: &str = "auohp-embeddings";
-
 /// How long a worker may be silent before its in-flight tasks are considered
 /// stranded and returned to `Pending`.
 ///
@@ -123,12 +115,20 @@ impl StorageConfig {
         }
     }
 
-    /// Translate into apalis's own `Config`.
+    /// Translate into apalis's own `Config` for one named queue.
     ///
     /// `Config::new` takes the queue name; the rest is our policy layered on
     /// top. This is the only place the two vocabularies meet.
-    pub fn to_apalis_config(&self) -> Config {
-        Config::new(QUEUE_NAME).set_reenqueue_orphaned_after(self.orphan_reclaim_after)
+    ///
+    /// The queue name is a parameter rather than a constant because a
+    /// `StorageConfig` describes the *database* --- where it lives, how long an
+    /// orphan window is --- and those settings are shared by every job kind,
+    /// while the queue name distinguishes one job kind from another within that
+    /// one file. Callers pass the owning job type's `QUEUE` const (see
+    /// [`crate::jobs::embed::EmbedInterview::QUEUE`]), which is what keeps the
+    /// enqueue and worker sides naming the same queue.
+    pub fn to_apalis_config(&self, queue: &str) -> Config {
+        Config::new(queue).set_reenqueue_orphaned_after(self.orphan_reclaim_after)
     }
 }
 

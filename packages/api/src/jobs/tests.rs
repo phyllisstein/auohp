@@ -72,12 +72,28 @@ struct Probe {
     label: String,
 }
 
+impl Probe {
+    /// The probe's own queue, distinct from the real embedding queue.
+    ///
+    /// Naming it separately is the point: these tests and the production
+    /// embedding queue can address the same database file without colliding,
+    /// because every fetch query filters on `job_type`. This is the same
+    /// partitioning `EmbedInterview::QUEUE` relies on, exercised here with a
+    /// second job kind.
+    const QUEUE: &str = "auohp-test-probe";
+}
+
 /// Storage view over the probe job type.
 type ProbeStorage =
     SqliteStorage<Probe, JsonCodec<CompactType>, apalis_sqlite::fetcher::SqliteFetcher>;
 
+/// Build a storage view over the probe queue.
+///
+/// Both the push side and the worker side of every test below go through this
+/// one helper, so they cannot disagree about the queue name --- the same
+/// property `EmbedInterview::QUEUE` gives the production code.
 fn probe_storage(pool: &SqlitePool, config: &StorageConfig) -> ProbeStorage {
-    SqliteStorage::new_with_config(pool, &config.to_apalis_config())
+    SqliteStorage::new_with_config(pool, &config.to_apalis_config(Probe::QUEUE))
 }
 
 fn config_for(dir: &TempDir) -> StorageConfig {
