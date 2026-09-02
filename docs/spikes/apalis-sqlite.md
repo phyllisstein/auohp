@@ -1,11 +1,17 @@
 # Spike: apalis + SQLite for background jobs
 
-Status: complete, compiling, 20 tests passing. Uncommitted in
-`worktree-agent-a4565ec16418ca6dd`.
+Status: complete, compiling, 20 tests passing. Committed on branch
+`spike-apalis-sqlite`, based on `main`. Not merged --- this is a spike, and
+adopting it is a separate decision.
 
-This is the third of three spikes on the same problem. The other two are
-`bgworker-port.md` (hand-rolled in-process queue) and `loco-migration.md`
-(adopt the Loco framework wholesale).
+This is the third of three spikes on the same problem. Each lives on its own
+branch off `main`, and each doc is present only on its own branch:
+
+- `spike-bgworker-port` --- `docs/spikes/bgworker-port.md`, a hand-rolled
+  in-process queue.
+- `spike-loco-migration` --- `docs/spikes/loco-migration.md`, adopting the
+  Loco framework wholesale (declined).
+- `spike-apalis-sqlite` --- this document.
 
 ## Why this spike exists
 
