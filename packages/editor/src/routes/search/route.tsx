@@ -1,17 +1,17 @@
 import { TextField } from "@react-spectrum/s2/TextField";
 import SearchIcon from "@react-spectrum/s2/icons/Search";
-import { createFileRoute, useRouterState, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
 import { style } from "@react-spectrum/s2/style" with { type: "macro" };
 import styled from "styled-components";
 import { Button, Text } from "@react-spectrum/s2/Button";
+import { batch } from "@preact/signals-react";
 import { gql, type TypedDocumentNode } from "@apollo/client";
 import type {
     SearchAllStatementsQuery,
     SearchAllStatementsQueryVariables,
-    SearchAllStatementsQuery_search_statementText,
-} from "./__generated__/search.gql";
+} from "./__generated__/index.gql";
 import { useLazyQuery } from "@apollo/client/react";
-import { useEffect, useState } from "react";
+import { searchQuery } from "./-search-signal";
 
 export const SEARCH_ALL_STATEMENTS_QUERY: TypedDocumentNode<
     SearchAllStatementsQuery,
@@ -56,37 +56,48 @@ export const Route = createFileRoute("/search")({
 });
 
 function SearchPage () {
-    const [runSearch, { data, loading, error }] = useLazyQuery(SEARCH_ALL_STATEMENTS_QUERY, {
+    // `useLazyQuery` gives us an imperative trigger. We do not read its returned
+    // `loading`/`data`/`error` --- the model is the single source of truth, and
+    // `runSearch` resolves with a snapshot of both, so one await is enough.
+    //
+    // `errorPolicy: "all"` is load-bearing: under Apollo Client 4's default
+    // ("none") an errored query *rejects* the promise instead of resolving with
+    // `{ error }`, which would skip the batch below and strand `loading` at
+    // true. With "all", errors arrive in the resolved result (with possibly
+    // partial `data`) and we can commit both.
+    const [runSearch] = useLazyQuery(SEARCH_ALL_STATEMENTS_QUERY, {
         fetchPolicy: "network-only",
+        errorPolicy: "all",
     });
-    const router = useRouter();
-        const state = useRouterState();
-    const [query, setQuery] = useState<string>(state?.location?.state?.query ?? "");
 
-    useEffect(() => {
-        if (state?.location?.state?.query && state.location.state.query !== query) {
-            setQuery(state.location.state.query);
-            runSearch({
-                variables: {
-                    fragment: `"${ state.location.state.query }"`,
-                },
-            });
-        }
-    }, [state?.location?.state?.query]);
+    const navigate = useNavigate();
 
     async function runSearchHandler () {
-        await runSearch({
-            variables: {
-                fragment: `"${ query }"`,
-            },
+        // The fragment is quoted so the backend treats it as a phrase.
+        const fragment = `"${ searchQuery.query.value }"`;
+
+        searchQuery.loading.value = true;
+        searchQuery.error.value = null;
+
+        const { data, error } = await runSearch({ variables: { fragment } });
+
+        // One commit: subscribers see loading flip off *with* the new
+        // results/error already in place, never an inconsistent in-between.
+        batch(() => {
+            searchQuery.loading.value = false;
+            searchQuery.error.value = error ?? null;
+            searchQuery.results.value = data ?? null;
         });
 
-        await router.buildAndCommitLocation({
-            to: "/search",
-            state: {
-                query,
-            },
-            resetScroll: false,
+        // Mount the results child (it renders from the signal), but mask the URL
+        // back to `/search`. The results view isn't URL-restorable --- it lives
+        // in `searchQuery`, an in-memory signal --- so a copied or reloaded link
+        // should land on the clean search page, not a `/search/results` that
+        // would show an empty state. `unmaskOnReload` stays false: a reload
+        // resolves the masked `/search`, discarding the transient results.
+        navigate({
+            to: "/search/results",
+            mask: { to: "/search" },
         });
     }
 
@@ -108,14 +119,20 @@ function SearchPage () {
                     inputMode="search"
                     prefix={ <SearchIcon /> }
                     size="M"
-                    value={ query }
-                    onChange={ setQuery }
+                    value={ searchQuery.query.value }
+                    onChange={ value => {
+                        searchQuery.query.value = value;
+                    } }
                     onKeyDown={ event => {
                         if (event.key === "Enter") {
                             runSearchHandler();
                         }
                     } } />
-                <Button variant="primary" size="M" isPending={ loading } onPress={ runSearchHandler }>
+                <Button
+                    variant="primary"
+                    size="M"
+                    isPending={ searchQuery.loading.value }
+                    onPress={ runSearchHandler }>
                     <SearchIcon />
                     <Text>Search</Text>
                 </Button>
@@ -128,42 +145,8 @@ function SearchPage () {
                     margin: "text-to-control",
                     borderRadius: "sm",
                 }) }>
-                <div className={ style({ width: "max", height: "max" }) }>
-                    <h3>Search results</h3>
-                    { error && <p>Error: { error.message }</p> }
-                    { data?.search?.statementText?.length === 0 && <p>No results found.</p> }
-                    { data?.search?.statementText?.map(result => (
-                        <Result result={ result } />
-                    )) }
-                </div>
+                <Outlet />
             </ResultsContainer>
         </section>
-    );
-}
-
-function Result ({ result }: { result: SearchAllStatementsQuery_search_statementText }) {
-    return (
-        <div className={ style({ marginBottom: "text-to-control", backgroundColor: "layer-1" }) }>
-            <p>
-                <strong>
-                    Interview #{ result.interview.number } - { result.interview.interviewee.name }
-                </strong>
-            </p>
-            <p>
-                { result.statement.text }
-            </p>
-            <p>
-                <em>
-                    Start time: 
-                    { " " }
-                    { result.statement.startTime }
-                    { " " }
-                    |
-                    End time: 
-                    { " " }
-                    { result.statement.endTime }
-                </em>
-            </p>
-        </div>
     );
 }

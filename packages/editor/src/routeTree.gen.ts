@@ -10,15 +10,16 @@
 
 import { Route as rootRouteImport } from "./routes/__root";
 import { Route as IndexRouteImport } from "./routes/index";
-import { Route as SearchRouteImport } from "./routes/search";
+import { Route as SearchRouteRouteImport } from "./routes/search/route";
 import { Route as InterviewInterviewNumberRouteImport } from "./routes/interview.$interviewNumber";
+import { Route as SearchResultsRouteRouteImport } from "./routes/search/results/route";
 
 const IndexRoute = IndexRouteImport.update({
   id: "/",
   path: "/",
   getParentRoute: () => rootRouteImport,
 } as any);
-const SearchRoute = SearchRouteImport.update({
+const SearchRouteRoute = SearchRouteRouteImport.update({
   id: "/search",
   path: "/search",
   getParentRoute: () => rootRouteImport,
@@ -29,34 +30,48 @@ const InterviewInterviewNumberRoute =
     path: "/interview/$interviewNumber",
     getParentRoute: () => rootRouteImport,
   } as any);
+const SearchResultsRouteRoute = SearchResultsRouteRouteImport.update({
+  id: "/results",
+  path: "/results",
+  getParentRoute: () => SearchRouteRoute,
+} as any);
 
 export interface FileRoutesByFullPath {
   "/": typeof IndexRoute;
-  "/search": typeof SearchRoute;
+  "/search": typeof SearchRouteRouteWithChildren;
+  "/search/results": typeof SearchResultsRouteRoute;
   "/interview/$interviewNumber": typeof InterviewInterviewNumberRoute;
 }
 export interface FileRoutesByTo {
   "/": typeof IndexRoute;
-  "/search": typeof SearchRoute;
+  "/search": typeof SearchRouteRouteWithChildren;
+  "/search/results": typeof SearchResultsRouteRoute;
   "/interview/$interviewNumber": typeof InterviewInterviewNumberRoute;
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport;
   "/": typeof IndexRoute;
-  "/search": typeof SearchRoute;
+  "/search": typeof SearchRouteRouteWithChildren;
+  "/search/results": typeof SearchResultsRouteRoute;
   "/interview/$interviewNumber": typeof InterviewInterviewNumberRoute;
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath;
-  fullPaths: "/" | "/search" | "/interview/$interviewNumber";
+  fullPaths:
+    "/" | "/search" | "/search/results" | "/interview/$interviewNumber";
   fileRoutesByTo: FileRoutesByTo;
-  to: "/" | "/search" | "/interview/$interviewNumber";
-  id: "__root__" | "/" | "/search" | "/interview/$interviewNumber";
+  to: "/" | "/search" | "/search/results" | "/interview/$interviewNumber";
+  id:
+    | "__root__"
+    | "/"
+    | "/search"
+    | "/search/results"
+    | "/interview/$interviewNumber";
   fileRoutesById: FileRoutesById;
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute;
-  SearchRoute: typeof SearchRoute;
+  SearchRouteRoute: typeof SearchRouteRouteWithChildren;
   InterviewInterviewNumberRoute: typeof InterviewInterviewNumberRoute;
 }
 
@@ -73,7 +88,7 @@ declare module "@tanstack/react-router" {
       id: "/search";
       path: "/search";
       fullPath: "/search";
-      preLoaderRoute: typeof SearchRouteImport;
+      preLoaderRoute: typeof SearchRouteRouteImport;
       parentRoute: typeof rootRouteImport;
     };
     "/interview/$interviewNumber": {
@@ -83,12 +98,31 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof InterviewInterviewNumberRouteImport;
       parentRoute: typeof rootRouteImport;
     };
+    "/search/results": {
+      id: "/search/results";
+      path: "/results";
+      fullPath: "/search/results";
+      preLoaderRoute: typeof SearchResultsRouteRouteImport;
+      parentRoute: typeof SearchRouteRoute;
+    };
   }
 }
 
+interface SearchRouteRouteChildren {
+  SearchResultsRouteRoute: typeof SearchResultsRouteRoute;
+}
+
+const SearchRouteRouteChildren: SearchRouteRouteChildren = {
+  SearchResultsRouteRoute: SearchResultsRouteRoute,
+};
+
+const SearchRouteRouteWithChildren = SearchRouteRoute._addFileChildren(
+  SearchRouteRouteChildren,
+);
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  SearchRoute: SearchRoute,
+  SearchRouteRoute: SearchRouteRouteWithChildren,
   InterviewInterviewNumberRoute: InterviewInterviewNumberRoute,
 };
 export const routeTree = rootRouteImport

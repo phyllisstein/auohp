@@ -5,7 +5,7 @@ import { useReadQuery } from "@apollo/client/react";
 import type { TypedDocumentNode } from "@apollo/client";
 import type { ListInterviewsQuery, ListInterviewsQueryVariables } from "./__generated__/index.gql";
 import { Route as InterviewRoute } from "./interview.$interviewNumber";
-import { Route as SearchRoute } from "./search";
+import { Route as SearchRoute } from "./search/route";
 import { style, baseColor } from "@react-spectrum/s2/style" with { type: "macro" };
 import styled from "styled-components";
 
