@@ -81,11 +81,17 @@ async fn main() -> Result<()> {
     .await?;
 
     db.run(neo4rs::query(
-        "CREATE FULLTEXT INDEX statementText IF NOT EXISTS
-         FOR (s:Statement) ON EACH [s.text]",
+        "
+        CREATE FULLTEXT INDEX statementSearchText IF NOT EXISTS
+        FOR (s:Statement) ON EACH [s.text]
+        OPTIONS {indexConfig: {
+            `fulltext.analyzer`: 'english',
+            `fulltext.eventually_consistent`: true
+        }}
+    ",
     ))
     .await?;
-    info!("ensured fulltext Statement index");
+    info!("ensured searchable text Statement index");
 
     let embedder = Embedder::new().expect("failed to load embedding model");
     info!("loaded embedding model ({}-dim)", &embedder.dimensions());

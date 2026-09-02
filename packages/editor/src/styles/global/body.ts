@@ -19,7 +19,7 @@ export const Body = createGlobalStyle`
             "Apple Color Emoji",
             "Segoe UI Emoji",
             "Segoe UI Symbol",
-            "Noto Color Emoji" !important;
+            "Noto Color Emoji";
         font-variant-ligatures: common-ligatures;
         font-variant-numeric: lining-nums proportional-nums;
         font-kerning: normal;

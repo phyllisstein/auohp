@@ -100,10 +100,14 @@ export const TRANSCRIPT_QUERY: TypedDocumentNode<TranscriptQuery, TranscriptQuer
 
 export const SEARCH_STATEMENTS_QUERY: TypedDocumentNode<SearchStatementsQuery, SearchStatementsQueryVariables> = gql`
     query SearchStatements(
-        $fragment: String!
+        $fragment: String!,
+        $interviewUid: String
     ) {
         search {
-            statementText(fragment: $fragment) {
+            statementText(
+                fragment: $fragment
+                interviewUid: $interviewUid
+            ) {
                 statement {
                     uid
                     text

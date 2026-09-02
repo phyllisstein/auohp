@@ -1,5 +1,5 @@
 import { useLazyQuery, useMutation } from "@apollo/client/react";
-import type { EditStatementMutation, EditStatementMutationVariables, TranscriptQuery, SearchStatementsQuery, SearchStatementsQueryVariables, CreateStatementMutation, CreateStatementMutationVariables, DestroyStatementMutationVariables, DestroyStatementMutation } from "@/__generated__/queries.gql";
+import type { EditStatementMutation, EditStatementMutationVariables, TranscriptQuery, SearchStatementsQuery, SearchStatementsQueryVariables, CreateStatementMutation, CreateStatementMutationVariables, DestroyStatementMutationVariables, DestroyStatementMutation } from "~/__generated__/queries.gql";
 
 
 // A split-on-Enter produces a second statement the backend knows nothing about:

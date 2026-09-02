@@ -42,6 +42,7 @@ const config = {
 
         "media-feature-range-notation": "prefix",
         "selector-class-pattern": null,
+        "no-empty-source": null,
     },
 };
 

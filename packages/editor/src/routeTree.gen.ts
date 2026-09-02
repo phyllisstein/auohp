@@ -8,62 +8,132 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from './routes/__root'
-import { Route as InterviewInterviewNumberRouteImport } from './routes/interview.$interviewNumber'
+import { Route as rootRouteImport } from "./routes/__root";
+import { Route as IndexRouteImport } from "./routes/index";
+import { Route as SearchRouteRouteImport } from "./routes/search/route";
+import { Route as InterviewInterviewNumberRouteImport } from "./routes/interview.$interviewNumber";
+import { Route as SearchResultsRouteRouteImport } from "./routes/search/results/route";
 
+const IndexRoute = IndexRouteImport.update({
+  id: "/",
+  path: "/",
+  getParentRoute: () => rootRouteImport,
+} as any);
+const SearchRouteRoute = SearchRouteRouteImport.update({
+  id: "/search",
+  path: "/search",
+  getParentRoute: () => rootRouteImport,
+} as any);
 const InterviewInterviewNumberRoute =
   InterviewInterviewNumberRouteImport.update({
-    id: '/interview/$interviewNumber',
-    path: '/interview/$interviewNumber',
+    id: "/interview/$interviewNumber",
+    path: "/interview/$interviewNumber",
     getParentRoute: () => rootRouteImport,
-  } as any)
+  } as any);
+const SearchResultsRouteRoute = SearchResultsRouteRouteImport.update({
+  id: "/results",
+  path: "/results",
+  getParentRoute: () => SearchRouteRoute,
+} as any);
 
 export interface FileRoutesByFullPath {
-  '/interview/$interviewNumber': typeof InterviewInterviewNumberRoute
+  "/": typeof IndexRoute;
+  "/search": typeof SearchRouteRouteWithChildren;
+  "/search/results": typeof SearchResultsRouteRoute;
+  "/interview/$interviewNumber": typeof InterviewInterviewNumberRoute;
 }
 export interface FileRoutesByTo {
-  '/interview/$interviewNumber': typeof InterviewInterviewNumberRoute
+  "/": typeof IndexRoute;
+  "/search": typeof SearchRouteRouteWithChildren;
+  "/search/results": typeof SearchResultsRouteRoute;
+  "/interview/$interviewNumber": typeof InterviewInterviewNumberRoute;
 }
 export interface FileRoutesById {
-  __root__: typeof rootRouteImport
-  '/interview/$interviewNumber': typeof InterviewInterviewNumberRoute
+  __root__: typeof rootRouteImport;
+  "/": typeof IndexRoute;
+  "/search": typeof SearchRouteRouteWithChildren;
+  "/search/results": typeof SearchResultsRouteRoute;
+  "/interview/$interviewNumber": typeof InterviewInterviewNumberRoute;
 }
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/interview/$interviewNumber'
-  fileRoutesByTo: FileRoutesByTo
-  to: '/interview/$interviewNumber'
-  id: '__root__' | '/interview/$interviewNumber'
-  fileRoutesById: FileRoutesById
+  fileRoutesByFullPath: FileRoutesByFullPath;
+  fullPaths:
+    "/" | "/search" | "/search/results" | "/interview/$interviewNumber";
+  fileRoutesByTo: FileRoutesByTo;
+  to: "/" | "/search" | "/search/results" | "/interview/$interviewNumber";
+  id:
+    | "__root__"
+    | "/"
+    | "/search"
+    | "/search/results"
+    | "/interview/$interviewNumber";
+  fileRoutesById: FileRoutesById;
 }
 export interface RootRouteChildren {
-  InterviewInterviewNumberRoute: typeof InterviewInterviewNumberRoute
+  IndexRoute: typeof IndexRoute;
+  SearchRouteRoute: typeof SearchRouteRouteWithChildren;
+  InterviewInterviewNumberRoute: typeof InterviewInterviewNumberRoute;
 }
 
-declare module '@tanstack/react-router' {
+declare module "@tanstack/react-router" {
   interface FileRoutesByPath {
-    '/interview/$interviewNumber': {
-      id: '/interview/$interviewNumber'
-      path: '/interview/$interviewNumber'
-      fullPath: '/interview/$interviewNumber'
-      preLoaderRoute: typeof InterviewInterviewNumberRouteImport
-      parentRoute: typeof rootRouteImport
-    }
+    "/": {
+      id: "/";
+      path: "/";
+      fullPath: "/";
+      preLoaderRoute: typeof IndexRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/search": {
+      id: "/search";
+      path: "/search";
+      fullPath: "/search";
+      preLoaderRoute: typeof SearchRouteRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/interview/$interviewNumber": {
+      id: "/interview/$interviewNumber";
+      path: "/interview/$interviewNumber";
+      fullPath: "/interview/$interviewNumber";
+      preLoaderRoute: typeof InterviewInterviewNumberRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/search/results": {
+      id: "/search/results";
+      path: "/results";
+      fullPath: "/search/results";
+      preLoaderRoute: typeof SearchResultsRouteRouteImport;
+      parentRoute: typeof SearchRouteRoute;
+    };
   }
 }
 
-const rootRouteChildren: RootRouteChildren = {
-  InterviewInterviewNumberRoute: InterviewInterviewNumberRoute,
+interface SearchRouteRouteChildren {
+  SearchResultsRouteRoute: typeof SearchResultsRouteRoute;
 }
+
+const SearchRouteRouteChildren: SearchRouteRouteChildren = {
+  SearchResultsRouteRoute: SearchResultsRouteRoute,
+};
+
+const SearchRouteRouteWithChildren = SearchRouteRoute._addFileChildren(
+  SearchRouteRouteChildren,
+);
+
+const rootRouteChildren: RootRouteChildren = {
+  IndexRoute: IndexRoute,
+  SearchRouteRoute: SearchRouteRouteWithChildren,
+  InterviewInterviewNumberRoute: InterviewInterviewNumberRoute,
+};
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>()
+  ._addFileTypes<FileRouteTypes>();
 
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
+import type { getRouter } from "./router.tsx";
+import type { createStart } from "@tanstack/react-start";
+declare module "@tanstack/react-start" {
   interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
+    ssr: true;
+    router: Awaited<ReturnType<typeof getRouter>>;
   }
 }
