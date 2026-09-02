@@ -50,7 +50,7 @@ impl Search {
     ) -> async_graphql::Result<Vec<SearchHit>> {
         let db = ctx.data::<Db>()?;
         let mut q = String::from("
-            CALL db.index.fulltext.queryNodes('statementText', $queryText) YIELD node AS statement, score
+            CALL db.index.fulltext.queryNodes('statementSearchText', $queryText) YIELD node AS statement, score
             MATCH (person) <-[:INTERVIEWS]- (interview:Interview) -[:HAS_TRANSCRIPT]-> (:Transcript) -[span:CONTAINS]-> (statement)
         ");
         if let Some(uid) = interview_uid {

@@ -15,7 +15,7 @@ LET
     }
 
 CALL (query, queryVector, sourceK, rrfConstant, sourceWeights) {
-    CALL db.index.fulltext.queryNodes('statementText', query, {limit: sourceK})
+    CALL db.index.fulltext.queryNodes('statementSearchText', query, {limit: sourceK})
     YIELD node AS statement, score
     ORDER BY score DESC, statement.uid ASC
     WITH collect(statement) AS statements, rrfConstant, sourceWeights
