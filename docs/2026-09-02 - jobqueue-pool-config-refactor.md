@@ -163,10 +163,10 @@ Deliberately not included, per the discussion that produced this plan:
 - **A worker-registration seam.** This is the axis that will actually accumulate
   copy-paste (each job kind adds a `run_worker_*`, a `tokio::spawn`, and a
   shutdown fan-out in `main.rs`), and it serves all four candidate jobs rather
-  than two. Worth doing, but separately and later.
-- **`apalis-cron`.** Not vendored in the local registry; it would be a sixth
-  direct dependency on a third release line, against a spike whose known sharp
-  edge is rc version skew.
+  than two. Worth doing, but separately and later. **Superseded** --- built
+  immediately after this refactor; see `jobs/workers.rs`.
+- **`apalis-cron`.** Deferred pending a decision, but see the correction below:
+  the reason recorded here was wrong.
 
 ## Outcome
 
@@ -217,3 +217,64 @@ one hit --- there is no second literal to get wrong.
 lines. It deletes `auohp_core::eval::Op`, `DeError` and `Version`, which are
 genuinely unused (the compiler warns on all three), but takes `BoltType` and
 `Row` with them, which are still used at nine sites. Not touched here.
+
+### Correction: the cost of `apalis-cron` was overstated
+
+The out-of-scope note above declined `apalis-cron` as "a sixth direct dependency
+on a third release line, against a spike whose known sharp edge is rc version
+skew." Checked against crates.io, that is wrong on both counts:
+
+- `apalis-cron` 1.0.0-rc.8 is on the **same release line** as `apalis-sqlite`
+  1.0.0-rc.8, and requires `apalis-core ^1.0.0-rc.9` --- exactly the version
+  already in the lockfile. It adds no skew; it pins what is already pinned.
+- It adds **one crate**, not a dependency subtree. Of its six runtime
+  dependencies (`apalis-core`, `chrono`, `futures-util`, `ulid`, `cron`, and
+  `cron`'s own `once_cell`/`phf`/`winnow`), every one is already in the
+  lockfile at a compatible version except `cron` itself.
+
+Against the +59 crates apalis already costs, one more is noise. The claim was
+made from memory rather than checked, and the correct figure is small enough to
+change the answer.
+
+### What `apalis-cron` actually is, architecturally
+
+Its only apalis dependency is `apalis-core` --- not `apalis-sqlite`, not any
+storage backend. `CronStream` is a `Backend` implementation whose "storage" is
+the clock: it yields a task when the schedule fires. That is the same `Backend`
+trait `SqliteStorage` implements, which is why `WorkerBuilder::backend()` takes
+either.
+
+The consequence is worth stating plainly, because it is easy to assume
+otherwise: **a cron worker is not durable.** There is no row, no `job_type`, no
+orphan reclaim. A tick that fires while the process is down is lost --- the
+clock does not buffer.
+
+For the two sweeps on the roadmap (tombstone reaping, embedding refresh) that is
+almost certainly fine: both are idempotent convergence sweeps, so a missed 3am
+run means the 4am run does slightly more work.
+
+If a tick ever must *not* be lost, the composition is to point a cron worker at
+a handler whose entire body is `queue.enqueue_*()`. The clock becomes a trigger
+and the durable SQLite queue does the work --- scheduled *and* durable, out of
+two backends neither of which provides both. That composition exists precisely
+because `Backend` is one trait with two implementations.
+
+### It lands on the seam, which revises the "premature" judgement
+
+A cron worker registers exactly like any other:
+
+```ignore
+workers.add("tombstone-sweep", |shutdown| {
+    run_cron_worker(schedule, deps, shutdown)
+});
+```
+
+`Workers::add` is bounded on `FnOnce(ShutdownSignal) -> impl Future<Output =
+anyhow::Result<()>>` and mentions no storage type, queue name, or job type, so a
+`CronStream`-backed worker satisfies it identically to a `SqliteStorage`-backed
+one.
+
+The seam was called premature above on the grounds that it does not pay for
+itself until job kind #3. That judgement was about *timing*, and it was wrong
+for the same reason the dependency estimate was: `apalis-cron` is available now,
+at one crate, and is the second implementor that justifies the abstraction.
