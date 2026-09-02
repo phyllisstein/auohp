@@ -5,6 +5,7 @@ export default defineConfig({
     jsPlugins: [
         { specifier: "@stylistic/eslint-plugin", name: "stylistic-js" },
         { specifier: "@tanstack/eslint-plugin-router", name: "@tanstack-router" },
+        { specifier: "eslint-plugin-import-x", name: "import-x-js" },
     ],
     categories: {
         correctness: "off",
@@ -497,33 +498,34 @@ export default defineConfig({
 
         "@tanstack-router/create-route-property-order": "error",
 
-        // Enforce the `dir/index.ts` module seam: outside code imports the
-        // barrel, never a private sibling. Intra-module `./sibling` imports use
-        // relative paths and are unaffected --- the rule only sees the aliased
-        // `~/...` string that a boundary-crossing import is forced to write.
-        // The `!*.css` negations let side-effect stylesheet imports through:
-        // those files sit beside the module but are not part of its TS surface.
-        "no-restricted-imports": [
+        // Enforce the `dir/index.ts` module seam: outside a module you import
+        // its barrel, never a private sibling. `no-internal-modules` flags any
+        // specifier that resolves *past* a permitted entry point. Needs a
+        // resolver (see `settings` below) --- an unresolved specifier fails open.
+        "import-x-js/no-internal-modules": [
             "error",
             {
-                patterns: [
-                    {
-                        group: [
-                            "~/styles/global/*",
-                            "!~/styles/global/*.css",
-                            "~/styles/theme/*",
-                        ],
-                        message:
-                            "Import from the module barrel (~/styles/global, ~/styles/theme), not a private sibling module.",
-                    },
-                    {
-                        group: [
-                            "~/styles/assets/fonts/*",
-                            "~/styles/assets/fonts/*/*",
-                        ],
-                        message:
-                            "Import from ~/styles/assets/fonts, not a private font module.",
-                    },
+                allow: [
+                    // Our barrels. Each entry is the deepest importable path;
+                    // one segment deeper is a seam violation.
+                    "~/*",
+                    "~/styles/*",
+                    "~/styles/assets/*",
+                    // `src/lexical/` is deliberately *not* exempted: it is a
+                    // flat junk-drawer directory whose files reach into each
+                    // other directly, and those violations are the standing
+                    // reminder to convert it to a sealed feature module.
+                    //
+                    // Side-effect stylesheets sit beside a module, not behind it.
+                    "**/*.css",
+                    // File-based routing owns arbitrarily deep paths.
+                    "~/routes/**",
+                    // Generated GraphQL types are addressed directly.
+                    "**/__generated__/**",
+                    // Third-party packages with intentional deep entry points.
+                    "@apollo/client/**",
+                    "@react-spectrum/s2/**",
+                    "@lexical/*/**",
                 ],
             },
         ],
@@ -532,5 +534,13 @@ export default defineConfig({
         AsyncDisposableStack: "readonly",
         DisposableStack: "readonly",
         SuppressedError: "readonly",
+    },
+    settings: {
+        // import-x resolves specifiers against the filesystem to police
+        // `no-internal-modules`. Without a resolver an unresolved specifier ---
+        // every `~/...` alias --- fails open, so the seam rule would be inert.
+        "import-x/resolver": {
+            typescript: { project: "packages/editor/tsconfig.json" },
+        },
     },
 });

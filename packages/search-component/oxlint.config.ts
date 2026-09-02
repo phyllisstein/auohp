@@ -4,6 +4,7 @@ export default defineConfig({
     plugins: ["react", "oxc", "eslint", "jsx-a11y", "react-perf"],
     jsPlugins: [
         { specifier: "@stylistic/eslint-plugin", name: "stylistic-js" },
+        { specifier: "eslint-plugin-import-x", name: "import-x-js" },
     ],
     categories: {
         correctness: "off",
@@ -494,22 +495,22 @@ export default defineConfig({
         "jsx-a11y/tabindex-no-positive": "error",
         "react/exhaustive-deps": "warn",
 
-        // Enforce the `dir/index.ts` module seam: outside code imports the
-        // barrel, never a private sibling. Intra-module `./sibling` imports use
-        // relative paths and are unaffected --- the rule only sees the aliased
-        // `~/...` string that a boundary-crossing import is forced to write.
-        "no-restricted-imports": [
+        // Enforce the `dir/index.ts` module seam: outside a module you import
+        // its barrel, never a private sibling. `no-internal-modules` flags any
+        // specifier that resolves *past* a permitted entry point. Needs a
+        // resolver (see `settings` below) --- an unresolved specifier fails open.
+        "import-x-js/no-internal-modules": [
             "error",
             {
-                patterns: [
-                    {
-                        group: [
-                            "~/components/player/*",
-                            "~/components/search/*",
-                        ],
-                        message:
-                            "Import from the component barrel (~/components/player, ~/components/search), not a private sibling module.",
-                    },
+                allow: [
+                    // Component barrels: `~/components/search` resolves to its
+                    // index.ts; one segment deeper is a seam violation.
+                    "~/components/*",
+                    // Generated GraphQL types are addressed directly.
+                    "**/__generated__/**",
+                    // Third-party packages with intentional deep entry points.
+                    "@apollo/client/**",
+                    "react-dom/*",
                 ],
             },
         ],
@@ -518,5 +519,13 @@ export default defineConfig({
         AsyncDisposableStack: "readonly",
         DisposableStack: "readonly",
         SuppressedError: "readonly",
+    },
+    settings: {
+        // import-x resolves specifiers against the filesystem to police
+        // `no-internal-modules`. Without a resolver an unresolved specifier ---
+        // every `~/...` alias --- fails open, so the seam rule would be inert.
+        "import-x/resolver": {
+            typescript: { project: "packages/search-component/tsconfig.json" },
+        },
     },
 });
