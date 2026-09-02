@@ -6,6 +6,7 @@ export default defineConfig({
         { specifier: "@stylistic/eslint-plugin", name: "stylistic-js" },
         { specifier: "@tanstack/eslint-plugin-router", name: "@tanstack-router" },
         { specifier: "eslint-plugin-import-x", name: "import-x-js" },
+        { specifier: "../../scripts/oxlint-no-export-star.mjs", name: "no-export-star" },
     ],
     categories: {
         correctness: "off",
@@ -497,6 +498,9 @@ export default defineConfig({
         "react/exhaustive-deps": "warn",
 
         "@tanstack-router/create-route-property-order": "error",
+
+        // Barrels re-export named bindings explicitly, never `export *`.
+        "no-export-star/no-export-star": "error",
 
         // Enforce the `dir/index.ts` module seam: outside a module you import
         // its barrel, never a private sibling. `no-internal-modules` flags any

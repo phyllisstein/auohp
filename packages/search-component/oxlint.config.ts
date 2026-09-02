@@ -5,6 +5,7 @@ export default defineConfig({
     jsPlugins: [
         { specifier: "@stylistic/eslint-plugin", name: "stylistic-js" },
         { specifier: "eslint-plugin-import-x", name: "import-x-js" },
+        { specifier: "../../scripts/oxlint-no-export-star.mjs", name: "no-export-star" },
     ],
     categories: {
         correctness: "off",
@@ -494,6 +495,9 @@ export default defineConfig({
         "jsx-a11y/scope": "error",
         "jsx-a11y/tabindex-no-positive": "error",
         "react/exhaustive-deps": "warn",
+
+        // Barrels re-export named bindings explicitly, never `export *`.
+        "no-export-star/no-export-star": "error",
 
         // Enforce the `dir/index.ts` module seam: outside a module you import
         // its barrel, never a private sibling. `no-internal-modules` flags any
