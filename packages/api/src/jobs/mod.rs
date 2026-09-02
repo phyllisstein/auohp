@@ -35,14 +35,22 @@
 //!   which is what makes a job id pollable from GraphQL.
 //! - [`queue`] --- the enqueue-side handle that resolvers hold via `.data()`.
 //! - [`storage`] --- where the database file lives and how it is created.
+//! - [`workers`] --- registration and shutdown for the worker side, so `main`
+//!   addresses "the workers" once instead of each worker at four separate
+//!   points in its own lifecycle.
 
 pub mod embed;
 pub mod queue;
 pub mod status;
 pub mod storage;
+pub mod workers;
 
 #[cfg(test)]
 mod tests;
 
 pub use queue::JobQueue;
 pub use storage::{StorageConfig, open_pool};
+// `ShutdownSignal` is deliberately not re-exported: callers receive one as the
+// closure parameter to `Workers::add` and never name the type. It stays
+// reachable as `workers::ShutdownSignal` for anything that does.
+pub use workers::Workers;

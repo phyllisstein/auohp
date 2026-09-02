@@ -244,12 +244,31 @@ impl JobQueue {
 /// the borrow checker rejects spawning it. Taking ownership up front moves the
 /// borrow problem to the call site, where a `SqlitePool` clone is a refcount
 /// bump and a `StorageConfig` clone is two small fields.
-pub fn run_worker(
+///
+/// # Shutdown
+///
+/// The signal is bounded by `IntoFuture`, not `Future`, so callers can pass a
+/// [`ShutdownSignal`](crate::jobs::ShutdownSignal) from
+/// [`Workers`](crate::jobs::Workers) as-is. Everything awaitable is
+/// `IntoFuture` --- every `Future` gets a blanket impl --- so this loosens the
+/// signature without asking anything more of a caller who has a plain future.
+pub fn run_worker<S>(
     pool: SqlitePool,
     config: StorageConfig,
     deps: crate::jobs::embed::EmbedDeps,
-    shutdown: impl std::future::Future<Output = ()> + Send + 'static,
-) -> impl std::future::Future<Output = anyhow::Result<()>> + Send {
+    shutdown: S,
+) -> impl std::future::Future<Output = anyhow::Result<()>> + Send
+where
+    // `IntoFuture` rather than `Future` so callers may pass a `ShutdownSignal`
+    // (or anything else awaitable) directly. `S::IntoFuture: Send` is the
+    // bound that actually matters --- it is the type that ends up held across
+    // an await inside the returned future, and `tokio::spawn` needs that
+    // future to be `Send`. Naming `S` rather than writing `impl IntoFuture` in
+    // argument position is forced: an argument-position `impl Trait` has no
+    // name, so its associated types cannot be constrained in a where clause.
+    S: std::future::IntoFuture<Output = ()> + Send + 'static,
+    S::IntoFuture: Send,
+{
     use apalis::layers::retry::RetryPolicy;
     use apalis::prelude::{WorkerBuilder, WorkerBuilderExt};
 
@@ -287,6 +306,9 @@ pub fn run_worker(
         // this wrapper supplies the `Ok`. `WorkerError` is named as the error
         // type only to satisfy inference --- the `Err` branch is unreachable.
         let signal = async move {
+            // `.await` on a non-`Future` desugars through `IntoFuture`, so this
+            // reads the same whether the caller handed us a `ShutdownSignal` or
+            // a plain future.
             shutdown.await;
             Ok::<(), apalis_core::error::WorkerError>(())
         };
