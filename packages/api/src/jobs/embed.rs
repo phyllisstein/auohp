@@ -32,6 +32,7 @@ use auohp_core::embeddings::EmbedderHandle;
 use neo4rs::{BoltMap, BoltString, BoltType, query};
 use serde::{Deserialize, Serialize};
 
+use crate::jobs::job::QueuedJob;
 use crate::neo4j::Db;
 
 /// How many (uid, vector) pairs go into one Cypher write.
@@ -56,26 +57,15 @@ pub struct EmbedInterview {
     pub interview_uid: String,
 }
 
-impl EmbedInterview {
-    /// The apalis queue this job is filed under.
-    ///
-    /// apalis partitions the `Jobs` table by a `job_type` column and every
-    /// fetch query filters on it, so distinct queues can share one database
-    /// file without seeing each other's work.
-    ///
-    /// The name lives here, on the job type, rather than as a free-standing
-    /// constant --- and that placement is load-bearing. The enqueue side and
-    /// the worker side each build their own `SqliteStorage` view, and both must
-    /// name the same queue: `fetch_next.sql` filters `WHERE job_type = ?2`, so
-    /// a mismatch means the worker polls for a `job_type` no row carries. Jobs
-    /// would sit `Pending` forever with no error on either side --- nothing in
-    /// the type system catches a disagreement between two string literals.
-    ///
-    /// Hanging the name off the job type makes that a correspondence rather
-    /// than a convention: both sides write `EmbedInterview::QUEUE`, so they
-    /// derive it from the same place and cannot drift apart.
-    pub const QUEUE: &str = "auohp-embeddings";
+/// The bounds are all satisfied already: `Serialize`/`Deserialize` are derived
+/// above, and `String` is `Send + Unpin + 'static`. See [`QueuedJob`] for why
+/// the queue name belongs on the job type rather than in a free-standing
+/// constant.
+impl QueuedJob for EmbedInterview {
+    const QUEUE: &'static str = "auohp-embeddings";
+}
 
+impl EmbedInterview {
     /// Construct a job for one interview.
     pub fn new(interview_uid: impl Into<String>) -> Self {
         Self {

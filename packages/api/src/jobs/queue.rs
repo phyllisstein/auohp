@@ -62,16 +62,29 @@ use sqlx::SqlitePool;
 use ulid::Ulid;
 
 use crate::jobs::embed::EmbedInterview;
+use crate::jobs::job::QueuedJob;
 use crate::jobs::status::{JobStatus, read_status};
 use crate::jobs::storage::StorageConfig;
 
-/// The concrete storage type for the embedding queue.
+/// The storage type for any job kind, with this crate's codec and fetcher
+/// choices already made.
 ///
-/// Spelled out once here so nothing else in the crate has to. `JsonCodec<Vec<u8>>`
-/// is what `SqliteStorage::new` selects by default; `SqliteFetcher` is the
-/// polling fetcher (as opposed to the update-hook-driven `HookCallbackListener`).
-pub type EmbedStorage =
-    SqliteStorage<EmbedInterview, JsonCodec<CompactType>, apalis_sqlite::fetcher::SqliteFetcher>;
+/// A *partially applied* type constructor: `SqliteStorage` takes three
+/// parameters, two of which never vary here, so this pins them and leaves the
+/// job type open. `JsonCodec<CompactType>` is what `SqliteStorage::new` selects
+/// by default; `SqliteFetcher` is the polling fetcher (as opposed to the
+/// update-hook-driven `HookCallbackListener`).
+///
+/// Stating those two once means a second job kind writes `JobStorage<Ner>` and
+/// inherits both decisions rather than restating them.
+pub type JobStorage<T> =
+    SqliteStorage<T, JsonCodec<CompactType>, apalis_sqlite::fetcher::SqliteFetcher>;
+
+/// The storage type for the embedding queue.
+///
+/// A use of [`JobStorage`], not a separate definition --- the codec and fetcher
+/// are chosen there.
+pub type EmbedStorage = JobStorage<EmbedInterview>;
 
 /// How many times a failed embedding job is retried before it is left alone.
 ///
@@ -104,20 +117,24 @@ impl JobQueue {
         }
     }
 
-    /// Enqueue an embedding job to run as soon as a worker is free.
+    /// Enqueue any job kind, optionally deferred.
     ///
     /// Returns the task id, which the client polls with the `jobStatus` query.
-    pub async fn enqueue_embed(&self, interview_uid: &str) -> anyhow::Result<String> {
-        self.enqueue_embed_after(interview_uid, Duration::ZERO)
-            .await
-    }
-
-    /// Enqueue an embedding job that must not run until `delay` has elapsed.
     ///
-    /// This is the scheduling capability the hand-rolled in-process queue could
-    /// not express. It is not implemented with a timer or a sleeping task: the
-    /// delay is written into the row's `run_at` column as an absolute unix
-    /// timestamp, and every fetch query carries
+    /// # Why this is generic when the storage type is not
+    ///
+    /// `SqliteStorage<T, ..>` is monomorphic in the job type, so there is a
+    /// distinct storage type per job kind and no single one this struct could
+    /// hold. Building the view here, where `T` is known, is what lets one
+    /// method serve every job kind --- the type parameter is resolved at the
+    /// call site and never has to be named by a field or a context entry.
+    ///
+    /// # Delay
+    ///
+    /// A non-zero `delay` is the scheduling capability the hand-rolled
+    /// in-process queue could not express. It is not implemented with a timer
+    /// or a sleeping task: the delay is written into the row's `run_at` column
+    /// as an absolute unix timestamp, and every fetch query carries
     /// `AND (run_at IS NULL OR run_at <= strftime('%s','now'))`.
     ///
     /// That distinction is the whole point. A `tokio::time::sleep` before
@@ -125,16 +142,12 @@ impl JobQueue {
     /// `run_at` is a fact in the database, so a job scheduled for an hour from
     /// now still fires even if the server restarts twice in between. Scheduling
     /// and durability are the same mechanism here, not two features.
-    pub async fn enqueue_embed_after(
-        &self,
-        interview_uid: &str,
-        delay: Duration,
-    ) -> anyhow::Result<String> {
+    pub async fn enqueue<T: QueuedJob>(&self, args: T, delay: Duration) -> anyhow::Result<String> {
         // Assign the id up front so we can return it --- see the module docs.
         let task_id: TaskId<Ulid> = TaskId::new(Ulid::new());
         let id_string = task_id.to_string();
 
-        let mut builder = TaskBuilder::new(EmbedInterview::new(interview_uid))
+        let mut builder = TaskBuilder::new(args)
             .with_task_id(task_id)
             // Written to the row's `max_attempts`. The orphan-reclaim path and
             // the fetch query both consult it, so this survives restarts in a
@@ -158,23 +171,45 @@ impl JobQueue {
         // field would need either `&mut self` on this method or a clone to
         // dodge it. Constructing it costs a refcount bump on the pool --- see
         // the module docs for why that, not thrift, is what makes this cheap.
-        let mut storage: EmbedStorage = SqliteStorage::new_with_config(
-            &self.pool,
-            &self.config.to_apalis_config(EmbedInterview::QUEUE),
-        );
+        //
+        // `T::QUEUE` is the same const the worker side names, which is what
+        // keeps the two from addressing different queues.
+        let mut storage: JobStorage<T> =
+            SqliteStorage::new_with_config(&self.pool, &self.config.to_apalis_config(T::QUEUE));
         storage
             .push_task(task)
             .await
-            .map_err(|e| anyhow::anyhow!("failed to enqueue embedding job: {e}"))?;
+            .map_err(|e| anyhow::anyhow!("failed to enqueue job on {}: {e}", T::QUEUE))?;
 
         tracing::info!(
             job_id = %id_string,
-            interview_uid,
+            queue = T::QUEUE,
             delay_secs = delay.as_secs(),
-            "embedding job enqueued"
+            "job enqueued"
         );
 
         Ok(id_string)
+    }
+
+    /// Enqueue an embedding job to run as soon as a worker is free.
+    ///
+    /// A named wrapper over [`enqueue`](Self::enqueue). It exists because
+    /// resolvers read better saying what they are scheduling than assembling
+    /// the argument struct inline, and because `interview_uid` is the only
+    /// thing a caller actually supplies.
+    pub async fn enqueue_embed(&self, interview_uid: &str) -> anyhow::Result<String> {
+        self.enqueue(EmbedInterview::new(interview_uid), Duration::ZERO)
+            .await
+    }
+
+    /// Enqueue an embedding job that must not run until `delay` has elapsed.
+    pub async fn enqueue_embed_after(
+        &self,
+        interview_uid: &str,
+        delay: Duration,
+    ) -> anyhow::Result<String> {
+        self.enqueue(EmbedInterview::new(interview_uid), delay)
+            .await
     }
 
     /// Read a task's current state back out of the queue.

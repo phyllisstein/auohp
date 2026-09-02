@@ -33,6 +33,7 @@
 //!   Neo4j and write embeddings back.
 //! - [`status`] --- reading task state back out of the SQLite `Jobs` table,
 //!   which is what makes a job id pollable from GraphQL.
+//! - [`job`] --- the `QueuedJob` trait: what every job kind has in common.
 //! - [`queue`] --- the enqueue-side handle that resolvers hold via `.data()`.
 //! - [`storage`] --- where the database file lives and how it is created.
 //! - [`workers`] --- registration and shutdown for the worker side, so `main`
@@ -40,6 +41,7 @@
 //!   points in its own lifecycle.
 
 pub mod embed;
+pub mod job;
 pub mod queue;
 pub mod status;
 pub mod storage;
@@ -48,6 +50,7 @@ pub mod workers;
 #[cfg(test)]
 mod tests;
 
+pub use job::QueuedJob;
 pub use queue::JobQueue;
 pub use storage::{StorageConfig, open_pool};
 // `ShutdownSignal` is deliberately not re-exported: callers receive one as the
