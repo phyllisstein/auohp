@@ -1,23 +1,24 @@
 mod transcription;
 
-use std::convert::Infallible;
-use std::path::PathBuf;
-use std::sync::Arc;
-use std::time::Duration;
-
 use axum::extract::State;
 use axum::response::sse::{Event as SseEvent, KeepAlive, Sse};
 use axum::{Json, Router, http, response::IntoResponse};
 use serde::{Deserialize, Serialize};
+use std::convert::Infallible;
+use std::path::PathBuf;
+use std::sync::Arc;
+use std::time::Duration;
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
-use tauri::tray::TrayIconBuilder;
-use tauri::{AppHandle, Emitter};
+use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
+use tauri::{AppHandle, Emitter, Manager};
+use tauri_plugin_tracing::{Builder, LevelFilter};
 use tokio::net::TcpListener;
 use tokio::sync::broadcast;
 use tokio_stream::wrappers::BroadcastStream;
 use tokio_stream::{Stream, StreamExt};
+use tower::ServiceBuilder;
+use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
-
 use transcription::{
     CancelError, Event as JobEvent, JobId, Registry, Status as JobStatus, SubmitError,
     SubmitOutcome, TranscribeSource,
@@ -85,6 +86,13 @@ fn main() {
             #[cfg(target_os = "macos")]
             app.set_activation_policy(tauri::ActivationPolicy::Accessory);
 
+            app.handle().plugin(tauri_plugin_positioner::init())?;
+            tauri::tray::TrayIconBuilder::new()
+                .on_tray_icon_event(|tray_handle, event| {
+                    tauri_plugin_positioner::on_tray_event(tray_handle.app_handle(), &event);
+                })
+                .build(app)?;
+
             let say_hello = MenuItem::with_id(app, "say-hello", "Say Hello", true, None::<&str>)?;
             let quit = PredefinedMenuItem::quit(app, Some("Quit"))?;
             let menu = Menu::with_items(app, &[&say_hello, &quit])?;
@@ -97,15 +105,23 @@ fn main() {
                 .menu(&menu)
                 .icon(tauri::include_image!("icons/tray-icon.png"))
                 .icon_as_template(true)
-                .on_menu_event(|_app, event| {
-                    if event.id() == "say-hello" {
-                        tauri::async_runtime::spawn(async {
-                            reqwest::Client::new()
-                                .post("http://127.0.0.1:8705/hello")
-                                .send()
-                                .await
-                                .ok();
-                        });
+                .on_tray_icon_event(|tray, event| match event {
+                    TrayIconEvent::Click {
+                        button: MouseButton::Left,
+                        button_state: MouseButtonState::Up,
+                        ..
+                    } => {
+                        println!("left click pressed and released");
+                        // in this example, let's show and focus the main window when the tray is clicked
+                        let app = tray.app_handle();
+                        if let Some(window) = app.get_webview_window("main") {
+                            let _ = window.unminimize();
+                            let _ = window.show();
+                            let _ = window.set_focus();
+                        }
+                    }
+                    _ => {
+                        println!("unhandled event {event:?}");
                     }
                 })
                 .build(app)?;
@@ -134,6 +150,11 @@ async fn run_server(state: AppState) {
         .route("/transcribe/cancel", axum::routing::post(cancel_handler))
         .route("/transcribe/status", axum::routing::get(status_handler))
         .route("/transcribe/events", axum::routing::get(events_handler))
+        .layer(
+            ServiceBuilder::new()
+                .layer(TraceLayer::new_for_http())
+                .layer(CorsLayer::permissive()),
+        )
         .with_state(state);
 
     let listener = TcpListener::bind("127.0.0.1:8705")

@@ -114,7 +114,7 @@ restart_editor() {
 }
 
 restart_search() {
-    pushd packages/search >/dev/null
+    pushd packages/search-component >/dev/null
 
     echo "Terminate existing search component server..."
     stop_service search
