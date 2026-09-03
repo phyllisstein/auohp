@@ -64,3 +64,6 @@ tauri-plugin-deep-link = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-fs = "2"
 tauri-plugin-single-instance = "2"
+tower = "0.5.3"
+tower-http = { version = "0.6.8", features = ["trace", "cors"] }
+http = "1.4.0"

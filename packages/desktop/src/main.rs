@@ -16,8 +16,12 @@ use tokio::net::TcpListener;
 use tokio::sync::broadcast;
 use tokio_stream::wrappers::BroadcastStream;
 use tokio_stream::{Stream, StreamExt};
+use tower::ServiceBuilder;
+use tower_http::{
+    cors::{AllowOrigin, CorsLayer},
+    trace::TraceLayer,
+};
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
-
 use transcription::{
     CancelError, Event as JobEvent, JobId, Registry, Status as JobStatus, SubmitError,
     SubmitOutcome, TranscribeSource,
@@ -134,6 +138,11 @@ async fn run_server(state: AppState) {
         .route("/transcribe/cancel", axum::routing::post(cancel_handler))
         .route("/transcribe/status", axum::routing::get(status_handler))
         .route("/transcribe/events", axum::routing::get(events_handler))
+        .layer(
+            ServiceBuilder::new()
+                .layer(TraceLayer::new_for_http())
+                .layer(CorsLayer::permissive()),
+        )
         .with_state(state);
 
     let listener = TcpListener::bind("127.0.0.1:8705")
