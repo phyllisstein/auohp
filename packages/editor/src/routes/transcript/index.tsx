@@ -4,10 +4,20 @@ import { createFileRoute, createLink } from "@tanstack/react-router";
 import { useReadQuery } from "@apollo/client/react";
 import type { TypedDocumentNode } from "@apollo/client";
 import type { ListInterviewsQuery, ListInterviewsQueryVariables } from "./__generated__/index.gql";
-import { Route as InterviewRoute } from "./transcript/$interviewNumber";
-import { Route as SearchRoute } from "./transcript/search/route";
+import { Route as InterviewRoute } from "./$interviewNumber";
+import { Route as SearchRoute } from "../search/route";
 import { style, baseColor } from "@react-spectrum/s2/style" with { type: "macro" };
 import styled from "styled-components";
+import { Route as CreateRoute } from "./create";
+
+export const Route = createFileRoute("/transcript/")({
+    component: TranscriptPage,
+    loader: async ({ context: { preloadQuery }, params }) => {
+        const listInterviewsQuery = preloadQuery(LIST_INTERVIEWS_QUERY);
+
+        return { listInterviewsQuery };
+    },
+});
 
 export const LIST_INTERVIEWS_QUERY: TypedDocumentNode<ListInterviewsQuery, ListInterviewsQueryVariables> = gql`
     query ListInterviews {
@@ -53,16 +63,7 @@ const BasicLinkComponent = React.forwardRef<HTMLAnchorElement, React.ComponentPr
 
 const StackLink = createLink(BasicLinkComponent);
 
-export const Route = createFileRoute("/")({
-    component: IndexPage,
-    loader: async ({ context: { preloadQuery }, params }) => {
-        const listInterviewsQuery = preloadQuery(LIST_INTERVIEWS_QUERY);
-
-        return { listInterviewsQuery };
-    },
-});
-
-function IndexPage () {
+function TranscriptPage () {
     const { listInterviewsQuery } = Route.useLoaderData();
     const { data: interviewsData } = useReadQuery(listInterviewsQuery);
     const interviews = interviewsData?.interviews ?? [];
@@ -83,6 +84,10 @@ function IndexPage () {
                 <h3>Search</h3>
                 <StackLink to={ SearchRoute.to } title="Search">
                     Search
+                </StackLink>
+                <h3>New</h3>
+                <StackLink to={ CreateRoute.to } title="Search">
+                    Create
                 </StackLink>
             </div>
         </div>

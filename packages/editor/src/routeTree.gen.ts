@@ -11,8 +11,11 @@
 import { Route as rootRouteImport } from "./routes/__root";
 import { Route as IndexRouteImport } from "./routes/index";
 import { Route as SearchRouteRouteImport } from "./routes/search/route";
-import { Route as InterviewInterviewNumberRouteImport } from "./routes/interview.$interviewNumber";
+import { Route as TranscriptRouteRouteImport } from "./routes/transcript/route";
 import { Route as SearchResultsRouteRouteImport } from "./routes/search/results/route";
+import { Route as TranscriptIndexRouteImport } from "./routes/transcript/index";
+import { Route as TranscriptInterviewNumberRouteImport } from "./routes/transcript/$interviewNumber";
+import { Route as TranscriptCreateRouteImport } from "./routes/transcript/create";
 
 const IndexRoute = IndexRouteImport.update({
   id: "/",
@@ -24,55 +27,93 @@ const SearchRouteRoute = SearchRouteRouteImport.update({
   path: "/search",
   getParentRoute: () => rootRouteImport,
 } as any);
-const InterviewInterviewNumberRoute =
-  InterviewInterviewNumberRouteImport.update({
-    id: "/interview/$interviewNumber",
-    path: "/interview/$interviewNumber",
-    getParentRoute: () => rootRouteImport,
-  } as any);
+const TranscriptRouteRoute = TranscriptRouteRouteImport.update({
+  id: "/transcript",
+  path: "/transcript",
+  getParentRoute: () => rootRouteImport,
+} as any);
 const SearchResultsRouteRoute = SearchResultsRouteRouteImport.update({
   id: "/results",
   path: "/results",
   getParentRoute: () => SearchRouteRoute,
 } as any);
+const TranscriptIndexRoute = TranscriptIndexRouteImport.update({
+  id: "/",
+  path: "/",
+  getParentRoute: () => TranscriptRouteRoute,
+} as any);
+const TranscriptInterviewNumberRoute =
+  TranscriptInterviewNumberRouteImport.update({
+    id: "/$interviewNumber",
+    path: "/$interviewNumber",
+    getParentRoute: () => TranscriptRouteRoute,
+  } as any);
+const TranscriptCreateRoute = TranscriptCreateRouteImport.update({
+  id: "/create",
+  path: "/create",
+  getParentRoute: () => TranscriptRouteRoute,
+} as any);
 
 export interface FileRoutesByFullPath {
   "/": typeof IndexRoute;
   "/search": typeof SearchRouteRouteWithChildren;
+  "/transcript": typeof TranscriptRouteRouteWithChildren;
   "/search/results": typeof SearchResultsRouteRoute;
-  "/interview/$interviewNumber": typeof InterviewInterviewNumberRoute;
+  "/transcript/$interviewNumber": typeof TranscriptInterviewNumberRoute;
+  "/transcript/create": typeof TranscriptCreateRoute;
+  "/transcript/": typeof TranscriptIndexRoute;
 }
 export interface FileRoutesByTo {
   "/": typeof IndexRoute;
   "/search": typeof SearchRouteRouteWithChildren;
   "/search/results": typeof SearchResultsRouteRoute;
-  "/interview/$interviewNumber": typeof InterviewInterviewNumberRoute;
+  "/transcript/$interviewNumber": typeof TranscriptInterviewNumberRoute;
+  "/transcript/create": typeof TranscriptCreateRoute;
+  "/transcript": typeof TranscriptIndexRoute;
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport;
   "/": typeof IndexRoute;
   "/search": typeof SearchRouteRouteWithChildren;
+  "/transcript": typeof TranscriptRouteRouteWithChildren;
   "/search/results": typeof SearchResultsRouteRoute;
-  "/interview/$interviewNumber": typeof InterviewInterviewNumberRoute;
+  "/transcript/$interviewNumber": typeof TranscriptInterviewNumberRoute;
+  "/transcript/create": typeof TranscriptCreateRoute;
+  "/transcript/": typeof TranscriptIndexRoute;
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath;
   fullPaths:
-    "/" | "/search" | "/search/results" | "/interview/$interviewNumber";
+    | "/"
+    | "/search"
+    | "/transcript"
+    | "/search/results"
+    | "/transcript/$interviewNumber"
+    | "/transcript/create"
+    | "/transcript/";
   fileRoutesByTo: FileRoutesByTo;
-  to: "/" | "/search" | "/search/results" | "/interview/$interviewNumber";
+  to:
+    | "/"
+    | "/search"
+    | "/search/results"
+    | "/transcript/$interviewNumber"
+    | "/transcript/create"
+    | "/transcript";
   id:
     | "__root__"
     | "/"
     | "/search"
+    | "/transcript"
     | "/search/results"
-    | "/interview/$interviewNumber";
+    | "/transcript/$interviewNumber"
+    | "/transcript/create"
+    | "/transcript/";
   fileRoutesById: FileRoutesById;
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute;
   SearchRouteRoute: typeof SearchRouteRouteWithChildren;
-  InterviewInterviewNumberRoute: typeof InterviewInterviewNumberRoute;
+  TranscriptRouteRoute: typeof TranscriptRouteRouteWithChildren;
 }
 
 declare module "@tanstack/react-router" {
@@ -91,11 +132,11 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof SearchRouteRouteImport;
       parentRoute: typeof rootRouteImport;
     };
-    "/interview/$interviewNumber": {
-      id: "/interview/$interviewNumber";
-      path: "/interview/$interviewNumber";
-      fullPath: "/interview/$interviewNumber";
-      preLoaderRoute: typeof InterviewInterviewNumberRouteImport;
+    "/transcript": {
+      id: "/transcript";
+      path: "/transcript";
+      fullPath: "/transcript";
+      preLoaderRoute: typeof TranscriptRouteRouteImport;
       parentRoute: typeof rootRouteImport;
     };
     "/search/results": {
@@ -104,6 +145,27 @@ declare module "@tanstack/react-router" {
       fullPath: "/search/results";
       preLoaderRoute: typeof SearchResultsRouteRouteImport;
       parentRoute: typeof SearchRouteRoute;
+    };
+    "/transcript/": {
+      id: "/transcript/";
+      path: "/";
+      fullPath: "/transcript/";
+      preLoaderRoute: typeof TranscriptIndexRouteImport;
+      parentRoute: typeof TranscriptRouteRoute;
+    };
+    "/transcript/$interviewNumber": {
+      id: "/transcript/$interviewNumber";
+      path: "/$interviewNumber";
+      fullPath: "/transcript/$interviewNumber";
+      preLoaderRoute: typeof TranscriptInterviewNumberRouteImport;
+      parentRoute: typeof TranscriptRouteRoute;
+    };
+    "/transcript/create": {
+      id: "/transcript/create";
+      path: "/create";
+      fullPath: "/transcript/create";
+      preLoaderRoute: typeof TranscriptCreateRouteImport;
+      parentRoute: typeof TranscriptRouteRoute;
     };
   }
 }
@@ -120,10 +182,26 @@ const SearchRouteRouteWithChildren = SearchRouteRoute._addFileChildren(
   SearchRouteRouteChildren,
 );
 
+interface TranscriptRouteRouteChildren {
+  TranscriptInterviewNumberRoute: typeof TranscriptInterviewNumberRoute;
+  TranscriptCreateRoute: typeof TranscriptCreateRoute;
+  TranscriptIndexRoute: typeof TranscriptIndexRoute;
+}
+
+const TranscriptRouteRouteChildren: TranscriptRouteRouteChildren = {
+  TranscriptInterviewNumberRoute: TranscriptInterviewNumberRoute,
+  TranscriptCreateRoute: TranscriptCreateRoute,
+  TranscriptIndexRoute: TranscriptIndexRoute,
+};
+
+const TranscriptRouteRouteWithChildren = TranscriptRouteRoute._addFileChildren(
+  TranscriptRouteRouteChildren,
+);
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SearchRouteRoute: SearchRouteRouteWithChildren,
-  InterviewInterviewNumberRoute: InterviewInterviewNumberRoute,
+  TranscriptRouteRoute: TranscriptRouteRouteWithChildren,
 };
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
