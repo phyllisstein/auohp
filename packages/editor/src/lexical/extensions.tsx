@@ -369,23 +369,57 @@ export const UpdateTimestampExtension = /* @__PURE__ */ defineExtension({
 //    Tags would work (the seed carries HISTORY_MERGE_TAG), but see `lastPersisted`
 //    below for why we ask a question about state instead of one about provenance.
 //
-// 2. `config` replaces props, and `build` turns that config into signals
-//    (`namedSignals` --- the same move RichTextExtension and HistoryExtension
-//    make). Reading `.peek()` at fire time rather than closing over a value means
-//    the debounce delay, or the mutation function itself, can be retuned at
-//    runtime from React via `useExtensionDependency(PersistenceExtension)`
-//    without tearing down and rebuilding the editor.
+// 2. `config` replaces props, but `build` is SELECTIVE about what becomes a
+//    signal --- and that selectivity is the pattern, not a one-off. `config` is
+//    still the transport (values arrive from React at construction), but
+//    `namedSignals` runs over only the fields that are genuinely reactive
+//    state: the two debounce scalars, which a settings UI could retune on a
+//    live editor via `useExtensionDependency(PersistenceExtension)`.
+//
+//    The four collaborators --- `editStatement`, `createStatement`,
+//    `destroyStatement`, `interviewUid` --- pass straight through `build`
+//    unwrapped. They are injected dependencies, not state: they never take a
+//    second value, because the route `useMemo`s the root extension and
+//    `LexicalExtensionComposer` memoises the EDITOR on that extension's
+//    identity (see the SearchInterviewExtension header). A new Apollo executor
+//    identity could reach this extension only through that `useMemo` dep array,
+//    and reaching it that way tears the whole document down. A surviving editor
+//    is proof the executors did not change --- so there is nothing to react to,
+//    and `afterRegistration` calls them directly: `editStatement?.(...)`, no
+//    `.peek()`.
+//
+//    The general rule for any extension's `build`: wrap a field in a signal iff
+//    it takes a second value mid-session AND something reacts to that (a
+//    `.subscribe` or a `.value` read in a reactive context). Otherwise pass it
+//    through. SearchOutput is the all-reactive case; this is the mixed one.
 //
 // The dirty-set -> statement mapping is unchanged from the plugin: Lexical has no
 // operation stream (Slate's model), it hands us dirty node sets per update, so we
 // walk each dirty node up to its StatementNode ancestor and dedupe by NodeKey.
 // -----------------------------------------------------------------------------
+// The full config surface: what the route passes in. `build` splits it --- the
+// scalars become signals, the collaborators pass through --- into
+// `PersistenceOutput` below.
 export interface PersistenceConfig {
-    /** Apollo's `editStatement` executor. `null` disables persistence entirely. */
-    editStatement: EditStatementFn | null;
-    /** Per-statement debounce window, in milliseconds. */
+    /** Per-statement debounce window for edits/creates, in milliseconds. */
     delay: number;
+    /** Debounce window for destroys --- longer, it doubles as the undo grace period. */
     destroyDelay: number;
+    /** Apollo's `editStatement` executor. `null` disables edit persistence. */
+    editStatement: EditStatementFn | null;
+    createStatement: CreateStatementFn | null;
+    destroyStatement: DestroyStatementFn | null;
+    interviewUid: string;
+}
+
+// What `state.getOutput()` yields: reactive scalars as signals, collaborators
+// as-is. The `Signal<T>` wrappers here are the ones that earn it --- a live
+// settings UI is the only writer, and there is no such thing yet, but the seam
+// is cheap to keep. Everything else is a plain injected value.
+export interface PersistenceOutput {
+    delay: Signal<number>;
+    destroyDelay: Signal<number>;
+    editStatement: EditStatementFn | null;
     createStatement: CreateStatementFn | null;
     destroyStatement: DestroyStatementFn | null;
     interviewUid: string;
@@ -408,28 +442,42 @@ export const PersistenceExtension = /* @__PURE__ */ defineExtension({
     // is only visible to `state.getOutput()` in members that come after it ---
     // otherwise it resolves to `unknown`. Lexical's own InitialStateExtension
     // carries a comment conceding the same ordering constraint.
-    build: (_editor, config) => namedSignals(config),
+    //
+    // The selective split: `namedSignals` over the two reactive scalars only,
+    // spread alongside the four collaborators passed through verbatim. The return
+    // is annotated `PersistenceOutput` rather than inferred, so the shape --- two
+    // `Signal<number>` and four plain values --- is stated once and checked here.
+    build: (_editor, config): PersistenceOutput => ({
+        ...namedSignals({ delay: config.delay, destroyDelay: config.destroyDelay }),
+        editStatement: config.editStatement,
+        createStatement: config.createStatement,
+        destroyStatement: config.destroyStatement,
+        interviewUid: config.interviewUid,
+    }),
 
     afterRegistration (editor, _config, state) {
+        // `delay`/`destroyDelay` are signals --- `.peek()` at each debouncer's
+        // construction reads the current window. The rest are plain: the executors
+        // are called directly (`editStatement?.(...)`), `interviewUid` is a string.
         const { delay, destroyDelay, editStatement, destroyStatement, createStatement, interviewUid } = state.getOutput();
 
         const createDebouncedUpdate = (uid: string) =>
             debounce((text: string, startTime: number, endTime: number) => {
-                // `.peek()` reads the signal without subscribing --- we want the
-                // value as of the moment the debounce fires, not as of registration.
-                editStatement.peek()?.({
+                // Called directly --- `editStatement` is a plain injected function,
+                // stable for the editor's lifetime (see point 2 of the header).
+                editStatement?.({
                     variables: { uid, text, startTime, endTime },
                     onCompleted: data => {
                         console.debug(`Edit completed for statement ${ data.editStatement.statement.uid }:`, data.editStatement);
                     },
                 });
+                // `delay` IS a signal --- `.peek()` reads the window as of the
+                // moment the debouncer is built, without subscribing.
             }, delay.peek());
 
         const createDebouncedDestroy = (uid: string) =>
             debounce(() => {
-                // `.peek()` reads the signal without subscribing --- we want the
-                // value as of the moment the debounce fires, not as of registration.
-                destroyStatement.peek()?.({
+                destroyStatement?.({
                     variables: { uid },
                     onCompleted: data => {
                         console.debug(`Destroy completed for statement ${ data.destroyStatement.statement.uid }:`, data.destroyStatement);
@@ -465,7 +513,9 @@ export const PersistenceExtension = /* @__PURE__ */ defineExtension({
                     return { text: node.getTextContent(), startTime, endTime };
                 });
 
-                const uid = interviewUid.peek();
+                // `interviewUid` is a plain string --- one interview per editor,
+                // fixed at construction.
+                const uid = interviewUid;
 
                 // Either the statement vanished between the edit and the debounce
                 // firing, or we have no interview to attach it to.
@@ -473,7 +523,7 @@ export const PersistenceExtension = /* @__PURE__ */ defineExtension({
                     return;
                 }
 
-                createStatement.peek()?.({
+                createStatement?.({
                     variables: { statement: payload, interviewUid: uid },
                     onCompleted: data => {
                         console.debug(`Create completed for statement ${ data.createStatement.statement.uid }:`, data.createStatement);
@@ -750,6 +800,13 @@ export const PersistenceExtension = /* @__PURE__ */ defineExtension({
 // immediately) and what makes "what does this command do" answerable without
 // knowing anything about the network.
 // -----------------------------------------------------------------------------
+// Unlike PersistenceConfig, every field here earns its Signal: each one takes a
+// second value mid-session and something reacts to it --- `data.subscribe(...)`
+// in `register` repaints the highlights, the React consumers re-render off
+// `.value` reads. The `.peek()` calls inside the subscriber (`query.peek()`,
+// `focusedResult.peek()`) are the correct kind: reading a sibling signal's
+// current value without cross-subscribing to it. Contrast PersistenceConfig's
+// peeks, which unwrap a box around a value that never moves.
 export interface SearchOutput {
     /** The pending search string. `null` means idle --- no search requested yet. */
     query: Signal<string | null>;
@@ -1355,6 +1412,23 @@ export interface AuohpEditorOptions {
     interviewUid: string;
 }
 
+export function defineSearchResultsExtension () {
+    return defineExtension({
+        dependencies: [
+            SearchInterviewExtension,
+            configExtension(ReactExtension, { decorators: [SearchResultPortals] }),
+            HistoryExtension,
+            RichTextExtension,
+            PersistenceExtension,
+        ],
+        name: "@auohp/search-results",
+        namespace: "auohp-lexical-spike",
+        onError: (error: Error) => {
+            throw error;
+        },
+    });
+}
+
 export function defineAuohpEditorExtension ({ statements, editStatement, createStatement, destroyStatement, interviewUid }: AuohpEditorOptions) {
     return defineExtension({
         dependencies: [
@@ -1836,7 +1910,11 @@ function SearchResultPortals (): JSX.Element {
 // -----------------------------------------------------------------------------
 function SearchDriver (): JSX.Element | null {
     const { query, data, loading, focusedResult, resultCount, resultKeys } = useExtensionDependency(SearchInterviewExtension).output;
-    const interviewUid = useExtensionSignalValue(PersistenceExtension, "interviewUid");
+    // Plain value on the output, not a signal --- read it straight off `.output`,
+    // the way the SearchInterviewExtension fields above are. `useExtensionSignalValue`
+    // would type-error here (`SignalValue<string>` is `never`) and blow up at
+    // runtime reaching for `.subscribe` on a string.
+    const { interviewUid } = useExtensionDependency(PersistenceExtension).output;
     const [editor] = useLexicalComposerContext();
 
     // Subscribing to `query` is what turns a command dispatch into a re-render of
