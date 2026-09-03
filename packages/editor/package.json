@@ -9,7 +9,7 @@
     "name": "@auohp/editor",
     "scripts": {
         "build": "vite build",
-        "codegen": "graphql-codegen --config codegen.ts",
+        "codegen": "trash './src/**/__generated__/' && graphql-codegen --config codegen.ts",
         "dev": "vite dev",
         "editor:dev": "vite dev",
         "start": "vite preview"
@@ -70,6 +70,7 @@
         "stylelint-config-standard": "^40.0.0",
         "stylelint-config-styled-components": "^0.1.1",
         "stylelint-order": "^8.1.1",
+        "trash-cli": "^7.2.0",
         "tslib": "^2.8.1",
         "tsx": "^4.23.12",
         "typescript": "^7.0.2",
