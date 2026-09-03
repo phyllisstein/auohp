@@ -1,0 +1,210 @@
+# Tabs migration guide
+
+Replace `<sp-tabs>`, `<sp-tab>`, and `<sp-tab-panel>` with their `swc-` equivalents, rename `value` to `tab-id`, and switch boolean toggles (`auto`, `compact`) to the new enum attributes (`keyboard-activation`, `density`).
+
+## Installation
+
+```bash
+# Remove
+yarn remove @spectrum-web-components/tabs @spectrum-web-components/tab @spectrum-web-components/tab-panel
+
+# Add
+yarn add @adobe/spectrum-wc
+```
+
+Update your import:
+
+```js
+// Before
+import '@spectrum-web-components/tabs/sp-tabs.js';
+import '@spectrum-web-components/tabs/sp-tab.js';
+import '@spectrum-web-components/tabs/sp-tab-panel.js';
+
+// After
+import '@adobe/spectrum-wc/components/tabs/swc-tabs.js';
+import '@adobe/spectrum-wc/components/tabs/swc-tab.js';
+import '@adobe/spectrum-wc/components/tabs/swc-tab-panel.js';
+```
+
+> `@adobe/spectrum-wc` is a monolithic package. Importing via subpath (e.g., `@adobe/spectrum-wc/components/tabs/swc-tabs.js`) registers and loads only that component's bundle.
+
+## What changed
+
+### Renamed
+
+| Area                    | Spectrum 1                                               | Spectrum 2                                                     |
+| ----------------------- | -------------------------------------------------------- | -------------------------------------------------------------- |
+| Tag names               | `<sp-tabs>`, `<sp-tab>`, `<sp-tab-panel>`                | `<swc-tabs>`, `<swc-tab>`, `<swc-tab-panel>`                   |
+| Package                 | `@spectrum-web-components/tabs`                          | `@adobe/spectrum-wc`                                           |
+| Import                  | `@spectrum-web-components/tabs/sp-tabs.js` (per element) | `@adobe/spectrum-wc/components/tabs/swc-tabs.js` (per element) |
+| Tab/panel identifier    | `value` attribute                                        | `tab-id` attribute                                             |
+| Tablist accessible name | `label` on `<sp-tabs>`                                   | `accessible-label` on `<swc-tabs>`                             |
+| CSS custom properties   | `--mod-tabs-*`                                           | `--swc-tabs-*`, `--swc-tab-*`                                  |
+
+### Added in Spectrum 2
+
+| Addition                        | Notes                                                             |
+| ------------------------------- | ----------------------------------------------------------------- |
+| `keyboard-activation` attribute | `'automatic'` (default) or `'manual'` — replaces boolean `auto`   |
+| `density` attribute             | `'regular'` (default) or `'compact'` — replaces boolean `compact` |
+
+### Removed in Spectrum 2
+
+| Removed                                                                           | Replacement                                                      |
+| --------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `auto` boolean                                                                    | `keyboard-activation` (see default change note below)            |
+| `compact` boolean                                                                 | `density="compact"`                                              |
+| `quiet` boolean                                                                   | No replacement; not part of Spectrum 2 surface                   |
+| `emphasized` boolean                                                              | No replacement; not part of Spectrum 2 surface                   |
+| `size` attribute                                                                  | No replacement; Spectrum 2 uses a single default scale           |
+| `label` on `<sp-tab>`                                                             | Use `aria-label` directly for icon-only tabs                     |
+| `direction="vertical-right"`                                                      | Use `direction="vertical"`                                       |
+| `enableTabsScroll`, `scrollTabs()`, `scrollToSelection()`, `sp-tabs-scroll` event | Not yet migrated; continue using 1st-gen if overflow is required |
+| `rovingTabindexController` field                                                  | Removed; keyboard navigation is internal                         |
+| `focusElement` getter                                                             | Removed; use `tabsEl.focus()`                                    |
+
+> **Default activation mode changed.** In Spectrum 1, `<sp-tabs>` defaulted to manual activation (`auto` omitted or `false`): arrow keys moved focus without changing selection until <kbd>Enter</kbd>, <kbd>Space</kbd>, or click. Spectrum 2 defaults `keyboard-activation` to `automatic` to match React Spectrum's `Tabs`, so arrow keys now select immediately by default. If you were relying on the implicit manual default (no `auto` attribute) and your tab panels are expensive to render or not fully in the DOM, add `keyboard-activation="manual"` explicitly.
+
+## Update your code
+
+### 1. Rename the tags and attributes
+
+```html
+<!-- Before -->
+<sp-tabs selected="settings" label="Preferences">
+  <sp-tab value="settings">Settings</sp-tab>
+  <sp-tab value="privacy">Privacy</sp-tab>
+  <sp-tab-panel value="settings">
+    <p>Settings content.</p>
+  </sp-tab-panel>
+  <sp-tab-panel value="privacy">
+    <p>Privacy content.</p>
+  </sp-tab-panel>
+</sp-tabs>
+
+<!-- After -->
+<swc-tabs selected="settings" accessible-label="Preferences">
+  <swc-tab tab-id="settings">Settings</swc-tab>
+  <swc-tab tab-id="privacy">Privacy</swc-tab>
+  <swc-tab-panel tab-id="settings">
+    <p>Settings content.</p>
+  </swc-tab-panel>
+  <swc-tab-panel tab-id="privacy">
+    <p>Privacy content.</p>
+  </swc-tab-panel>
+</swc-tabs>
+```
+
+### 2. Replace boolean toggles with enum attributes
+
+```html
+<!-- Before: automatic activation + compact -->
+<sp-tabs selected="1" auto compact label="Example">
+  <sp-tab value="1">Tab</sp-tab>
+</sp-tabs>
+
+<!-- After -->
+<swc-tabs
+  selected="1"
+  keyboard-activation="automatic"
+  density="compact"
+  accessible-label="Example"
+>
+  <swc-tab tab-id="1">Tab</swc-tab>
+</swc-tabs>
+```
+
+### 3. Update icon-only tabs
+
+The `label` attribute on `<sp-tab>` is removed. Use `aria-label` directly.
+
+```html
+<!-- Before -->
+<sp-tab value="dashboard" label="Dashboard">
+  <sp-icon-dashboard slot="icon"></sp-icon-dashboard>
+</sp-tab>
+
+<!-- After -->
+<swc-tab tab-id="dashboard" aria-label="Dashboard">
+  <sp-icon-dashboard slot="icon"></sp-icon-dashboard>
+</swc-tab>
+```
+
+### 4. Remove unsupported attributes
+
+Remove `quiet`, `emphasized`, and `size` from `<swc-tabs>`. Remove `direction="vertical-right"` and replace with `direction="vertical"`.
+
+```html
+<!-- Before -->
+<sp-tabs quiet emphasized size="l" direction="vertical-right" label="Nav">
+  <sp-tab value="1">Tab</sp-tab>
+</sp-tabs>
+
+<!-- After -->
+<swc-tabs direction="vertical" accessible-label="Nav">
+  <swc-tab tab-id="1">Tab</swc-tab>
+</swc-tabs>
+```
+
+## Accessibility
+
+- Always provide `accessible-label` on `<swc-tabs>` for the tablist accessible name. See [step 1](#1-rename-the-tags-and-attributes).
+- For icon-only tabs, add `aria-label` directly to `<swc-tab>`. See [step 3](#3-update-icon-only-tabs).
+- **Disabled tabs are now focusable via arrow keys** but cannot be activated. This follows WAI-ARIA Authoring Practices. If your application relied on disabled tabs being unreachable by keyboard, verify the new behavior is acceptable.
+- Arrow keys are now restricted by orientation: <kbd>Left Arrow</kbd> / <kbd>Right Arrow</kbd> for horizontal, <kbd>Up Arrow</kbd> / <kbd>Down Arrow</kbd> for vertical. <kbd>Home</kbd> / <kbd>End</kbd> jump to first/last tab.
+
+## Styling
+
+Spectrum 2 uses a different custom property prefix. Spectrum 1 overrides will not apply.
+
+<div
+  style={{
+    borderLeft: '4px solid #dba842',
+    background: 'rgba(219, 168, 66, 0.12)',
+    padding: '12px 16px',
+    margin: '16px 0',
+    borderRadius: '4px',
+  }}
+>
+  <strong>⚠️ Breaking change.</strong> Spectrum 1 `--mod-tabs-*`
+  properties <strong>do not apply</strong> to `<swc-tabs>`.
+  Remove or replace every `--mod-tabs-*` override with the
+  `--swc-tabs-*` equivalents below. Not every Spectrum 1 property
+  has a 1:1 replacement, so read the list below carefully.
+</div>
+
+| Custom property               | Description                          | Notes                                                  |
+| ----------------------------- | ------------------------------------ | ------------------------------------------------------ |
+| `--swc-tab-text-color`        | Text color of each tab               | Modified per state (selected, hover, active, disabled) |
+| `--swc-tabs-indicator-color`  | Color of the selection indicator bar | Set to disabled color when container is disabled       |
+| `--swc-tab-height`            | Block size (height) of each tab      | Overridden by parent in compact density                |
+| `--swc-tab-padding-block`     | Block-start padding of each tab      | Overridden by parent in compact density                |
+| `--swc-tab-padding-block-end` | Block-end padding of each tab        | Overridden by parent in compact density                |
+
+<div
+  style={{
+    borderLeft: '4px solid #e34850',
+    background: 'rgba(227, 72, 80, 0.10)',
+    padding: '12px 16px',
+    margin: '16px 0',
+    borderRadius: '4px',
+  }}
+>
+  <strong>🚫 Do not target internals.</strong> Internal classes,
+  `--_swc-tabs-*` private properties, and shadow DOM are
+  <strong>not public API</strong>. Styling applied to them will break without
+  warning on minor releases.
+</div>
+
+## Checklist
+
+- [ ] Remove `@spectrum-web-components/tabs`, `@spectrum-web-components/tab`, and `@spectrum-web-components/tab-panel` and replace imports with `@adobe/spectrum-wc/components/tabs/swc-tabs.js`, `swc-tab.js`, and `swc-tab-panel.js`
+- [ ] Replace `<sp-tabs>` with `<swc-tabs>`, `<sp-tab>` with `<swc-tab>`, `<sp-tab-panel>` with `<swc-tab-panel>`
+- [ ] Rename `value` attribute to `tab-id` on every tab and tab panel
+- [ ] Rename `label` attribute to `accessible-label` on `<swc-tabs>`
+- [ ] Replace boolean `auto` with `keyboard-activation`; if you relied on the implicit manual default in Spectrum 1, add `keyboard-activation="manual"` explicitly since Spectrum 2 defaults to `automatic`
+- [ ] Replace boolean `compact` with `density="compact"`
+- [ ] Remove `quiet`, `emphasized`, and `size` attributes
+- [ ] Replace `direction="vertical-right"` with `direction="vertical"`
+- [ ] Replace `label` on icon-only `<sp-tab>` with `aria-label` on `<swc-tab>`
+- [ ] Replace `--mod-tabs-*` CSS overrides with `--swc-tabs-*` / `--swc-tab-*` equivalents

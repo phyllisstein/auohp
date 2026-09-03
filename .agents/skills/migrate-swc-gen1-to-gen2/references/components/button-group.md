@@ -1,0 +1,230 @@
+# Button group migration guide
+
+Replace `<sp-button-group>` with `<swc-button-group>`, update the import, and replace the `vertical` boolean with `orientation="vertical"`.
+
+## Installation
+
+```bash
+# Remove
+yarn remove @spectrum-web-components/button-group
+
+# Add
+yarn add @adobe/spectrum-wc
+```
+
+Update your import:
+
+```js
+// Before
+import '@spectrum-web-components/button-group/sp-button-group.js';
+
+// After
+import '@adobe/spectrum-wc/components/button-group/swc-button-group.js';
+```
+
+> `@adobe/spectrum-wc` is a monolithic package. Importing via subpath (e.g., `@adobe/spectrum-wc/components/button-group/swc-button-group.js`) registers and loads only that component's bundle.
+
+## What changed
+
+### Renamed
+
+| Area             | Spectrum 1 (`sp-button-group`)          | Spectrum 2 (`swc-button-group`)                                  |
+| ---------------- | --------------------------------------- | ---------------------------------------------------------------- |
+| Tag              | `sp-button-group`                       | `swc-button-group`                                               |
+| Import path      | `@spectrum-web-components/button-group` | `@adobe/spectrum-wc/components/button-group/swc-button-group.js` |
+| Orientation      | `vertical` boolean attribute            | `orientation="horizontal\|vertical"` string attribute            |
+| CSS custom props | `--mod-buttongroup-*`                   | `--swc-button-group-*` (see [Styling](#styling))                 |
+| Default `size`   | No default (`noDefaultSize`)            | `'m'` (the `size` attribute is reflected by default)             |
+
+### Added in Spectrum 2
+
+| Addition               | Notes                                                                                        |
+| ---------------------- | -------------------------------------------------------------------------------------------- |
+| `align` attribute      | `start` (default), `center`, `end` — main-axis alignment                                     |
+| `disabled` attribute   | Disables all slotted buttons at once; propagated to children                                 |
+| `role="group"` on host | Set automatically; provide `aria-label` on every group (see [Accessibility](#accessibility)) |
+| `xl` size              | Supports `s`, `m`, `l`, `xl`                                                                 |
+
+### Removed in Spectrum 2
+
+| Removed                                | Replacement                          |
+| -------------------------------------- | ------------------------------------ |
+| `vertical` boolean attribute           | `orientation="vertical"`             |
+| `--mod-buttongroup-spacing-horizontal` | `--swc-button-group-gap`             |
+| `--mod-buttongroup-spacing-vertical`   | `--swc-button-group-gap`             |
+| `--mod-buttongroup-spacing`            | `--swc-button-group-gap`             |
+| `--mod-buttongroup-justify-content`    | `--swc-button-group-justify-content` |
+| `--mod-buttongroup-flex-wrap`          | No replacement (removed)             |
+
+## Update your code
+
+### 1. Update the import
+
+```js
+// Before
+import '@spectrum-web-components/button-group/sp-button-group.js';
+
+// After
+import '@adobe/spectrum-wc/components/button-group/swc-button-group.js';
+```
+
+### 2. Rename the tag
+
+```html
+<!-- Before -->
+<sp-button-group>
+  <sp-button>Save</sp-button>
+  <sp-button>Cancel</sp-button>
+</sp-button-group>
+
+<!-- After -->
+<swc-button-group>
+  <swc-button>Save</swc-button>
+  <swc-button>Cancel</swc-button>
+</swc-button-group>
+```
+
+### 3. Replace `vertical` with `orientation`
+
+The `vertical` boolean attribute is removed. Use `orientation="vertical"` instead.
+
+```html
+<!-- Before -->
+<sp-button-group vertical>
+  <sp-button>Button 1</sp-button>
+  <sp-button>Button 2</sp-button>
+</sp-button-group>
+
+<!-- After -->
+<swc-button-group orientation="vertical">
+  <swc-button>Button 1</swc-button>
+  <swc-button>Button 2</swc-button>
+</swc-button-group>
+```
+
+Horizontal is the default — omit the attribute or set `orientation="horizontal"` explicitly.
+
+### 4. Replace CSS custom properties
+
+```css
+/* Before */
+sp-button-group {
+  --mod-buttongroup-spacing-horizontal: 16px;
+  --mod-buttongroup-justify-content: flex-end;
+}
+
+/* After */
+swc-button-group {
+  --swc-button-group-gap: 16px;
+  --swc-button-group-justify-content: flex-end;
+}
+```
+
+Both `--mod-buttongroup-spacing-horizontal` and `--mod-buttongroup-spacing-vertical` map to the single `--swc-button-group-gap` property.
+
+### 5. Check default size behavior
+
+`swc-button-group` defaults to `size="m"` and always propagates its size to slotted children, overriding any `size` attribute set directly on individual buttons. If you previously relied on buttons managing their own individual sizes, set the desired size on the group instead.
+
+```html
+<!-- Before (no default size; buttons kept their own sizes) -->
+<sp-button-group>
+  <sp-button size="l">Large</sp-button>
+</sp-button-group>
+
+<!-- After (group defaults to "m" and propagates to children) -->
+<swc-button-group size="l">
+  <swc-button>Large</swc-button>
+</swc-button-group>
+```
+
+### 6. (Optional) Adopt new features
+
+Use group-level `disabled` to disable all buttons at once. Individual buttons can still be disabled independently when the group itself is not disabled:
+
+```html
+<!-- Before -->
+<sp-button-group>
+  <sp-button disabled>Save</sp-button>
+  <sp-button disabled>Cancel</sp-button>
+</sp-button-group>
+
+<!-- After -->
+<swc-button-group disabled>
+  <swc-button>Save</swc-button>
+  <swc-button>Cancel</swc-button>
+</swc-button-group>
+```
+
+Use `align` for main-axis alignment (dialog footers, toolbars):
+
+```html
+<swc-button-group align="end">
+  <swc-button>Cancel</swc-button>
+  <swc-button>Save</swc-button>
+</swc-button-group>
+```
+
+## Accessibility
+
+- `role="group"` is set automatically on the host. No consumer action is needed.
+- Add `aria-label` to every button group so assistive technology announces the group's purpose:
+
+```html
+<swc-button-group aria-label="Document actions">
+  <swc-button>Save</swc-button>
+  <swc-button>Cancel</swc-button>
+</swc-button-group>
+```
+
+- Standard tab order applies — buttons receive focus sequentially. No roving tabindex is used.
+
+## Styling
+
+<div
+  style={{
+    borderLeft: '4px solid #dba842',
+    background: 'rgba(219, 168, 66, 0.12)',
+    padding: '12px 16px',
+    margin: '16px 0',
+    borderRadius: '4px',
+  }}
+>
+  <strong>⚠️ Breaking change.</strong> Spectrum 1
+  `--mod-buttongroup-*` properties <strong>do not apply</strong>
+  to `<swc-button-group>`. Remove or replace every
+  `--mod-buttongroup-*` override with the
+  `--swc-button-group-*` equivalents below. Not every Spectrum 1
+  property has a 1:1 replacement, so read the list below carefully.
+</div>
+
+| Custom property                      | Description                                                                                           |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| `--swc-button-group-gap`             | Space between buttons in the group.                                                                   |
+| `--swc-button-group-justify-content` | Alignment of buttons along the main axis. Prefer use of the `align` property to adjust the alignment. |
+
+<div
+  style={{
+    borderLeft: '4px solid #e34850',
+    background: 'rgba(227, 72, 80, 0.10)',
+    padding: '12px 16px',
+    margin: '16px 0',
+    borderRadius: '4px',
+  }}
+>
+  <strong>🚫 Do not target internals.</strong> Internal classes,
+  `--_swc-button-group-*` private properties, and shadow DOM are
+  <strong>not public API</strong>. Styling applied to them will break without
+  warning on minor releases.
+</div>
+
+## Checklist
+
+- [ ] Update imports to `@adobe/spectrum-wc/components/button-group/swc-button-group.js`
+- [ ] Rename all `<sp-button-group>` to `<swc-button-group>`
+- [ ] Rename slotted `<sp-button>` to `<swc-button>`
+- [ ] Replace `vertical` attribute with `orientation="vertical"`
+- [ ] Replace `--mod-buttongroup-*` CSS overrides with `--swc-button-group-*`
+- [ ] Verify size behavior — group defaults to `size="m"` and propagates to children
+- [ ] Add `aria-label` to button groups for screen reader context
+- [ ] Optionally adopt `align` and `disabled` properties

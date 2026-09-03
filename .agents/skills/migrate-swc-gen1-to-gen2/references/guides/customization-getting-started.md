@@ -1,0 +1,35 @@
+# Getting started
+
+For guidance about how to install the package, add the base stylesheet, and render your first component, see [Get started](/docs/learn-about-swc-get-started--docs). This page covers specifics about customization once a basic setup is in place.
+
+With the deprecation of `<sp-theme>`, the SWC stylesheet contains basic document typography values, a default application background color, and all of the relevant Spectrum 2 design data tokens as custom properties.
+
+Spectrum Web Components (SWC) also offers options to alter the [theme and scale contexts](/docs/guides-customization-theme-and-scales--docs).
+
+## Application background color
+
+You may override the default application background color via the `--swc-application-background` custom property. Place this override after inclusion of the main stylesheet.
+
+```css
+:root {
+  --swc-application-background: [your-app-color];
+}
+```
+
+**Note**: It is strongly encouraged to use a Spectrum color token, which has the built-in capability to adapt to light and dark theme contexts.
+
+## PostCSS Options
+
+Please note that if you're re-processing the stylesheet through PostCSS and using PostCSS Preset Env, you'll need to use the options below. Otherwise, you'll encounter issues with these features, as the transpilation is not successful for applied use across shadow DOM.
+
+```json
+stage: 2,
+features: {
+    'nesting-rules': false,
+    'custom-properties': false,
+    'light-dark-function': false,
+    'logical-properties-and-values': false,
+    'is-pseudo-class': false,
+    'cascade-layers': false,
+}
+```

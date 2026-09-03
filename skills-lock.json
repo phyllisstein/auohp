@@ -1,10 +1,24 @@
 {
   "version": 1,
   "skills": {
+    "migrate-swc-gen1-to-gen2": {
+      "source": "spectrum-web-components.adobe.com",
+      "sourceUrl": "https://spectrum-web-components.adobe.com",
+      "sourceType": "well-known",
+      "computedHash": "3f5a77e0fe06c462fdb3bd71418fe809ebaad9bf56015f073f536cdca809e5cf",
+      "wellKnownDigest": "sha256:556953a017adef28daf39ec76af8fc11912dc82774f0db6f53207234739f2898"
+    },
     "react-spectrum-s2": {
       "source": "react-spectrum.adobe.com",
       "sourceType": "well-known",
       "computedHash": "24303efeb91b158da69008234fc1397092ae8777e6df3f9bf0dc60ca430298a3"
+    },
+    "spectrum-web-components": {
+      "source": "spectrum-web-components.adobe.com",
+      "sourceUrl": "https://spectrum-web-components.adobe.com",
+      "sourceType": "well-known",
+      "computedHash": "cafc959c44e6aa1f8d82ba086f09fc71013f8a1f9e72d0aadf3fcca67bf5099d",
+      "wellKnownDigest": "sha256:f7fcb53da0255228c19d716c31aa5d58d8ec421447d8f15d95b6d17d6a190f36"
     }
   }
 }
