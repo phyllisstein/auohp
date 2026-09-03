@@ -7,5 +7,7 @@
       }
     }
   },
-  "enabledPlugins": ["ast-grep@ast-grep-marketplace"]
+  "enabledPlugins": {
+    "ast-grep@ast-grep-marketplace": true
+  }
 }
