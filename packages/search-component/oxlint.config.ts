@@ -4,6 +4,7 @@ export default defineConfig({
     plugins: ["react", "oxc", "eslint", "jsx-a11y", "react-perf"],
     jsPlugins: [
         { specifier: "@stylistic/eslint-plugin", name: "stylistic-js" },
+        { specifier: "@tanstack/eslint-plugin-router", name: "@tanstack-router" },
         { specifier: "eslint-plugin-import-x", name: "import-x-js" },
         { specifier: "../../scripts/oxlint-no-export-star.mjs", name: "no-export-star" },
     ],
@@ -16,7 +17,7 @@ export default defineConfig({
         es2026: true,
         worker: true,
     },
-    ignorePatterns: ["node_modules", "dist", "public", "schema.graphql", "**/*.d.ts"],
+    ignorePatterns: ["node_modules", "dist", "public", "schema.graphql", "**/*.d.ts", "routeTree.gen.*"],
     rules: {
         "constructor-super": "error",
         "for-direction": "error",
@@ -496,6 +497,8 @@ export default defineConfig({
         "jsx-a11y/tabindex-no-positive": "error",
         "react/exhaustive-deps": "warn",
 
+        "@tanstack-router/create-route-property-order": "error",
+
         // Barrels re-export named bindings explicitly, never `export *`.
         "no-export-star/no-export-star": "error",
 
@@ -507,14 +510,26 @@ export default defineConfig({
             "error",
             {
                 allow: [
-                    // Component barrels: `~/components/search` resolves to its
-                    // index.ts; one segment deeper is a seam violation.
-                    "~/components/*",
+                    // Our barrels. Each entry is the deepest importable path;
+                    // one segment deeper is a seam violation.
+                    "~/*",
+                    "~/styles/*",
+                    "~/styles/assets/*",
+                    // `src/lexical/` is deliberately *not* exempted: it is a
+                    // flat junk-drawer directory whose files reach into each
+                    // other directly, and those violations are the standing
+                    // reminder to convert it to a sealed feature module.
+                    //
+                    // Side-effect stylesheets sit beside a module, not behind it.
+                    "**/*.css",
+                    // File-based routing owns arbitrarily deep paths.
+                    "~/routes/**",
                     // Generated GraphQL types are addressed directly.
                     "**/__generated__/**",
                     // Third-party packages with intentional deep entry points.
                     "@apollo/client/**",
-                    "react-dom/*",
+                    "@react-spectrum/s2/**",
+                    "@lexical/*/**",
                 ],
             },
         ],
@@ -529,7 +544,7 @@ export default defineConfig({
         // `no-internal-modules`. Without a resolver an unresolved specifier ---
         // every `~/...` alias --- fails open, so the seam rule would be inert.
         "import-x/resolver": {
-            typescript: { project: "packages/search-component/tsconfig.json" },
+            typescript: { project: "packages/editor/tsconfig.json" },
         },
     },
 });
