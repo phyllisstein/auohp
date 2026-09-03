@@ -27,6 +27,7 @@ tauri-build = "2"
 
 [dependencies]
 anyhow = "1"
+anyhow-tauri = "1.0.1"
 axum = "0.8"
 auohp-core = { path = "../core" }
 tauri = { version = "2", features = ["tray-icon"] }
@@ -67,3 +68,4 @@ tauri-plugin-single-instance = "2"
 tower = "0.5.3"
 tower-http = { version = "0.6.8", features = ["trace", "cors"] }
 http = "1.4.0"
+tauri-plugin-positioner = { version = "2.0.0", features = ["tray-icon"] }
