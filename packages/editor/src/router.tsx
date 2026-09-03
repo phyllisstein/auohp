@@ -19,9 +19,8 @@ export function getRouter () {
     });
 
     const router = createRouter({
-        defaultPreload: "intent",
+        defaultPreload: false,
         routeTree,
-        scrollRestoration: true,
         context: {
             ...routerWithApolloClient.defaultContext,
         },
