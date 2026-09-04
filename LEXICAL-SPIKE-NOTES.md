@@ -141,6 +141,80 @@ Counter-intuitively, **portal-inversion is the easier half to port, and
 for AUOHP --- is an `ElementNode` with hand-rolled `createDOM` chrome and no
 React in it at all. It ports by deleting the `.tsx` extension.
 
+## Second editor instance
+
+Probed with working code (`src/TwoEditors.svelte`, rendered below the main
+editor): two live editors whose graphs both list the same extension objects.
+Findings are measured, not inferred.
+
+**1. Extension sharing --- one instance PER EDITOR, not per module.**
+`LexicalBuilder` is constructed fresh inside each `buildEditorFromExtensions`
+call and owns a private `extensionNameMap: Map<string, ExtensionRep>`. Dedupe is
+therefore *within* one editor's graph, keyed by the extension's `name` string.
+Measured: `build()` ran **2x** for two editors sharing one `ProbeExtension`.
+`defineExtension` returns a config *description*, not an instance --- the
+instance is the `ExtensionRep`, and there is one per editor.
+
+**2. `namedSignals` --- per-editor, and that's the good news.** Since `build()`
+re-runs, `namedSignals({...})` mints a fresh signal object per editor. Measured:
+writing `41` through editor A and `7` through editor B left them reading 41 and 7
+respectively --- **independent**. So `SearchInterviewExtension` and
+`LatencyExtension` state does *not* collide across two editors. This is the
+single most encouraging result: the extension-local state channel is already
+instance-safe by construction, for free.
+
+**3. The ambient singletons are the actual problem, and they're outside the
+extension system.** `playhead` (`src/playhead.ts`) and `SearchQuery`
+(`routes/search/-search-signal.ts`) both use `createModel`, which mints
+*per-instance* signals --- but both modules then export a single module-scoped
+`new Playhead()` / `new SearchQuery()`. Every importer shares one object. So
+`playhead.seek.value = startTime` in `StatementSeekExtension` (~L198), and the
+`playhead.timestamp.peek()` reads in `UpdateTimestampExtension` and
+`StatementNode`, are genuinely global: **two editors would fight over one
+playhead**, and a click-to-seek in the results view would move the transcript
+view's video. Note this is a pre-existing coupling that has nothing to do with
+Svelte --- React has it identically today.
+
+The fix is small and mechanical, and the code is already shaped for it:
+`createModel` exists precisely so you *can* have more than one. Either pass a
+`Playhead` instance through extension config (`defineExtension` config is the
+natural channel --- it is per-editor by the same mechanism as #2), or keep one
+playhead deliberately (two views of *one* video probably *should* share a
+playhead) and only split `SearchQuery`. Worth deciding per-singleton rather than
+reflexively.
+
+**4. NodeKeys --- no collision, but don't rely on why.** Measured across two
+freshly built editors: key spaces were `9..20` and `21..32` --- disjoint, because
+Lexical's key counter is **module-global**, not per-editor. The only shared key
+is the literal `"root"`. So a single flat `Map<NodeKey, Entry>` happens to be
+safe today. It is safe by *accident of a global counter*, though, not by
+contract. The seam sidesteps this anyway: `registerSvelteDecorator` is called
+from inside `register(editor)`, so each editor gets its **own closure and its own
+`entries` map**, and every lookup goes through that editor's
+`editor.getElementByKey`. Cross-editor collision is structurally impossible
+regardless of the counter. Verified incidentally --- the main seam test still
+reports `1 mount / 1 re-parent / 0 unmounts` with three editors live on the page.
+
+**Does this change the port verdict? No --- and Svelte is marginally better
+here.** React's `ReactExtension` mounts decorators into a React root whose
+context carries the editor, so a second instance means a second provider and the
+usual "which context am I in" hazard. Svelte's `mount(Component, { target,
+props })` has no ambient context at all --- the editor is passed explicitly. The
+context gap called out earlier as the port's one regression turns out to be an
+*advantage* under two instances: there is no ambient thing to get wrong. The one
+change the real port needs is dropping the `editor-context.ts` module singleton
+(fine for a one-editor spike) in favour of putting the editor on
+`DecoratorSpec.props`, which the interface already supports.
+
+**Verdict on "make the results page a second editable Lexical instance":
+yellow-green.** The extension architecture is already instance-safe where it
+counts --- per-editor `build()`, per-editor signals, per-editor decorator maps.
+The blocker is not Lexical or Svelte; it is the two hand-rolled module-scoped
+`createModel` singletons, which is an afternoon of threading an instance through
+config, and a design question (should two views share one playhead?) rather than
+a technical risk. Do that decoupling *before* the Svelte port, not during ---
+it's orthogonal to the framework and would otherwise muddy the port's diff.
+
 ## Verdict: **green**, with one caveat
 
 The seam is real, it is small (~130 lines, once), and it survives the harshest

@@ -19,6 +19,7 @@
     import { seamStats } from "./svelte-extension.svelte";
     import { cyclePalette, tagPalette } from "./tag-signals.svelte";
     import { setEditor } from "./editor-context";
+    import TwoEditors from "./TwoEditors.svelte";
 
     let contentEl: HTMLDivElement;
     let editor: ReturnType<typeof buildEditorFromExtensions>;
@@ -151,6 +152,8 @@
         <div><strong>{seamStats.reparents}</strong> re-parents (host moved, state kept)</div>
         <div><strong>{seamStats.unmounts}</strong> unmounts</div>
     </section>
+
+    <TwoEditors />
 
     <ul class="log">
         {#each log as line (line)}
