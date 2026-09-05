@@ -1,13 +1,20 @@
 {
-  "extraKnownMarketplaces": {
-    "ast-grep-marketplace": {
-      "source": {
-        "source": "github",
-        "repo": "ast-grep/agent-skill"
-      }
+    "extraKnownMarketplaces": {
+        "ast-grep-marketplace": {
+            "source": {
+                "source": "github",
+                "repo": "ast-grep/agent-skill"
+            }
+        },
+        "svelte": {
+            "source": {
+                "source": "github",
+                "repo": "sveltejs/ai-tools"
+            }
+        }
+    },
+    "enabledPlugins": {
+        "ast-grep@ast-grep-marketplace": true,
+        "svelte@svelte": true
     }
-  },
-  "enabledPlugins": {
-    "ast-grep@ast-grep-marketplace": true
-  }
 }

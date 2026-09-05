@@ -21,6 +21,10 @@
             "path": "packages/editor"
         },
         {
+            "name": "✏️ @auohp/editor-svelte",
+            "path": "packages/editor-svelte"
+        },
+        {
             "name": "🕵️ @auohp/search-component",
             "path": "packages/search-component"
         },
@@ -97,6 +101,14 @@
             ],
         },
         "[typescript]": {
+            "editor.formatOnSave": false,
+            "editor.defaultFormatter": "oxc.oxc-vscode",
+            "editor.codeActionsOnSave": [
+                "source.fixAll.stylelint",
+                "source.fixAll.oxc"
+            ],
+        },
+        "[svelte]": {
             "editor.formatOnSave": false,
             "editor.defaultFormatter": "oxc.oxc-vscode",
             "editor.codeActionsOnSave": [

@@ -5,6 +5,18 @@ __metadata:
   version: 10
   cacheKey: 10c0
 
+"@0no-co/graphql.web@npm:^1.0.13":
+  version: 1.3.4
+  resolution: "@0no-co/graphql.web@npm:1.3.4"
+  peerDependencies:
+    graphql: ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0
+  peerDependenciesMeta:
+    graphql:
+      optional: true
+  checksum: 10c0/58c61e16664121bd0974609890bf68135469fa1af23c70c3966cf50f0215efac7062a4ff2ded60faaf7575e420b73c0800467e46fc0440942d48490d2f6c13bd
+  languageName: node
+  linkType: hard
+
 "@0no-co/graphql.web@npm:^1.3.1":
   version: 1.3.3
   resolution: "@0no-co/graphql.web@npm:1.3.3"
@@ -145,6 +157,76 @@ __metadata:
   checksum: 10c0/f39e2cee4e6ef034af405e0fe272c8e3d27dcf8cc123fd6a5801a9dea3f8bbdfeee05a1a58e08f364ca8f7608a2749bd6e21c61265e15c2a0e6dd913e2f63bba
   languageName: node
   linkType: hard
+
+"@auohp/editor-svelte@workspace:packages/editor-svelte":
+  version: 0.0.0-use.local
+  resolution: "@auohp/editor-svelte@workspace:packages/editor-svelte"
+  dependencies:
+    "@0no-co/graphqlsp": "npm:^1.17.5"
+    "@eslint/js": "npm:^10.0.1"
+    "@graphql-codegen/cli": "npm:^7.4.0"
+    "@graphql-codegen/near-operation-file-preset": "npm:^5.2.2"
+    "@graphql-codegen/schema-ast": "npm:^6.1.0"
+    "@graphql-codegen/typescript-operations": "npm:^6.1.6"
+    "@lexical/extension": "npm:^0.49.0"
+    "@lexical/history": "npm:^0.49.0"
+    "@lexical/mark": "npm:^0.49.0"
+    "@lexical/rich-text": "npm:^0.49.0"
+    "@lexical/utils": "npm:^0.49.0"
+    "@spectrum-web-components/bundle": "npm:^1.12.3"
+    "@spectrum-web-components/button": "npm:^1.12.3"
+    "@spectrum-web-components/card": "npm:^1.12.3"
+    "@spectrum-web-components/field-label": "npm:^1.12.3"
+    "@spectrum-web-components/icons-workflow": "npm:^1.12.3"
+    "@spectrum-web-components/search": "npm:^1.12.3"
+    "@spectrum-web-components/theme": "npm:^1.12.3"
+    "@stylelint/postcss-css-in-js": "npm:^0.38.0"
+    "@stylistic/eslint-plugin": "npm:^5.10.0"
+    "@stylistic/stylelint-config": "npm:^5.0.0"
+    "@sveltejs/adapter-auto": "npm:^7.0.1"
+    "@sveltejs/kit": "npm:^2.70.3"
+    "@sveltejs/vite-plugin-svelte": "npm:^7.3.0"
+    "@types/chai": "npm:^5.2.3"
+    "@types/react": "npm:^19.2.18"
+    "@urql/svelte": "npm:^5.0.0"
+    "@vitest/browser": "npm:^4.1.11"
+    "@vitest/browser-playwright": "npm:^4.1.11"
+    bezier-easing: "npm:^3.0.1"
+    chai: "npm:^6.2.2"
+    concurrently: "npm:^10.0.5"
+    csstype: "npm:^3.2.3"
+    es-toolkit: "npm:^1.52.0"
+    eslint: "npm:^10.10.0"
+    eslint-import-resolver-typescript: "npm:^4.4.5"
+    eslint-plugin-import-x: "npm:^4.17.1"
+    globals: "npm:^17.12.0"
+    graphql: "npm:^17.0.2"
+    lexical: "npm:^0.49.0"
+    oxlint: "npm:^1.81.0"
+    oxlint-tsgolint: "npm:^7.0.2001"
+    perfect-debounce: "npm:^2.1.0"
+    playwright: "npm:^1.63.0"
+    polished: "npm:^4.3.1"
+    postcss: "npm:^8.5.28"
+    postcss-html: "npm:^2.0.0"
+    postcss-scss: "npm:^4.0.9"
+    sass-embedded: "npm:^1.104.0"
+    stylelint: "npm:^17.15.0"
+    stylelint-config-clean-order: "npm:^10.0.0"
+    stylelint-config-rational-order: "npm:^0.1.2"
+    stylelint-config-recommended: "npm:18.0.0"
+    stylelint-config-standard: "npm:^40.0.0"
+    stylelint-order: "npm:^8.1.1"
+    svelte: "npm:^5.57.0"
+    svelte-check: "npm:^4.7.6"
+    trash-cli: "npm:^7.2.0"
+    tslib: "npm:^2.8.1"
+    typescript: "npm:^7.0.2"
+    unplugin-parcel-macros: "npm:^0.2.0"
+    vite: "npm:^8.2.2"
+    vitest: "npm:^4.1.11"
+  languageName: unknown
+  linkType: soft
 
 "@auohp/editor@workspace:packages/editor":
   version: 0.0.0-use.local
@@ -991,6 +1073,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@bufbuild/protobuf@npm:^2.5.0":
+  version: 2.14.1
+  resolution: "@bufbuild/protobuf@npm:2.14.1"
+  checksum: 10c0/3f913aca03df8419c4b21d800ea54d7f6c836a5343e65d6f686279ec3566c4907729938ef2f94a5e27d92e8d3f4adcd6e027118ba29ba764d21e1c637cddc702
+  languageName: node
+  linkType: hard
+
 "@cacheable/memory@npm:^2.2.0":
   version: 2.2.0
   resolution: "@cacheable/memory@npm:2.2.0"
@@ -1064,6 +1153,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@csstools/css-syntax-patches-for-csstree@npm:^1.1.9":
+  version: 1.1.12
+  resolution: "@csstools/css-syntax-patches-for-csstree@npm:1.1.12"
+  peerDependencies:
+    css-tree: ^3.2.1
+  peerDependenciesMeta:
+    css-tree:
+      optional: true
+  checksum: 10c0/1ba981c04e3ea104a0009a51324c156760495f52d2e25418550a9c58cfb6b7efd91ca27ff7c3db0925f53bcd290641effa0647f0ab75cac5bf2ed37448c35a80
+  languageName: node
+  linkType: hard
+
 "@csstools/css-tokenizer@npm:^4.0.0":
   version: 4.0.0
   resolution: "@csstools/css-tokenizer@npm:4.0.0"
@@ -1081,7 +1182,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@csstools/selector-resolve-nested@npm:^4.0.0":
+"@csstools/selector-resolve-nested@npm:^4.0.0, @csstools/selector-resolve-nested@npm:^4.0.1":
   version: 4.0.1
   resolution: "@csstools/selector-resolve-nested@npm:4.0.1"
   peerDependencies:
@@ -1433,6 +1534,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@eslint/plugin-kit@npm:^0.7.3":
+  version: 0.7.3
+  resolution: "@eslint/plugin-kit@npm:0.7.3"
+  dependencies:
+    "@eslint/core": "npm:^1.2.1"
+    levn: "npm:^0.4.1"
+  checksum: 10c0/2daebaedcfbd261478e8b87dfb46d3118f48277c19eb298483ebc6f3b438e9688b86ddca13b3aeb08dfb06be00fb6073506852386aa124645c1170e7e33d140c
+  languageName: node
+  linkType: hard
+
 "@exodus/bytes@npm:^1.11.0, @exodus/bytes@npm:^1.15.1, @exodus/bytes@npm:^1.6.0":
   version: 1.15.1
   resolution: "@exodus/bytes@npm:1.15.1"
@@ -1452,12 +1563,22 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@floating-ui/core@npm:^1.8.0":
+"@floating-ui/core@npm:^1.7.3, @floating-ui/core@npm:^1.8.0":
   version: 1.8.0
   resolution: "@floating-ui/core@npm:1.8.0"
   dependencies:
     "@floating-ui/utils": "npm:^0.2.12"
   checksum: 10c0/cece958f6fab0f8cd7740cd57988c4f8bc5356dca39dd4c093433d44c91952c3a02c7a54d93d7ed6c078b6544d531a29f66621d2839c8bfbb4467dca6aed7df0
+  languageName: node
+  linkType: hard
+
+"@floating-ui/dom@npm:1.7.4":
+  version: 1.7.4
+  resolution: "@floating-ui/dom@npm:1.7.4"
+  dependencies:
+    "@floating-ui/core": "npm:^1.7.3"
+    "@floating-ui/utils": "npm:^0.2.10"
+  checksum: 10c0/da6166c25f9b0729caa9f498685a73a0e28251613b35d27db8de8014bc9d045158a23c092b405321a3d67c2064909b6e2a7e6c1c9cc0f62967dca5779f5aef30
   languageName: node
   linkType: hard
 
@@ -1497,7 +1618,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@floating-ui/utils@npm:^0.2.12":
+"@floating-ui/utils@npm:0.2.10":
+  version: 0.2.10
+  resolution: "@floating-ui/utils@npm:0.2.10"
+  checksum: 10c0/e9bc2a1730ede1ee25843937e911ab6e846a733a4488623cd353f94721b05ec2c9ec6437613a2ac9379a94c2fd40c797a2ba6fa1df2716f5ce4aa6ddb1cf9ea4
+  languageName: node
+  linkType: hard
+
+"@floating-ui/utils@npm:^0.2.10, @floating-ui/utils@npm:^0.2.12":
   version: 0.2.12
   resolution: "@floating-ui/utils@npm:0.2.12"
   checksum: 10c0/bb910b90d56991a62011afaf5f8e0c4b7fb6dab69403f4dd17fbd6eb25560b28d533dff9791f270b4f459852e9006a1077b5d73cbedb5e34d9424afc6a828314
@@ -1638,6 +1766,61 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@graphql-codegen/cli@npm:^7.4.0":
+  version: 7.4.0
+  resolution: "@graphql-codegen/cli@npm:7.4.0"
+  dependencies:
+    "@babel/generator": "npm:^7.18.13"
+    "@babel/template": "npm:^7.18.10"
+    "@babel/types": "npm:^7.18.13"
+    "@graphql-codegen/client-preset": "npm:^6.1.3"
+    "@graphql-codegen/core": "npm:^6.2.0"
+    "@graphql-codegen/plugin-helpers": "npm:^7.3.0"
+    "@graphql-tools/apollo-engine-loader": "npm:^8.0.28"
+    "@graphql-tools/code-file-loader": "npm:^8.1.28"
+    "@graphql-tools/git-loader": "npm:^8.0.32"
+    "@graphql-tools/github-loader": "npm:^9.0.6"
+    "@graphql-tools/graphql-file-loader": "npm:^8.1.11"
+    "@graphql-tools/json-file-loader": "npm:^8.0.26"
+    "@graphql-tools/load": "npm:^8.1.8"
+    "@graphql-tools/merge": "npm:^9.0.6"
+    "@graphql-tools/url-loader": "npm:^9.0.6"
+    "@graphql-tools/utils": "npm:^11.2.0"
+    "@inquirer/prompts": "npm:^8.3.2"
+    "@whatwg-node/fetch": "npm:^0.10.0"
+    chalk: "npm:^5.6.0"
+    cosmiconfig: "npm:^9.0.0"
+    debounce: "npm:^3.0.0"
+    detect-indent: "npm:^7.0.0"
+    graphql-config: "npm:^5.1.6"
+    is-glob: "npm:^4.0.1"
+    jiti: "npm:^2.3.0"
+    json-to-pretty-yaml: "npm:^1.2.2"
+    listr2: "npm:^10.2.1"
+    log-symbols: "npm:^7.0.0"
+    micromatch: "npm:^4.0.5"
+    shell-quote: "npm:^1.7.3"
+    string-env-interpolation: "npm:^1.0.1"
+    ts-log: "npm:^3.0.0"
+    tslib: "npm:^2.4.0"
+    yaml: "npm:^2.3.1"
+    yargs: "npm:^18.0.0"
+  peerDependencies:
+    "@parcel/watcher": ^2.1.0
+    graphql: ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0
+  peerDependenciesMeta:
+    "@parcel/watcher":
+      optional: true
+  bin:
+    gql-gen: esm/bin.js
+    graphql-code-generator: esm/bin.js
+    graphql-codegen: esm/bin.js
+    graphql-codegen-cjs: cjs/bin.js
+    graphql-codegen-esm: esm/bin.js
+  checksum: 10c0/80ea9378742557f2d5ad4a90bcf73095504082167c412334d41e68529cbbf8ffa949838b8d84cafaceeb0739df05e62d24bbbb50c856afe13e5bdf2e117cac84
+  languageName: node
+  linkType: hard
+
 "@graphql-codegen/client-preset@npm:^6.1.0, @graphql-codegen/client-preset@npm:^6.1.3":
   version: 6.1.3
   resolution: "@graphql-codegen/client-preset@npm:6.1.3"
@@ -1737,6 +1920,21 @@ __metadata:
   peerDependencies:
     graphql: ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0
   checksum: 10c0/f8a4bdb94f23eddfad86fecfab40528a68aabb93228e2eece512152ea70fed55a3d3d636bb1e0e224ea2c4508445073ea1fedb989e94d42ccb084b071050f19b
+  languageName: node
+  linkType: hard
+
+"@graphql-codegen/plugin-helpers@npm:^7.3.0":
+  version: 7.3.0
+  resolution: "@graphql-codegen/plugin-helpers@npm:7.3.0"
+  dependencies:
+    "@graphql-tools/utils": "npm:^11.2.0"
+    change-case-all: "npm:^2.1.0"
+    common-tags: "npm:1.8.2"
+    import-from: "npm:4.0.0"
+    tslib: "npm:^2.8.0"
+  peerDependencies:
+    graphql: ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0
+  checksum: 10c0/dff38d72fa5cc34c32d18db601d7a134673bcb38dd68ad8d94ac6dbef2de5e2d5924afbedc27468a0e91de4f91cb8b13cb1e120278edcd07490478b84861db86
   languageName: node
   linkType: hard
 
@@ -2501,6 +2699,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@internationalized/number@npm:3.6.5":
+  version: 3.6.5
+  resolution: "@internationalized/number@npm:3.6.5"
+  dependencies:
+    "@swc/helpers": "npm:^0.5.0"
+  checksum: 10c0/f87d710863a8dbf057aac311193c82f3c42e862abdd99e5b71034f1022926036552620eab5dd00c23e975f28b9e41e830cb342ba0264436749d9cdc5ae031d44
+  languageName: node
+  linkType: hard
+
 "@internationalized/number@npm:^3.6.7":
   version: 3.6.7
   resolution: "@internationalized/number@npm:3.6.7"
@@ -2538,7 +2745,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@jridgewell/remapping@npm:^2.3.5":
+"@jridgewell/remapping@npm:^2.3.4, @jridgewell/remapping@npm:^2.3.5":
   version: 2.3.5
   resolution: "@jridgewell/remapping@npm:2.3.5"
   dependencies:
@@ -2562,7 +2769,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@jridgewell/trace-mapping@npm:^0.3.24, @jridgewell/trace-mapping@npm:^0.3.28":
+"@jridgewell/sourcemap-codec@npm:^1.4.15":
+  version: 1.6.0
+  resolution: "@jridgewell/sourcemap-codec@npm:1.6.0"
+  checksum: 10c0/b5be700e45a775f218589c3466c4ffea630582b4988657652da464e5ab8a7d18bf928ee4fd2363fb346ede4bea9c6ff0bae05a538358c4565ece6199531b5f72
+  languageName: node
+  linkType: hard
+
+"@jridgewell/trace-mapping@npm:^0.3.24, @jridgewell/trace-mapping@npm:^0.3.25, @jridgewell/trace-mapping@npm:^0.3.28":
   version: 0.3.31
   resolution: "@jridgewell/trace-mapping@npm:0.3.31"
   dependencies:
@@ -3007,6 +3221,41 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@lit-labs/observers@npm:2.0.2":
+  version: 2.0.2
+  resolution: "@lit-labs/observers@npm:2.0.2"
+  dependencies:
+    "@lit/reactive-element": "npm:^1.0.0 || ^2.0.0"
+  checksum: 10c0/77099b1596bf053a3378abbd9ab0e0edb2ab2602de9aa86ed8e7238ea64803cc9c5c8fdd61f100d06ae11a187dbd5b8df4dafec7cbbd4066e4f6afb335a7c816
+  languageName: node
+  linkType: hard
+
+"@lit-labs/ssr-dom-shim@npm:^1.5.0":
+  version: 1.6.0
+  resolution: "@lit-labs/ssr-dom-shim@npm:1.6.0"
+  checksum: 10c0/deffcfd765d268820beef600a1c1cf9d3cf1a5cb4bbe7e80843796ff33d1a122f4e5651ef4a44b33d36e5fa6538e6ee87a95b9d40b4a26cabf3c35b45194c87a
+  languageName: node
+  linkType: hard
+
+"@lit-labs/virtualizer@npm:2.0.12":
+  version: 2.0.12
+  resolution: "@lit-labs/virtualizer@npm:2.0.12"
+  dependencies:
+    lit: "npm:^3.1.0"
+    tslib: "npm:^2.0.3"
+  checksum: 10c0/f554454ff452ffdfdf646ef91fcb4124ff8f170a0064f021753684ba1afc72fbacae88744be5d932bcc62e5de2945e2f82f4609af11ab7a2381be0eec150c461
+  languageName: node
+  linkType: hard
+
+"@lit/reactive-element@npm:^1.0.0 || ^2.0.0, @lit/reactive-element@npm:^2.1.0":
+  version: 2.1.2
+  resolution: "@lit/reactive-element@npm:2.1.2"
+  dependencies:
+    "@lit-labs/ssr-dom-shim": "npm:^1.5.0"
+  checksum: 10c0/557069ce6ebbbafb1140e1e0a25ce73d3501bf455cda231d42bb131baa9065c54b6b7ca1655507eede397decd7ddde16c84192cb72a07d4edf41d54e07725933
+  languageName: node
+  linkType: hard
+
 "@mrmlnc/readdir-enhanced@npm:^2.2.1":
   version: 2.2.1
   resolution: "@mrmlnc/readdir-enhanced@npm:2.2.1"
@@ -3429,6 +3678,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@oxlint/binding-android-arm-eabi@npm:1.81.0":
+  version: 1.81.0
+  resolution: "@oxlint/binding-android-arm-eabi@npm:1.81.0"
+  conditions: os=android & cpu=arm
+  languageName: node
+  linkType: hard
+
 "@oxlint/binding-android-arm64@npm:1.79.0":
   version: 1.79.0
   resolution: "@oxlint/binding-android-arm64@npm:1.79.0"
@@ -3439,6 +3695,13 @@ __metadata:
 "@oxlint/binding-android-arm64@npm:1.80.0":
   version: 1.80.0
   resolution: "@oxlint/binding-android-arm64@npm:1.80.0"
+  conditions: os=android & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"@oxlint/binding-android-arm64@npm:1.81.0":
+  version: 1.81.0
+  resolution: "@oxlint/binding-android-arm64@npm:1.81.0"
   conditions: os=android & cpu=arm64
   languageName: node
   linkType: hard
@@ -3457,6 +3720,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@oxlint/binding-darwin-arm64@npm:1.81.0":
+  version: 1.81.0
+  resolution: "@oxlint/binding-darwin-arm64@npm:1.81.0"
+  conditions: os=darwin & cpu=arm64
+  languageName: node
+  linkType: hard
+
 "@oxlint/binding-darwin-x64@npm:1.79.0":
   version: 1.79.0
   resolution: "@oxlint/binding-darwin-x64@npm:1.79.0"
@@ -3467,6 +3737,13 @@ __metadata:
 "@oxlint/binding-darwin-x64@npm:1.80.0":
   version: 1.80.0
   resolution: "@oxlint/binding-darwin-x64@npm:1.80.0"
+  conditions: os=darwin & cpu=x64
+  languageName: node
+  linkType: hard
+
+"@oxlint/binding-darwin-x64@npm:1.81.0":
+  version: 1.81.0
+  resolution: "@oxlint/binding-darwin-x64@npm:1.81.0"
   conditions: os=darwin & cpu=x64
   languageName: node
   linkType: hard
@@ -3485,6 +3762,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@oxlint/binding-freebsd-x64@npm:1.81.0":
+  version: 1.81.0
+  resolution: "@oxlint/binding-freebsd-x64@npm:1.81.0"
+  conditions: os=freebsd & cpu=x64
+  languageName: node
+  linkType: hard
+
 "@oxlint/binding-linux-arm-gnueabihf@npm:1.79.0":
   version: 1.79.0
   resolution: "@oxlint/binding-linux-arm-gnueabihf@npm:1.79.0"
@@ -3495,6 +3779,13 @@ __metadata:
 "@oxlint/binding-linux-arm-gnueabihf@npm:1.80.0":
   version: 1.80.0
   resolution: "@oxlint/binding-linux-arm-gnueabihf@npm:1.80.0"
+  conditions: os=linux & cpu=arm
+  languageName: node
+  linkType: hard
+
+"@oxlint/binding-linux-arm-gnueabihf@npm:1.81.0":
+  version: 1.81.0
+  resolution: "@oxlint/binding-linux-arm-gnueabihf@npm:1.81.0"
   conditions: os=linux & cpu=arm
   languageName: node
   linkType: hard
@@ -3513,6 +3804,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@oxlint/binding-linux-arm-musleabihf@npm:1.81.0":
+  version: 1.81.0
+  resolution: "@oxlint/binding-linux-arm-musleabihf@npm:1.81.0"
+  conditions: os=linux & cpu=arm
+  languageName: node
+  linkType: hard
+
 "@oxlint/binding-linux-arm64-gnu@npm:1.79.0":
   version: 1.79.0
   resolution: "@oxlint/binding-linux-arm64-gnu@npm:1.79.0"
@@ -3523,6 +3821,13 @@ __metadata:
 "@oxlint/binding-linux-arm64-gnu@npm:1.80.0":
   version: 1.80.0
   resolution: "@oxlint/binding-linux-arm64-gnu@npm:1.80.0"
+  conditions: os=linux & cpu=arm64 & libc=glibc
+  languageName: node
+  linkType: hard
+
+"@oxlint/binding-linux-arm64-gnu@npm:1.81.0":
+  version: 1.81.0
+  resolution: "@oxlint/binding-linux-arm64-gnu@npm:1.81.0"
   conditions: os=linux & cpu=arm64 & libc=glibc
   languageName: node
   linkType: hard
@@ -3541,6 +3846,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@oxlint/binding-linux-arm64-musl@npm:1.81.0":
+  version: 1.81.0
+  resolution: "@oxlint/binding-linux-arm64-musl@npm:1.81.0"
+  conditions: os=linux & cpu=arm64 & libc=musl
+  languageName: node
+  linkType: hard
+
 "@oxlint/binding-linux-ppc64-gnu@npm:1.79.0":
   version: 1.79.0
   resolution: "@oxlint/binding-linux-ppc64-gnu@npm:1.79.0"
@@ -3551,6 +3863,13 @@ __metadata:
 "@oxlint/binding-linux-ppc64-gnu@npm:1.80.0":
   version: 1.80.0
   resolution: "@oxlint/binding-linux-ppc64-gnu@npm:1.80.0"
+  conditions: os=linux & cpu=ppc64 & libc=glibc
+  languageName: node
+  linkType: hard
+
+"@oxlint/binding-linux-ppc64-gnu@npm:1.81.0":
+  version: 1.81.0
+  resolution: "@oxlint/binding-linux-ppc64-gnu@npm:1.81.0"
   conditions: os=linux & cpu=ppc64 & libc=glibc
   languageName: node
   linkType: hard
@@ -3569,6 +3888,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@oxlint/binding-linux-riscv64-gnu@npm:1.81.0":
+  version: 1.81.0
+  resolution: "@oxlint/binding-linux-riscv64-gnu@npm:1.81.0"
+  conditions: os=linux & cpu=riscv64 & libc=glibc
+  languageName: node
+  linkType: hard
+
 "@oxlint/binding-linux-riscv64-musl@npm:1.79.0":
   version: 1.79.0
   resolution: "@oxlint/binding-linux-riscv64-musl@npm:1.79.0"
@@ -3579,6 +3905,13 @@ __metadata:
 "@oxlint/binding-linux-riscv64-musl@npm:1.80.0":
   version: 1.80.0
   resolution: "@oxlint/binding-linux-riscv64-musl@npm:1.80.0"
+  conditions: os=linux & cpu=riscv64 & libc=musl
+  languageName: node
+  linkType: hard
+
+"@oxlint/binding-linux-riscv64-musl@npm:1.81.0":
+  version: 1.81.0
+  resolution: "@oxlint/binding-linux-riscv64-musl@npm:1.81.0"
   conditions: os=linux & cpu=riscv64 & libc=musl
   languageName: node
   linkType: hard
@@ -3597,6 +3930,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@oxlint/binding-linux-s390x-gnu@npm:1.81.0":
+  version: 1.81.0
+  resolution: "@oxlint/binding-linux-s390x-gnu@npm:1.81.0"
+  conditions: os=linux & cpu=s390x & libc=glibc
+  languageName: node
+  linkType: hard
+
 "@oxlint/binding-linux-x64-gnu@npm:1.79.0":
   version: 1.79.0
   resolution: "@oxlint/binding-linux-x64-gnu@npm:1.79.0"
@@ -3607,6 +3947,13 @@ __metadata:
 "@oxlint/binding-linux-x64-gnu@npm:1.80.0":
   version: 1.80.0
   resolution: "@oxlint/binding-linux-x64-gnu@npm:1.80.0"
+  conditions: os=linux & cpu=x64 & libc=glibc
+  languageName: node
+  linkType: hard
+
+"@oxlint/binding-linux-x64-gnu@npm:1.81.0":
+  version: 1.81.0
+  resolution: "@oxlint/binding-linux-x64-gnu@npm:1.81.0"
   conditions: os=linux & cpu=x64 & libc=glibc
   languageName: node
   linkType: hard
@@ -3625,6 +3972,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@oxlint/binding-linux-x64-musl@npm:1.81.0":
+  version: 1.81.0
+  resolution: "@oxlint/binding-linux-x64-musl@npm:1.81.0"
+  conditions: os=linux & cpu=x64 & libc=musl
+  languageName: node
+  linkType: hard
+
 "@oxlint/binding-openharmony-arm64@npm:1.79.0":
   version: 1.79.0
   resolution: "@oxlint/binding-openharmony-arm64@npm:1.79.0"
@@ -3635,6 +3989,13 @@ __metadata:
 "@oxlint/binding-openharmony-arm64@npm:1.80.0":
   version: 1.80.0
   resolution: "@oxlint/binding-openharmony-arm64@npm:1.80.0"
+  conditions: os=openharmony & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"@oxlint/binding-openharmony-arm64@npm:1.81.0":
+  version: 1.81.0
+  resolution: "@oxlint/binding-openharmony-arm64@npm:1.81.0"
   conditions: os=openharmony & cpu=arm64
   languageName: node
   linkType: hard
@@ -3653,6 +4014,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@oxlint/binding-win32-arm64-msvc@npm:1.81.0":
+  version: 1.81.0
+  resolution: "@oxlint/binding-win32-arm64-msvc@npm:1.81.0"
+  conditions: os=win32 & cpu=arm64
+  languageName: node
+  linkType: hard
+
 "@oxlint/binding-win32-ia32-msvc@npm:1.79.0":
   version: 1.79.0
   resolution: "@oxlint/binding-win32-ia32-msvc@npm:1.79.0"
@@ -3667,6 +4035,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@oxlint/binding-win32-ia32-msvc@npm:1.81.0":
+  version: 1.81.0
+  resolution: "@oxlint/binding-win32-ia32-msvc@npm:1.81.0"
+  conditions: os=win32 & cpu=ia32
+  languageName: node
+  linkType: hard
+
 "@oxlint/binding-win32-x64-msvc@npm:1.79.0":
   version: 1.79.0
   resolution: "@oxlint/binding-win32-x64-msvc@npm:1.79.0"
@@ -3677,6 +4052,13 @@ __metadata:
 "@oxlint/binding-win32-x64-msvc@npm:1.80.0":
   version: 1.80.0
   resolution: "@oxlint/binding-win32-x64-msvc@npm:1.80.0"
+  conditions: os=win32 & cpu=x64
+  languageName: node
+  linkType: hard
+
+"@oxlint/binding-win32-x64-msvc@npm:1.81.0":
+  version: 1.81.0
+  resolution: "@oxlint/binding-win32-x64-msvc@npm:1.81.0"
   conditions: os=win32 & cpu=x64
   languageName: node
   linkType: hard
@@ -3781,7 +4163,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@parcel/watcher@npm:^2.6.0":
+"@parcel/watcher@npm:^2.4.1, @parcel/watcher@npm:^2.6.0":
   version: 2.6.0
   resolution: "@parcel/watcher@npm:2.6.0"
   dependencies:
@@ -4184,7 +4566,1025 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@standard-schema/spec@npm:^1.1.0":
+"@spectrum-web-components/accordion@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/accordion@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/icon": "npm:1.12.3"
+    "@spectrum-web-components/icons-ui": "npm:1.12.3"
+    "@spectrum-web-components/reactive-controllers": "npm:1.12.3"
+    "@spectrum-web-components/shared": "npm:1.12.3"
+  checksum: 10c0/71c8224bf627b6f85d4447ebd45c26df7529f5f49470d9c14b7d605435849c7f86948f2bb278b7abb8f0a8d88e66eb208bff60e3de4005e36782c5f2d1b2857c
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/action-bar@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/action-bar@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/action-group": "npm:1.12.3"
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/button": "npm:1.12.3"
+    "@spectrum-web-components/field-label": "npm:1.12.3"
+    "@spectrum-web-components/popover": "npm:1.12.3"
+    "@spectrum-web-components/shared": "npm:1.12.3"
+  checksum: 10c0/7ada1809ef2d4cff05a0e99a3744ac82eef32a9411d31635f7cbf3db1c90664301a855df042ae5542681e383b9ba973054c9608fd8d3bb71d365e6d7aa24a6b8
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/action-button@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/action-button@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/button": "npm:1.12.3"
+    "@spectrum-web-components/icon": "npm:1.12.3"
+    "@spectrum-web-components/icons-ui": "npm:1.12.3"
+    "@spectrum-web-components/shared": "npm:1.12.3"
+  checksum: 10c0/bcc768fdbc2eeeaf15d0e9a43fc52db315588545982dc07e713bbb2407521f262b880bd068b853b04b5bc4e9aaba52b204e9392070955bedf2788302a6ae5fa6
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/action-group@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/action-group@npm:1.12.3"
+  dependencies:
+    "@lit-labs/observers": "npm:2.0.2"
+    "@spectrum-web-components/action-button": "npm:1.12.3"
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/icons-workflow": "npm:1.12.3"
+    "@spectrum-web-components/reactive-controllers": "npm:1.12.3"
+  checksum: 10c0/2ac99934164495d3b5d7f5429287bf81ce933b6b762c5420dad92c1efd908b07f58eb75a3410f0c222fb707a80c64ebe4c34c6a401032580cb692b261e327fe8
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/action-menu@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/action-menu@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/action-button": "npm:1.12.3"
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/field-label": "npm:1.12.3"
+    "@spectrum-web-components/icon": "npm:1.12.3"
+    "@spectrum-web-components/icons-workflow": "npm:1.12.3"
+    "@spectrum-web-components/menu": "npm:1.12.3"
+    "@spectrum-web-components/overlay": "npm:1.12.3"
+    "@spectrum-web-components/picker": "npm:1.12.3"
+    "@spectrum-web-components/popover": "npm:1.12.3"
+    "@spectrum-web-components/progress-circle": "npm:1.12.3"
+    "@spectrum-web-components/shared": "npm:1.12.3"
+    "@spectrum-web-components/tooltip": "npm:1.12.3"
+    "@spectrum-web-components/tray": "npm:1.12.3"
+  checksum: 10c0/af60b115e714413d829e270b81ab4d3226042d80e883d07b1c6f959cf607b070e4a25c312d918c84e5614a70cc7bc36211a444d8379b58102c65347c265db9cc
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/alert-banner@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/alert-banner@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/button": "npm:1.12.3"
+    "@spectrum-web-components/icons-workflow": "npm:1.12.3"
+  checksum: 10c0/02da0165e332a232a628eda6567f5cd8e349f33513f6314872ffbb351227b7b107005a3bf7911cf2bfb2df61603fa51fc86fb9be834e4cb9f436394a45b87dd3
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/alert-dialog@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/alert-dialog@npm:1.12.3"
+  dependencies:
+    "@lit-labs/observers": "npm:2.0.2"
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/button": "npm:1.12.3"
+    "@spectrum-web-components/button-group": "npm:1.12.3"
+    "@spectrum-web-components/divider": "npm:1.12.3"
+    "@spectrum-web-components/icons-workflow": "npm:1.12.3"
+    "@spectrum-web-components/shared": "npm:1.12.3"
+  checksum: 10c0/90790d9f892e5223c4a0c069e74a6c97567723f7e87943a3053ed20311a59b4cff08bca285e5e13221b27d83add0f770b26751f09ebbbf422020bb77c8ce91bc
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/asset@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/asset@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+  checksum: 10c0/eca3772b6b255453a9348ed613ff30ad209ff6717c392a8d2387233f46a53cafebeb33e4480f36e2afafbdef22173ab557cbfce3642acdd926d151a8eed66ea3
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/avatar@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/avatar@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/shared": "npm:1.12.3"
+  checksum: 10c0/fd85b55db5afd4104902631e8b0b0883b2f9d031947300780f550cd57decaeaf22fda1107459995900b6e63cd883eb14d80ee9536c06564f90254463db1482b7
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/badge@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/badge@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/shared": "npm:1.12.3"
+  checksum: 10c0/4153059979395d535a30a94c65f9cb82d8e7733bdf1aa8c313941a4938c969f40433142ec0b2077a667dabca724e60677051a0d5cac96ecd98c6adc055f01479
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/base@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/base@npm:1.12.3"
+  dependencies:
+    lit: "npm:^2.5.0 || ^3.1.3"
+  checksum: 10c0/7785b880e54e432ba132ad02823f25c2dbe7c78b17c90ab485384bb961b56190fa9c5f00d6bc967da35a814665687eb018b32e77359c289eae8fb0e8039d228e
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/breadcrumbs@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/breadcrumbs@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/action-menu": "npm:1.12.3"
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/icon": "npm:1.12.3"
+    "@spectrum-web-components/icons-ui": "npm:1.12.3"
+    "@spectrum-web-components/icons-workflow": "npm:1.12.3"
+    "@spectrum-web-components/link": "npm:1.12.3"
+    "@spectrum-web-components/menu": "npm:1.12.3"
+    "@spectrum-web-components/shared": "npm:1.12.3"
+  checksum: 10c0/c92edeee86c373b0eb178154a98f9b2c4744cd308f4d1e6458a3c77ab803e53cbd93f68b5d58f4f6cec0f9e259f5a83cf2e7d325979e89bbd739bb7bb7148570
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/bundle@npm:^1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/bundle@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/accordion": "npm:1.12.3"
+    "@spectrum-web-components/action-bar": "npm:1.12.3"
+    "@spectrum-web-components/action-button": "npm:1.12.3"
+    "@spectrum-web-components/action-group": "npm:1.12.3"
+    "@spectrum-web-components/action-menu": "npm:1.12.3"
+    "@spectrum-web-components/alert-banner": "npm:1.12.3"
+    "@spectrum-web-components/asset": "npm:1.12.3"
+    "@spectrum-web-components/avatar": "npm:1.12.3"
+    "@spectrum-web-components/badge": "npm:1.12.3"
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/breadcrumbs": "npm:1.12.3"
+    "@spectrum-web-components/button": "npm:1.12.3"
+    "@spectrum-web-components/button-group": "npm:1.12.3"
+    "@spectrum-web-components/card": "npm:1.12.3"
+    "@spectrum-web-components/checkbox": "npm:1.12.3"
+    "@spectrum-web-components/clear-button": "npm:1.12.3"
+    "@spectrum-web-components/close-button": "npm:1.12.3"
+    "@spectrum-web-components/coachmark": "npm:1.12.3"
+    "@spectrum-web-components/color-area": "npm:1.12.3"
+    "@spectrum-web-components/color-field": "npm:1.12.3"
+    "@spectrum-web-components/color-handle": "npm:1.12.3"
+    "@spectrum-web-components/color-loupe": "npm:1.12.3"
+    "@spectrum-web-components/color-slider": "npm:1.12.3"
+    "@spectrum-web-components/color-wheel": "npm:1.12.3"
+    "@spectrum-web-components/combobox": "npm:1.12.3"
+    "@spectrum-web-components/contextual-help": "npm:1.12.3"
+    "@spectrum-web-components/dialog": "npm:1.12.3"
+    "@spectrum-web-components/divider": "npm:1.12.3"
+    "@spectrum-web-components/dropzone": "npm:1.12.3"
+    "@spectrum-web-components/field-group": "npm:1.12.3"
+    "@spectrum-web-components/field-label": "npm:1.12.3"
+    "@spectrum-web-components/grid": "npm:1.12.3"
+    "@spectrum-web-components/help-text": "npm:1.12.3"
+    "@spectrum-web-components/icon": "npm:1.12.3"
+    "@spectrum-web-components/icons": "npm:1.12.3"
+    "@spectrum-web-components/icons-ui": "npm:1.12.3"
+    "@spectrum-web-components/icons-workflow": "npm:1.12.3"
+    "@spectrum-web-components/iconset": "npm:1.12.3"
+    "@spectrum-web-components/illustrated-message": "npm:1.12.3"
+    "@spectrum-web-components/infield-button": "npm:1.12.3"
+    "@spectrum-web-components/link": "npm:1.12.3"
+    "@spectrum-web-components/menu": "npm:1.12.3"
+    "@spectrum-web-components/meter": "npm:1.12.3"
+    "@spectrum-web-components/modal": "npm:1.12.3"
+    "@spectrum-web-components/number-field": "npm:1.12.3"
+    "@spectrum-web-components/overlay": "npm:1.12.3"
+    "@spectrum-web-components/picker": "npm:1.12.3"
+    "@spectrum-web-components/picker-button": "npm:1.12.3"
+    "@spectrum-web-components/popover": "npm:1.12.3"
+    "@spectrum-web-components/progress-bar": "npm:1.12.3"
+    "@spectrum-web-components/progress-circle": "npm:1.12.3"
+    "@spectrum-web-components/radio": "npm:1.12.3"
+    "@spectrum-web-components/reactive-controllers": "npm:1.12.3"
+    "@spectrum-web-components/search": "npm:1.12.3"
+    "@spectrum-web-components/shared": "npm:1.12.3"
+    "@spectrum-web-components/sidenav": "npm:1.12.3"
+    "@spectrum-web-components/slider": "npm:1.12.3"
+    "@spectrum-web-components/split-view": "npm:1.12.3"
+    "@spectrum-web-components/status-light": "npm:1.12.3"
+    "@spectrum-web-components/styles": "npm:1.12.3"
+    "@spectrum-web-components/swatch": "npm:1.12.3"
+    "@spectrum-web-components/switch": "npm:1.12.3"
+    "@spectrum-web-components/table": "npm:1.12.3"
+    "@spectrum-web-components/tabs": "npm:1.12.3"
+    "@spectrum-web-components/tags": "npm:1.12.3"
+    "@spectrum-web-components/textfield": "npm:1.12.3"
+    "@spectrum-web-components/theme": "npm:1.12.3"
+    "@spectrum-web-components/thumbnail": "npm:1.12.3"
+    "@spectrum-web-components/toast": "npm:1.12.3"
+    "@spectrum-web-components/tooltip": "npm:1.12.3"
+    "@spectrum-web-components/top-nav": "npm:1.12.3"
+    "@spectrum-web-components/tray": "npm:1.12.3"
+    "@spectrum-web-components/truncated": "npm:1.12.3"
+    "@spectrum-web-components/underlay": "npm:1.12.3"
+  checksum: 10c0/c3d68a7f7b85e969eddef50f7b1d3c4617d42e6747cae0cae5d95a4bed0c2ec50cc92975dcc7539854ccbbb86480ce861157401fe62cde5c0ed2d2f0ecbeffb8
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/button-group@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/button-group@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/button": "npm:1.12.3"
+  checksum: 10c0/d9baa0d5b17919f75da67ae10956cd5c1a79dcca2415ccad30ac7d28f4c327c8674b33c366bd0ff632bc07507514ea7c55c46ef95f58dc5962a6e509466a5cb1
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/button@npm:1.12.3, @spectrum-web-components/button@npm:^1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/button@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/clear-button": "npm:1.12.3"
+    "@spectrum-web-components/close-button": "npm:1.12.3"
+    "@spectrum-web-components/icon": "npm:1.12.3"
+    "@spectrum-web-components/icons-ui": "npm:1.12.3"
+    "@spectrum-web-components/progress-circle": "npm:1.12.3"
+    "@spectrum-web-components/reactive-controllers": "npm:1.12.3"
+    "@spectrum-web-components/shared": "npm:1.12.3"
+  checksum: 10c0/ced80871522b4bd7900041a8b80f74f651192bdd1eb2824aa598b2d874dd350b9b61102f29f063a52b2a2416ed5d2146921ac6d2210565dac7f636ff2358607e
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/card@npm:1.12.3, @spectrum-web-components/card@npm:^1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/card@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/asset": "npm:1.12.3"
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/checkbox": "npm:1.12.3"
+    "@spectrum-web-components/divider": "npm:1.12.3"
+    "@spectrum-web-components/icons-workflow": "npm:1.12.3"
+    "@spectrum-web-components/popover": "npm:1.12.3"
+    "@spectrum-web-components/shared": "npm:1.12.3"
+    "@spectrum-web-components/styles": "npm:1.12.3"
+  checksum: 10c0/0f12f34a4838e64d49058b43f0dd1808f197512c93fe3d0603ffcf00a0a6f8af084f196c1de4cbd6aa6fdc77d90b17b81db537c7ecad3305563161fe20b865f7
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/checkbox@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/checkbox@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/icon": "npm:1.12.3"
+    "@spectrum-web-components/icons-ui": "npm:1.12.3"
+    "@spectrum-web-components/shared": "npm:1.12.3"
+  checksum: 10c0/d38321d5bdcdbfac9377e590b1cf323fc831f64ce35942121e83c6daf6bb3739068864667a44f3bbfb3f509514d0ffbefb5bfc98f12ab4020b0e610421cb89cc
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/clear-button@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/clear-button@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+  checksum: 10c0/359ab9af2c0cdaced9befde31efc6c166832ee82b23d06469cfa69ccea52d00d1831c35a50add1f7e547a862bb56a05f85b895edf9650106e34de63870b49209
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/close-button@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/close-button@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+  checksum: 10c0/dcd59ed915717bad03c863875d4487ceaa068a2b7bb89ab6ba5282cc261b0d8bf84c849eb326da8987dd73067812356d41696715651368b05bae490235a9fb68
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/coachmark@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/coachmark@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/asset": "npm:1.12.3"
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/button": "npm:1.12.3"
+    "@spectrum-web-components/button-group": "npm:1.12.3"
+    "@spectrum-web-components/icon": "npm:1.12.3"
+    "@spectrum-web-components/icons-ui": "npm:1.12.3"
+    "@spectrum-web-components/popover": "npm:1.12.3"
+    "@spectrum-web-components/reactive-controllers": "npm:1.12.3"
+    "@spectrum-web-components/shared": "npm:1.12.3"
+  checksum: 10c0/94fe095ab6825ceeb12df070a31056a4f1216e8132fcad1397bc69756d6ece917f5d657873574a6dfbebdd8a36dacc768cedb7b08b4b599577a166bc56d53a40
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/color-area@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/color-area@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/color-handle": "npm:1.12.3"
+    "@spectrum-web-components/opacity-checkerboard": "npm:1.12.3"
+    "@spectrum-web-components/reactive-controllers": "npm:1.12.3"
+    "@spectrum-web-components/shared": "npm:1.12.3"
+  checksum: 10c0/1aa9450764ff432ec1d733c003802558a2fa95dad1d255d53c95a95ed53139a13cabee8c72b964c433db3873626f16064c8a4c949212eeea15f80475cf054a98
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/color-field@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/color-field@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/color-handle": "npm:1.12.3"
+    "@spectrum-web-components/reactive-controllers": "npm:1.12.3"
+    "@spectrum-web-components/textfield": "npm:1.12.3"
+  checksum: 10c0/a3d0af5900c0d2b48a15fe05762a5ad2af807d90b94707e70bffb80a0680667609b3ab647baf3a05e5af74b36c0785d14e8cad5c6fb519c3c3f893a179e45100
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/color-handle@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/color-handle@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/color-loupe": "npm:1.12.3"
+    "@spectrum-web-components/opacity-checkerboard": "npm:1.12.3"
+  checksum: 10c0/8fa9f9517c0d398bc9e01ca3db70f6e0b98909ea531fd1b800fdef3ce4a184cc6108c67a244753707c372259f8510e4152128171656f23a73e305af3e11c70f0
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/color-loupe@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/color-loupe@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/opacity-checkerboard": "npm:1.12.3"
+  checksum: 10c0/ba7ecaadacfcb66608c5efc01a2f73ef6a4c991d7be6384f92052d19e6d7d0bb76ccc95628966d9fef2b4e47f3e417f582aee9ea349be0ac2a1fc11293a021d8
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/color-slider@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/color-slider@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/color-handle": "npm:1.12.3"
+    "@spectrum-web-components/opacity-checkerboard": "npm:1.12.3"
+    "@spectrum-web-components/reactive-controllers": "npm:1.12.3"
+    "@spectrum-web-components/shared": "npm:1.12.3"
+  checksum: 10c0/14a0c414118cc4010972debc53333d9a898d5a144768770bc34d89058cd258c40fcaaf09a53b10da16e6e9aa12fcf44ccf27effccc5537a04917581d45fbb138
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/color-wheel@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/color-wheel@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/color-handle": "npm:1.12.3"
+    "@spectrum-web-components/reactive-controllers": "npm:1.12.3"
+    "@spectrum-web-components/shared": "npm:1.12.3"
+  checksum: 10c0/65a7f188f6707f3a2b31599c7893053cb4c9846f08238f2807ce489e87de0747246ff3c0e1862547b587c792742b2a04a21b504745ab355030f236a8138cb640
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/combobox@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/combobox@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/action-button": "npm:1.12.3"
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/icon": "npm:1.12.3"
+    "@spectrum-web-components/icons-ui": "npm:1.12.3"
+    "@spectrum-web-components/menu": "npm:1.12.3"
+    "@spectrum-web-components/overlay": "npm:1.12.3"
+    "@spectrum-web-components/picker-button": "npm:1.12.3"
+    "@spectrum-web-components/popover": "npm:1.12.3"
+    "@spectrum-web-components/progress-circle": "npm:1.12.3"
+    "@spectrum-web-components/reactive-controllers": "npm:1.12.3"
+    "@spectrum-web-components/textfield": "npm:1.12.3"
+  checksum: 10c0/fd1cb9f24f8f4942572a32fc2557412a50f843469d33dbacb832c53c99e0c0f4140b29bf1359210ec1d69dd9b38fc337ddf68d7ddb160ef403840ae8b136b42a
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/contextual-help@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/contextual-help@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/action-button": "npm:1.12.3"
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/dialog": "npm:1.12.3"
+    "@spectrum-web-components/icons-workflow": "npm:1.12.3"
+    "@spectrum-web-components/overlay": "npm:1.12.3"
+    "@spectrum-web-components/popover": "npm:1.12.3"
+    "@spectrum-web-components/reactive-controllers": "npm:1.12.3"
+  checksum: 10c0/71c39726fbaee4b8656756216a23f1c41e0bfdb3a04a70f2316d7acdf6a155d2c2a23e53d4083a2bf045ce076044ff03ea006c7b0ac05f545c271b9bb22b71c7
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/dialog@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/dialog@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/alert-dialog": "npm:1.12.3"
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/button": "npm:1.12.3"
+    "@spectrum-web-components/button-group": "npm:1.12.3"
+    "@spectrum-web-components/divider": "npm:1.12.3"
+    "@spectrum-web-components/icons-workflow": "npm:1.12.3"
+    "@spectrum-web-components/modal": "npm:1.12.3"
+    "@spectrum-web-components/shared": "npm:1.12.3"
+    "@spectrum-web-components/underlay": "npm:1.12.3"
+  checksum: 10c0/0d1d7cb4cc25d043bff5360f60ba5fe120f8eecd6c4aeb997beb118ecee0f8912fb58fcf5f699b34af823becb348a80d41659a9559848d8ff587ac76acbebed6
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/divider@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/divider@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+  checksum: 10c0/f973839f67cf622440af88511e7373cb3ff04a8b1e024945d4c372f0c52a9e2fb045d8820571b0034f6761b8b62a1a2c61674818a4140a8dc0b528947e2239fd
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/dropzone@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/dropzone@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+  checksum: 10c0/03163f342393f9244ecaf61be027bab3faab640a78c922e47267b10854e54ec30437588d24387204dd8c495d997b0dd5d412aaf3a9d1566a94ba71145e7a92eb
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/field-group@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/field-group@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/help-text": "npm:1.12.3"
+  checksum: 10c0/04507f9329e614bafd15a55eac2601b338e16e3e9a4d804b278e5d15c054afe1e8cc33907ae14cc465658154f3ea4fdc0c1d06f04f796923cb462a7d944f11c5
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/field-label@npm:1.12.3, @spectrum-web-components/field-label@npm:^1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/field-label@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/icon": "npm:1.12.3"
+    "@spectrum-web-components/icons-ui": "npm:1.12.3"
+    "@spectrum-web-components/reactive-controllers": "npm:1.12.3"
+    "@spectrum-web-components/shared": "npm:1.12.3"
+  checksum: 10c0/275b44e333538c844c8bef9205f9dffbd5bd8993b91be89dd6213073573e22e59a4bf2d41862fec92f0055669c2ce1a732c34253123294d2d1a8f66618dafde0
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/grid@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/grid@npm:1.12.3"
+  dependencies:
+    "@lit-labs/observers": "npm:2.0.2"
+    "@lit-labs/virtualizer": "npm:2.0.12"
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/reactive-controllers": "npm:1.12.3"
+    lit: "npm:^2.5.0 || ^3.1.3"
+  checksum: 10c0/33c8e5dc57b96cc92477882b86e321d7ff473e62886ee69711f9611b2d87e305148164f6c49dcc780f525f731e8e69d7c07286a3e7c0a2bf5fd6c6b77a78f17c
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/help-text@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/help-text@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/icons-workflow": "npm:1.12.3"
+    "@spectrum-web-components/shared": "npm:1.12.3"
+  checksum: 10c0/8544bbc747459ce2944d7f8a0bce3f9d89f69625194c96258f3b870fd4040b2b97f4058e553de4754e964c57335da8c56c2b7006fa051ec820c8b7cd1b1a9a51
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/icon@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/icon@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/iconset": "npm:1.12.3"
+    "@spectrum-web-components/reactive-controllers": "npm:1.12.3"
+  checksum: 10c0/a253a78016d9ac153f0eac238ec35bd7d96fb7e6dad6dbe4041432ece6cd82967ddbfa75c6179113c0e562afddec0f3451078c7addfce758db3b057873efe76e
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/icons-ui@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/icons-ui@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/icon": "npm:1.12.3"
+    "@spectrum-web-components/iconset": "npm:1.12.3"
+  checksum: 10c0/a8609798c8dd3efe67ea4befe278b86c1d721811f4c1cedb4698571252832447fefef1f9c65a46713ce3d645c91b3a751632dd9b1b042458d653ca2490d283d2
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/icons-workflow@npm:1.12.3, @spectrum-web-components/icons-workflow@npm:^1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/icons-workflow@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/icon": "npm:1.12.3"
+  checksum: 10c0/ce37093f61a53cafcc72bcff89877fb4e8e104071b45b6bdcbce0fbca32130d62f956543db551e3b324024a7dbc9610292fb7d1db1b9cfeeb206d482dda940ef
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/icons@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/icons@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/iconset": "npm:1.12.3"
+  checksum: 10c0/5e421cc8907604edbfddbb1a933274c5435f009e3c2d9255f17a74d09dd82c77e9e172a945413e75af72c7e5c5ce861674febb32014aa0ca5e81918f0c36f442
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/iconset@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/iconset@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+  checksum: 10c0/d351a7164eed38ca9fd313d18b9ca9499b8946488ba545f13ce090facacb00fd5d1348e97260482acf58eed4d0699ab07978ff5ae3eb4bbb0dae2975ab0049a4
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/illustrated-message@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/illustrated-message@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/styles": "npm:1.12.3"
+  checksum: 10c0/a7cae439b2baa41875e417baceb7790b667dfca2f0f6830d0dedc9426ba6e7af903d7497bba4cbe0c1e81b8ee2b5cc0462ea05231e86c6e6d02c3d435aba1882
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/infield-button@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/infield-button@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/button": "npm:1.12.3"
+  checksum: 10c0/874071aa1b620c46e8ab7b5c64a93785e9b18559bb2cafaa4ad254a38a00ed16cc78f211fa57f8e3cb1ea967528e8c2440a5f8cd17f643392f6941bed58cd525
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/link@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/link@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/shared": "npm:1.12.3"
+  checksum: 10c0/854b5f8baaf7d7d4d39dcb3d2ab1fc7cf0c3c387c21383821960b10493467cc775663db289babc7fca13cf8f8722e6708de9e1680a837f214b5b0758b9cd2b73
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/menu@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/menu@npm:1.12.3"
+  dependencies:
+    "@lit-labs/observers": "npm:2.0.2"
+    "@spectrum-web-components/action-button": "npm:1.12.3"
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/divider": "npm:1.12.3"
+    "@spectrum-web-components/icon": "npm:1.12.3"
+    "@spectrum-web-components/icons-ui": "npm:1.12.3"
+    "@spectrum-web-components/overlay": "npm:1.12.3"
+    "@spectrum-web-components/popover": "npm:1.12.3"
+    "@spectrum-web-components/reactive-controllers": "npm:1.12.3"
+    "@spectrum-web-components/shared": "npm:1.12.3"
+  checksum: 10c0/094e95180c7105544cc6477cc94d69435494b54ecc7355eaf74873e0fb3a90c3d0b6b221a09511f3fcfd86e5a619237f0c9f78036605234de12b7f14583e9870
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/meter@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/meter@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/field-label": "npm:1.12.3"
+    "@spectrum-web-components/reactive-controllers": "npm:1.12.3"
+    "@spectrum-web-components/shared": "npm:1.12.3"
+  checksum: 10c0/d3ed0e54a5f177f6a5a2668d074c98812885980a9f5a478691fe29eef90d23fdbdfb10b54834ca6ed0a18db9e9cfc4cbba519adfab985a750452c863b70e5d7c
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/modal@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/modal@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+  checksum: 10c0/121c4bf11ef7196185a6387a09ebe5781b4db71b11a49b1194c584b20ff25a4171b7eb58ef13adb49e745043cba89f27d0ab46c21315237d8fc1300216706154
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/number-field@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/number-field@npm:1.12.3"
+  dependencies:
+    "@internationalized/number": "npm:3.6.5"
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/icon": "npm:1.12.3"
+    "@spectrum-web-components/icons-ui": "npm:1.12.3"
+    "@spectrum-web-components/infield-button": "npm:1.12.3"
+    "@spectrum-web-components/reactive-controllers": "npm:1.12.3"
+    "@spectrum-web-components/shared": "npm:1.12.3"
+    "@spectrum-web-components/textfield": "npm:1.12.3"
+  checksum: 10c0/e7a3803e83bff09eee8f5836851e1855de8b9287725d6ffb8d7b63878bec72e8d461d71ed1c1236122419b40acd9b173f0fcfbc6933f1ba76b9e999f03d88a1e
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/opacity-checkerboard@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/opacity-checkerboard@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+  checksum: 10c0/a8fd2b6efea8ff76ae0cb8e5d720227ee6e733c7c586fbf4a581e6f600c902b2cb4fa95b5f6e2e7201499a3d30bdfa66f24abe34b66b358ffcfb5d8bf62b7b6f
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/overlay@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/overlay@npm:1.12.3"
+  dependencies:
+    "@floating-ui/dom": "npm:1.7.4"
+    "@floating-ui/utils": "npm:0.2.10"
+    "@spectrum-web-components/action-button": "npm:1.12.3"
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/reactive-controllers": "npm:1.12.3"
+    "@spectrum-web-components/shared": "npm:1.12.3"
+    "@spectrum-web-components/theme": "npm:1.12.3"
+    focus-trap: "npm:7.6.5"
+  checksum: 10c0/5271578f4dba7c8060e9fc5cb90e7a940e1b17c0983061ad95793adfe5dd405b54d618a0bbb48863e2b76935e72c724eafe89a09fae167615ace0bb407678f4d
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/picker-button@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/picker-button@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/button": "npm:1.12.3"
+    "@spectrum-web-components/icon": "npm:1.12.3"
+    "@spectrum-web-components/icons-ui": "npm:1.12.3"
+    "@spectrum-web-components/shared": "npm:1.12.3"
+  checksum: 10c0/bd3a57a44b837a73dfd62e709fe72a11c444c63f9215169ad40926b04d0f2fc29ae516cb8cc26c3d0c0c93156a7dffb7c37aef0e176979bac78f857dd9249a64
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/picker@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/picker@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/button": "npm:1.12.3"
+    "@spectrum-web-components/field-label": "npm:1.12.3"
+    "@spectrum-web-components/icon": "npm:1.12.3"
+    "@spectrum-web-components/icons-ui": "npm:1.12.3"
+    "@spectrum-web-components/icons-workflow": "npm:1.12.3"
+    "@spectrum-web-components/menu": "npm:1.12.3"
+    "@spectrum-web-components/overlay": "npm:1.12.3"
+    "@spectrum-web-components/popover": "npm:1.12.3"
+    "@spectrum-web-components/progress-circle": "npm:1.12.3"
+    "@spectrum-web-components/reactive-controllers": "npm:1.12.3"
+    "@spectrum-web-components/shared": "npm:1.12.3"
+    "@spectrum-web-components/tooltip": "npm:1.12.3"
+    "@spectrum-web-components/tray": "npm:1.12.3"
+  checksum: 10c0/5fc70165de9029b80eeb72cf0952c4f749e99eb929ac030007d526ce278317600c6f919572f4106abf510c041666950b9751c7dddf672a6155d447cf96709263
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/popover@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/popover@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/overlay": "npm:1.12.3"
+  checksum: 10c0/c759f8675d3da2eb45777216676923785a247134f6f28aeaafcd0be8d13261f8eb5e696d9dd75ea1442901e5f5f5ac2c52a847871b6454af30d4214953e5036d
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/progress-bar@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/progress-bar@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/field-label": "npm:1.12.3"
+    "@spectrum-web-components/reactive-controllers": "npm:1.12.3"
+    "@spectrum-web-components/shared": "npm:1.12.3"
+  checksum: 10c0/8b529daf9814492b2dc116c2ad45f45f631956060940948ec4d473eb1566a71a47e0fffde865846fb4ec93cbf279a3192e8271cec925ea3d1c3f5df24b098859
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/progress-circle@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/progress-circle@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/reactive-controllers": "npm:1.12.3"
+    "@spectrum-web-components/shared": "npm:1.12.3"
+  checksum: 10c0/9728a26c9e1e7496b6b614a796fefd836e41c0d61b7b2dc33362dca70ba76a39177b39bb4456df70be50d7683923d81ba933bfaf3c798381f1991d1ffb257a39
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/radio@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/radio@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/field-group": "npm:1.12.3"
+    "@spectrum-web-components/help-text": "npm:1.12.3"
+    "@spectrum-web-components/reactive-controllers": "npm:1.12.3"
+    "@spectrum-web-components/shared": "npm:1.12.3"
+  checksum: 10c0/8d72434d974f7f8b6a3503cfe1408a8e44fc5ff5cd91a4366d2e88607ff70d3e2b9a6531e08672a4fa217cc1c0b79ba8d52c08d2339a9a64b5c41489fcc7aa1b
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/reactive-controllers@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/reactive-controllers@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/progress-circle": "npm:1.12.3"
+    colorjs.io: "npm:0.5.2"
+    lit: "npm:^2.5.0 || ^3.1.3"
+  checksum: 10c0/478e5215d793d58bdb1a8ee884432f6e8a2df1a9da904d119f580c7d5e7457ac5839eda0d90a1adf5216b3414c6c2c97ca3228cece7c15e18858464cd3ded82e
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/search@npm:1.12.3, @spectrum-web-components/search@npm:^1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/search@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/button": "npm:1.12.3"
+    "@spectrum-web-components/icon": "npm:1.12.3"
+    "@spectrum-web-components/icons-workflow": "npm:1.12.3"
+    "@spectrum-web-components/textfield": "npm:1.12.3"
+  checksum: 10c0/79d2b5e35e67ef293aec991f29ea93702dcc7a99e9b44ca3f866f9df1031898d6c96a314439bf9cab66a2cd8378666605005cb71805a64fa1e5f3f5239ebd69b
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/shared@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/shared@npm:1.12.3"
+  dependencies:
+    "@lit-labs/observers": "npm:2.0.2"
+    "@spectrum-web-components/base": "npm:1.12.3"
+    focus-visible: "npm:5.2.1"
+  checksum: 10c0/dacaea8031bf57daf82dccb1f285597bedc9286b9f4c85c273d2025d5a4eeb384ffbf0fa04a2b3d3c4bfff570a1b20ca29aea9b77a066270bc2d8779cdceeb6d
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/sidenav@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/sidenav@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/reactive-controllers": "npm:1.12.3"
+    "@spectrum-web-components/shared": "npm:1.12.3"
+  checksum: 10c0/3d93463b86a133311f502baaeaef2bde324c6ee56f30637eb4da768861ba7a6bdb4910b670fc9ccd6b0f280a5fb89bcabc1b7ce8ce7dacf054e37b3416fb0c83
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/slider@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/slider@npm:1.12.3"
+  dependencies:
+    "@internationalized/number": "npm:3.6.5"
+    "@lit-labs/observers": "npm:2.0.2"
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/field-label": "npm:1.12.3"
+    "@spectrum-web-components/number-field": "npm:1.12.3"
+    "@spectrum-web-components/reactive-controllers": "npm:1.12.3"
+    "@spectrum-web-components/shared": "npm:1.12.3"
+    "@spectrum-web-components/theme": "npm:1.12.3"
+  checksum: 10c0/13437b9c789135b00c8cd1f4870aa5bd4ca68670b64908f1a9040ceaf278d15241043b73c4d461b4be84ae97cfc7b93f6d7b758a86ffdfd1b4f0833c4e16876a
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/split-view@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/split-view@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/shared": "npm:1.12.3"
+  checksum: 10c0/7fcfafe1afa3b705371c3eb9217064def9ccb3949105d7a1fcc291a2621df0345f67b92e14ca8a312d390f1620de8a35be2b048bed22b445794850bc7862912b
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/status-light@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/status-light@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+  checksum: 10c0/1411130c64115a3ffa11d67415634fd18773c14eca38076884f30a721b659f93c4e850d34cc7435ca4d16eba735a2b72b515cfc35956437f4afa514bd05b5d0d
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/styles@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/styles@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+    lit: "npm:^2.5.0 || ^3.1.3"
+  checksum: 10c0/a800f39263cb67168aa5ad0ca975d5da07d7c018bd7468b1dabadc05d8fd1ed34edff6745bfffcf3d4126641399b81e31e8944235450930864b722c506ea1b7b
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/swatch@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/swatch@npm:1.12.3"
+  dependencies:
+    "@lit-labs/observers": "npm:2.0.2"
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/icon": "npm:1.12.3"
+    "@spectrum-web-components/icons-ui": "npm:1.12.3"
+    "@spectrum-web-components/opacity-checkerboard": "npm:1.12.3"
+    "@spectrum-web-components/reactive-controllers": "npm:1.12.3"
+    "@spectrum-web-components/shared": "npm:1.12.3"
+  checksum: 10c0/ce10493572fd10c70c6a309159e2ab069625adad1a3f104a12dd80dc9b2d887bbf42215b140e0f75ddd22fcb033a10b4bf74a860ee986a6d19bfa80d71b7ae76
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/switch@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/switch@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/checkbox": "npm:1.12.3"
+  checksum: 10c0/2a3e5d3cc8dfb1228d33c89b4742da958e8f7556fe8e9dbde60b0c8703babbc5e6e5fd58ae792ca8a0cedd8ec7fd42cd0ca8e0cdc6aa070b5f0ce17d0cd58602
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/table@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/table@npm:1.12.3"
+  dependencies:
+    "@lit-labs/observers": "npm:2.0.2"
+    "@lit-labs/virtualizer": "npm:2.0.12"
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/checkbox": "npm:1.12.3"
+    "@spectrum-web-components/icon": "npm:1.12.3"
+    "@spectrum-web-components/icons-ui": "npm:1.12.3"
+  checksum: 10c0/f52422c36ea2147f0005595d28a0826a718b31955a01b6566ec356dbdd4d9ce2af1ba8b433e3d8495cf2363c9e2779dfd0a7a543d81dda0183877b6ee95b2e6c
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/tabs@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/tabs@npm:1.12.3"
+  dependencies:
+    "@lit-labs/observers": "npm:2.0.2"
+    "@spectrum-web-components/action-button": "npm:1.12.3"
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/icon": "npm:1.12.3"
+    "@spectrum-web-components/icons-ui": "npm:1.12.3"
+    "@spectrum-web-components/reactive-controllers": "npm:1.12.3"
+    "@spectrum-web-components/shared": "npm:1.12.3"
+  checksum: 10c0/3e80014b35c374f1263de2341ce256784685dac23bfb2d9f743c941d2ecacd130948c6cd7156ba56490d62c326bc844bd22324a2fb743f3fceec8b1ed8f6e038
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/tags@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/tags@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/button": "npm:1.12.3"
+    "@spectrum-web-components/reactive-controllers": "npm:1.12.3"
+    "@spectrum-web-components/shared": "npm:1.12.3"
+  checksum: 10c0/e64ec4a365464d26117f06d262bee7e1844dd4d98b391e713d86c4667730163bf5fedbfa7bd8f2d14c8eabc5a9fa7c8542c46a8131c20d23a40e5f49c010bfa9
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/textfield@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/textfield@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/help-text": "npm:1.12.3"
+    "@spectrum-web-components/icon": "npm:1.12.3"
+    "@spectrum-web-components/icons-ui": "npm:1.12.3"
+    "@spectrum-web-components/icons-workflow": "npm:1.12.3"
+    "@spectrum-web-components/overlay": "npm:1.12.3"
+    "@spectrum-web-components/shared": "npm:1.12.3"
+    "@spectrum-web-components/tooltip": "npm:1.12.3"
+  checksum: 10c0/f51c07a732b892deb139e5bd8d59322a9383e68d501f21d8cdb158060fc7ebd7d3c5ed5adae8a294294a82581ee19c67ffcd594b137ed52a15ff2a725759a848
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/theme@npm:1.12.3, @spectrum-web-components/theme@npm:^1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/theme@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/styles": "npm:1.12.3"
+  checksum: 10c0/46f182d8bf676ee47d3d14cbe0d26388ea8f6812af8cf36ce8449b4bf063b589de9457f7779e57e724d0484e0c1cb84fecf3ca29f4694d929e3b6a5c36ede5dd
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/thumbnail@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/thumbnail@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/opacity-checkerboard": "npm:1.12.3"
+  checksum: 10c0/75f03744c6c4bfbe635f133aa2cd7ae0054530917aedc46217f4e510628f6a2bc3ea54d1d9ceb302564f343a81ee6fa7adbbaeb1dafeb321ccdbe3c0c8917741
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/toast@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/toast@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/button": "npm:1.12.3"
+    "@spectrum-web-components/icon": "npm:1.12.3"
+    "@spectrum-web-components/icons-workflow": "npm:1.12.3"
+    "@spectrum-web-components/shared": "npm:1.12.3"
+  checksum: 10c0/247adab91511d66043791f2c0bded30c261f7a76f4548022e4249805d8c893fff929f05e0bba7187fe84bd9b570caca21fe24cd05a461a0a589dafc50ff16d40
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/tooltip@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/tooltip@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/overlay": "npm:1.12.3"
+    "@spectrum-web-components/reactive-controllers": "npm:1.12.3"
+    "@spectrum-web-components/shared": "npm:1.12.3"
+  checksum: 10c0/fbea3b53fec986cd64d80679865a40dad8436f0f6c09ad701fb80fad08f12a39c3d8ff51434c7408089903f29bfd6cadccc9644743f9c7712f6b269a622f5460
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/top-nav@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/top-nav@npm:1.12.3"
+  dependencies:
+    "@lit-labs/observers": "npm:2.0.2"
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/shared": "npm:1.12.3"
+    "@spectrum-web-components/tabs": "npm:1.12.3"
+  checksum: 10c0/8e41ad3ef21003820b35641058371f0cd3b8a46cbc92e60abcbe2262a42b1b7bae6a13c62aef0cc9bdc50b6cd2104f10035467b23e93006f0334f0d07419e2a0
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/tray@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/tray@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/modal": "npm:1.12.3"
+    "@spectrum-web-components/reactive-controllers": "npm:1.12.3"
+    "@spectrum-web-components/shared": "npm:1.12.3"
+    "@spectrum-web-components/underlay": "npm:1.12.3"
+  checksum: 10c0/c1e326a50c025c4aabbb9fa1c08482da093cd38f9a5d3c994df8a84cb2c69028991e8264582d1e91e80948d895898f137fb9dbab13270b22a9acaa6beb79fd72
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/truncated@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/truncated@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+    "@spectrum-web-components/overlay": "npm:1.12.3"
+    "@spectrum-web-components/styles": "npm:1.12.3"
+    "@spectrum-web-components/tooltip": "npm:1.12.3"
+  checksum: 10c0/33d283222a1b85191bfc77b4ae85701d8f094e53115dcbf9d894e4bac1479fea9a2cdaed6d329f0e6bd3d9ce57c7c2098ac2bb5f9cd1b23fe506d7ecaa768992
+  languageName: node
+  linkType: hard
+
+"@spectrum-web-components/underlay@npm:1.12.3":
+  version: 1.12.3
+  resolution: "@spectrum-web-components/underlay@npm:1.12.3"
+  dependencies:
+    "@spectrum-web-components/base": "npm:1.12.3"
+  checksum: 10c0/f1d1c75292406dbca1c4b9b7431fd6aadd4f3d40154e7042135eaa6e01cbbdaaead8f194fadec7689448ac6ac60f05ae5d3fc1906b46885608eaef8c4a171947
+  languageName: node
+  linkType: hard
+
+"@standard-schema/spec@npm:^1.0.0, @standard-schema/spec@npm:^1.1.0":
   version: 1.1.0
   resolution: "@standard-schema/spec@npm:1.1.0"
   checksum: 10c0/d90f55acde4b2deb983529c87e8025fa693de1a5e8b49ecc6eb84d1fd96328add0e03d7d551442156c7432fd78165b2c26ff561b970a9a881f046abb78d6a526
@@ -4260,6 +5660,79 @@ __metadata:
   peerDependencies:
     react: ^18 || ^19
   checksum: 10c0/9ab61e33b4618b9eb9b8959a73cc89d00dd974de4388d9f8a1c278d7e15571058936ad8293eb7b8135421d1edf237b78972d9f6cb7eebbaad8bbd82f706242a7
+  languageName: node
+  linkType: hard
+
+"@sveltejs/acorn-typescript@npm:^1.0.10, @sveltejs/acorn-typescript@npm:^1.0.9":
+  version: 1.0.13
+  resolution: "@sveltejs/acorn-typescript@npm:1.0.13"
+  peerDependencies:
+    acorn: ^8.9.0
+  checksum: 10c0/c470221feb7e8f9585cfc2fc9b8ece510f3cacff16fcedf5318d923b3341c9d6694ba057efa4852a37d8f08cb2cb489b285f27aa19ec4a65968788bbc1131405
+  languageName: node
+  linkType: hard
+
+"@sveltejs/adapter-auto@npm:^7.0.1":
+  version: 7.0.1
+  resolution: "@sveltejs/adapter-auto@npm:7.0.1"
+  peerDependencies:
+    "@sveltejs/kit": ^2.0.0
+  checksum: 10c0/b4d76a432cc077a0f5fb684dc83471676e7f4f0704e7350d18ebbdf8a69726e5f8ca7ebc709d06f6598725ac0a749c396d466f03095005d919ce97bc97324f50
+  languageName: node
+  linkType: hard
+
+"@sveltejs/kit@npm:^2.70.3":
+  version: 2.70.3
+  resolution: "@sveltejs/kit@npm:2.70.3"
+  dependencies:
+    "@standard-schema/spec": "npm:^1.0.0"
+    "@sveltejs/acorn-typescript": "npm:^1.0.9"
+    "@types/cookie": "npm:^0.6.0"
+    acorn: "npm:^8.16.0"
+    cookie: "npm:^0.6.0"
+    devalue: "npm:^5.8.1"
+    esm-env: "npm:^1.2.2"
+    kleur: "npm:^4.1.5"
+    magic-string: "npm:^0.30.5"
+    mrmime: "npm:^2.0.0"
+    set-cookie-parser: "npm:^3.0.0"
+    sirv: "npm:^3.0.0"
+  peerDependencies:
+    "@opentelemetry/api": ^1.0.0
+    "@sveltejs/vite-plugin-svelte": ^3.0.0 || ^4.0.0-next.1 || ^5.0.0 || ^6.0.0-next.0 || ^7.0.0
+    svelte: ^4.0.0 || ^5.0.0-next.0
+    typescript: ^5.3.3 || ^6.0.0
+    vite: ^5.0.3 || ^6.0.0 || ^7.0.0-beta.0 || ^8.0.0
+  peerDependenciesMeta:
+    "@opentelemetry/api":
+      optional: true
+    typescript:
+      optional: true
+  bin:
+    svelte-kit: svelte-kit.js
+  checksum: 10c0/af0888aa65bfe71ed18fb1450449de4be8096a910536eb3a2695b013c18b9a1b0efe7efc5dc2b1f52f4ff990bc8ea4471c365010d5cf5eb4e76bd5d5d91b1a84
+  languageName: node
+  linkType: hard
+
+"@sveltejs/load-config@npm:^0.2.3":
+  version: 0.2.3
+  resolution: "@sveltejs/load-config@npm:0.2.3"
+  checksum: 10c0/39d4f1045fd1a862e59317e76033d6c9212eb693df28b2beaf6b89d376eebab362bc9ba595fb71d357b998199ce879bc7d7f916c36f572b36a0894b2a5e1d1da
+  languageName: node
+  linkType: hard
+
+"@sveltejs/vite-plugin-svelte@npm:^7.3.0":
+  version: 7.3.0
+  resolution: "@sveltejs/vite-plugin-svelte@npm:7.3.0"
+  dependencies:
+    deepmerge: "npm:^4.3.1"
+    magic-string: "npm:^1.0.0"
+    obug: "npm:^2.1.0"
+    vitefu: "npm:^1.1.2"
+  peerDependencies:
+    svelte: ^5.46.4
+    vite: ^8.0.0-beta.7 || ^8.0.0
+  checksum: 10c0/064affb1b09af408b8f9948cb657a8983ac629bc899dbf20bde9bf8d10d4333acbf4df43376adfc32ea69e2a041a7b57ff3a11f23e76c201b2af972b0ef5ea28
   languageName: node
   linkType: hard
 
@@ -4982,6 +6455,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/cookie@npm:^0.6.0":
+  version: 0.6.0
+  resolution: "@types/cookie@npm:0.6.0"
+  checksum: 10c0/5b326bd0188120fb32c0be086b141b1481fec9941b76ad537f9110e10d61ee2636beac145463319c71e4be67a17e85b81ca9e13ceb6e3bb63b93d16824d6c149
+  languageName: node
+  linkType: hard
+
 "@types/deep-eql@npm:*":
   version: 4.0.2
   resolution: "@types/deep-eql@npm:4.0.2"
@@ -4996,7 +6476,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/estree@npm:^1.0.0, @types/estree@npm:^1.0.6, @types/estree@npm:^1.0.8":
+"@types/estree@npm:^1.0.0, @types/estree@npm:^1.0.5, @types/estree@npm:^1.0.6, @types/estree@npm:^1.0.8":
   version: 1.0.9
   resolution: "@types/estree@npm:1.0.9"
   checksum: 10c0/3ad3286ca2988cd550dafb8f2ad599c8474868e954fa601a36655bdfefd8039f7c714b8c1c7f2ae219ffbd58bd4660e66fa7479a0120fc02d4777057d4865387
@@ -5109,7 +6589,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/trusted-types@npm:^2.0.7":
+"@types/trusted-types@npm:^2.0.2, @types/trusted-types@npm:^2.0.7":
   version: 2.0.7
   resolution: "@types/trusted-types@npm:2.0.7"
   checksum: 10c0/4c4855f10de7c6c135e0d32ce462419d8abbbc33713b31d294596c0cc34ae1fa6112a2f9da729c8f7a20707782b0d69da3b1f8df6645b0366d08825ca1522e0c
@@ -5728,6 +7208,29 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@urql/core@npm:^6.0.0":
+  version: 6.0.3
+  resolution: "@urql/core@npm:6.0.3"
+  dependencies:
+    "@0no-co/graphql.web": "npm:^1.0.13"
+    wonka: "npm:^6.3.2"
+  checksum: 10c0/1fc423d967644f60cfd41090b85708ca7c3d19da30a8e44188b1e0955787ce9fac88ab3c0caea03231041de8ad905251a90bfa49a729e34fa895d3c9117f94bb
+  languageName: node
+  linkType: hard
+
+"@urql/svelte@npm:^5.0.0":
+  version: 5.0.0
+  resolution: "@urql/svelte@npm:5.0.0"
+  dependencies:
+    "@urql/core": "npm:^6.0.0"
+    wonka: "npm:^6.3.2"
+  peerDependencies:
+    "@urql/core": ^6.0.0
+    svelte: ^3.0.0 || ^4.0.0 || ^5.0.0
+  checksum: 10c0/ee1f0074b722f26142b3c00680f7b50bee5fb0d072de3504a2f02317a776b9a4413d64977c986311e3ccefe9a9d573f2b64f04ddc177167a049a9c0ba5e1f835
+  languageName: node
+  linkType: hard
+
 "@vitejs/plugin-react-swc@npm:^4.3.3":
   version: 4.3.3
   resolution: "@vitejs/plugin-react-swc@npm:4.3.3"
@@ -5992,7 +7495,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"acorn@npm:^8.14.0, acorn@npm:^8.15.0, acorn@npm:^8.16.0":
+"acorn@npm:^8.12.1, acorn@npm:^8.14.0, acorn@npm:^8.15.0, acorn@npm:^8.16.0":
   version: 8.18.0
   resolution: "acorn@npm:8.18.0"
   bin:
@@ -6109,6 +7612,13 @@ __metadata:
   dependencies:
     tslib: "npm:^2.0.0"
   checksum: 10c0/7720cb539497a9f760f68f98a4b30f22c6767aa0e72fa7d58279f7c164e258fc38b2699828f8de881aab0fc8e9c56d1313a3f1a965046fc0381a554dbc72b54a
+  languageName: node
+  linkType: hard
+
+"aria-query@npm:5.3.1":
+  version: 5.3.1
+  resolution: "aria-query@npm:5.3.1"
+  checksum: 10c0/2e9aca7d92d20b8539ee58fa1d29ba07e2269a68da8d27e9830d3cb816d49bb01648610ac3f2e365a8dedbf00168ac18c017ea49c512fbe2537a0b17184a458b
   languageName: node
   linkType: hard
 
@@ -6765,6 +8275,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"chokidar@npm:^4.0.1":
+  version: 4.0.3
+  resolution: "chokidar@npm:4.0.3"
+  dependencies:
+    readdirp: "npm:^4.0.1"
+  checksum: 10c0/a58b9df05bb452f7d105d9e7229ac82fa873741c0c40ddcc7bb82f8a909fbe3f7814c9ebe9bc9a2bef9b737c0ec6e2d699d179048ef06ad3ec46315df0ebe6ad
+  languageName: node
+  linkType: hard
+
 "chokidar@npm:^5.0.0":
   version: 5.0.0
   resolution: "chokidar@npm:5.0.0"
@@ -6910,10 +8429,24 @@ __metadata:
   languageName: node
   linkType: hard
 
-"colord@npm:^2.9.3":
+"colord@npm:^2.10.0, colord@npm:^2.9.3":
   version: 2.10.0
   resolution: "colord@npm:2.10.0"
   checksum: 10c0/2f5d1d1759124f593deca17bbbab8a88bdc3ab68bbcc88db76c1192d9a5d575db202badde044bf61789561fa0ed7a9eb895382becad1af27ec65934c216e9e04
+  languageName: node
+  linkType: hard
+
+"colorjs.io@npm:0.5.2":
+  version: 0.5.2
+  resolution: "colorjs.io@npm:0.5.2"
+  checksum: 10c0/2e6ea43629e325e721b92429239de3a6f42fb6d88ba6e4c2aeff0288c196d876f2f7ee82aea95bd40072d5cdc8cb87f042f4d94c134dcabf0e34a717e4caacb9
+  languageName: node
+  linkType: hard
+
+"colorjs.io@npm:^0.7.0":
+  version: 0.7.1
+  resolution: "colorjs.io@npm:0.7.1"
+  checksum: 10c0/a1237a1aedf168ede908a818ba3fc35097895dd48868ed0534c32ade5ee49db364ae889910f5cacd3e48057f7a16d00408935ca99e5246f2011f956833c9b10b
   languageName: node
   linkType: hard
 
@@ -6973,6 +8506,13 @@ __metadata:
   version: 3.1.1
   resolution: "cookie-es@npm:3.1.1"
   checksum: 10c0/62cf0c325cc547b52477b351e9b5d068b3ffc74f7d143cdf7af854648dd1015fca3aed1498b355365e24b0746333f0b15688ed3a535abecc5ed0a046ae956a84
+  languageName: node
+  linkType: hard
+
+"cookie@npm:^0.6.0":
+  version: 0.6.0
+  resolution: "cookie@npm:0.6.0"
+  checksum: 10c0/f2318b31af7a31b4ddb4a678d024514df5e705f9be5909a192d7f116cfb6d45cbacf96a473fa733faa95050e7cff26e7832bb3ef94751592f1387b71c8956686
   languageName: node
   linkType: hard
 
@@ -7262,7 +8802,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"deepmerge@npm:^4.2.2":
+"deepmerge@npm:^4.2.2, deepmerge@npm:^4.3.1":
   version: 4.3.1
   resolution: "deepmerge@npm:4.3.1"
   checksum: 10c0/e53481aaf1aa2c4082b5342be6b6d8ad9dfe387bc92ce197a66dea08bd4265904a087e75e464f14d1347cf2ac8afe1e4c16b266e0561cc5df29382d3c5f80044
@@ -7353,6 +8893,13 @@ __metadata:
   version: 2.1.2
   resolution: "detect-libc@npm:2.1.2"
   checksum: 10c0/acc675c29a5649fa1fb6e255f993b8ee829e510b6b56b0910666949c80c364738833417d0edb5f90e4e46be17228b0f2b66a010513984e18b15deeeac49369c4
+  languageName: node
+  linkType: hard
+
+"devalue@npm:^5.8.1":
+  version: 5.9.2
+  resolution: "devalue@npm:5.9.2"
+  checksum: 10c0/06ee48d3a69a2f77dee7867be4885b965d10592cd7082a19e885a81bc552548780564ea244ecc77e70a91c41bea7086a473b85120d73bfa1737c801a3797e6b5
   languageName: node
   linkType: hard
 
@@ -7780,6 +9327,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"es-toolkit@npm:^1.52.0":
+  version: 1.52.0
+  resolution: "es-toolkit@npm:1.52.0"
+  dependenciesMeta:
+    "@trivago/prettier-plugin-sort-imports@4.3.0":
+      unplugged: true
+    prettier-plugin-sort-re-exports@0.0.1:
+      unplugged: true
+    vitepress-plugin-sandpack@1.1.4:
+      unplugged: true
+  checksum: 10c0/465988c0a6b84b6d1d171287cbbe40c3247a1f94acea210ae14bc66b7d90c93e6839bd6937cbaf2a1d206669f3179eb26141a89d9125969a4b8e58cb7d86a2ca
+  languageName: node
+  linkType: hard
+
 "esbuild@npm:~0.28.0":
   version: 0.28.2
   resolution: "esbuild@npm:0.28.2"
@@ -8067,6 +9628,51 @@ __metadata:
   languageName: node
   linkType: hard
 
+"eslint@npm:^10.10.0":
+  version: 10.10.0
+  resolution: "eslint@npm:10.10.0"
+  dependencies:
+    "@eslint-community/eslint-utils": "npm:^4.8.0"
+    "@eslint-community/regexpp": "npm:^4.12.2"
+    "@eslint/config-array": "npm:^0.23.5"
+    "@eslint/config-helpers": "npm:^0.7.0"
+    "@eslint/core": "npm:^1.2.1"
+    "@eslint/plugin-kit": "npm:^0.7.3"
+    "@humanfs/node": "npm:^0.16.6"
+    "@humanwhocodes/module-importer": "npm:^1.0.1"
+    "@humanwhocodes/retry": "npm:^0.4.2"
+    "@types/estree": "npm:^1.0.6"
+    ajv: "npm:^6.14.0"
+    cross-spawn: "npm:^7.0.6"
+    debug: "npm:^4.3.2"
+    escape-string-regexp: "npm:^4.0.0"
+    eslint-scope: "npm:^9.1.2"
+    eslint-visitor-keys: "npm:^5.0.1"
+    espree: "npm:^11.2.0"
+    esquery: "npm:^1.7.0"
+    esutils: "npm:^2.0.2"
+    fast-deep-equal: "npm:^3.1.3"
+    file-entry-cache: "npm:11.1.5 || >11.1.6 <12"
+    find-up: "npm:^5.0.0"
+    glob-parent: "npm:^6.0.2"
+    ignore: "npm:^5.2.0"
+    imurmurhash: "npm:^0.1.4"
+    is-glob: "npm:^4.0.0"
+    json-stable-stringify-without-jsonify: "npm:^1.0.1"
+    minimatch: "npm:^10.2.5"
+    natural-compare: "npm:^1.4.0"
+    optionator: "npm:^0.9.3"
+  peerDependencies:
+    jiti: "*"
+  peerDependenciesMeta:
+    jiti:
+      optional: true
+  bin:
+    eslint: bin/eslint.js
+  checksum: 10c0/ba583145305f088585f91c5dab6825492ec657614558e4610cffc94174cf800f456e39ec3cafd3eed73e04bd9a05794067ae33b553f1323e3e7c1157242409d2
+  languageName: node
+  linkType: hard
+
 "eslint@npm:^10.8.1":
   version: 10.8.1
   resolution: "eslint@npm:10.8.1"
@@ -8157,6 +9763,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"esm-env@npm:^1.2.1, esm-env@npm:^1.2.2":
+  version: 1.2.2
+  resolution: "esm-env@npm:1.2.2"
+  checksum: 10c0/3d25c973f2fd69c25ffff29c964399cea573fe10795ecc1d26f6f957ce0483d3254e1cceddb34bf3296a0d7b0f1d53a28992f064ba509dfe6366751e752c4166
+  languageName: node
+  linkType: hard
+
 "espree@npm:^10.4.0":
   version: 10.4.0
   resolution: "espree@npm:10.4.0"
@@ -8195,6 +9808,20 @@ __metadata:
   dependencies:
     estraverse: "npm:^5.1.0"
   checksum: 10c0/77d5173db450b66f3bc685d11af4c90cffeedb340f34a39af96d43509a335ce39c894fd79233df32d38f5e4e219fa0f7076f6ec90bae8320170ba082c0db4793
+  languageName: node
+  linkType: hard
+
+"esrap@npm:^2.2.12":
+  version: 2.3.7
+  resolution: "esrap@npm:2.3.7"
+  dependencies:
+    "@jridgewell/sourcemap-codec": "npm:^1.4.15"
+  peerDependencies:
+    "@typescript-eslint/types": ^8.2.0
+  peerDependenciesMeta:
+    "@typescript-eslint/types":
+      optional: true
+  checksum: 10c0/28272f76b6ffd80aa29f58952b2c0748efd679252cd72781b1c365b2ae364905e41d425adccf6c34b43a3173a81483a75e3104f392be6d388a5e9721eaab087f
   languageName: node
   linkType: hard
 
@@ -8444,7 +10071,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fdir@npm:^6.5.0":
+"fdir@npm:^6.2.0, fdir@npm:^6.5.0":
   version: 6.5.0
   resolution: "fdir@npm:6.5.0"
   peerDependencies:
@@ -8473,7 +10100,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"file-entry-cache@npm:^11.1.5":
+"file-entry-cache@npm:11.1.5 || >11.1.6 <12, file-entry-cache@npm:^11.1.5":
   version: 11.1.5
   resolution: "file-entry-cache@npm:11.1.5"
   dependencies:
@@ -8590,6 +10217,22 @@ __metadata:
   version: 3.4.4
   resolution: "flatted@npm:3.4.4"
   checksum: 10c0/a3a52a88ea5a4c333e5a1f097dcd87a037fa31c236a77cf46222c2aa4036ef895ab9bc76138a66d9dc22bdb3652128f9598cd26e7439561bf19f67276e2bc37e
+  languageName: node
+  linkType: hard
+
+"focus-trap@npm:7.6.5":
+  version: 7.6.5
+  resolution: "focus-trap@npm:7.6.5"
+  dependencies:
+    tabbable: "npm:^6.2.0"
+  checksum: 10c0/36cac0d9b05fe5824733675bb49792842dae4704286ef7e17c736ee0c9c14701e874e6821449e78b70c17e42ba1b2c98ef10434bfe644b9d7654d8ef7f1c8faf
+  languageName: node
+  linkType: hard
+
+"focus-visible@npm:5.2.1":
+  version: 5.2.1
+  resolution: "focus-visible@npm:5.2.1"
+  checksum: 10c0/1c0e4e8b22be8684a664acc340efd6a41aafb560ce09979186a1c934de321ce8d6a3d7175c946aab1c87409b0e10f623274d7ce7d42ff16a0e4dc862fa151623
   languageName: node
   linkType: hard
 
@@ -8881,6 +10524,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"globals@npm:^17.12.0":
+  version: 17.12.0
+  resolution: "globals@npm:17.12.0"
+  checksum: 10c0/8325cf8818c848871d17c32974c2c74e9c5f09c1b0e04421886f64f21e77c3e95f3ba25586743895a73acd860ada151132481d87d44a1f12993ae7758a694d03
+  languageName: node
+  linkType: hard
+
 "globalthis@npm:^1.0.4":
   version: 1.0.4
   resolution: "globalthis@npm:1.0.4"
@@ -8919,7 +10569,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"globby@npm:^16.2.1":
+"globby@npm:^16.2.1, globby@npm:^16.2.4":
   version: 16.2.4
   resolution: "globby@npm:16.2.4"
   dependencies:
@@ -9081,6 +10731,13 @@ __metadata:
   version: 3.0.0
   resolution: "has-flag@npm:3.0.0"
   checksum: 10c0/1c6c83b14b8b1b3c25b0727b8ba3e3b647f99e9e6e13eb7322107261de07a4c1be56fc0d45678fc376e09772a3a1642ccdaf8fc69bdf123b6c086598397ce473
+  languageName: node
+  linkType: hard
+
+"has-flag@npm:^4.0.0":
+  version: 4.0.0
+  resolution: "has-flag@npm:4.0.0"
+  checksum: 10c0/2e789c61b7888d66993e14e8331449e525ef42aac53c627cc53d1c3334e768bcb6abdc4f5f0de1478a25beec6f0bd62c7549058b7ac53e924040d4f301f02fd1
   languageName: node
   linkType: hard
 
@@ -9298,7 +10955,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ignore@npm:^7.0.3":
+"ignore@npm:^7.0.3, ignore@npm:^7.0.6":
   version: 7.0.8
   resolution: "ignore@npm:7.0.8"
   checksum: 10c0/95ed888e66ad46c478680af1628ac1d242a623fcac418bd5533b91549f609a6756985a32ebfe087b1d97806f52a20f991c804e3b074e9cf16fd1404f2bcd9c0a
@@ -9312,7 +10969,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"immutable@npm:^5.1.9":
+"immutable@npm:^5.1.5, immutable@npm:^5.1.9":
   version: 5.1.9
   resolution: "immutable@npm:5.1.9"
   checksum: 10c0/ae7032b60b81b682f3e7e4df13e1ec9a401a603eb81b15bb3e37331ed6666e318c71994c6936e1462eb443d32d04769396562a7e2669da22457c8ba279c03ad2
@@ -9827,6 +11484,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"is-reference@npm:^3.0.3":
+  version: 3.0.3
+  resolution: "is-reference@npm:3.0.3"
+  dependencies:
+    "@types/estree": "npm:^1.0.6"
+  checksum: 10c0/35edd284cfb4cd9e9f08973f20e276ec517eaca31f5f049598e97dbb2d05544973dde212dac30fddee5b420930bff365e2e67dcd1293d0866c6720377382e3e5
+  languageName: node
+  linkType: hard
+
 "is-regex@npm:^1.2.1":
   version: 1.2.1
   resolution: "is-regex@npm:1.2.1"
@@ -10282,6 +11948,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"kleur@npm:^4.1.5":
+  version: 4.1.5
+  resolution: "kleur@npm:4.1.5"
+  checksum: 10c0/e9de6cb49657b6fa70ba2d1448fd3d691a5c4370d8f7bbf1c2f64c24d461270f2117e1b0afe8cb3114f13bbd8e51de158c2a224953960331904e636a5e4c0f2a
+  languageName: node
+  linkType: hard
+
 "known-css-properties@npm:^0.11.0":
   version: 0.11.0
   resolution: "known-css-properties@npm:0.11.0"
@@ -10476,6 +12149,37 @@ __metadata:
   languageName: node
   linkType: hard
 
+"lit-element@npm:^4.2.0":
+  version: 4.2.2
+  resolution: "lit-element@npm:4.2.2"
+  dependencies:
+    "@lit-labs/ssr-dom-shim": "npm:^1.5.0"
+    "@lit/reactive-element": "npm:^2.1.0"
+    lit-html: "npm:^3.3.0"
+  checksum: 10c0/114ab5837f1f9e03a30b1ed1c055fa0e31f01e444464e5ab0453ef88be12d778508235533267c42614d323e3048ee58f865b5c612948a53bd6219abca404c710
+  languageName: node
+  linkType: hard
+
+"lit-html@npm:^3.3.0":
+  version: 3.3.3
+  resolution: "lit-html@npm:3.3.3"
+  dependencies:
+    "@types/trusted-types": "npm:^2.0.2"
+  checksum: 10c0/84e57314412ff385cc67fc482d26b77057370e2cfe3c6495cc45f692bdad840d5ed0519ddddcfae1d043bb098c66daa7e807593d5a21ac72094da14274497879
+  languageName: node
+  linkType: hard
+
+"lit@npm:^2.5.0 || ^3.1.3, lit@npm:^3.1.0":
+  version: 3.3.3
+  resolution: "lit@npm:3.3.3"
+  dependencies:
+    "@lit/reactive-element": "npm:^2.1.0"
+    lit-element: "npm:^4.2.0"
+    lit-html: "npm:^3.3.0"
+  checksum: 10c0/11b6175ebffce92f4cf835ddd8a198d49707c27f34b0a7c538d2cb294f6c2fb7ff40aabd3589fcf0c2ed162404faaf2bb7c966fad9024bb9e02d013e2d5aa0b5
+  languageName: node
+  linkType: hard
+
 "load-json-file@npm:^4.0.0":
   version: 4.0.0
   resolution: "load-json-file@npm:4.0.0"
@@ -10485,6 +12189,13 @@ __metadata:
     pify: "npm:^3.0.0"
     strip-bom: "npm:^3.0.0"
   checksum: 10c0/6b48f6a0256bdfcc8970be2c57f68f10acb2ee7e63709b386b2febb6ad3c86198f840889cdbe71d28f741cbaa2f23a7771206b138cd1bdd159564511ca37c1d5
+  languageName: node
+  linkType: hard
+
+"locate-character@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "locate-character@npm:3.0.0"
+  checksum: 10c0/9da917622395002eb1336fca8cbef1c19904e3dc0b3b8078abe8ff390106d947a86feccecd0346f0e0e19fa017623fb4ccb65263d72a76dfa36e20cc18766b6c
   languageName: node
   linkType: hard
 
@@ -10627,12 +12338,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"magic-string@npm:^0.30.21":
+"magic-string@npm:^0.30.11, magic-string@npm:^0.30.21, magic-string@npm:^0.30.5":
   version: 0.30.21
   resolution: "magic-string@npm:0.30.21"
   dependencies:
     "@jridgewell/sourcemap-codec": "npm:^1.5.5"
   checksum: 10c0/299378e38f9a270069fc62358522ddfb44e94244baa0d6a8980ab2a9b2490a1d03b236b447eee309e17eb3bddfa482c61259d47960eb018a904f0ded52780c4a
+  languageName: node
+  linkType: hard
+
+"magic-string@npm:^1.0.0":
+  version: 1.2.3
+  resolution: "magic-string@npm:1.2.3"
+  dependencies:
+    "@jridgewell/sourcemap-codec": "npm:^1.5.5"
+  checksum: 10c0/541ecb30ec96e4d9b76ca65aed00124592dca26739aeee86e01d7fbce227b3fce43c9d2f0b9495dc9077c30794c967b1e091445614e2e45722ea4c128be60a93
   languageName: node
   linkType: hard
 
@@ -10902,6 +12622,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"mri@npm:^1.1.0":
+  version: 1.2.0
+  resolution: "mri@npm:1.2.0"
+  checksum: 10c0/a3d32379c2554cf7351db6237ddc18dc9e54e4214953f3da105b97dc3babe0deb3ffe99cf409b38ea47cc29f9430561ba6b53b24ab8f9ce97a4b50409e4a50e7
+  languageName: node
+  linkType: hard
+
 "mrmime@npm:^2.0.0":
   version: 2.0.1
   resolution: "mrmime@npm:2.0.1"
@@ -10930,7 +12657,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nanoid@npm:^3.3.17":
+"nanoid@npm:^3.3.17, nanoid@npm:^3.3.18":
   version: 3.3.18
   resolution: "nanoid@npm:3.3.18"
   bin:
@@ -11264,7 +12991,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"obug@npm:^2.1.1":
+"obug@npm:^2.1.0, obug@npm:^2.1.1":
   version: 2.1.4
   resolution: "obug@npm:2.1.4"
   checksum: 10c0/34a0ee97cd88573cfd97d384c2a79f07118ae5680d7e45d1de6e99c74eddefe145e8ca27a2db02195a1ee5fded5aa22b924869c842728c201b9f109a27d0ef19
@@ -11678,6 +13405,82 @@ __metadata:
   languageName: node
   linkType: hard
 
+"oxlint@npm:^1.81.0":
+  version: 1.81.0
+  resolution: "oxlint@npm:1.81.0"
+  dependencies:
+    "@oxlint/binding-android-arm-eabi": "npm:1.81.0"
+    "@oxlint/binding-android-arm64": "npm:1.81.0"
+    "@oxlint/binding-darwin-arm64": "npm:1.81.0"
+    "@oxlint/binding-darwin-x64": "npm:1.81.0"
+    "@oxlint/binding-freebsd-x64": "npm:1.81.0"
+    "@oxlint/binding-linux-arm-gnueabihf": "npm:1.81.0"
+    "@oxlint/binding-linux-arm-musleabihf": "npm:1.81.0"
+    "@oxlint/binding-linux-arm64-gnu": "npm:1.81.0"
+    "@oxlint/binding-linux-arm64-musl": "npm:1.81.0"
+    "@oxlint/binding-linux-ppc64-gnu": "npm:1.81.0"
+    "@oxlint/binding-linux-riscv64-gnu": "npm:1.81.0"
+    "@oxlint/binding-linux-riscv64-musl": "npm:1.81.0"
+    "@oxlint/binding-linux-s390x-gnu": "npm:1.81.0"
+    "@oxlint/binding-linux-x64-gnu": "npm:1.81.0"
+    "@oxlint/binding-linux-x64-musl": "npm:1.81.0"
+    "@oxlint/binding-openharmony-arm64": "npm:1.81.0"
+    "@oxlint/binding-win32-arm64-msvc": "npm:1.81.0"
+    "@oxlint/binding-win32-ia32-msvc": "npm:1.81.0"
+    "@oxlint/binding-win32-x64-msvc": "npm:1.81.0"
+  peerDependencies:
+    oxlint-tsgolint: ">=7.0.2001"
+    vite-plus: "*"
+  dependenciesMeta:
+    "@oxlint/binding-android-arm-eabi":
+      optional: true
+    "@oxlint/binding-android-arm64":
+      optional: true
+    "@oxlint/binding-darwin-arm64":
+      optional: true
+    "@oxlint/binding-darwin-x64":
+      optional: true
+    "@oxlint/binding-freebsd-x64":
+      optional: true
+    "@oxlint/binding-linux-arm-gnueabihf":
+      optional: true
+    "@oxlint/binding-linux-arm-musleabihf":
+      optional: true
+    "@oxlint/binding-linux-arm64-gnu":
+      optional: true
+    "@oxlint/binding-linux-arm64-musl":
+      optional: true
+    "@oxlint/binding-linux-ppc64-gnu":
+      optional: true
+    "@oxlint/binding-linux-riscv64-gnu":
+      optional: true
+    "@oxlint/binding-linux-riscv64-musl":
+      optional: true
+    "@oxlint/binding-linux-s390x-gnu":
+      optional: true
+    "@oxlint/binding-linux-x64-gnu":
+      optional: true
+    "@oxlint/binding-linux-x64-musl":
+      optional: true
+    "@oxlint/binding-openharmony-arm64":
+      optional: true
+    "@oxlint/binding-win32-arm64-msvc":
+      optional: true
+    "@oxlint/binding-win32-ia32-msvc":
+      optional: true
+    "@oxlint/binding-win32-x64-msvc":
+      optional: true
+  peerDependenciesMeta:
+    oxlint-tsgolint:
+      optional: true
+    vite-plus:
+      optional: true
+  bin:
+    oxlint: bin/oxlint
+  checksum: 10c0/547027fc2dae81851b61819886f36d95a694a12c457e0b740708756005da23602fbbb9579ea133341f3a45656e7d0821a042423e26267be5a1630492a88e8691
+  languageName: node
+  linkType: hard
+
 "p-finally@npm:^2.0.0":
   version: 2.0.1
   resolution: "p-finally@npm:2.0.1"
@@ -11909,7 +13712,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"picocolors@npm:^1.1.1":
+"picocolors@npm:^1.0.0, picocolors@npm:^1.1.1":
   version: 1.1.1
   resolution: "picocolors@npm:1.1.1"
   checksum: 10c0/e2e3e8170ab9d7c7421969adaa7e1b31434f789afb9b3f115f6b96d91945041ac3ceb02e9ec6fe6510ff036bcc0bf91e69a1772edc0b707e12b19c0f2d6bcf58
@@ -11976,6 +13779,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"playwright-core@npm:1.63.0":
+  version: 1.63.0
+  resolution: "playwright-core@npm:1.63.0"
+  bin:
+    playwright-core: cli.js
+  checksum: 10c0/39c1ebae4029ca2e9371e00a5588d962038e24b6e0bdb7d0d27374dde04838f349b83ae0c8b3b648653d0935cba7fb9011f1201adaab9dd0db7801ad6c75e9aa
+  languageName: node
+  linkType: hard
+
 "playwright@npm:^1.62.1":
   version: 1.62.1
   resolution: "playwright@npm:1.62.1"
@@ -11988,6 +13800,17 @@ __metadata:
   bin:
     playwright: cli.js
   checksum: 10c0/4d3522cd46325f50c46f8874d31f70d036f6983228a9f8b9d68fc249e4c17464edcd97cc4adfbb24e712d1829c1386d3bc24e17f58a1ced94e7c423300c21845
+  languageName: node
+  linkType: hard
+
+"playwright@npm:^1.63.0":
+  version: 1.63.0
+  resolution: "playwright@npm:1.63.0"
+  dependencies:
+    playwright-core: "npm:1.63.0"
+  bin:
+    playwright: cli.js
+  checksum: 10c0/d1fd048a89be27c9aba6757dc4f70eff4a5163b49f439ad691767be8b2a482327d0dd1928b4f73c8fe0d8b33aab2c9dc2670424ab60f112d9e98e91b94e3b090
   languageName: node
   linkType: hard
 
@@ -12278,6 +14101,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"postcss@npm:^8.5.28":
+  version: 8.5.28
+  resolution: "postcss@npm:8.5.28"
+  dependencies:
+    nanoid: "npm:^3.3.18"
+    picocolors: "npm:^1.1.1"
+    source-map-js: "npm:^1.2.1"
+  checksum: 10c0/9fe44215a6628d89c8a75184b92f5b2f77e16f9e5b13b39b9009bb7e8e6eccddf82c8854bae922db1f17ace6ef3445073fe38abff513caeb03e5285b1b55620a
+  languageName: node
+  linkType: hard
+
 "powershell-utils@npm:^0.1.0":
   version: 0.1.0
   resolution: "powershell-utils@npm:0.1.0"
@@ -12527,6 +14361,13 @@ __metadata:
     string_decoder: "npm:^1.1.1"
     util-deprecate: "npm:^1.0.1"
   checksum: 10c0/e37be5c79c376fdd088a45fa31ea2e423e5d48854be7a22a58869b4e84d25047b193f6acb54f1012331e1bcd667ffb569c01b99d36b0bd59658fb33f513511b7
+  languageName: node
+  linkType: hard
+
+"readdirp@npm:^4.0.1":
+  version: 4.1.2
+  resolution: "readdirp@npm:4.1.2"
+  checksum: 10c0/60a14f7619dec48c9c850255cd523e2717001b0e179dc7037cfa0895da7b9e9ab07532d324bfb118d73a710887d1e35f79c495fa91582784493e085d18c72c62
   languageName: node
   linkType: hard
 
@@ -12916,12 +14757,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rxjs@npm:7.8.2, rxjs@npm:^7.8.2":
+"rxjs@npm:7.8.2, rxjs@npm:^7.4.0, rxjs@npm:^7.8.2":
   version: 7.8.2
   resolution: "rxjs@npm:7.8.2"
   dependencies:
     tslib: "npm:^2.1.0"
   checksum: 10c0/1fcd33d2066ada98ba8f21fcbbcaee9f0b271de1d38dc7f4e256bfbc6ffcdde68c8bfb69093de7eeb46f24b1fb820620bf0223706cff26b4ab99a7ff7b2e2c45
+  languageName: node
+  linkType: hard
+
+"sade@npm:^1.7.4":
+  version: 1.8.1
+  resolution: "sade@npm:1.8.1"
+  dependencies:
+    mri: "npm:^1.1.0"
+  checksum: 10c0/da8a3a5d667ad5ce3bf6d4f054bbb9f711103e5df21003c5a5c1a8a77ce12b640ed4017dd423b13c2307ea7e645adee7c2ae3afe8051b9db16a6f6d3da3f90b1
   languageName: node
   linkType: hard
 
@@ -12979,6 +14829,225 @@ __metadata:
   version: 2.1.2
   resolution: "safer-buffer@npm:2.1.2"
   checksum: 10c0/7e3c8b2e88a1841c9671094bbaeebd94448111dd90a81a1f606f3f67708a6ec57763b3b47f06da09fc6054193e0e6709e77325415dc8422b04497a8070fa02d4
+  languageName: node
+  linkType: hard
+
+"sass-embedded-all-unknown@npm:1.104.0":
+  version: 1.104.0
+  resolution: "sass-embedded-all-unknown@npm:1.104.0"
+  dependencies:
+    sass: "npm:1.104.0"
+  conditions: (!cpu=arm | !cpu=arm64 | !cpu=riscv64 | !cpu=x64)
+  languageName: node
+  linkType: hard
+
+"sass-embedded-android-arm64@npm:1.104.0":
+  version: 1.104.0
+  resolution: "sass-embedded-android-arm64@npm:1.104.0"
+  conditions: os=android & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"sass-embedded-android-arm@npm:1.104.0":
+  version: 1.104.0
+  resolution: "sass-embedded-android-arm@npm:1.104.0"
+  conditions: os=android & cpu=arm
+  languageName: node
+  linkType: hard
+
+"sass-embedded-android-riscv64@npm:1.104.0":
+  version: 1.104.0
+  resolution: "sass-embedded-android-riscv64@npm:1.104.0"
+  conditions: os=android & cpu=riscv64
+  languageName: node
+  linkType: hard
+
+"sass-embedded-android-x64@npm:1.104.0":
+  version: 1.104.0
+  resolution: "sass-embedded-android-x64@npm:1.104.0"
+  conditions: os=android & cpu=x64
+  languageName: node
+  linkType: hard
+
+"sass-embedded-darwin-arm64@npm:1.104.0":
+  version: 1.104.0
+  resolution: "sass-embedded-darwin-arm64@npm:1.104.0"
+  conditions: os=darwin & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"sass-embedded-darwin-x64@npm:1.104.0":
+  version: 1.104.0
+  resolution: "sass-embedded-darwin-x64@npm:1.104.0"
+  conditions: os=darwin & cpu=x64
+  languageName: node
+  linkType: hard
+
+"sass-embedded-linux-arm64@npm:1.104.0":
+  version: 1.104.0
+  resolution: "sass-embedded-linux-arm64@npm:1.104.0"
+  conditions: os=linux & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"sass-embedded-linux-arm@npm:1.104.0":
+  version: 1.104.0
+  resolution: "sass-embedded-linux-arm@npm:1.104.0"
+  conditions: os=linux & cpu=arm
+  languageName: node
+  linkType: hard
+
+"sass-embedded-linux-musl-arm64@npm:1.104.0":
+  version: 1.104.0
+  resolution: "sass-embedded-linux-musl-arm64@npm:1.104.0"
+  conditions: os=linux & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"sass-embedded-linux-musl-arm@npm:1.104.0":
+  version: 1.104.0
+  resolution: "sass-embedded-linux-musl-arm@npm:1.104.0"
+  conditions: os=linux & cpu=arm
+  languageName: node
+  linkType: hard
+
+"sass-embedded-linux-musl-riscv64@npm:1.104.0":
+  version: 1.104.0
+  resolution: "sass-embedded-linux-musl-riscv64@npm:1.104.0"
+  conditions: os=linux & cpu=riscv64
+  languageName: node
+  linkType: hard
+
+"sass-embedded-linux-musl-x64@npm:1.104.0":
+  version: 1.104.0
+  resolution: "sass-embedded-linux-musl-x64@npm:1.104.0"
+  conditions: os=linux & cpu=x64
+  languageName: node
+  linkType: hard
+
+"sass-embedded-linux-riscv64@npm:1.104.0":
+  version: 1.104.0
+  resolution: "sass-embedded-linux-riscv64@npm:1.104.0"
+  conditions: os=linux & cpu=riscv64
+  languageName: node
+  linkType: hard
+
+"sass-embedded-linux-x64@npm:1.104.0":
+  version: 1.104.0
+  resolution: "sass-embedded-linux-x64@npm:1.104.0"
+  conditions: os=linux & cpu=x64
+  languageName: node
+  linkType: hard
+
+"sass-embedded-unknown-all@npm:1.104.0":
+  version: 1.104.0
+  resolution: "sass-embedded-unknown-all@npm:1.104.0"
+  dependencies:
+    sass: "npm:1.104.0"
+  conditions: (!os=android | !os=darwin | !os=linux | !os=win32)
+  languageName: node
+  linkType: hard
+
+"sass-embedded-win32-arm64@npm:1.104.0":
+  version: 1.104.0
+  resolution: "sass-embedded-win32-arm64@npm:1.104.0"
+  conditions: os=win32 & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"sass-embedded-win32-x64@npm:1.104.0":
+  version: 1.104.0
+  resolution: "sass-embedded-win32-x64@npm:1.104.0"
+  conditions: os=win32 & cpu=x64
+  languageName: node
+  linkType: hard
+
+"sass-embedded@npm:^1.104.0":
+  version: 1.104.0
+  resolution: "sass-embedded@npm:1.104.0"
+  dependencies:
+    "@bufbuild/protobuf": "npm:^2.5.0"
+    colorjs.io: "npm:^0.7.0"
+    immutable: "npm:^5.1.5"
+    rxjs: "npm:^7.4.0"
+    sass-embedded-all-unknown: "npm:1.104.0"
+    sass-embedded-android-arm: "npm:1.104.0"
+    sass-embedded-android-arm64: "npm:1.104.0"
+    sass-embedded-android-riscv64: "npm:1.104.0"
+    sass-embedded-android-x64: "npm:1.104.0"
+    sass-embedded-darwin-arm64: "npm:1.104.0"
+    sass-embedded-darwin-x64: "npm:1.104.0"
+    sass-embedded-linux-arm: "npm:1.104.0"
+    sass-embedded-linux-arm64: "npm:1.104.0"
+    sass-embedded-linux-musl-arm: "npm:1.104.0"
+    sass-embedded-linux-musl-arm64: "npm:1.104.0"
+    sass-embedded-linux-musl-riscv64: "npm:1.104.0"
+    sass-embedded-linux-musl-x64: "npm:1.104.0"
+    sass-embedded-linux-riscv64: "npm:1.104.0"
+    sass-embedded-linux-x64: "npm:1.104.0"
+    sass-embedded-unknown-all: "npm:1.104.0"
+    sass-embedded-win32-arm64: "npm:1.104.0"
+    sass-embedded-win32-x64: "npm:1.104.0"
+    supports-color: "npm:^8.1.1"
+    sync-child-process: "npm:^1.0.2"
+    varint: "npm:^6.0.0"
+  dependenciesMeta:
+    sass-embedded-all-unknown:
+      optional: true
+    sass-embedded-android-arm:
+      optional: true
+    sass-embedded-android-arm64:
+      optional: true
+    sass-embedded-android-riscv64:
+      optional: true
+    sass-embedded-android-x64:
+      optional: true
+    sass-embedded-darwin-arm64:
+      optional: true
+    sass-embedded-darwin-x64:
+      optional: true
+    sass-embedded-linux-arm:
+      optional: true
+    sass-embedded-linux-arm64:
+      optional: true
+    sass-embedded-linux-musl-arm:
+      optional: true
+    sass-embedded-linux-musl-arm64:
+      optional: true
+    sass-embedded-linux-musl-riscv64:
+      optional: true
+    sass-embedded-linux-musl-x64:
+      optional: true
+    sass-embedded-linux-riscv64:
+      optional: true
+    sass-embedded-linux-x64:
+      optional: true
+    sass-embedded-unknown-all:
+      optional: true
+    sass-embedded-win32-arm64:
+      optional: true
+    sass-embedded-win32-x64:
+      optional: true
+  bin:
+    sass: dist/bin/sass.js
+  checksum: 10c0/10714839dff288aef70a7ba880bdb2406135fe9bd03f30989703c6a258245aff494f6e239bd6cbd2e27cfb9c8bdf2d489de2a5676be9dcaeab6cda56a7ab3aa9
+  languageName: node
+  linkType: hard
+
+"sass@npm:1.104.0":
+  version: 1.104.0
+  resolution: "sass@npm:1.104.0"
+  dependencies:
+    "@parcel/watcher": "npm:^2.4.1"
+    chokidar: "npm:^5.0.0"
+    immutable: "npm:^5.1.5"
+    source-map-js: "npm:>=0.6.2 <2.0.0"
+  dependenciesMeta:
+    "@parcel/watcher":
+      optional: true
+  bin:
+    sass: sass.js
+  checksum: 10c0/f43dafaf582526bece2e854f73eecab433300b641468e56966ed97717e7eb06db2c010f8b6bdfccd6ff6b4c07083732ef0d524dfe12a1a19e9e5c953083c06a6
   languageName: node
   linkType: hard
 
@@ -13045,6 +15114,13 @@ __metadata:
   version: 2.7.2
   resolution: "set-cookie-parser@npm:2.7.2"
   checksum: 10c0/4381a9eb7ee951dfe393fe7aacf76b9a3b4e93a684d2162ab35594fa4053cc82a4d7d7582bf397718012c9adcf839b8cd8f57c6c42901ea9effe33c752da4a45
+  languageName: node
+  linkType: hard
+
+"set-cookie-parser@npm:^3.0.0":
+  version: 3.1.2
+  resolution: "set-cookie-parser@npm:3.1.2"
+  checksum: 10c0/ea3d4fba5affd57f2a4c2e5172d701c4c17645879f9fddf1331622ae556210d840cdcb6666f0d71288ad545e31db5927bf49696051928e0186e079588cd5ddb0
   languageName: node
   linkType: hard
 
@@ -13196,7 +15272,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sirv@npm:^3.0.2":
+"sirv@npm:^3.0.0, sirv@npm:^3.0.2":
   version: 3.0.2
   resolution: "sirv@npm:3.0.2"
   dependencies:
@@ -13316,7 +15392,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"source-map-js@npm:^1.2.1":
+"source-map-js@npm:>=0.6.2 <2.0.0, source-map-js@npm:^1.2.1":
   version: 1.2.1
   resolution: "source-map-js@npm:1.2.1"
   checksum: 10c0/7bda1fc4c197e3c6ff17de1b8b2c20e60af81b63a52cb32ec5a5d67a20a7d42651e2cb34ebe93833c5a2a084377e17455854fee3e21e7925c64a51b6a52b0faf
@@ -13534,7 +15610,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"string-width@npm:^8.2.0, string-width@npm:^8.2.1":
+"string-width@npm:^8.2.0, string-width@npm:^8.2.1, string-width@npm:^8.2.2":
   version: 8.2.2
   resolution: "string-width@npm:8.2.2"
   dependencies:
@@ -13842,6 +15918,51 @@ __metadata:
   languageName: node
   linkType: hard
 
+"stylelint@npm:^17.15.0":
+  version: 17.15.0
+  resolution: "stylelint@npm:17.15.0"
+  dependencies:
+    "@csstools/css-calc": "npm:^3.3.0"
+    "@csstools/css-parser-algorithms": "npm:^4.0.0"
+    "@csstools/css-syntax-patches-for-csstree": "npm:^1.1.9"
+    "@csstools/css-tokenizer": "npm:^4.0.0"
+    "@csstools/media-query-list-parser": "npm:^5.0.0"
+    "@csstools/selector-resolve-nested": "npm:^4.0.1"
+    "@csstools/selector-specificity": "npm:^6.0.0"
+    colord: "npm:^2.10.0"
+    cosmiconfig: "npm:^9.0.2"
+    css-functions-list: "npm:^3.3.3"
+    css-tree: "npm:^3.2.1"
+    debug: "npm:^4.4.3"
+    fast-glob: "npm:^3.3.3"
+    fastest-levenshtein: "npm:^1.0.16"
+    file-entry-cache: "npm:^11.1.5"
+    global-modules: "npm:^2.0.0"
+    globby: "npm:^16.2.4"
+    globjoin: "npm:^0.1.4"
+    html-tags: "npm:^5.1.0"
+    ignore: "npm:^7.0.6"
+    import-meta-resolve: "npm:^4.2.0"
+    mathml-tag-names: "npm:^4.0.0"
+    meow: "npm:^14.1.0"
+    micromatch: "npm:^4.0.8"
+    normalize-path: "npm:^3.0.0"
+    picocolors: "npm:^1.1.1"
+    postcss: "npm:^8.5.26"
+    postcss-safe-parser: "npm:^7.0.1"
+    postcss-selector-parser: "npm:^7.1.5"
+    postcss-value-parser: "npm:^4.2.0"
+    string-width: "npm:^8.2.2"
+    supports-hyperlinks: "npm:^4.5.0"
+    svg-tags: "npm:^1.0.0"
+    table: "npm:^6.9.0"
+    write-file-atomic: "npm:^7.0.1"
+  bin:
+    stylelint: bin/stylelint.mjs
+  checksum: 10c0/1077bfd2206dbb1a6498b1a569314dd7d5f54f629412e58bcaca581898defa7776c3377c967b709603d36dea0ef34c2f6a05901c8cd47560ffdb9dc78746b113
+  languageName: node
+  linkType: hard
+
 "stylelint@npm:^9.10.1":
   version: 9.10.1
   resolution: "stylelint@npm:9.10.1"
@@ -13931,6 +16052,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"supports-color@npm:^8.1.1":
+  version: 8.1.1
+  resolution: "supports-color@npm:8.1.1"
+  dependencies:
+    has-flag: "npm:^4.0.0"
+  checksum: 10c0/ea1d3c275dd604c974670f63943ed9bd83623edc102430c05adb8efc56ba492746b6e95386e7831b872ec3807fd89dd8eb43f735195f37b5ec343e4234cc7e89
+  languageName: node
+  linkType: hard
+
 "supports-hyperlinks@npm:^4.5.0":
   version: 4.5.0
   resolution: "supports-hyperlinks@npm:4.5.0"
@@ -13945,6 +16075,48 @@ __metadata:
   version: 1.0.0
   resolution: "supports-preserve-symlinks-flag@npm:1.0.0"
   checksum: 10c0/6c4032340701a9950865f7ae8ef38578d8d7053f5e10518076e6554a9381fa91bd9c6850193695c141f32b21f979c985db07265a758867bac95de05f7d8aeb39
+  languageName: node
+  linkType: hard
+
+"svelte-check@npm:^4.7.6":
+  version: 4.7.6
+  resolution: "svelte-check@npm:4.7.6"
+  dependencies:
+    "@jridgewell/trace-mapping": "npm:^0.3.25"
+    "@sveltejs/load-config": "npm:^0.2.3"
+    chokidar: "npm:^4.0.1"
+    fdir: "npm:^6.2.0"
+    picocolors: "npm:^1.0.0"
+    sade: "npm:^1.7.4"
+  peerDependencies:
+    svelte: ^4.0.0 || ^5.0.0-next.0
+    typescript: ^5.0.0 || ^6.0.0
+  bin:
+    svelte-check: bin/svelte-check
+  checksum: 10c0/66c2ff0025abd6c680673c76638eb0c753b03c2d3e62988ac266040cef06fd6a27b51d4c5b6b58e6d09e0eb7f41b4fc695851d3b10ae9f7b494544dfc8943714
+  languageName: node
+  linkType: hard
+
+"svelte@npm:^5.57.0":
+  version: 5.57.0
+  resolution: "svelte@npm:5.57.0"
+  dependencies:
+    "@jridgewell/remapping": "npm:^2.3.4"
+    "@jridgewell/sourcemap-codec": "npm:^1.5.0"
+    "@sveltejs/acorn-typescript": "npm:^1.0.10"
+    "@types/estree": "npm:^1.0.5"
+    acorn: "npm:^8.12.1"
+    aria-query: "npm:5.3.1"
+    axobject-query: "npm:^4.1.0"
+    clsx: "npm:^2.1.1"
+    devalue: "npm:^5.8.1"
+    esm-env: "npm:^1.2.1"
+    esrap: "npm:^2.2.12"
+    is-reference: "npm:^3.0.3"
+    locate-character: "npm:^3.0.0"
+    magic-string: "npm:^0.30.11"
+    zimmerframe: "npm:^1.1.2"
+  checksum: 10c0/7be135110932db5bd55e670a1bc66b4122b599326129b25d925396b86796d4720a0ec6100b2f77a7a3f57c79ec729d753bdd0e440b38bf33e6e9ff9e93644dce
   languageName: node
   linkType: hard
 
@@ -13976,6 +16148,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"sync-child-process@npm:^1.0.2":
+  version: 1.0.2
+  resolution: "sync-child-process@npm:1.0.2"
+  dependencies:
+    sync-message-port: "npm:^1.0.0"
+  checksum: 10c0/f73c87251346fba28da8ac5bc8ed4c9474504a5250ab4bd44582beae8e25c230e0a5b7b16076488fee1aed39a1865de5ed4cec19c6fa4efdbb1081c514615170
+  languageName: node
+  linkType: hard
+
 "sync-fetch@npm:0.6.0":
   version: 0.6.0
   resolution: "sync-fetch@npm:0.6.0"
@@ -13987,7 +16168,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tabbable@npm:^6.0.0":
+"sync-message-port@npm:^1.0.0":
+  version: 1.2.0
+  resolution: "sync-message-port@npm:1.2.0"
+  checksum: 10c0/31071ccc1e1607649aab5f1d283b0b6544632b9e8c2e8afedae394a0e97c1454978d0e415d664db8e3b1ae48a9c4cdba8d39e79edcb86c517be06123a110efae
+  languageName: node
+  linkType: hard
+
+"tabbable@npm:^6.0.0, tabbable@npm:^6.2.0":
   version: 6.5.0
   resolution: "tabbable@npm:6.5.0"
   checksum: 10c0/7d778af05a3093800265831198cad9d0024f3d65cdd4405007490f7430b42ff4e80060b4679f45281fb96ddbddc5fb895e8ea36e3ebdc811051e14acc9c7c02c
@@ -15034,6 +17222,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"varint@npm:^6.0.0":
+  version: 6.0.0
+  resolution: "varint@npm:6.0.0"
+  checksum: 10c0/737fc37088a62ed3bd21466e318d21ca7ac4991d0f25546f518f017703be4ed0f9df1c5559f1dd533dddba4435a1b758fd9230e4772c1a930ef72b42f5c750fd
+  languageName: node
+  linkType: hard
+
 "vfile-location@npm:^2.0.0":
   version: 2.0.6
   resolution: "vfile-location@npm:2.0.6"
@@ -15132,7 +17327,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vitefu@npm:^1.1.1":
+"vitefu@npm:^1.1.1, vitefu@npm:^1.1.2":
   version: 1.1.3
   resolution: "vitefu@npm:1.1.3"
   peerDependencies:
@@ -15402,6 +17597,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"wonka@npm:^6.3.2":
+  version: 6.3.6
+  resolution: "wonka@npm:6.3.6"
+  checksum: 10c0/a8887a7766cf9519b4f80b43842fe1b6575a0f5edf397c5a32c267185bd999af9d3c42d91d6d7cd86d3ec89fdc5f8909bb542004d184fcaad794d25e821ff70d
+  languageName: node
+  linkType: hard
+
 "word-wrap@npm:^1.2.5":
   version: 1.2.5
   resolution: "word-wrap@npm:1.2.5"
@@ -15624,6 +17826,13 @@ __metadata:
   version: 2.2.0
   resolution: "yoctocolors@npm:2.2.0"
   checksum: 10c0/ca179aa83401aa0711f268fda38145a44c828e612a5f5265439efb5796cd63c46ca6b786bae3b74c75440a48518c36b5b23cba7fbb76ea8af5a9f85f830a5754
+  languageName: node
+  linkType: hard
+
+"zimmerframe@npm:^1.1.2":
+  version: 1.1.5
+  resolution: "zimmerframe@npm:1.1.5"
+  checksum: 10c0/4fa50f35420366d12d477062de52cb1179d8ec2165947dd11214137b489b9b40cd4c796817d6e371925273df6c198949c4fb4abde69d2b3ef33f39a2d31a0fe8
   languageName: node
   linkType: hard
 
