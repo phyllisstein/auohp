@@ -23,14 +23,14 @@ cuda = ["auohp-core/cuda"]
 # Error handling --- thiserror generates Error impls for your own types;
 # anyhow provides a flexible Result<T, anyhow::Error> for application code.
 thiserror = "2"
-tauri-build = "2"
+tauri-build = { version = "2", features = [] }
 
 [dependencies]
 anyhow = "1"
 anyhow-tauri = "1.0.1"
 axum = "0.8"
 auohp-core = { path = "../core" }
-tauri = { version = "2", features = ["tray-icon"] }
+tauri = { version = "2", features = ["macos-private-api", "tray-icon"] }
 tauri-plugin-opener = "2"
 tauri-plugin-shell = "2"
 tokio = { version = "1", features = ["full"] }
@@ -69,3 +69,5 @@ tower = "0.5.3"
 tower-http = { version = "0.6.8", features = ["trace", "cors"] }
 http = "1.4.0"
 tauri-plugin-positioner = { version = "2.0.0", features = ["tray-icon"] }
+tauri-plugin-liquid-glass = "0.1.6"
+tauri-macros = "2.6.3"

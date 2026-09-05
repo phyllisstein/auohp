@@ -1,0 +1,9 @@
+{
+    "identifier": "default",
+    "windows": [
+    ],
+    "permissions": [
+        "core:default",
+        "liquid-glass:default"
+    ]
+}
