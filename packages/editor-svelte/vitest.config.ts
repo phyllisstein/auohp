@@ -4,10 +4,8 @@ import viteConfig from "./vite.config";
 
 // A standalone `vitest.config.ts` *replaces* `vite.config.ts` rather than
 // extending it --- Vitest loads one config file, and this one wins. Merging the
-// app config back in is what keeps the React plugin (and so the JSX transform),
-// svgr, path resolution and dependency pre-bundling available to tests. Without
-// it, `import React from "react"` inside vitest-browser-react resolves to raw
-// CJS with no interop shim and fails on the missing default export.
+// app config back in keeps the SvelteKit plugin (and so the Svelte compiler),
+// path resolution and dependency pre-bundling available to tests.
 export default mergeConfig(viteConfig, defineConfig({
     server: {
         host: "0.0.0.0",
@@ -33,6 +31,6 @@ export default mergeConfig(viteConfig, defineConfig({
         // Node-side environment would be ignored anyway.
         exclude: ["**/node_modules/**", "**/dist/**", "**/public/**"],
         include: ["test/**/*.{test,spec}.{ts,tsx}"],
-        setupFiles: ["vitest-browser-react", "./setup-tests.ts"],
+        setupFiles: ["vitest-browser-svelte", "./setup-tests.ts"],
     },
 }));
