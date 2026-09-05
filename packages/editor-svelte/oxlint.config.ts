@@ -1,0 +1,387 @@
+import { defineConfig } from "oxlint";
+
+export default defineConfig({
+    plugins: ["oxc", "eslint"],
+    jsPlugins: [
+        { specifier: "@stylistic/eslint-plugin", name: "stylistic-js" },
+        { specifier: "eslint-plugin-import-x", name: "import-x-js" },
+    ],
+    categories: {
+        correctness: "off",
+    },
+    env: {
+        browser: true,
+        builtin: true,
+        es2026: true,
+        worker: true,
+    },
+    ignorePatterns: ["node_modules", "dist", "public", "schema.graphql", "**/*.d.ts", "routeTree.gen.*"],
+    rules: {
+        "constructor-super": "error",
+        "for-direction": "error",
+        "getter-return": "error",
+        "no-async-promise-executor": "error",
+        "no-case-declarations": "error",
+        "no-class-assign": "error",
+        "no-compare-neg-zero": "error",
+        "no-cond-assign": "error",
+        "no-const-assign": "error",
+        "no-constant-binary-expression": "error",
+        "no-constant-condition": "error",
+        "no-control-regex": "error",
+        "no-debugger": "error",
+        "no-delete-var": "error",
+        "no-dupe-class-members": "error",
+        "no-dupe-else-if": "error",
+        "no-dupe-keys": "error",
+        "no-duplicate-case": "error",
+        "no-empty": "error",
+        "no-empty-character-class": "error",
+        "no-empty-pattern": "error",
+        "no-empty-static-block": "error",
+        "no-ex-assign": "error",
+        "no-extra-boolean-cast": "error",
+        "no-fallthrough": "error",
+        "no-func-assign": "error",
+        "no-global-assign": "error",
+        "no-import-assign": "error",
+        "no-invalid-regexp": "error",
+        "no-irregular-whitespace": "error",
+        "no-loss-of-precision": "error",
+        "no-misleading-character-class": "error",
+        "no-new-native-nonconstructor": "error",
+        "no-nonoctal-decimal-escape": "error",
+        "no-obj-calls": "error",
+        "no-prototype-builtins": "error",
+        "no-redeclare": "error",
+        "no-regex-spaces": "error",
+        "no-self-assign": "error",
+        "no-setter-return": "error",
+        "no-shadow-restricted-names": "error",
+        "no-sparse-arrays": "error",
+        "no-this-before-super": "error",
+        "no-unassigned-vars": "error",
+        "no-undef": "off",
+        "no-unexpected-multiline": "error",
+        "no-unreachable": "error",
+        "no-unsafe-finally": "error",
+        "no-unsafe-negation": "error",
+        "no-unsafe-optional-chaining": "error",
+        "no-unused-labels": "error",
+        "no-unused-private-class-members": "error",
+        "no-unused-vars": "off",
+        "no-useless-assignment": "error",
+        "no-useless-backreference": "error",
+        "no-useless-catch": "error",
+        "no-useless-escape": "error",
+        "no-with": "error",
+        "preserve-caught-error": "error",
+        "require-yield": "error",
+        "use-isnan": "error",
+        "valid-typeof": "error",
+
+        "stylistic-js/array-bracket-spacing": ["warn", "never"],
+        "stylistic-js/arrow-parens": [
+            "warn",
+            "as-needed",
+            {
+                requireForBlockBody: false,
+            },
+        ],
+        "stylistic-js/arrow-spacing": [
+            "error",
+            {
+                after: true,
+                before: true,
+            },
+        ],
+        "stylistic-js/block-spacing": ["warn", "never"],
+        "stylistic-js/brace-style": [
+            "warn",
+            "1tbs",
+            {
+                allowSingleLine: true,
+            },
+        ],
+        "stylistic-js/comma-dangle": ["warn", "always-multiline"],
+        "stylistic-js/comma-spacing": [
+            "warn",
+            {
+                after: true,
+                before: false,
+            },
+        ],
+        "stylistic-js/comma-style": ["error", "last"],
+        "stylistic-js/computed-property-spacing": [
+            "error",
+            "never",
+            {
+                enforceForClassMembers: true,
+            },
+        ],
+        "stylistic-js/dot-location": ["error", "property"],
+        "stylistic-js/eol-last": "warn",
+        "stylistic-js/generator-star-spacing": [
+            "error",
+            {
+                after: true,
+                before: false,
+            },
+        ],
+        "stylistic-js/indent": ["warn", 4],
+        "stylistic-js/indent-binary-ops": ["error", 2],
+        "stylistic-js/key-spacing": [
+            "error",
+            {
+                afterColon: true,
+                beforeColon: false,
+            },
+        ],
+        "stylistic-js/keyword-spacing": [
+            "error",
+            {
+                after: true,
+                before: true,
+            },
+        ],
+        "stylistic-js/lines-between-class-members": [
+            "error",
+            "always",
+            {
+                exceptAfterSingleLine: true,
+            },
+        ],
+        "stylistic-js/max-statements-per-line": [
+            "error",
+            {
+                max: 1,
+            },
+        ],
+        "stylistic-js/member-delimiter-style": [
+            "warn",
+            {
+                multiline: {
+                    delimiter: "semi",
+                    requireLast: true,
+                },
+                singleline: {
+                    delimiter: "semi",
+                    requireLast: false,
+                },
+            },
+        ],
+        "stylistic-js/multiline-ternary": ["error", "always-multiline"],
+        "stylistic-js/new-parens": "error",
+        "stylistic-js/no-extra-parens": ["error", "functions"],
+        "stylistic-js/no-floating-decimal": "error",
+        "stylistic-js/no-mixed-operators": [
+            "error",
+            {
+                allowSamePrecedence: true,
+                groups: [
+                    ["==", "!=", "===", "!==", ">", ">=", "<", "<="],
+                    ["&&", "||"],
+                    ["in", "instanceof"],
+                ],
+            },
+        ],
+        "stylistic-js/no-mixed-spaces-and-tabs": "error",
+        "stylistic-js/no-multi-spaces": "error",
+        "stylistic-js/no-multiple-empty-lines": [
+            "warn",
+            {
+                max: 2,
+                maxBOF: 0,
+                maxEOF: 1,
+            },
+        ],
+        "stylistic-js/no-tabs": "error",
+        "stylistic-js/no-trailing-spaces": "off",
+        "stylistic-js/no-whitespace-before-property": "error",
+        "stylistic-js/object-curly-spacing": ["warn", "always"],
+        "stylistic-js/operator-linebreak": "warn",
+        "stylistic-js/padded-blocks": [
+            "error",
+            {
+                blocks: "never",
+                classes: "never",
+                switches: "never",
+            },
+        ],
+        "stylistic-js/quote-props": ["warn", "consistent-as-needed"],
+        "stylistic-js/quotes": [
+            "warn",
+            "double",
+            {
+                allowTemplateLiterals: "always",
+                avoidEscape: true,
+            },
+        ],
+        "stylistic-js/rest-spread-spacing": ["error", "never"],
+        "stylistic-js/semi": [
+            "warn",
+            "always",
+            {
+                omitLastInOneLineBlock: true,
+                omitLastInOneLineClassBody: true,
+            },
+        ],
+        "stylistic-js/semi-spacing": [
+            "error",
+            {
+                after: true,
+                before: false,
+            },
+        ],
+        "stylistic-js/space-before-blocks": ["error", "always"],
+        "stylistic-js/space-before-function-paren": "warn",
+        "stylistic-js/space-in-parens": ["error", "never"],
+        "stylistic-js/space-infix-ops": "error",
+        "stylistic-js/space-unary-ops": [
+            "error",
+            {
+                nonwords: false,
+                words: true,
+            },
+        ],
+        "stylistic-js/spaced-comment": [
+            "error",
+            "always",
+            {
+                block: {
+                    balanced: true,
+                    exceptions: ["*"],
+                    markers: ["!"],
+                },
+                line: {
+                    exceptions: ["/", "#"],
+                    markers: ["/"],
+                },
+            },
+        ],
+        "stylistic-js/template-curly-spacing": ["warn", "always"],
+        "stylistic-js/template-tag-spacing": ["error", "never"],
+        "stylistic-js/type-annotation-spacing": ["error", {}],
+        "stylistic-js/type-generic-spacing": "error",
+        "stylistic-js/type-named-tuple-spacing": "error",
+        "stylistic-js/wrap-iife": [
+            "error",
+            "any",
+            {
+                functionPrototypeMethods: true,
+            },
+        ],
+        "stylistic-js/yield-star-spacing": [
+            "error",
+            {
+                after: true,
+                before: false,
+            },
+        ],
+
+        "stylistic-js/jsx-closing-bracket-location": ["warn", "after-props"],
+        "stylistic-js/jsx-closing-tag-location": "error",
+        "stylistic-js/jsx-curly-brace-presence": [
+            "error",
+            {
+                propElementValues: "always",
+            },
+        ],
+        "stylistic-js/jsx-curly-newline": ["warn", "consistent"],
+        "stylistic-js/jsx-curly-spacing": [
+            "warn",
+            {
+                attributes: { when: "always" },
+                children: { when: "always" },
+                spacing: { objectLiterals: "never" },
+                when: "always",
+            },
+        ],
+        "stylistic-js/jsx-equals-spacing": "error",
+        "stylistic-js/jsx-first-prop-new-line": "error",
+        "stylistic-js/jsx-function-call-newline": ["error", "multiline"],
+        "stylistic-js/jsx-indent-props": ["warn", 4],
+        "stylistic-js/jsx-max-props-per-line": [
+            "error",
+            {
+                maximum: 1,
+                when: "multiline",
+            },
+        ],
+        "stylistic-js/jsx-one-expression-per-line": [
+            "warn",
+            {
+                allow: "single-line",
+            },
+        ],
+        "stylistic-js/jsx-quotes": ["warn", "prefer-double"],
+        "stylistic-js/jsx-tag-spacing": [
+            "warn",
+            {
+                afterOpening: "never",
+                beforeClosing: "never",
+                beforeSelfClosing: "always",
+                closingSlash: "never",
+            },
+        ],
+        "stylistic-js/jsx-wrap-multilines": [
+            "error",
+            {
+                arrow: "parens-new-line",
+                assignment: "parens-new-line",
+                condition: "parens-new-line",
+                declaration: "parens-new-line",
+                logical: "parens-new-line",
+                prop: "parens-new-line",
+                propertyValue: "parens-new-line",
+                return: "parens-new-line",
+            },
+        ],
+        // Enforce the `dir/index.ts` module seam: outside a module you import
+        // its barrel, never a private sibling. `no-internal-modules` flags any
+        // specifier that resolves *past* a permitted entry point. Needs a
+        // resolver (see `settings` below) --- an unresolved specifier fails open.
+        "import-x-js/no-internal-modules": [
+            "error",
+            {
+                allow: [
+                    // Our barrels. Each entry is the deepest importable path;
+                    // one segment deeper is a seam violation.
+                    "~/*",
+                    "~/styles/*",
+                    "~/styles/assets/*",
+                    // `src/lexical/` is deliberately *not* exempted: it is a
+                    // flat junk-drawer directory whose files reach into each
+                    // other directly, and those violations are the standing
+                    // reminder to convert it to a sealed feature module.
+                    //
+                    // Side-effect stylesheets sit beside a module, not behind it.
+                    "**/*.css",
+                    // File-based routing owns arbitrarily deep paths.
+                    "~/routes/**",
+                    // Generated GraphQL types are addressed directly.
+                    "**/__generated__/**",
+                    // Third-party packages with intentional deep entry points.
+                    "@apollo/client/**",
+                    "@react-spectrum/s2/**",
+                    "@lexical/*/**",
+                    "$*/**",
+                    "@spectrum-web-components/**",
+                ],
+            },
+        ],
+    },
+    globals: {
+        AsyncDisposableStack: "readonly",
+        DisposableStack: "readonly",
+        SuppressedError: "readonly",
+    },
+    settings: {
+        // import-x resolves specifiers against the filesystem to police
+        // `no-internal-modules`. Without a resolver an unresolved specifier ---
+        // every `~/...` alias --- fails open, so the seam rule would be inert.
+        "import-x/resolver": {
+            typescript: { project: "packages/editor/tsconfig.json" },
+        },
+    },
+});
