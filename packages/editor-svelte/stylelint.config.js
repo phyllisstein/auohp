@@ -20,13 +20,8 @@ const config = {
         "stylelint-config-rational-order/plugin",
     ],
     rules: {
-        "@stylistic/no-extra-semicolons": null,
-        "@stylistic/block-closing-brace-newline-before": null,
-        "@stylistic/block-opening-brace-newline-before": null,
-        "@stylistic/block-opening-brace-space-before": null,
         "@stylistic/color-hex-case": "upper",
-        "@stylistic/declaration-block-trailing-semicolon": null,
-        "@stylistic/indentation": null,
+        "@stylistic/indentation": 4,
         "@stylistic/max-empty-lines": 2,
         "@stylistic/named-grid-areas-alignment": [
             true,
@@ -40,10 +35,7 @@ const config = {
         "@stylistic/selector-max-empty-lines": 2,
         "@stylistic/string-quotes": "double",
 
-        "media-feature-range-notation": "prefix",
         "selector-class-pattern": null,
-        "no-empty-source": null,
-        // Svelte's `:global(...)` scoping escape hatch, not a real pseudo-class.
         "selector-pseudo-class-no-unknown": [
             true,
             {
