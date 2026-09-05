@@ -362,11 +362,13 @@ export default defineConfig({
                     // Generated GraphQL types are addressed directly.
                     "**/__generated__/**",
                     // Third-party packages with intentional deep entry points.
-                    "@apollo/client/**",
-                    "@react-spectrum/s2/**",
+                    "@urql/svelte/**",
                     "@lexical/*/**",
                     "$*/**",
                     "@spectrum-web-components/**",
+                    // Config-only deep entry points.
+                    "vitest/config",
+                    "@sveltejs/kit/vite",
                 ],
             },
         ],
@@ -375,13 +377,22 @@ export default defineConfig({
         AsyncDisposableStack: "readonly",
         DisposableStack: "readonly",
         SuppressedError: "readonly",
+        // Svelte 5 rune globals -- compiler-provided, not imports. Every
+        // component trips `no-undef` on these without this declaration.
+        $props: "readonly",
+        $state: "readonly",
+        $derived: "readonly",
+        $effect: "readonly",
+        $bindable: "readonly",
+        $inspect: "readonly",
+        $host: "readonly",
     },
     settings: {
         // import-x resolves specifiers against the filesystem to police
         // `no-internal-modules`. Without a resolver an unresolved specifier ---
         // every `~/...` alias --- fails open, so the seam rule would be inert.
         "import-x/resolver": {
-            typescript: { project: "packages/editor/tsconfig.json" },
+            typescript: { project: "packages/editor-svelte/tsconfig.json" },
         },
     },
 });

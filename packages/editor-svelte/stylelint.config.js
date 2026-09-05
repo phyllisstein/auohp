@@ -10,10 +10,6 @@ const config = {
             files: ["./src/**/*.scss"],
         },
         {
-            customSyntax: "postcss-styled-syntax",
-            files: ["./src/**/*.ts", "./src/**/*.tsx"],
-        },
-        {
             customSyntax: "postcss-html",
             files: ["./src/**/*.svelte", "./src/**/*.html"],
         },
@@ -47,6 +43,13 @@ const config = {
         "media-feature-range-notation": "prefix",
         "selector-class-pattern": null,
         "no-empty-source": null,
+        // Svelte's `:global(...)` scoping escape hatch, not a real pseudo-class.
+        "selector-pseudo-class-no-unknown": [
+            true,
+            {
+                ignorePseudoClasses: ["global"],
+            },
+        ],
     },
 };
 

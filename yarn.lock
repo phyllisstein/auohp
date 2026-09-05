@@ -180,7 +180,6 @@ __metadata:
     "@spectrum-web-components/icons-workflow": "npm:^1.12.3"
     "@spectrum-web-components/search": "npm:^1.12.3"
     "@spectrum-web-components/theme": "npm:^1.12.3"
-    "@stylelint/postcss-css-in-js": "npm:^0.38.0"
     "@stylistic/eslint-plugin": "npm:^5.10.0"
     "@stylistic/stylelint-config": "npm:^5.0.0"
     "@sveltejs/adapter-auto": "npm:^7.0.1"
@@ -225,6 +224,7 @@ __metadata:
     unplugin-parcel-macros: "npm:^0.2.0"
     vite: "npm:^8.2.2"
     vitest: "npm:^4.1.11"
+    vitest-browser-svelte: "npm:^1.1.0"
   languageName: unknown
   linkType: soft
 
@@ -17354,6 +17354,17 @@ __metadata:
     "@types/react-dom":
       optional: true
   checksum: 10c0/d2e582e564cf7f65f19a5a9c36b0b136e84fc6dabd42566703d79e0b220094a5a88a9197a42b2c4779f38977d79c8f3306387cd7edd2ef8e57790b921a759975
+  languageName: node
+  linkType: hard
+
+"vitest-browser-svelte@npm:^1.1.0":
+  version: 1.1.0
+  resolution: "vitest-browser-svelte@npm:1.1.0"
+  peerDependencies:
+    "@vitest/browser": ^2.1.0 || ^3.0.0 || ^4.0.0-0
+    svelte: ^3 || ^4 || ^5 || ^5.0.0-next.0
+    vitest: ^2.1.0 || ^3.0.0 || ^4.0.0-0
+  checksum: 10c0/2f16133bf46ff735e2c2c14d68dc6932d88788f779e82ad9277a9343b12634653021382f3a10fde48aead714544eb60cd60fa225954b191414398a0f3c4bcc8c
   languageName: node
   linkType: hard
 
