@@ -5,10 +5,12 @@
     "identifier": "com.auohp.desktop",
     "app": {
         "withGlobalTauri": true,
-        "windows": [],
+        "windows": [
+        ],
         "security": {
             "csp": null
-        }
+        },
+        "macOSPrivateApi": true
     },
     "bundle": {
         "active": true,
