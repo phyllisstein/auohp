@@ -664,6 +664,7 @@ tags
 !**/secrets/.gitkeep
 .fastRequest
 .claude/worktrees/
+assets/
 
 # Machine-local Claude Code settings (permissions, MCP toggles).
 .claude/settings.local.json

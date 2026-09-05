@@ -10,7 +10,7 @@ import { useRouter } from "@tanstack/react-router";
 import { ThemeProvider as StyledThemeProvider } from "styled-components";
 import theme from "~/styles/theme";
 import { Body, StyledComponentsRegistry } from "~/styles/global";
-import { AdobeClean } from "~/styles/assets/fonts";
+import { AdobeClean } from "~/styles/fonts";
 import { ErrorBoundary } from "@suspensive/react";
 
 
