@@ -3,12 +3,15 @@ import {
     ElementNode,
     setDOMUnmanaged,
     type EditorConfig,
+    type ExtensionConfigBase,
+    type LexicalExtension,
     type LexicalNode,
     type NodeKey,
     type RangeSelection,
     type SerializedElementNode,
     type Spread,
 } from "lexical";
+import { $getExtensionDependency } from "@lexical/extension";
 import { formatTimestamp } from "./timestamps";
 import { SYNTHETIC_UID_MARKER } from "../persistence/synthetic-uid";
 import type { Playhead } from "../../playhead.svelte";
@@ -43,16 +46,19 @@ export const STATEMENT_CHROME_CLASS = "auohp-statement__chrome";
 const STATEMENT_CONTENT_CLASS = "auohp-statement__content";
 const STATEMENT_TIME_CLASS = "auohp-statement__time";
 
-// `insertNewAfter` needs the current playback position, but the node has no
-// injectable constructor call site --- Lexical constructs and calls nodes
-// itself. Per MIGRATION.md's ownership decision, the real seam is
-// `$getExtensionDependency` naming the statement extension (step 5), which
-// isn't built yet. Until then, the extension sets this once at register time.
-let currentPlayhead: Playhead | null = null;
-
-export function setStatementPlayhead (playhead: Playhead | null): void {
-    currentPlayhead = playhead;
-}
+// `insertNewAfter` needs the current playback position. Lexical constructs and
+// calls nodes itself, so there is no constructor call site to inject a
+// per-instance Playhead through --- the seam is `$getExtensionDependency`,
+// which resolves the *current editor's* registered extension from inside a
+// `$`-function. `StatementExtension` (step 5) is the real thing this names;
+// this is a type-only stand-in until that extension exists, carrying the
+// `output` shape the node depends on.
+const StatementExtension = { name: "@auohp/statement" } as unknown as LexicalExtension<
+    ExtensionConfigBase,
+    "@auohp/statement",
+    { playhead: Playhead },
+    unknown
+>;
 
 export class StatementNode extends ElementNode {
     __uid: string;
@@ -123,7 +129,7 @@ export class StatementNode extends ElementNode {
     insertNewAfter (selection: RangeSelection, restoreSelection = true): ElementNode | null {
         const newUid = `${ this.getUid() }${ SYNTHETIC_UID_MARKER }${ Date.now() }`;
         // New node's startTime, old node's endTime = current playhead position.
-        const currentTime = currentPlayhead?.timestamp ?? 0;
+        const currentTime = $getExtensionDependency(StatementExtension).output.playhead.timestamp;
         const continuation = $createStatementNode(newUid, currentTime, this.getEndTime());
         this.setEndTime(currentTime);
 
