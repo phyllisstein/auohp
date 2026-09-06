@@ -1,15 +1,11 @@
 import { defineExtension, safeCast } from "lexical";
-import { createPlayhead, type Playhead } from "../../playhead.svelte";
+import type { Playhead } from "../../playhead.svelte";
 import { StatementNode } from "./StatementNode";
 
 export interface StatementExtensionConfig {
     // Read source for insertNewAfter's caption-window split (see StatementNode).
-    // The route supplies one playhead per interview via configExtension, per
-    // MIGRATION.md's per-instance ownership decision. The default below is a
-    // throwaway instance, same as PersistenceConfig's null executors --- it
-    // exists only so `config` type-checks, and is never the one an editor
-    // actually runs against once step 6 wires the route.
-    playhead: Playhead;
+    // The route supplies one playhead per interview via configExtension.
+    playhead: Playhead | null;
 }
 
 // Minimal on purpose: registers StatementNode and vends the playhead config
@@ -19,7 +15,12 @@ export const StatementExtension = /* @__PURE__ */ defineExtension({
     name: "@auohp/statement",
     nodes: () => [StatementNode],
     config: /* @__PURE__ */ safeCast<StatementExtensionConfig>({
-        playhead: createPlayhead(),
+        playhead: null,
     }),
-    build: (_editor, config) => config.playhead,
+    build: (_editor, config) => {
+        if (!config.playhead) {
+            throw new Error("StatementExtension: no playhead configured -- the route must supply one via configExtension");
+        }
+        return config.playhead;
+    },
 });
