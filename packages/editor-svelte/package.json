@@ -13,7 +13,8 @@
         "dev": "vite dev",
         "editor:dev": "vite dev",
         "prepare": "svelte-kit sync || echo ''",
-        "start": "vite preview"
+        "start": "vite preview",
+        "test": "vitest run"
     },
     "devDependencies": {
         "@0no-co/graphqlsp": "^1.17.5",
