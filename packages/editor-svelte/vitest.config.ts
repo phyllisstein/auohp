@@ -30,7 +30,7 @@ export default mergeConfig(viteConfig, defineConfig({
         // jsdom/happy-dom environment alongside it is contradictory, and the
         // Node-side environment would be ignored anyway.
         exclude: ["**/node_modules/**", "**/dist/**", "**/public/**"],
-        include: ["test/**/*.{test,spec}.{ts,tsx}"],
+        include: ["test/**/*.{test,spec}.ts"],
         setupFiles: ["vitest-browser-svelte", "./setup-tests.ts"],
     },
 }));
