@@ -180,31 +180,76 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01GWi9W42XvWNggZG3VAHyaL
 ```
 
-## Session pause --- 2026-09-05, resume here
+## Session log --- 2026-09-05/06, resume here
 
-Team stopped mid-step-2. State of the world:
+**Resolved, no longer a blocker:** the `.git/info/exclude` bare `assets` /
+`**/assets/**` lines and `.gitignore`'s unanchored `lib/` are both gone.
+`packages/editor-svelte/.gitignore` carries `!lib/` / `!assets/` negations
+(landed in `a5f49a4`, predates this session's later work). Assets and
+`src/lib/` commit normally now --- verified via `git check-ignore -v`.
 
-**Committed:** `eef8c65` (tooling fixes) only.
+**Committed so far, tip `431fc9e` on `svelte-editor`:**
 
-**Uncommitted, ready to land as three commits** (boundaries already agreed):
+- `eef8c65` --- tooling fixes (pre-existing).
+- `e90b985` --- previously-invisible spike files (`src/lib/{search.svelte.ts,
+  urql.ts,graphql.ts,index.ts}`, `__generated__/` x2), `MIGRATION.md`, `PLAN.md`.
+- `13179c9` --- step 2, `playhead.svelte.ts` (per-instance factory, reviewed).
+- `71c3e95` --- step 3 part 1: command tokens split to their owning feature
+  dirs (no barrel file), `formatTimestamp` -> `statement/timestamps.ts`,
+  `SYNTHETIC_UID_MARKER` -> `persistence/synthetic-uid.ts`. Approved.
+- `fe6f1d8` --- `StatementNode.ts` port. **Superseded** by `3d93f07` (see below);
+  kept in history rather than rewritten.
+- `3f5106d` --- `TagChipNode.ts` + `SearchResultNode.ts`. Approved, no shared
+  base class (PLAN.md §6 non-goal), source's duplicated-header defect not
+  carried across.
+- `a8968c6` --- first attempt at fixing `fe6f1d8`'s playhead seam. **Superseded**
+  by `3d93f07`: used a type-cast stand-in extension object
+  (`{name: "..."} as unknown as LexicalExtension<...>`) that would throw in
+  *every* case once a real extension existed, because `@lexical/extension`
+  resolves dependencies by name **and then asserts reference identity**
+  (`LexicalBuilder`'s `getExtensionRep`, throws on mismatch). A stand-in can
+  never satisfy that check --- there is no fix short of a real shared object.
+- `3d93f07` --- real fix: `StatementExtension.ts`, a genuine minimal
+  `defineExtension` (name + `nodes: () => [StatementNode]` + config + build),
+  module-level singleton import, no cast. This part is solid and unchanged
+  since.
+- `6a4e1a2` --- trivial all-caps comment nit in `TagChipNode.ts`. Approved.
+- `31cb87d` --- struck stale "assets blocked" wording from this file / PLAN.md.
+- `431fc9e` --- fixed `3d93f07`'s remaining issue: its config default was a
+  throwaway `createPlayhead()` instance, which silently reintroduces the exact
+  corruption failure (`startTime: 0` written on split) if a route ever forgets
+  to override it via `configExtension` --- same risk as the rejected `?? 0`
+  fallback, just relocated to a wiring omission instead of an ordering bug.
+  Fixed: `playhead: Playhead | null`, default `null`, `build()` throws if still
+  null. Refusal happens before the editor finishes construction, and `build`'s
+  return value **is** `.output`, so nothing can reach the read site without
+  passing the check. Also resolved a live question about whether
+  `createPlayhead()` (`$state()`) is even legal to call at module-evaluation
+  time in a plain `.ts` file rather than `.svelte.ts` --- moot now, the call
+  is gone.
 
-- **2a** --- the `.gitignore` anchoring fix alone (`lib/` -> `/lib/`, `lib64/` ->
-  `/lib64/`). Repo-root change, revertable on its own.
-- **2b** --- the previously-invisible files: `src/lib/{search.svelte.ts,urql.ts,
-  graphql.ts,index.ts}`, `src/lib/__generated__/`, `src/__generated__/`, plus
-  `MIGRATION.md`, `PLAN.md` and the uncommitted `oxlint.config.ts` resolver
-  change. Commit as-is, no cleanup --- the diff should read purely as "these
-  become tracked". Precedent checked: `packages/editor` tracks 6 `__generated__`
-  files, so codegen output is committed in this repo.
-  **`src/lib/assets/` cannot be staged** --- see the blocker below. Note it in
-  the commit message.
-- **2c** --- `src/lib/playhead.svelte.ts` alone. Already written and verified
-  (`svelte-autofixer` clean, compiles under `vite build`). Factory only, no
-  default instance, per §3.1. Needs a review round; 2a and 2b do not.
+**Reviewer confirmed pending final pass, expected to close step 3 clean** as
+of the last exchange in this session. If step 3 isn't marked done below and
+you're resuming cold, check with `git log --oneline` against the tip above and
+`reviewer`'s last message before assuming anything is still open.
 
-**Resolved:** `.git/info/exclude`'s bare `assets` and `**/assets/**` lines
-(9-10) blocked anything under an `assets/` directory anywhere in the repo from
-being committed. Now fixed and verified --- assets commit normally.
+**Design principle worth keeping visible for steps 4-6:** a `null` config
+default is only a safe pattern when every read site is guarded and the `null`
+is a real, intended mode (see `PersistenceConfig`'s `null` executors, disabled
+persistence, always read via `?.`). A `null` that must never actually reach a
+read site is a different thing --- a sentinel, not a value --- and belongs
+behind a thrown guard (in `build`, ideally, where refusal prevents construction
+altogether) rather than an unguarded optional field. Don't let the shared
+`null` literal make these look like the same pattern; ports of extension
+configs in steps 5-6 should ask which one they are.
+
+**`@lexical/extension` mechanism worth remembering for steps 4-5:** extensions
+are identified by **object identity**, not name or shape --- name is only an
+index into `LexicalBuilder`'s map, the map entry's `extension` field must be
+`===` the object passed to `$getExtensionDependency`. Any extension referenced
+from node code (or elsewhere) must be a real, module-level singleton, exported
+once and imported by reference. A structurally-identical re-creation, or a
+type-only stand-in, throws --- this is nominal typing enforced at runtime.
 
 **Open defect, logged in PLAN.md §7:** `no-internal-modules` has never run.
 oxlint does not supply `eslint-plugin-import-x` with a resolver, so the
@@ -220,27 +265,42 @@ component test). Note `*.svelte.ts` is a **reserved** filename pattern ---
 `vite-plugin-svelte` compiles anything matching `/^[^?#]+\.svelte\.[jt]s(?:[?#]|$)/`
 as a rune module, so test files must not be named that way.
 
-**Verification discipline that this session established.** Five defects so far
-all failed by producing the appearance of success. Plain `git status` does not
-list ignored files; three of us reported a clean tree and were wrong. Use
-`git status --short --ignored <path>` and `git check-ignore -v <file>`. For a
-linter, feed it a known-bad input and confirm it rejects --- silence is not
-evidence.
+**Verification discipline established this session.** Multiple defects in a
+row failed by producing the appearance of success: a green `vite build` on
+`StatementNode.ts` proved nothing while nothing imported it yet, and the
+`as unknown as` cast in `a8968c6` suppressed the only error TypeScript could
+have raised. Plain `git status` does not list ignored files either. Use
+`git status --short --ignored <path>` and `git check-ignore -v <file>` for
+gitignore questions; for extension/dependency-graph code, trace the actual
+library source (`node_modules/@lexical/extension/dist/*.d.ts` and the
+`.dev.mjs` implementation) rather than trusting a plausible-sounding claim
+about runtime behavior. For a linter, feed it a known-bad input and confirm it
+rejects --- silence is not evidence.
+
+**Dev/API environment (2026-09-06):** Vite dev server on `:2020`, plain
+`http://api.auohp.localhost/graphql` reachable (no TLS workaround needed ---
+Docker's back up, self-signed-cert `https://` fallback no longer required
+day-to-day, though `codegen.ts`'s default stays `https://`).
 
 ## Checklist
 
-- [ ] 1. Tooling fixes
-- [ ] 2. `playhead` → runes
+- [x] 1. Tooling fixes
+- [x] 2. `playhead` → runes
 - [ ] 3. Lexical neutral core (commands, shared, nodes) --- landed node classes,
-      commands, `formatTimestamp`, `SYNTHETIC_UID_MARKER`. Deferred:
+      commands, `formatTimestamp`, `SYNTHETIC_UID_MARKER`, and the real
+      `StatementExtension` with a throw-on-missing-playhead guard. Deferred:
       `shared.ts`'s Apollo-hook-derived type aliases (`TranscriptStatements`,
       `EditStatementFn`, etc.), which belong with the urql operation documents
-      that replace them (steps 5-6). Also deferred: `StatementNode`'s playhead
-      read goes through a module-level setter (`setStatementPlayhead`) instead
-      of `$getExtensionDependency`, since the statement extension doesn't exist
-      yet --- step 5 should replace it with the real extension-dependency
-      lookup per PLAN.md 3.1.
-- [ ] 4. Svelte decorator seam
+      that replace them (steps 5-6). Pending final reviewer confirmation to
+      mark this step fully closed.
+- [ ] 4. Svelte decorator seam --- PLAN.md §5's highest-ranked risk. Read
+      `LEXICAL-SPIKE-NOTES.md` on branch `spike-svelte-lexical` (SHA `e33edce`,
+      addendum `8bb9b63`) before starting: the "move the DOM, not the
+      component" mechanism, the `updated`-mutation gotcha, the
+      `registerUpdateListener` sweep for host-DOM rebuilds with no mutation
+      record, and the two-editor-instance findings (extensions/signals are
+      already per-editor and fine; only the old module singletons were the
+      risk, and those are now gone per steps 2-3).
 - [ ] 5. Extensions
 - [ ] 6. `/transcript/[interviewNumber]` route
 - [ ] 7. Remaining routes + theme + search reconciliation
