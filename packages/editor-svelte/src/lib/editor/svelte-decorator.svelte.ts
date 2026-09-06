@@ -112,13 +112,18 @@ export function registerSvelteDecorator<Props extends Record<string, unknown>>(
         }
     });
 
-    // A mutation listener alone is not enough. Lexical rebuilds host DOM in
-    // cases that produce no mutation record for the node in question -- most
-    // visibly root detach/reattach, which re-runs createDOM for the whole tree
-    // while every node stays "unchanged" from the mutation listener's point of
-    // view. So also sweep on every update: one getElementByKey per live
-    // decorator, re-parenting if the host moved. Skipping this silently
-    // orphans slots.
+    // Insurance, not a demonstrated fix: setRootElement(null) commits via
+    // resetEditor, which nulls the mutation observer and clears textContent
+    // directly BEFORE $commitPendingUpdates runs -- $reconcileRoot never
+    // executes, so the mutation listener sees nothing for that commit.
+    // Measured in lexical 0.49.0: the follow-up setRootElement(reattach) then
+    // fires FULL_RECONCILE, which re-announces every live node as "created"
+    // regardless, so the mutation listener alone already recovers once
+    // reattach happens -- this sweep has not been shown to change that
+    // outcome. It stays as a second line of defense against orphaned slots in
+    // case some future Lexical build (or an in-between read while detached)
+    // exercises a path the mutation listener misses: one getElementByKey per
+    // live decorator, re-parenting if the host moved.
     const unregisterUpdates = editor.registerUpdateListener(() => {
         for (const key of [...entries.keys()]) {
             const element = editor.getElementByKey(key);
