@@ -3,8 +3,6 @@ import {
     ElementNode,
     setDOMUnmanaged,
     type EditorConfig,
-    type ExtensionConfigBase,
-    type LexicalExtension,
     type LexicalNode,
     type NodeKey,
     type RangeSelection,
@@ -14,7 +12,7 @@ import {
 import { $getExtensionDependency } from "@lexical/extension";
 import { formatTimestamp } from "./timestamps";
 import { SYNTHETIC_UID_MARKER } from "../persistence/synthetic-uid";
-import type { Playhead } from "../../playhead.svelte";
+import { StatementExtension } from "./StatementExtension";
 
 // -----------------------------------------------------------------------------
 // StatementNode --- the Lexical analogue of the Slate `statement` element.
@@ -45,20 +43,6 @@ export const STATEMENT_NODE_CLASS = "auohp-statement";
 export const STATEMENT_CHROME_CLASS = "auohp-statement__chrome";
 const STATEMENT_CONTENT_CLASS = "auohp-statement__content";
 const STATEMENT_TIME_CLASS = "auohp-statement__time";
-
-// `insertNewAfter` needs the current playback position. Lexical constructs and
-// calls nodes itself, so there is no constructor call site to inject a
-// per-instance Playhead through --- the seam is `$getExtensionDependency`,
-// which resolves the *current editor's* registered extension from inside a
-// `$`-function. `StatementExtension` (step 5) is the real thing this names;
-// this is a type-only stand-in until that extension exists, carrying the
-// `output` shape the node depends on.
-const StatementExtension = { name: "@auohp/statement" } as unknown as LexicalExtension<
-    ExtensionConfigBase,
-    "@auohp/statement",
-    { playhead: Playhead },
-    unknown
->;
 
 export class StatementNode extends ElementNode {
     __uid: string;
@@ -128,8 +112,12 @@ export class StatementNode extends ElementNode {
     // Return null to refuse the split (what CodeNode does).
     insertNewAfter (selection: RangeSelection, restoreSelection = true): ElementNode | null {
         const newUid = `${ this.getUid() }${ SYNTHETIC_UID_MARKER }${ Date.now() }`;
-        // New node's startTime, old node's endTime = current playhead position.
-        const currentTime = $getExtensionDependency(StatementExtension).output.playhead.timestamp;
+        // Lexical constructs and calls nodes itself, so there is no constructor
+        // call site to inject a per-instance Playhead through. This resolves
+        // the current editor's registered StatementExtension instead --
+        // per-editor by construction, and throws if the extension is missing
+        // rather than silently defaulting (see PLAN.md 3.1 and its risk 4).
+        const currentTime = $getExtensionDependency(StatementExtension).output.timestamp;
         const continuation = $createStatementNode(newUid, currentTime, this.getEndTime());
         this.setEndTime(currentTime);
 
