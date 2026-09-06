@@ -294,23 +294,38 @@ day-to-day, though `codegen.ts`'s default stays `https://`).
       that replace them. Carry-forwards logged in PLAN.md §7: `Temporal` has no
       polyfill and will fail at runtime the first time a statement renders
       (step 5/6); two leftover all-caps words in `StatementNode.ts:144,219`.
-- [ ] 4. Svelte decorator seam --- **dispatched to porter, in progress.**
-      PLAN.md §5's highest-ranked risk. Two non-negotiable invariants: handle
-      `"updated"` mutations (not just created/destroyed), and sweep on
-      `registerUpdateListener` re-parenting when `getElementByKey` returns a
-      different host (the correctness-critical one, silent-failure-prone --
-      catches root detach/reattach with zero mutation records). Editor
-      reference goes through decorator props, not context (`mount()` doesn't
-      cross Svelte context boundaries) --- no module singleton, same class of
-      mistake as step 3's playhead setter. Test budget's component half spends
-      here: the four-gesture table from the spike notes. `vitest.config.ts`'s
-      `include` must be fixed as part of this step --- widen `test/**/*.{test,
-      spec}.{ts,tsx}` to drop `.tsx` only, do NOT reach into `src/` (the
-      `*.svelte.ts` reserved-pattern hazard plus no benefit at this test
-      budget size); getting this wrong means vitest silently collects 0 tests
-      and exits green. Read `LEXICAL-SPIKE-NOTES.md` on branch
-      `spike-svelte-lexical` (SHA `e33edce`, addendum `8bb9b63`) before
-      starting --- port `registerSvelteDecorator` essentially verbatim.
+- [x] 4. Svelte decorator seam --- **closed.** `registerSvelteDecorator`
+      ported (`d0d78c5`), `TagChip.svelte` + `TagChipExtension.ts` wired as
+      its first consumer, four-gesture component test added (`a743dba`).
+      Editor reference goes through decorator props, not context (`mount()`
+      doesn't cross Svelte context boundaries) --- no module singleton, same
+      class of mistake as step 3's playhead setter.
+
+      **Tooling fix (`c211828`):** the actual defect was a missing `test`
+      script in `package.json` --- there wasn't one, so `vitest` had never
+      been run against this package at all. The `.tsx` → `.ts` glob narrowing
+      was also made per PLAN.md's settled decision, but was not itself the
+      reason tests weren't collecting; the earlier session-log entry (this
+      file, superseded) stated the glob as the cause and that was wrong.
+
+      **The sweep's justification, corrected.** The dispatch brief and
+      PLAN.md both state `registerUpdateListener`'s sweep is required because
+      root detach/reattach "produces no mutation record at all." Traced
+      against the actual lexical 0.49.0 reconciler source and measured
+      directly (porter + reviewer, this session): the **detach** half
+      (`setRootElement(null)`) is genuinely silent --- `resetEditor` nulls
+      the mutation observer before `$commitPendingUpdates` runs, so
+      `$reconcileRoot` never executes. But the **reattach** half fires
+      `FULL_RECONCILE`, which re-announces every live node as `"created"`
+      regardless of whether it changed -- so the mutation listener alone
+      already recovers once reattach happens. No test constructed against
+      this Lexical version shows the sweep changing an outcome. It stays in
+      (cheap, and PLAN.md still calls it non-negotiable), but is now
+      documented as insurance against an unexercised path rather than a
+      demonstrated fix -- see `svelte-decorator.svelte.ts`'s inline comment
+      and `test/decorator-seam.test.ts`'s module comment for what was
+      actually measured versus assumed. Same correction applies to PLAN.md
+      §4's build-order entry for this step.
 - [ ] 5. Extensions
 - [ ] 6. `/transcript/[interviewNumber]` route
 - [ ] 7. Remaining routes + theme + search reconciliation

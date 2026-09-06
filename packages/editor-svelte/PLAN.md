@@ -199,10 +199,24 @@ essentially verbatim. Two invariants the review will check hard:
 - it sweeps on `registerUpdateListener`, re-parenting when `getElementByKey`
   returns a different host.
 
-The second is the correctness-critical one with a silent failure mode. This is
-where the one example component test from the constraint budget should go: the
-four-gesture table from the spike notes, asserting mount/unmount counts. That
-spends the test budget on the single highest-risk invariant in the port.
+This is where the one example component test from the constraint budget
+should go: the four-gesture table from the spike notes, asserting mount/
+unmount counts.
+
+**Correction, made while implementing this step.** The second invariant above
+was described as catching root detach/reattach because that gesture
+"produces no mutation record at all" --- stated as fact in the spike notes.
+Traced against the actual lexical 0.49.0 reconciler source and measured
+directly: the detach half (`setRootElement(null)`) is genuinely silent
+(`resetEditor` nulls the mutation observer before `$commitPendingUpdates`
+runs), but the reattach half fires `FULL_RECONCILE`, which re-announces every
+live node as `"created"` regardless -- so the mutation listener alone already
+recovers once reattach happens. No test constructed against this Lexical
+version shows the sweep changing an outcome for this gesture. The sweep stays
+in as insurance against a path this suite does not exercise (a future Lexical
+build, or some other gesture not yet found), not as a demonstrated fix for
+root detach/reattach specifically. See `svelte-decorator.svelte.ts`'s inline
+comment and `test/decorator-seam.test.ts`'s module comment.
 
 **Settle the test file convention as part of this step, before writing the
 test.** `vitest.config.ts` currently includes `test/**/*.{test,spec}.{ts,tsx}`.
