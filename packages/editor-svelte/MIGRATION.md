@@ -240,7 +240,15 @@ evidence.
 
 - [ ] 1. Tooling fixes
 - [ ] 2. `playhead` → runes
-- [ ] 3. Lexical neutral core (commands, shared, nodes)
+- [ ] 3. Lexical neutral core (commands, shared, nodes) --- landed node classes,
+      commands, `formatTimestamp`, `SYNTHETIC_UID_MARKER`. Deferred:
+      `shared.ts`'s Apollo-hook-derived type aliases (`TranscriptStatements`,
+      `EditStatementFn`, etc.), which belong with the urql operation documents
+      that replace them (steps 5-6). Also deferred: `StatementNode`'s playhead
+      read goes through a module-level setter (`setStatementPlayhead`) instead
+      of `$getExtensionDependency`, since the statement extension doesn't exist
+      yet --- step 5 should replace it with the real extension-dependency
+      lookup per PLAN.md 3.1.
 - [ ] 4. Svelte decorator seam
 - [ ] 5. Extensions
 - [ ] 6. `/transcript/[interviewNumber]` route
