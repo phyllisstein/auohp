@@ -286,21 +286,31 @@ day-to-day, though `codegen.ts`'s default stays `https://`).
 
 - [x] 1. Tooling fixes
 - [x] 2. `playhead` → runes
-- [ ] 3. Lexical neutral core (commands, shared, nodes) --- landed node classes,
-      commands, `formatTimestamp`, `SYNTHETIC_UID_MARKER`, and the real
-      `StatementExtension` with a throw-on-missing-playhead guard. Deferred:
-      `shared.ts`'s Apollo-hook-derived type aliases (`TranscriptStatements`,
+- [x] 3. Lexical neutral core (commands, shared, nodes) --- **closed, reviewer
+      approved the full set** (71c3e95, 3f5106d, 3d93f07, 6a4e1a2, 31cb87d,
+      431fc9e; fe6f1d8 and a8968c6 superseded by 3d93f07). Deferred to steps
+      5-6: `shared.ts`'s Apollo-hook-derived type aliases (`TranscriptStatements`,
       `EditStatementFn`, etc.), which belong with the urql operation documents
-      that replace them (steps 5-6). Pending final reviewer confirmation to
-      mark this step fully closed.
-- [ ] 4. Svelte decorator seam --- PLAN.md §5's highest-ranked risk. Read
-      `LEXICAL-SPIKE-NOTES.md` on branch `spike-svelte-lexical` (SHA `e33edce`,
-      addendum `8bb9b63`) before starting: the "move the DOM, not the
-      component" mechanism, the `updated`-mutation gotcha, the
-      `registerUpdateListener` sweep for host-DOM rebuilds with no mutation
-      record, and the two-editor-instance findings (extensions/signals are
-      already per-editor and fine; only the old module singletons were the
-      risk, and those are now gone per steps 2-3).
+      that replace them. Carry-forwards logged in PLAN.md §7: `Temporal` has no
+      polyfill and will fail at runtime the first time a statement renders
+      (step 5/6); two leftover all-caps words in `StatementNode.ts:144,219`.
+- [ ] 4. Svelte decorator seam --- **dispatched to porter, in progress.**
+      PLAN.md §5's highest-ranked risk. Two non-negotiable invariants: handle
+      `"updated"` mutations (not just created/destroyed), and sweep on
+      `registerUpdateListener` re-parenting when `getElementByKey` returns a
+      different host (the correctness-critical one, silent-failure-prone --
+      catches root detach/reattach with zero mutation records). Editor
+      reference goes through decorator props, not context (`mount()` doesn't
+      cross Svelte context boundaries) --- no module singleton, same class of
+      mistake as step 3's playhead setter. Test budget's component half spends
+      here: the four-gesture table from the spike notes. `vitest.config.ts`'s
+      `include` must be fixed as part of this step --- widen `test/**/*.{test,
+      spec}.{ts,tsx}` to drop `.tsx` only, do NOT reach into `src/` (the
+      `*.svelte.ts` reserved-pattern hazard plus no benefit at this test
+      budget size); getting this wrong means vitest silently collects 0 tests
+      and exits green. Read `LEXICAL-SPIKE-NOTES.md` on branch
+      `spike-svelte-lexical` (SHA `e33edce`, addendum `8bb9b63`) before
+      starting --- port `registerSvelteDecorator` essentially verbatim.
 - [ ] 5. Extensions
 - [ ] 6. `/transcript/[interviewNumber]` route
 - [ ] 7. Remaining routes + theme + search reconciliation
