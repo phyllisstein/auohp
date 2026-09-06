@@ -25,7 +25,7 @@ const NO_IDS: readonly string[] = [];
 // authoritative Statement.text. A decorator chip would silently delete the
 // words it was tagging.
 //
-// So the chip extends MarkNode (hence ElementNode) and its children ARE the
+// So the chip extends MarkNode (hence ElementNode) and its children are the
 // tagged text --- transparent to getTextContent, copy/paste, and search. That
 // costs us `decorate()`, since only DecoratorNodes have one. The Svelte
 // decorator seam (step 4) gets in the other door instead: createDOM builds an
