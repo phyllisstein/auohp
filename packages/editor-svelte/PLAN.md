@@ -357,6 +357,12 @@ commit that touches the same file.
   in steps 3--5 the property we want is "nothing reaches into another feature's
   internals", which is exactly a forbid pattern. The `settings` resolver block
   becomes dead weight and can go. Same defect exists in `packages/editor`.
+- **`Temporal` has no polyfill and no lib support** (`editor/statement/
+  timestamps.ts`, `formatTimestamp`). Will fail at runtime the first time a
+  statement actually renders --- steps 5/6, not step 4. Check whether the
+  target runtime ships `Temporal` natively or a polyfill needs adding
+  (`temporal-polyfill` / `@js-temporal/polyfill`); same gap exists in
+  `packages/editor`, so this isn't new to the port, just newly exercised.
 
   Note for whoever does this: `--print-config` omits jsPlugin rules wholesale
   and `--deny` is silent even for bogus rule names, so neither can tell a
