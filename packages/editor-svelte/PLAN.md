@@ -362,23 +362,11 @@ commit that touches the same file.
   and `--deny` is silent even for bogus rule names, so neither can tell a
   passing rule from a disabled one. Probe with a known-bad input instead.
 
-- **Nothing under an `assets/` directory can be committed, anywhere in this
-  repo.** `.git/info/exclude` carries a bare `assets` (line 9) *and*
-  `**/assets/**` (line 10) --- unanchored, so they match at any depth. Same
-  class of bug as the `lib/` pattern, but local-only: `.git/info/exclude` is
-  never committed, so it does not travel and no one reviewing the repo can see
-  it. Porter's `.gitignore` fix does not touch it.
-
-  Blast radius, measured: `packages/editor-svelte/src/lib/assets/` and
-  `packages/editor/src/styles/assets/` are both invisible --- the latter is the
-  React font source that step 7 ports. Repo-wide, exactly two paths under an
-  `assets/` directory are tracked, and both are `.gitkeep` placeholders whose
-  directory contents were then swallowed. The exclusion is long-standing.
-
-  This blocks steps 3--7 directly: fonts, icons, and `number.sign.square.svg`
-  all want an `assets/` directory, and every file would silently fail to
-  commit. It is the user's local config and may be deliberate, so it is theirs
-  to resolve --- surfaced, not changed.
+- **Resolved: `assets/` directories now commit normally.** `.git/info/exclude`
+  carried a bare `assets` (line 9) *and* `**/assets/**` (line 10) ---
+  unanchored, so they matched at any depth, blocking `assets/` directories
+  anywhere in the repo from being committed. Same class of bug as the `lib/`
+  pattern, but local-only. Fixed and verified.
 
 **Instrument note for all of the above.** `git status` does not show ignored
 files, so a "clean tree" from it means nothing about what is hidden. Use

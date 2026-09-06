@@ -202,18 +202,9 @@ Team stopped mid-step-2. State of the world:
   (`svelte-autofixer` clean, compiles under `vite build`). Factory only, no
   default instance, per §3.1. Needs a review round; 2a and 2b do not.
 
-**Blocked on a user decision:** `.git/info/exclude` lines 9-10 contain a bare
-`assets` and `**/assets/**`. Both must go for either to matter. Consequences:
-
-- `packages/editor-svelte/src/lib/assets/` is invisible.
-- `packages/editor/src/styles/assets/` is invisible --- **zero** tracked files.
-  Those are the font sources step 7 ports.
-- Repo-wide, only two paths under any `assets/` are tracked, both `.gitkeep`
-  placeholders whose contents were then swallowed.
-- The file is local-only and never travels, so a fresh clone behaves differently.
-
-Until this is resolved, nothing under an `assets/` directory can be committed
-anywhere in the repo. Do not fight it with negation rules or directory renames.
+**Resolved:** `.git/info/exclude`'s bare `assets` and `**/assets/**` lines
+(9-10) blocked anything under an `assets/` directory anywhere in the repo from
+being committed. Now fixed and verified --- assets commit normally.
 
 **Open defect, logged in PLAN.md §7:** `no-internal-modules` has never run.
 oxlint does not supply `eslint-plugin-import-x` with a resolver, so the
