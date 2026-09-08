@@ -63,11 +63,11 @@ describe("registerSvelteDecorator", () => {
         container.remove();
     });
 
-    const createHostNode = (): NodeKey => {
+    const createHostNode = (forceRebuild = false): NodeKey => {
         let key = "";
         editor.update(
             () => {
-                const node = $createDecoratorHostNode();
+                const node = $createDecoratorHostNode(forceRebuild);
                 $getRoot().append(node);
                 key = node.getKey();
             },
@@ -76,13 +76,16 @@ describe("registerSvelteDecorator", () => {
         return key;
     };
 
-    it("survives an 'updated' mutation", () => {
-        const key = createHostNode();
+    it("survives an 'updated' mutation that rebuilds the element", () => {
+        // forceRebuild makes updateDOM() return true, so markDirty() below
+        // produces a genuine "updated" record whose badge element is a new
+        // DOM node -- not a no-op that would pass whether or not the
+        // "updated" branch of the mutation listener runs at all.
+        const key = createHostNode(true);
         flushSync();
         expect(mountCounts.get(key)).toBe(1);
+        const badgeBefore = container.querySelector(`.${ DECORATOR_HOST_BADGE_CLASS }`);
 
-        // Force an "updated" mutation without touching the DOM element:
-        // mark the node dirty via a no-op write.
         editor.update(
             () => {
                 const node = $getNodeByKey(key);
@@ -92,9 +95,25 @@ describe("registerSvelteDecorator", () => {
         );
         flushSync();
 
+        const badgeAfter = container.querySelector(`.${ DECORATOR_HOST_BADGE_CLASS }`);
+        // The rebuild really happened: the badge is a different element.
+        expect(badgeAfter).not.toBe(badgeBefore);
+        // The seam re-parented the same slot into the new badge rather than
+        // mounting a fresh instance.
         expect(mountCounts.get(key)).toBe(1);
-        const badge = container.querySelector(`.${ DECORATOR_HOST_BADGE_CLASS }`);
-        expect(badge?.querySelector("[data-testid='decorator-fixture']")).not.toBeNull();
+        expect(badgeAfter?.querySelector("[data-testid='decorator-fixture']")).not.toBeNull();
+
+        // What this does and doesn't prove: registerUpdateListener's sweep
+        // (see the seam module) walks every live entry on every update,
+        // unconditionally, which makes it a strict superset of this mutation
+        // listener's "created"/"updated" handling in lexical 0.49.0. Verified
+        // by mutation testing: breaking the "updated" branch above while
+        // leaving the sweep in place still leaves this test green, because
+        // the sweep's very next pass repairs the re-parent before any
+        // assertion runs. This test can only show the seam as a whole
+        // survives a rebuild -- it cannot isolate the mutation listener's
+        // "updated" branch from the sweep. That isolation only holds with
+        // the sweep disabled too, which is not the shipped configuration.
     });
 
     it("survives reordering (fires 'updated' for both nodes, verified separately)", () => {
@@ -126,7 +145,7 @@ describe("registerSvelteDecorator", () => {
         expect(mountCounts.get(key)).toBe(1);
 
         // setRootElement(null) commits via resetEditor, which nulls the
-        // mutation observer and clears textContent directly BEFORE
+        // mutation observer and clears textContent directly before
         // $commitPendingUpdates runs -- $reconcileRoot never executes, so no
         // mutation record fires for this node at all. Verified directly
         // against a bare mutation listener in a throwaway probe (not

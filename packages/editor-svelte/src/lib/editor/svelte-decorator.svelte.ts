@@ -114,7 +114,7 @@ export function registerSvelteDecorator<Props extends Record<string, unknown>>(
 
     // Insurance, not a demonstrated fix: setRootElement(null) commits via
     // resetEditor, which nulls the mutation observer and clears textContent
-    // directly BEFORE $commitPendingUpdates runs -- $reconcileRoot never
+    // directly before $commitPendingUpdates runs -- $reconcileRoot never
     // executes, so the mutation listener sees nothing for that commit.
     // Measured in lexical 0.49.0: the follow-up setRootElement(reattach) then
     // fires FULL_RECONCILE, which re-announces every live node as "created"
