@@ -13,12 +13,24 @@ import {
 export const DECORATOR_HOST_BADGE_CLASS = "decorator-host__badge";
 
 export class DecoratorHostNode extends ElementNode {
+    // Test-only escape hatch: force updateDOM() to report "rebuild me" so a
+    // caller can produce a genuine "updated" mutation whose element identity
+    // actually changes, distinct from a no-op markDirty(). Not cloned --
+    // deliberately per-instance-at-creation-time, since $applyNodeReplacement
+    // and clone() always go through the constructor.
+    __forceRebuild: boolean;
+
+    constructor (forceRebuild: boolean = false, key?: NodeKey) {
+        super(key);
+        this.__forceRebuild = forceRebuild;
+    }
+
     static getType (): string {
         return "decorator-host";
     }
 
     static clone (node: DecoratorHostNode): DecoratorHostNode {
-        return new DecoratorHostNode(node.__key);
+        return new DecoratorHostNode(node.__forceRebuild, node.__key);
     }
 
     createDOM (_config: EditorConfig): HTMLElement {
@@ -33,7 +45,7 @@ export class DecoratorHostNode extends ElementNode {
     }
 
     updateDOM (): boolean {
-        return false;
+        return this.getLatest().__forceRebuild;
     }
 
     getDOMSlot (element: HTMLElement) {
@@ -42,8 +54,8 @@ export class DecoratorHostNode extends ElementNode {
     }
 }
 
-export function $createDecoratorHostNode (key?: NodeKey): DecoratorHostNode {
-    return $applyNodeReplacement(new DecoratorHostNode(key));
+export function $createDecoratorHostNode (forceRebuild: boolean = false, key?: NodeKey): DecoratorHostNode {
+    return $applyNodeReplacement(new DecoratorHostNode(forceRebuild, key));
 }
 
 export function $isDecoratorHostNode (node?: LexicalNode): node is DecoratorHostNode {
