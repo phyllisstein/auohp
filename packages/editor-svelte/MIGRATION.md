@@ -326,6 +326,22 @@ day-to-day, though `codegen.ts`'s default stays `https://`).
       and `test/decorator-seam.test.ts`'s module comment for what was
       actually measured versus assumed. Same correction applies to PLAN.md
       §4's build-order entry for this step.
+
+      **The `"updated"`-mutation test, made to discriminate (`f28ace8`).**
+      The original test asserted a mount count `ensure()` never increments
+      for an already-known key, and looked at a DOM element already
+      correctly parented from initial mount -- it passed whether or not the
+      mutation listener's `"updated"` branch did anything. Fixed with a
+      `forceRebuild` flag on the test fixture node so `updateDOM()` can
+      genuinely report a rebuild. Mutation-tested both directions: red with
+      the sweep disabled and the `"updated"` branch broken; green with the
+      sweep intact and only that branch broken, because the sweep's next
+      pass repairs it first -- the sweep is a strict superset of the
+      mutation listener's `"created"`/`"updated"` handling in this Lexical
+      version. The test proves the seam as a whole survives a rebuild; it
+      cannot isolate the listener's `"updated"` branch from the sweep. Said
+      so directly in the test rather than implying independent coverage of
+      both mechanisms.
 - [ ] 5. Extensions
 - [ ] 6. `/transcript/[interviewNumber]` route
 - [ ] 7. Remaining routes + theme + search reconciliation
