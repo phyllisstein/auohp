@@ -12,8 +12,9 @@ import { $isTagChipNode } from "./TagChipNode";
 // handler): a chip is inline, so that handler cleaves it in two on its way up
 // to the enclosing block. COMMAND_PRIORITY_LOW (1) beats
 // COMMAND_PRIORITY_EDITOR (0) because the command bus dispatches high-to-low.
-// We relocate nothing and return false, so the default handler still runs
-// after us and re-reads $getSelection() itself.
+// When the caret is inside a chip we preempt the default handler entirely --
+// preventDefault() and return true -- which is why the FIXME below is a real
+// open question, not a nicety: there is currently no split at all here.
 export const TagSplitBoundaryExtension = /* @__PURE__ */ defineExtension({
     dependencies: [StatementExtension, TagChipExtension],
     name: "@auohp/tag-split-boundary",

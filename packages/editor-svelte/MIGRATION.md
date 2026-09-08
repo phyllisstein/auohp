@@ -251,13 +251,34 @@ from node code (or elsewhere) must be a real, module-level singleton, exported
 once and imported by reference. A structurally-identical re-creation, or a
 type-only stand-in, throws --- this is nominal typing enforced at runtime.
 
-**Open defect, logged in PLAN.md §7:** `no-internal-modules` has never run.
-oxlint does not supply `eslint-plugin-import-x` with a resolver, so the
-resolver-dependent `allow` form is inert; the `forbid` form works and is the
-agreed fix. Same defect exists in `packages/editor`. Matters at steps 3-5.
-Instrument caveat: `oxlint --print-config` omits jsPlugin rules wholesale and
-`--deny` is silent even for bogus rule names --- neither can tell a disabled
-rule from a passing one.
+**Corrected, step 5 session:** `no-internal-modules` is not inert. The earlier
+conclusion (this file and PLAN.md §7) was wrong about the mechanism and the
+outcome. `import-x/resolver`'s `typescript.project` path
+(`packages/editor-svelte/tsconfig.json`) is monorepo-root-relative; run oxlint
+from a cwd where that relative path does not resolve (a scratch worktree, for
+instance) and the resolver silently fails, the rule fails open, and it looks
+inert. Run from the actual repo --- the package directory or the repo root,
+both tested --- and the resolver works and the rule fires for real.
+
+Currently reports three errors in `src/lib/editor/`: `StatementNode.ts` ->
+`persistence/synthetic-uid`, `PersistenceExtension.ts` -> `statement/
+StatementNode`, `TagSplitBoundaryExtension.ts` -> `statement/
+StatementExtension`. All three are accepted, intentional cross-feature seams
+from steps 3-5 (PLAN.md sec 1.2), not a backlog to clear --- the rule is
+correctly identifying them as reaching past a `dir/index.ts` barrel, which is
+exactly right, except `src/lib/editor/`'s feature directories deliberately
+have no barrels (71c3e95's log entry above). The rule is policing a convention
+this package doesn't follow, which is why it flags correct code.
+
+No lint script, CI workflow, or hook runs oxlint in this package, so nothing
+has been silently red; these errors have only ever surfaced when a person runs
+oxlint by hand. `forbid` (pure pattern matching, no resolver needed) remains
+the right eventual fix, deferred until the module graph settles after
+search-interview (step 5 commit D) lands --- not indefinitely, and not because
+the rule doesn't work. Instrument caveat, still true: `oxlint --print-config`
+omits jsPlugin rules wholesale and `--deny` is silent even for bogus rule
+names --- neither can tell a disabled rule from a passing one; the only
+reliable check is a known-bad input from the actual repo location.
 
 **Standing cleanups (PLAN.md §7):** drop `@types/react`; widen the vitest
 `include` glob (currently `test/**/*.{test,spec}.{ts,tsx}`, cannot match a

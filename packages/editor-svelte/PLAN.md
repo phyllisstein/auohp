@@ -355,22 +355,38 @@ commit that touches the same file.
   and type-checks cleanly instead of failing. With no `svelte-check` on
   templates, the type errors we *can* still get should be loud. Next
   `package.json` edit.
-- **`no-internal-modules` is inert; convert it to the `forbid` form.** The
-  module seams this plan is organised around are currently unpoliced. Diagnosed:
-  the plugin loads and the rule name is right --- `no-default-export` and
-  `no-duplicates` both fire from the same plugin on the same file, while
-  `no-internal-modules` stays silent. It is the only one of the three needing a
-  resolver, and oxlint does not supply `eslint-plugin-import-x` with a working
-  one however the settings key is spelled. Confirmed by giving the rule an
-  explicit `forbid` pattern, whereupon it fires correctly.
+- **`no-internal-modules` is live, not inert --- corrected, step 5 session.**
+  The claim below (this bullet, before correction) was wrong: it is not
+  silent, and the fix it proposed was diagnosed against the wrong cause.
 
-  So the fix is not a rename. Convert the rule from the resolver-dependent
-  `allow` form to `forbid`, which is pure pattern matching. Our allow list is
-  mostly path-shaped already, so it inverts without much loss; the trade is
-  deny-by-exception rather than allow-by-exception. For the feature-module seams
-  in steps 3--5 the property we want is "nothing reaches into another feature's
-  internals", which is exactly a forbid pattern. The `settings` resolver block
-  becomes dead weight and can go. Same defect exists in `packages/editor`.
+  Reproduced firing for real: `yarn oxlint src/lib/editor/`, run from the
+  package directory and separately from the repo root, both report the same
+  three errors (`StatementNode.ts` -> `persistence/synthetic-uid`,
+  `PersistenceExtension.ts` -> `statement/StatementNode`,
+  `TagSplitBoundaryExtension.ts` -> `statement/StatementExtension`). The
+  earlier "inert" conclusion came from running oxlint at a cwd where
+  `import-x/resolver`'s `typescript.project` path
+  (`packages/editor-svelte/tsconfig.json`, monorepo-root-relative) does not
+  resolve --- the resolver fails silently and the rule fails open there. It is
+  not that oxlint supplies no resolver at all; the resolver works, just not
+  from every cwd. A rule that fails open depending on cwd is worse than one
+  known to be off: it gives different answers to the same question, and the
+  wrong answer is the quiet one.
+
+  All three current errors are accepted, intentional cross-feature seams
+  (sec 1.2 above), not a backlog. The rule's `allow` list is built around a
+  `dir/index.ts` barrel convention that `src/lib/editor/`'s feature
+  directories deliberately don't use (71c3e95 declined barrels explicitly) ---
+  so the rule is correctly flagging a seam that exists, in a package that
+  doesn't mark seams the way the rule expects. No lint script, CI workflow, or
+  hook runs oxlint in this package, so none of this has been silently red.
+
+  `forbid` (pure pattern matching, no resolver needed) is still the right
+  eventual fix, but designing its patterns now --- with search-interview
+  (step 5 commit D), the extension with the most cross-feature surface, still
+  unported --- means redesigning them again once that module graph exists.
+  Deferred until the graph settles after D lands, sequenced, not abandoned.
+  Same defect exists in `packages/editor`.
 - **`Temporal` has no polyfill and no lib support** (`editor/statement/
   timestamps.ts`, `formatTimestamp`). Will fail at runtime the first time a
   statement actually renders --- steps 5/6, not step 4. Check whether the
