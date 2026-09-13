@@ -1,31 +1,11 @@
-// Hand-transcribed from packages/editor/src/routes/search/__generated__/index.gql.ts
-// plus the operation in route.tsx. In the real port this is graphql-codegen
-// output: the schema + near-operation-file-preset are framework-neutral, so
-// `npm run codegen` against schema.graphql regenerates these verbatim. Stubbed
-// here to avoid running codegen in a spike (needs the API up for schema
-// introspection, or a local schema.graphql copy).
-
-export type SearchAllStatementsQuery = {
-    search: {
-        statementText: Array<{
-            statement: {
-                uid: string;
-                text: string;
-                startTime: number | null;
-                endTime: number | null;
-            };
-            interview: {
-                uid: string;
-                number: number;
-                interviewee: { uid: string; name: string };
-            };
-        }>;
-    };
-};
-
-export type SearchAllStatementsQueryVariables = {
-    fragment: string;
-};
+// Operation document for the search feature. Types used to be hand-transcribed
+// here (spike stub, pre-dating a live API to introspect); now superseded by
+// codegen output in __generated__/graphql.gql.ts, generated from this file's
+// query string via the near-operation-file preset.
+export type {
+    SearchAllStatementsQuery,
+    SearchAllStatementsQueryVariables,
+} from "./__generated__/graphql.gql";
 
 export const SEARCH_ALL_STATEMENTS_QUERY = /* GraphQL */ `
     query SearchAllStatements($fragment: String!) {
