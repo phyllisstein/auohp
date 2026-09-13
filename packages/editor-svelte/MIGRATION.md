@@ -386,7 +386,26 @@ day-to-day, though `codegen.ts`'s default stays `https://`).
       hidden. `no-internal-modules`'s `forbid`-migration (deferred pending
       this module graph, PLAN.md sec 1.2/7) can now proceed whenever picked
       up.
-- [ ] 6. `/transcript/[interviewNumber]` route
+- [x] 6. `/transcript/[interviewNumber]` route --- **closed.** Ported
+      `packages/editor/src/routes/transcript/$interviewNumber.tsx` (268
+      lines) to `+page.ts` (urql load, `HEADER_QUERY` + `TRANSCRIPT_QUERY`)
+      and `+page.svelte`. `defineAuohpEditorExtension` (new,
+      `src/lib/editor/editor.ts`) is the composition root wiring all six
+      extensions from step 5 plus `HistoryExtension`/`RichTextExtension`,
+      dependency order matching the source's `KEY_ENTER_COMMAND` priority
+      race. `{#if browser}` replaces `ClientOnly`, `{#key interviewUid}`
+      replaces the source's `useMemo`. The playhead is created INSIDE the
+      `{#key}` block per PLAN.md's explicit instruction --- reviewer
+      confirmed this fixes the source's stale-`seek`-on-interview-switch
+      race as a side effect of correct lifetime scoping, not just style.
+      `EditorHost.svelte` (new, no source equivalent) bridges
+      `buildEditorFromExtensions`/`setRootElement`/`.dispose()` where the
+      source used `LexicalExtensionComposer`, and houses the two
+      video<->playhead sync effects. Two fields dropped versus the source's
+      query docs (`wroteEmbedding`, top-level `health`) --- verified dead in
+      the source itself, not scope creep. No latency meter UI: the ported
+      `LatencyExtension` has no `Component` output, so there is nothing to
+      place; confirmed not a silently-dropped feature.
 - [ ] 7. Remaining routes + theme + search reconciliation
 - [ ] 8. Example tests (one component, one unit)
 - [ ] 9. `modern-web-practices` last pass
