@@ -363,7 +363,29 @@ day-to-day, though `codegen.ts`'s default stays `https://`).
       cannot isolate the listener's `"updated"` branch from the sweep. Said
       so directly in the test rather than implying independent coverage of
       both mechanisms.
-- [ ] 5. Extensions
+- [x] 5. Extensions --- **closed.** All five extensions ported: persistence,
+      tag-split-boundary, latency, statement-seek, update-timestamp (prior
+      commits), and search-interview (commit D, this session). Reviewer
+      verified search-interview line-by-line against
+      `packages/editor/src/lexical/extensions.tsx:769-1312`; no correctness
+      drift, including the four `peek()` -> `untrack()` sites and the
+      jump-to-first-hit regression class (does not reproduce --- query-change
+      and highlight-pass effects have disjoint triggers, matching the
+      source's deliberate asymmetry). `findMatchRanges` unit test added
+      (`test/match-ranges.test.ts`, PLAN.md's designated step-8 target,
+      pulled forward since it was small/pure and already earmarked) ---
+      6 cases, all pass alongside the existing 8. One dead-code note from
+      that test: the `start < lastEnd` overlap guard in `match-ranges.ts:59`
+      cannot currently be exercised, because `matchAll` on a fixed-width
+      literal+`\b` pattern always resumes past the previous match; written as
+      an invariant check instead of a fabricated overlap, so it still catches
+      a regression if the pattern ever grows a variable-width piece. The
+      `createSearchOutput` behavioral test (query/data/clamp/re-search-bypass)
+      was scoped by the reviewer but deferred --- judgment call against the
+      two-test budget PLAN.md sets for the whole port, not a gap being
+      hidden. `no-internal-modules`'s `forbid`-migration (deferred pending
+      this module graph, PLAN.md sec 1.2/7) can now proceed whenever picked
+      up.
 - [ ] 6. `/transcript/[interviewNumber]` route
 - [ ] 7. Remaining routes + theme + search reconciliation
 - [ ] 8. Example tests (one component, one unit)
