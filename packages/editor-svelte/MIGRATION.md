@@ -121,8 +121,12 @@ Framework tax with no Svelte equivalent — do not port these:
 - `routes/index.tsx` and `routes/transcript/index.tsx` are near-duplicates
   (90 / 95 lines), both defining `LIST_INTERVIEWS_QUERY`, both with a dead
   `LinkComponent` styled-component. Collapse to one.
-- `routes/index.tsx` imports `./transcript/search/route`, a path that does not
-  exist (search lives at `src/routes/search/route.tsx`).
+- ~~`routes/index.tsx` imports `./transcript/search/route`, a path that does
+  not exist~~ --- **corrected, step 7 session.** This was a documentation
+  error, not a source defect: `routes/index.tsx:8` imports `./search/route`
+  and `routes/transcript/index.tsx:8` imports `../search/route`, both of
+  which correctly resolve to `src/routes/search/route.tsx`. Did not affect
+  the port either way (the collapsed `/` route links to `/search` directly).
 - `routes/search/results/route.tsx` had a stray `A;` statement; already dropped
   in the spike port.
 
@@ -406,6 +410,26 @@ day-to-day, though `codegen.ts`'s default stays `https://`).
       the source itself, not scope creep. No latency meter UI: the ported
       `LatencyExtension` has no `Component` output, so there is nothing to
       place; confirmed not a silently-dropped feature.
-- [ ] 7. Remaining routes + theme + search reconciliation
+- [x] 7. Remaining routes + theme + search reconciliation --- **closed**,
+      with one explicit carve-out. Collapsed `routes/index.tsx` +
+      `routes/transcript/index.tsx` (confirmed near-duplicates: identical
+      `LIST_INTERVIEWS_QUERY`, identical dead `LinkComponent`) into one `/`
+      route, replacing the spike's `goto("/search")` stub. Theme: zero
+      tokens ported --- Spectrum's CSS custom properties carry no
+      `@font-face` rules, and the already-committed layout's font-family
+      fallback stack already covers everything the built slice reads;
+      confirmed via grep that no route in transcript/search/list references
+      a custom-font class. `lib/graphql.ts`: kept the query string (real
+      codegen input), deleted hand-duplicated type literals, re-exported
+      from `__generated__/graphql.gql.ts` instead --- `yarn codegen` diffed
+      clean, proving the hand types were accurate rather than stale.
+
+      **Carve-out, not silently absorbed:** `/transcript/create` (source:
+      `routes/transcript/create.tsx`, a health-check page) has no
+      editor-svelte route yet. `routes/transcript/index.tsx`'s "New/Create"
+      link pointed there; porting the link with no destination would be
+      dead, so it was dropped rather than faked. Still open --- pick up
+      whenever that route gets built, not implicitly covered by this
+      checkbox.
 - [ ] 8. Example tests (one component, one unit)
 - [ ] 9. `modern-web-practices` last pass
