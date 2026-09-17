@@ -22,6 +22,28 @@ import { SearchInterviewExtension, type SearchStatementsFn } from "./search-inte
 // five bespoke plugins) folds into this one extension. No ReactExtension, no
 // EditorChildrenComponent -- the route writes the chrome as ordinary markup
 // around the contenteditable (PLAN.md sec 2).
+//
+// Reactive state ($state) inside an extension takes one of three shapes here,
+// chosen by what owns the state's lifetime -- not by preference:
+//
+//   1. No $effect at all (LatencyExtension.svelte.ts) -- when `build()` only
+//      needs to hand back a $state value for a component to read, with
+//      nothing to react to internally. Nothing to dispose, so no root.
+//   2. `$effect.root` with an explicit disposer (search-output.svelte.ts) --
+//      when the extension itself needs live reactions (e.g. re-running a
+//      query as other state changes) outside any component's lifetime.
+//      `build()`/`register()` are not component init phases, so `$effect` has
+//      no ambient owner; `$effect.root` supplies one, and its disposer is
+//      wired back through the extension's own teardown (`_dispose` on the
+//      output, or `register`'s returned unregister).
+//   3. A plain `$state` factory called from a component's `{@const}`
+//      (playhead.svelte.ts) -- when the state's natural lifetime already
+//      matches a component's, so that component owns it directly and no
+//      extension-level disposal is needed.
+//
+// Adding a fourth reactive extension: ask what owns the state's lifetime
+// (nothing / the extension itself / a component), and that answer picks the
+// shape above -- these are not competing styles.
 export interface TranscriptStatement {
     uid: string;
     text: string;
@@ -52,7 +74,7 @@ export function defineAuohpEditorExtension ({
         dependencies: [
             configExtension(StatementExtension, { playhead }),
             configExtension(PersistenceExtension, { editStatement, createStatement, destroyStatement, interviewUid }),
-            configExtension(SearchInterviewExtension, { searchStatements }),
+            configExtension(SearchInterviewExtension, { searchStatements, interviewUid }),
             HistoryExtension,
             LatencyExtension,
             RichTextExtension,
