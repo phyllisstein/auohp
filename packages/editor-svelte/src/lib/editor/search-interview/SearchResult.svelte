@@ -26,7 +26,8 @@
 
     $effect(() => {
         if (focused && container) {
-            container.scrollIntoView({ behavior: "smooth", block: "center" });
+            const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+            container.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "center" });
         }
     });
 </script>
