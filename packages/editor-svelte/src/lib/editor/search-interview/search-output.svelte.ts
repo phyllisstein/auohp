@@ -128,8 +128,9 @@ export function createSearchOutput (deps: SearchOutputDeps): SearchOutputWithDis
 
     // Preact's `subscribe` invoked its callback immediately with the current
     // value; at registration that value is `undefined` and the document is
-    // not even seeded yet ($initialEditorState runs after every register), so
-    // the first call was noise. $effect has the same immediate-first-run
+    // not even seeded yet ($initialEditorState's editor.update() commit is
+    // deferred to a microtask, so it hasn't landed at registration time),
+    // so the first call was noise. $effect has the same immediate-first-run
     // behaviour (confirmed against the Svelte docs, not assumed), so the
     // guard is still needed. Swallowing it explicitly beats guarding on
     // `results === undefined` inside the effect, because `data` legitimately
