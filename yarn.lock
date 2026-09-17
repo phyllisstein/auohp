@@ -186,7 +186,6 @@ __metadata:
     "@sveltejs/kit": "npm:^2.70.3"
     "@sveltejs/vite-plugin-svelte": "npm:^7.3.0"
     "@types/chai": "npm:^5.2.3"
-    "@types/react": "npm:^19.2.18"
     "@urql/svelte": "npm:^5.0.0"
     "@vitest/browser": "npm:^4.1.11"
     "@vitest/browser-playwright": "npm:^4.1.11"
@@ -217,7 +216,6 @@ __metadata:
     stylelint-config-standard: "npm:^40.0.0"
     stylelint-order: "npm:^8.1.1"
     svelte: "npm:^5.57.0"
-    svelte-check: "npm:^4.7.6"
     temporal-polyfill: "npm:^1.0.4"
     trash-cli: "npm:^7.2.0"
     tslib: "npm:^2.8.1"
@@ -2777,7 +2775,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@jridgewell/trace-mapping@npm:^0.3.24, @jridgewell/trace-mapping@npm:^0.3.25, @jridgewell/trace-mapping@npm:^0.3.28":
+"@jridgewell/trace-mapping@npm:^0.3.24, @jridgewell/trace-mapping@npm:^0.3.28":
   version: 0.3.31
   resolution: "@jridgewell/trace-mapping@npm:0.3.31"
   dependencies:
@@ -5715,13 +5713,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sveltejs/load-config@npm:^0.2.3":
-  version: 0.2.3
-  resolution: "@sveltejs/load-config@npm:0.2.3"
-  checksum: 10c0/39d4f1045fd1a862e59317e76033d6c9212eb693df28b2beaf6b89d376eebab362bc9ba595fb71d357b998199ce879bc7d7f916c36f572b36a0894b2a5e1d1da
-  languageName: node
-  linkType: hard
-
 "@sveltejs/vite-plugin-svelte@npm:^7.3.0":
   version: 7.3.0
   resolution: "@sveltejs/vite-plugin-svelte@npm:7.3.0"
@@ -8276,15 +8267,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"chokidar@npm:^4.0.1":
-  version: 4.0.3
-  resolution: "chokidar@npm:4.0.3"
-  dependencies:
-    readdirp: "npm:^4.0.1"
-  checksum: 10c0/a58b9df05bb452f7d105d9e7229ac82fa873741c0c40ddcc7bb82f8a909fbe3f7814c9ebe9bc9a2bef9b737c0ec6e2d699d179048ef06ad3ec46315df0ebe6ad
-  languageName: node
-  linkType: hard
-
 "chokidar@npm:^5.0.0":
   version: 5.0.0
   resolution: "chokidar@npm:5.0.0"
@@ -10072,7 +10054,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fdir@npm:^6.2.0, fdir@npm:^6.5.0":
+"fdir@npm:^6.5.0":
   version: 6.5.0
   resolution: "fdir@npm:6.5.0"
   peerDependencies:
@@ -12623,13 +12605,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mri@npm:^1.1.0":
-  version: 1.2.0
-  resolution: "mri@npm:1.2.0"
-  checksum: 10c0/a3d32379c2554cf7351db6237ddc18dc9e54e4214953f3da105b97dc3babe0deb3ffe99cf409b38ea47cc29f9430561ba6b53b24ab8f9ce97a4b50409e4a50e7
-  languageName: node
-  linkType: hard
-
 "mrmime@npm:^2.0.0":
   version: 2.0.1
   resolution: "mrmime@npm:2.0.1"
@@ -13713,7 +13688,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"picocolors@npm:^1.0.0, picocolors@npm:^1.1.1":
+"picocolors@npm:^1.1.1":
   version: 1.1.1
   resolution: "picocolors@npm:1.1.1"
   checksum: 10c0/e2e3e8170ab9d7c7421969adaa7e1b31434f789afb9b3f115f6b96d91945041ac3ceb02e9ec6fe6510ff036bcc0bf91e69a1772edc0b707e12b19c0f2d6bcf58
@@ -14365,13 +14340,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"readdirp@npm:^4.0.1":
-  version: 4.1.2
-  resolution: "readdirp@npm:4.1.2"
-  checksum: 10c0/60a14f7619dec48c9c850255cd523e2717001b0e179dc7037cfa0895da7b9e9ab07532d324bfb118d73a710887d1e35f79c495fa91582784493e085d18c72c62
-  languageName: node
-  linkType: hard
-
 "readdirp@npm:^5.0.0":
   version: 5.1.1
   resolution: "readdirp@npm:5.1.1"
@@ -14764,15 +14732,6 @@ __metadata:
   dependencies:
     tslib: "npm:^2.1.0"
   checksum: 10c0/1fcd33d2066ada98ba8f21fcbbcaee9f0b271de1d38dc7f4e256bfbc6ffcdde68c8bfb69093de7eeb46f24b1fb820620bf0223706cff26b4ab99a7ff7b2e2c45
-  languageName: node
-  linkType: hard
-
-"sade@npm:^1.7.4":
-  version: 1.8.1
-  resolution: "sade@npm:1.8.1"
-  dependencies:
-    mri: "npm:^1.1.0"
-  checksum: 10c0/da8a3a5d667ad5ce3bf6d4f054bbb9f711103e5df21003c5a5c1a8a77ce12b640ed4017dd423b13c2307ea7e645adee7c2ae3afe8051b9db16a6f6d3da3f90b1
   languageName: node
   linkType: hard
 
@@ -16076,25 +16035,6 @@ __metadata:
   version: 1.0.0
   resolution: "supports-preserve-symlinks-flag@npm:1.0.0"
   checksum: 10c0/6c4032340701a9950865f7ae8ef38578d8d7053f5e10518076e6554a9381fa91bd9c6850193695c141f32b21f979c985db07265a758867bac95de05f7d8aeb39
-  languageName: node
-  linkType: hard
-
-"svelte-check@npm:^4.7.6":
-  version: 4.7.6
-  resolution: "svelte-check@npm:4.7.6"
-  dependencies:
-    "@jridgewell/trace-mapping": "npm:^0.3.25"
-    "@sveltejs/load-config": "npm:^0.2.3"
-    chokidar: "npm:^4.0.1"
-    fdir: "npm:^6.2.0"
-    picocolors: "npm:^1.0.0"
-    sade: "npm:^1.7.4"
-  peerDependencies:
-    svelte: ^4.0.0 || ^5.0.0-next.0
-    typescript: ^5.0.0 || ^6.0.0
-  bin:
-    svelte-check: bin/svelte-check
-  checksum: 10c0/66c2ff0025abd6c680673c76638eb0c753b03c2d3e62988ac266040cef06fd6a27b51d4c5b6b58e6d09e0eb7f41b4fc695851d3b10ae9f7b494544dfc8943714
   languageName: node
   linkType: hard
 

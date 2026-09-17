@@ -10,11 +10,6 @@
 // Since the results were never URL-restorable in the original either, this
 // is behaviourally equivalent and simpler.
 
-// SWC Gen 1 element + icon registrations (side-effectful).
-// import "@spectrum-web-components/search/sp-search.js";
-// import "@spectrum-web-components/button/sp-button.js";
-// import "@spectrum-web-components/icons-workflow/icons/sp-icon-search.js";
-
 import { client } from "$lib/urql";
 import { searchQuery } from "$lib/search.svelte";
 import {
@@ -54,10 +49,6 @@ function onInput (event: Event) {
 function onKeydown (event: KeyboardEvent) {
     if (event.key === "Enter") runSearch();
 }
-
-function greet () {
-    alert("Welcome to Svelte!");
-}
 </script>
 
 <section>
@@ -78,33 +69,6 @@ function greet () {
             Search
         </sp-button>
     </div>
-    <div>
-        <sp-card horizontal heading="Card Heading" subheading="JPG Photo">
-            <img
-                alt=""
-                slot="cover-photo"
-                src="https://picsum.photos/200/250"
-            />
-            <div slot="description">
-                10/15/18
-                <sp-action-menu
-                    label="More Actions"
-                    slot="actions"
-                    placement="bottom-end"
-                    quiet
-                >
-                    <sp-menu-item onclick={greet}>Deselect</sp-menu-item>
-                    <sp-menu-item>Select Inverse</sp-menu-item>
-                    <sp-menu-item>Feather...</sp-menu-item>
-                    <sp-menu-item>Select and Mask...</sp-menu-item>
-                    <sp-menu-divider></sp-menu-divider>
-                    <sp-menu-item>Save Selection</sp-menu-item>
-                    <sp-menu-item disabled>Make Work Path</sp-menu-item>
-                </sp-action-menu>
-            </div>
-        </sp-card>
-    </div>
-
     <div class="results">
         {@render children()}
     </div>

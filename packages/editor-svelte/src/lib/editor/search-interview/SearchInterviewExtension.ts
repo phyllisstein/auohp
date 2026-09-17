@@ -20,7 +20,7 @@ import { INSERT_SEARCH_RESULT_COMMAND } from "./commands";
 import { $createSearchResultNode, $isSearchResultNode, SEARCH_RESULT_BADGE_CLASS, SearchResultNode } from "./SearchResultNode";
 import { findMatchRanges } from "./match-ranges";
 import { createSearchOutput, SEARCH_TAG, type SearchOutput, type SearchOutputWithDispose, type SearchStatementsData } from "./search-output.svelte";
-import { registerSvelteDecorator } from "../svelte-decorator.svelte";
+import { registerSvelteDecorator } from "../svelte-decorator";
 import SearchResult from "./SearchResult.svelte";
 
 export type { SearchOutput, SearchStatementsData };

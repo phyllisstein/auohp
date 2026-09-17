@@ -8,7 +8,7 @@ import {
     type NodeKey,
 } from "lexical";
 
-import { registerSvelteDecorator } from "../src/lib/editor/svelte-decorator.svelte";
+import { registerSvelteDecorator } from "../src/lib/editor/svelte-decorator";
 import {
     $createDecoratorHostNode,
     DECORATOR_HOST_BADGE_CLASS,
@@ -32,7 +32,7 @@ import DecoratorFixture from "./fixtures/DecoratorFixture.svelte";
 // cannot see by itself -- but the follow-up reattach fires FULL_RECONCILE,
 // which re-announces every live node as "created" regardless, so the
 // mutation listener alone already recovers once reattach happens. The
-// registerUpdateListener sweep in svelte-decorator.svelte.ts therefore has
+// registerUpdateListener sweep in svelte-decorator.ts therefore has
 // not been shown to change any outcome measurable here; it is insurance
 // against a path this suite does not exercise, not a demonstrated fix.
 

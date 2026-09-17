@@ -27,7 +27,7 @@ export const UpdateTimestampExtension = /* @__PURE__ */ defineExtension({
                 const anchor = selection.anchor.getNode();
                 const statement = $isStatementNode(anchor)
                     ? anchor
-                    : $findMatchingParent(anchor, $isStatementNode)!;
+                    : $findMatchingParent(anchor, $isStatementNode);
 
                 if (!$isStatementNode(statement)) {
                     return false;

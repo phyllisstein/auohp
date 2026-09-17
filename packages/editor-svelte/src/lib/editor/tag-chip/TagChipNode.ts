@@ -72,7 +72,7 @@ export class TagChipNode extends MarkNode {
         return super.updateFromJSON(serializedNode).setIDs(serializedNode.ids);
     }
 
-    insertNewAfter (selection: RangeSelection, restoreSelection: boolean = true): ElementNode | null {
+    insertNewAfter (_selection: RangeSelection, restoreSelection: boolean = true): ElementNode | null {
         const tagChipNode = $createTagChipNode(this.__ids);
         this.insertAfter(tagChipNode, restoreSelection);
         return tagChipNode;

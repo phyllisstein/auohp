@@ -4,7 +4,7 @@
     // rather than keeping a second copy of them.
     //
     // `editor` comes in as a prop, not via context: mount() starts a new root
-    // and Svelte context does not cross it (see svelte-decorator.svelte.ts).
+    // and Svelte context does not cross it (see svelte-decorator.ts).
 
     import type { LexicalEditor } from "lexical";
     import { $isTagChipNode as isTagChipNode } from "./TagChipNode";

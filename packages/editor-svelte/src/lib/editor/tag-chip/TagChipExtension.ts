@@ -8,7 +8,7 @@ import {
 import { $wrapSelectionInMarkNode, MarkExtension } from "@lexical/mark";
 import { mergeRegister } from "@lexical/utils";
 
-import { registerSvelteDecorator } from "../svelte-decorator.svelte";
+import { registerSvelteDecorator } from "../svelte-decorator";
 import { INSERT_TAG_CHIP_COMMAND } from "./commands";
 import { $createTagChipNode, TAG_CHIP_BADGE_CLASS, TagChipNode } from "./TagChipNode";
 import TagChip from "./TagChip.svelte";

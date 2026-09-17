@@ -3,7 +3,6 @@
 // Bare $state reads -- Svelte compiler tracks them, re-renders on any write
 // from the layout. (The original had a stray `A;` on line 11 -- a syntax
 // error in the source. Dropped.)
-// import "@spectrum-web-components/card/sp-card.js";
 import { searchQuery } from "$lib/search.svelte";
 
 // `null` = no search has run; `[]` = ran and matched nothing.

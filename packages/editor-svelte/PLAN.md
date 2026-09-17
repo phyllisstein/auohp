@@ -21,7 +21,7 @@ src/lib/
         search-interview/   -- in-editor find/replace: node, extension, driver, bar
         latency/            -- instrumentation
         persistence/        -- the write path
-        svelte-decorator.svelte.ts  -- the seam (one file, shared)
+        svelte-decorator.ts  -- the seam (one file, shared)
         editor.ts           -- defineAuohpEditorExtension: the composition root
     playhead.svelte.ts      -- runes port of the createModel singleton
     urql.ts, search.svelte.ts, __generated__/   -- existing spike code
@@ -215,7 +215,7 @@ recovers once reattach happens. No test constructed against this Lexical
 version shows the sweep changing an outcome for this gesture. The sweep stays
 in as insurance against a path this suite does not exercise (a future Lexical
 build, or some other gesture not yet found), not as a demonstrated fix for
-root detach/reattach specifically. See `svelte-decorator.svelte.ts`'s inline
+root detach/reattach specifically. See `svelte-decorator.ts`'s inline
 comment and `test/decorator-seam.test.ts`'s module comment.
 
 **Settle the test file convention as part of this step, before writing the
