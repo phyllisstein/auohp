@@ -433,3 +433,25 @@ day-to-day, though `codegen.ts`'s default stays `https://`).
       checkbox.
 - [ ] 8. Example tests (one component, one unit)
 - [ ] 9. `modern-web-practices` last pass
+
+      **Carve-outs from the Opus code-quality audit (`.audit-opus.md`),
+      logged rather than silently absorbed by a green checkbox:**
+
+      - Finding 4: `TagSplitBoundaryExtension.ts:43-46` --- pressing Enter
+        with the caret inside a tag chip silently no-ops (`preventDefault`,
+        no split, no feedback). Faithful to the source, not a port defect,
+        but the extension's own header comment already calls this "a real
+        open question, not a nicety," and it is the only user gesture in the
+        tree that goes nowhere. Open until someone decides what pressing
+        Enter there should actually do.
+      - Finding 7: `SearchInterviewExtension.ts:322` reads `interviewUid` off
+        `PersistenceExtension`'s output rather than taking it directly, so
+        search structurally depends on the write path to know what it's
+        searching. Fails silently: `interviewUid` defaults to `""`
+        (`PersistenceExtension.ts:73`), so a missing wiring produces
+        unscoped results, not an error. `editor.ts:39` already threads
+        `interviewUid` in as a top-level option, so passing it to both
+        extensions independently would remove the coupling for the cost of
+        one duplicated wiring line. Deferred at step 6, still deferred ---
+        this entry is what keeps it from being silently dropped a second
+        time.
