@@ -13,9 +13,7 @@ import {
 } from "lexical";
 import { $dfs, $findMatchingParent, mergeRegister } from "@lexical/utils";
 import { $unwrapMarkNode, $wrapSelectionInMarkNode, MarkExtension } from "@lexical/mark";
-import { $getExtensionDependency } from "@lexical/extension";
 import { debounce } from "perfect-debounce";
-import { PersistenceExtension } from "../persistence/PersistenceExtension";
 import { StatementExtension } from "../statement/StatementExtension";
 import { $isStatementNode, StatementNode } from "../statement/StatementNode";
 import { INSERT_SEARCH_RESULT_COMMAND } from "./commands";
@@ -43,6 +41,7 @@ export type SearchStatementsFn = (variables: {
 
 export interface SearchInterviewConfig {
     searchStatements: SearchStatementsFn | null;
+    interviewUid: string;
 }
 
 // -----------------------------------------------------------------------------
@@ -282,21 +281,11 @@ export function replaceMark (mark: SearchResultNode, replacement: string): State
 
 export const SearchInterviewExtension = /* @__PURE__ */ defineExtension({
     nodes: () => [SearchResultNode],
-    // Carry-forward for step 6's composition root: this reads interviewUid
-    // off PersistenceExtension's output, so search now structurally requires
-    // persistence in the dependency graph -- a new edge the source also had
-    // (SearchDriver read interviewUid off PersistenceExtension too, so this
-    // is faithful) but that step 6 should know is there. Unlike
-    // StatementExtension's missing-playhead guard, PersistenceExtension does
-    // not throw when unconfigured -- interviewUid silently defaults to "",
-    // which then fails persistence's own `!interviewUid` check. So the
-    // failure mode here is quiet (search silently can't attribute results to
-    // an interview) rather than a build-time throw. Worth deciding at step 6
-    // whether that should change.
-    dependencies: [StatementExtension, PersistenceExtension, MarkExtension],
+    dependencies: [StatementExtension, MarkExtension],
     name: "@auohp/search-interview",
     config: /* @__PURE__ */ safeCast<SearchInterviewConfig>({
         searchStatements: null,
+        interviewUid: "",
     }),
 
     // `build` receives `editor` as its first parameter, same as `register`
@@ -311,15 +300,13 @@ export const SearchInterviewExtension = /* @__PURE__ */ defineExtension({
     // just a passthrough) rather than diverging from precedent the way an
     // earlier draft of this file briefly did.
     build (editor, config): SearchOutputWithDispose {
-        // interviewUid comes off PersistenceExtension's output, not this
-        // extension's own config -- one interview per editor, and this keeps
-        // a single wiring point for it rather than two extensions each taking
-        // their own copy that could disagree. PersistenceExtension is a
-        // sibling dependency (see `dependencies` below), so its output is
-        // already built by the time this extension's `build` runs --
-        // `LexicalBuilder` resolves the dependency graph before invoking a
-        // dependent's own lifecycle.
-        const { interviewUid } = $getExtensionDependency(PersistenceExtension).output;
+        // Taken directly from this extension's own config, not read off
+        // PersistenceExtension's output -- both extensions take their own
+        // copy of the same `interviewUid`, wired from the single call site in
+        // editor.ts, rather than search structurally depending on persistence
+        // to learn which interview it's searching. The two copies can't
+        // disagree because there is exactly one place that constructs them.
+        const { interviewUid } = config;
 
         // `output` is assigned below, once `createSearchOutput` returns.
         // `debouncedQueryHandler` and the `seekToResult` callback passed into

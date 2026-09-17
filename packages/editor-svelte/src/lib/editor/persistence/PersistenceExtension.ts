@@ -54,14 +54,10 @@ export interface PersistenceConfig {
 // general rule (wrap iff something takes a second value AND something reacts)
 // fails on the second half here; the other four fields are injected
 // collaborators, stable for the editor's lifetime, and pass through as-is.
-export interface PersistenceOutput {
-    delay: number;
-    destroyDelay: number;
-    editStatement: EditStatementFn | null;
-    createStatement: CreateStatementFn | null;
-    destroyStatement: DestroyStatementFn | null;
-    interviewUid: string;
-}
+//
+// Output is identical to config field-for-field -- nothing here transforms or
+// derives anything, `build` only exists to satisfy the extension's shape.
+export type PersistenceOutput = PersistenceConfig;
 
 export const PersistenceExtension = /* @__PURE__ */ defineExtension({
     config: /* @__PURE__ */ safeCast<PersistenceConfig>({
@@ -78,14 +74,7 @@ export const PersistenceExtension = /* @__PURE__ */ defineExtension({
     // this object literal's members in source order, so state.getOutput()'s
     // return type only resolves for members declared after build; otherwise
     // it's `unknown`.
-    build: (_editor, config): PersistenceOutput => ({
-        delay: config.delay,
-        destroyDelay: config.destroyDelay,
-        editStatement: config.editStatement,
-        createStatement: config.createStatement,
-        destroyStatement: config.destroyStatement,
-        interviewUid: config.interviewUid,
-    }),
+    build: (_editor, config): PersistenceOutput => config,
 
     // Not `register`. `afterRegistration` is the right phase for the same
     // reason InitialStateExtension itself seeds there rather than in
