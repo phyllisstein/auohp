@@ -15,6 +15,7 @@
     // (`editor.getElementByKey`). There is no DOM during SSR, so there is
     // nowhere for a decorator host to exist.
     import { buildEditorFromExtensions, type AnyLexicalExtension } from "@lexical/extension";
+    import { untrack } from "svelte";
     import type { Playhead } from "$lib/playhead.svelte";
 
     let {
@@ -31,9 +32,16 @@
 
     $effect(() => {
         const editor = buildEditorFromExtensions(extension);
-        if (contentEditable) {
-            editor.setRootElement(contentEditable);
-        }
+        // By the time an effect body runs, the component has already mounted
+        // and bind:this has already written contentEditable -- untrack keeps
+        // this effect keyed on `extension` alone, so a later contentEditable
+        // write (there won't be one; bind:this only fires once per mount)
+        // can't trigger a second build-and-dispose of the whole editor.
+        untrack(() => {
+            if (contentEditable) {
+                editor.setRootElement(contentEditable);
+            }
+        });
         return () => editor.dispose();
     });
 
