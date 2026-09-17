@@ -347,7 +347,7 @@ day-to-day, though `codegen.ts`'s default stays `https://`).
       this Lexical version shows the sweep changing an outcome. It stays in
       (cheap, and PLAN.md still calls it non-negotiable), but is now
       documented as insurance against an unexercised path rather than a
-      demonstrated fix -- see `svelte-decorator.svelte.ts`'s inline comment
+      demonstrated fix -- see `svelte-decorator.ts`'s inline comment
       and `test/decorator-seam.test.ts`'s module comment for what was
       actually measured versus assumed. Same correction applies to PLAN.md
       §4's build-order entry for this step.

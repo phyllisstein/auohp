@@ -51,7 +51,7 @@ export const StatementSeekExtension = /* @__PURE__ */ defineExtension({
                     const startTime = editor.read(() => {
                         const statement = $getRoot()
                             .getChildren()
-                            .find(node => $isStatementNode(node) && node.getUid() === uid)!;
+                            .find(node => $isStatementNode(node) && node.getUid() === uid);
 
                         return $isStatementNode(statement) ? statement.getStartTime() : null;
                     });
