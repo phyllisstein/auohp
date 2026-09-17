@@ -1,0 +1,46 @@
+#!/bin/sh
+# Chain to Git LFS's own post-checkout behavior first, since this hook
+# replaces whatever core.hooksPath pointed at before (normally the
+# LFS-managed .git/hooks/post-checkout).
+if command -v git-lfs >/dev/null 2>&1; then
+	git lfs post-checkout "$@"
+fi
+
+# Only act on worktrees, not the main checkout or a plain branch switch.
+# GIT_DIR and GIT_COMMON_DIR coincide in the main checkout; they diverge
+# for any worktree (GIT_DIR points at .git/worktrees/<name>, while
+# GIT_COMMON_DIR always points at the real, shared .git).
+git_dir="$(git rev-parse --git-dir)"
+common_dir="$(git rev-parse --git-common-dir)"
+
+if [ "$git_dir" = "$common_dir" ]; then
+	exit 0
+fi
+
+repo_root="$(cd "$(dirname "$common_dir")" && pwd)"
+worktree_root="$(git rev-parse --show-toplevel)"
+branch_name="$(basename "$worktree_root")"
+
+# Copy untracked env files the project needs to run --- they're gitignored,
+# so a fresh worktree checkout never has them.
+for f in .env .envrc; do
+	if [ -f "$repo_root/$f" ] && [ ! -e "$worktree_root/$f" ]; then
+		cp "$repo_root/$f" "$worktree_root/$f"
+	fi
+
+	for p in packages/*; do
+		if [ -f "$repo_root/$p/$f" ] && [ ! -e "$worktree_root/$p/$f" ]; then
+			mkdir -p "$worktree_root/$p"
+			cp "$repo_root/$p/$f" "$worktree_root/$p/$f"
+		fi
+	done
+done
+
+# Tag this worktree's Compose virtual hosts with the branch name, so
+# `editor.auohp` on main becomes `editor.foo-branch.auohp` here --- lets
+# main and worktree stacks run against nginx-proxy at the same time
+# without host collisions. HOST_TAG defaults to empty in docker-compose.yml,
+# so main (not a worktree, never runs this hook) is unaffected.
+if [ ! -f "$worktree_root/.env" ] || ! grep -q '^HOST_TAG=' "$worktree_root/.env"; then
+	echo "HOST_TAG=.$branch_name" >> "$worktree_root/.env"
+fi
