@@ -76,11 +76,16 @@ in `git worktree list`.
 
    ```
    cp "$REPO_ROOT/AUOHP.code-workspace" "$WORKTREES_DIR/<name>/AUOHP-<name>.code-workspace"
+   rm "$WORKTREES_DIR/<name>/AUOHP.code-workspace"
    ```
 
-   Inside the copy, folder `path` entries are relative to the `.code-workspace`
-   file's own location, so they still resolve correctly unmodified — only the
-   filename needs to change, not the contents.
+   The `rm` matters: the worktree's checkout already has the original
+   `AUOHP.code-workspace` from git, and leaving both files defeats the point
+   — VS Code's recent-workspaces picker would still show the generic name
+   alongside the renamed one. Inside the copy, folder `path` entries are
+   relative to the `.code-workspace` file's own location, so they still
+   resolve correctly unmodified — only the filename needs to change, not the
+   contents.
 
 7. Attach the current session to the new worktree:
 
