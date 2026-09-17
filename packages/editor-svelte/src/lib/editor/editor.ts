@@ -67,10 +67,13 @@ export function defineAuohpEditorExtension ({
             throw error;
         },
 
-        // Runs once, inside an editor.update() tagged history-merge, after
-        // every extension's register and before any afterRegistration -- see
-        // PersistenceExtension's afterRegistration-not-register comment for
-        // why that ordering matters.
+        // Seeds from InitialStateExtension's own afterRegistration -- as root
+        // index 0, it runs first among all afterRegistration hooks, so this
+        // fires before PersistenceExtension's. Its editor.update() is tagged
+        // history-merge, and that tag (not run order relative to register) is
+        // what shields PersistenceExtension's update listener from seeing the
+        // seed as user edits -- see PersistenceExtension's
+        // afterRegistration-not-register comment.
         $initialEditorState () {
             const root = $getRoot();
             root.clear();

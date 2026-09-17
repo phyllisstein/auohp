@@ -87,12 +87,16 @@ export const PersistenceExtension = /* @__PURE__ */ defineExtension({
         interviewUid: config.interviewUid,
     }),
 
-    // Not `register`. InitialStateExtension seeds via editor.update(), whose
-    // commit is deferred to a microtask, while LexicalBuilder.registerEditor
-    // runs its registration loops synchronously -- so the seed's dirty-node
-    // wave lands after every `register` has already returned, and an
-    // unguarded update listener sees all of it as spurious mutations.
-    // `afterRegistration` runs after that microtask has flushed.
+    // Not `register`. `afterRegistration` is the right phase for the same
+    // reason InitialStateExtension itself seeds there rather than in
+    // `register` -- it is the phase that runs once all extensions are wired.
+    // But what actually shields this update listener from seeing the seed as
+    // spurious mutations is the `tags.has("history-merge")` guard below:
+    // InitialStateExtension's editor.update() is tagged history-merge, and
+    // that tag is checked regardless of ordering. (editor.update()'s commit
+    // is deferred to a microtask anyway, so it lands after every
+    // afterRegistration hook has returned, this one included -- ordering
+    // relative to registration doesn't protect anything here.)
     afterRegistration (editor, _config, state) {
         const { delay, destroyDelay, editStatement, destroyStatement, createStatement, interviewUid } = state.getOutput();
 
