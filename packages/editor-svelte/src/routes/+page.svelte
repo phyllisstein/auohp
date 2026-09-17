@@ -18,21 +18,18 @@ let { data }: PageProps = $props();
 
 <div class="panel">
     <div class="content">
-        <h3>Interviews</h3>
+        <h1>Interviews</h1>
         <ul>
             {#each data.interviews as interview (interview.number)}
                 <li>
-                    <a
-                        href="/transcript/{interview.number}"
-                        title="Interview {interview.number}"
-                    >
+                    <a href="/transcript/{interview.number}">
                         #{interview.number} - {interview.interviewee.name}
                     </a>
                 </li>
             {/each}
         </ul>
-        <h3>Search</h3>
-        <a href="/search" title="Search">Search</a>
+        <h2>Search</h2>
+        <a href="/search">Search</a>
     </div>
 </div>
 

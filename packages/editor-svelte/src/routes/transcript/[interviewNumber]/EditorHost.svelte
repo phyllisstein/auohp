@@ -82,7 +82,8 @@
 ></div>
 
 <style>
-    .auohp-editor {
-        outline: none;
+    .auohp-editor:focus-visible {
+        outline: 2px solid var(--spectrum-accent-color-800, #0d66d0);
+        outline-offset: 2px;
     }
 </style>

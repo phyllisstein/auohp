@@ -431,8 +431,61 @@ day-to-day, though `codegen.ts`'s default stays `https://`).
       dead, so it was dropped rather than faked. Still open --- pick up
       whenever that route gets built, not implicitly covered by this
       checkbox.
-- [ ] 8. Example tests (one component, one unit)
-- [ ] 9. `modern-web-practices` last pass
+- [x] 8. Example tests (one component, one unit) --- **closed.**
+      `test/decorator-seam.test.ts` (component) and `test/match-ranges.test.ts`
+      (unit), per step 4/5 log entries above. `yarn test`: 3 files, 14 tests,
+      all pass.
+- [x] 9. `modern-web-practices` last pass --- **closed.** Prior parallel
+      "web-audit" fork (2026-09-13 session) never wrote its findings to disk,
+      so this was a fresh pass against `modern-web-guidance`'s accessibility
+      guide. Fixed:
+
+      - `routes/+page.svelte` --- heading hierarchy jumped straight to `<h3>`
+        with nothing above it; now `<h1>`/`<h2>`. Also dropped redundant
+        `title="..."` attrs duplicating each link's own visible text (guide
+        §3: `title` is not a naming mechanism).
+      - `EditorHost.svelte` --- `.auohp-editor` (the contenteditable root) had
+        `outline: none` with no replacement; added a `:focus-visible` outline.
+      - `search-interview/SearchResult.svelte` --- `scrollIntoView({behavior:
+        "smooth"})` on jump-to-result ran unconditionally; now checks
+        `prefers-reduced-motion`.
+
+      Verified via `svelte-autofixer` (clean on all three touched files, no
+      new suggestions beyond pre-existing effect-pattern notes already
+      deliberate per those files' own comments), `yarn build`, `yarn test`
+      (14/14 pass).
+
+      **Carve-outs, not silently absorbed (need a design decision, not a
+      drive-by fix):**
+
+      - `StatementSeekExtension.ts` + `.auohp-statement__chrome`
+        (`+page.svelte`'s global styles) --- click-to-seek is mouse-only. The
+        chrome column has `cursor: pointer` and a plain `click` listener
+        (`StatementSeekExtension.ts`'s `onClick`), no `role`, no `tabindex`,
+        no keydown/keyup handler. A keyboard-only or screen-reader user cannot
+        seek the video at all --- the entire gesture is invisible without a
+        mouse. Needs a decision on the right affordance (e.g. `role="button"`
+        + `tabindex="0"` + Enter/Space handlers per guide §5, or promoting it
+        to a real `<button>` wrapping the chrome content) before implementing.
+      - `routes/search/+page.svelte` --- result count/arrival has no live
+        region. `role="alert"` is already correctly used for the error case
+        (guide §8), but a successful search's results render silently; a
+        screen-reader user gets no confirmation results arrived or how many.
+        Needs a decision on wording/urgency (`polite`, per guide §8's
+        "Standard" row) before adding it.
+      - `tag-chip/TagChip.svelte` --- the badge is `<span>` + `title`, fully
+        decorative to assistive tech (no `role`/`aria-label`, and `title`
+        isn't a naming mechanism per guide §3). Given the product's
+        captions-first philosophy (tags are something a human reviews, not
+        just a visual flourish), whether/how to expose the tag IDs to screen
+        readers is a product call, not a mechanical fix.
+
+      Verified non-issue: the autofixer's long-standing warnings on
+      `search/+layout.svelte`'s `sp-search`/`sp-button` (missing ARIA
+      role/keyboard handler) are false positives per guide §2 --- Spectrum Web
+      Components attach semantics via `ElementInternals`, which the autofixer
+      can't see; absence of markup-level ARIA doesn't mean absence of
+      semantics.
 
       **Carve-outs from the Opus code-quality audit (`.audit-opus.md`),
       logged rather than silently absorbed by a green checkbox:**
