@@ -197,6 +197,14 @@ export const PersistenceExtension = /* @__PURE__ */ defineExtension({
         };
 
         const unregister = mergeRegister(
+            // `mutatedNodes` below is editor-global, not per-node-class: Lexical
+            // only populates it once at least one mutation listener exists for
+            // that class (Lexical.dev.mjs setMutatedNode). Without this
+            // registration, persistence would silently stop saving whenever no
+            // other extension happens to register a StatementNode mutation
+            // listener -- this no-op exists purely to make that precondition
+            // ours instead of a borrowed side effect of TagChip/SearchInterview.
+            editor.registerMutationListener(StatementNode, () => {}),
             editor.registerUpdateListener(({ tags, mutatedNodes, editorState, prevEditorState }) => {
                 if (tags.has("history-merge")) {
                     return;
