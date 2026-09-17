@@ -4,6 +4,12 @@ editing, and searching oral history interview videos. It processes interview
 footage through an AI transcription pipeline and stores the results in a Neo4j
 graph database, then exposes them via a caption editor and search interface.
 
+## Setup
+- After cloning, run `git config core.hooksPath .githooks` so the versioned
+  git hooks in `.githooks/` (worktree DX setup, chained Git LFS support)
+  actually run — `core.hooksPath` is local config, not something a clone
+  picks up on its own.
+
 ## Tooling
 - You are operating in an environment where ast-grep is installed. For any code
   search that requires understanding of syntax or code structure, you should
