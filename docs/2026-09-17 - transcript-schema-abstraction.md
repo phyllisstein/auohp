@@ -4,86 +4,282 @@ created: 2026-09-17
 updated: 2026-09-17
 ---
 
-# Transcript schema abstraction
+# Transcript Schema Abstraction
 ## Context
-Iterating on editorial and rendering features for transcription data has become increasingly difficult. Friction results from a design problem. Transcriptions serve different purposes, but they're all bound to a single `(:Transcript)-[:CONTAINS]->(:Statement)` tree.
+Iterating on editorial and rendering features for transcription data has become
+increasingly difficult. Friction results from a design problem. Transcriptions
+serve different purposes, but they're all bound to a single
+`(:Transcript)-[:CONTAINS]->(:Statement)` tree.
 
-- **Captioning.** View VTT files with timings (`[:CONTAINS {startTime, endTime}]`), formatted text (`(:Statement {text})`), and metadata (`:Statement`, and/or deeper walk).
-- **Editing.** Modify the text content of transcriptions (`(:Statement {text})`), reformat it (also `(:Statement {text})`), and adjust timings (`[:CONTAINS {startTime, endTime}]`).
-- **Search.** Query the text content of transcriptions (`(:Statement {embedding})`), returning timings (`[:CONTAINS {startTime, endTime}]`) and metadata (deeper walk).
+- **Captioning.** View VTT files with timings (`[:CONTAINS {startTime,
+  endTime}]`), formatted text (`(:Statement {text})`), and metadata
+  (`:Statement`, and/or deeper walk).
+- **Editing.** Modify the text content of transcriptions (`(:Statement
+  {text})`), reformat it (also `(:Statement {text})`), and adjust timings
+  (`[:CONTAINS {startTime, endTime}]`).
+- **Search.** Query the text content of transcriptions (`(:Statement
+  {embedding})`), returning timings (`[:CONTAINS {startTime, endTime}]`) and
+  metadata (deeper walk).
 
-The unified schema was designed with automagical editorial affordances in mind. The reasoning held that a single "editing" pane could harness multiple kinds of edits for the purpose of sanitizing and enriching the overall corpus. A director, seeing "ACT UP" split across two caption segments, would remove the split for readability's sake---improving, at the same time, the search index and the ability to add knowledge graph edges, neither of which could usefully span two statement nodes.
+The unified schema was designed with automagical editorial affordances in mind.
+The reasoning held that a single "editing" pane could harness multiple kinds of
+edits for the purpose of sanitizing and enriching the overall corpus. A
+director, seeing "ACT UP" split across two caption segments, would remove the
+split for readability's sake---improving, at the same time, the search index and
+the ability to add knowledge graph edges, neither of which could usefully span
+two statement nodes.
 
-In reality, the perverse outcome prevailed: different use cases created shearing in the schema. Core transcript data can't be tombstoned on edit because presentational caption edits are too fluid and fast-moving. Captions can't be in a drafting state because the core data has to remain live. Transcript text must be split into `:Statement` hunks that are searchable _and_ readable _and_ indexable.
+In reality, the perverse outcome prevailed: different use cases created shearing
+in the schema. Core transcript data can't be tombstoned on edit because
+presentational caption edits are too fluid and fast-moving. Captions can't be in
+a drafting state because the core data has to remain live. Worse, this has also
+polluted the inference layer, which must split transcribed speech into
+`:Statement` hunks that are searchable _and_ readable _and_ indexable. Every new
+feature ramifies across the entire application.
 
-> [!WARNING] TK: Tautology. "Makes itself necessary"?
->
-> The magical "ACT UP" edit _wouldn't be necessary_ if the transcript data, the search index, the knowledge graph, and the formatting of a caption were separated at the schema level.
+As a substitute for thoughtful abstraction, the magical "ACT UP" edit _makes
+itself necessary_.
+
+The schema also reflects a prissiness around creating "too many" graph nodes and
+edges, false economies that arbitrarily constrain schema evolution and feature
+development. A raw JSON string of word timings and metadata is difficult for
+consumers of the graph to use and inert in the graph itself. Too-muchness is a
+feature of the graph, not a bug. Conceptualizing the schema in terms of the
+Neo4j Browser force-directed visualization is an antipattern.
 
 
 ## Decision
-Separate "Transcription" and "Captions" in the database schema. `:Transcription` becomes a data-rich singleton; `:Caption` becomes a persisted presentational artifact generated from a `:Transcription`.
+Create a data-rich `:Transcription` as a source of truth. Expose tools for
+generating presentational derivatives, factoring on-the-fly API rendering logic
+into specific stepwise transformations of schema data.
 
-### Schema changes
-#### `:Transcription`
-`:Transcript` subtly implies a source type, inasmuch as "transcript of an image" would make no sense and "transcript of a document" would be a tossup. It is renamed `:Transcription`, and grows an additional label based on source type. _Source type_ is based on the medium, not the container. What the current schema thinks of as the "transcript" of a video is a _transcription_ of the _speech_ contained in a video.
 
-```cypher
-(:Video)-[:TRANSCRIBED_AS]->(:Transcription:Speech)
-```
-
-Similarly, an image would have a transcription of its text.
+### Inference
+Persist inference runs and raw results to the graph.
 
 ```cypher
-(:Image)-[:TRANSCRIBED_AS]->(:Transcription:Text)
+(:InferenceRun {
+    started:     ZONED DATETIME
+    completed:   ZONED DATETIME
+})
+
+(:Model {
+    label:      STRING
+    metadata:   STRING  // JSON
+})
+
+(:InferenceRun)-[:WITH_MODEL]->(:Model)
 ```
 
-Sources might be transcribed in multiple ways---for instance, the speech in a documentary may be transcribed along with the visible text of posters.
+Inference runs record edges between their input artifact (e.g., the video
+recording of an interview) and their output artifact (e.g., the transcription
+generated by Whisper).
 
 ```cypher
-(:Video)-[:TRANSCRIBED_AS]->(:Transcription:Speech)
-(:Video)-[:TRANSCRIBED_AS]->(:Transcription:Text)
+()<-[:FROM_INPUT]-(:InferenceRun)-[:WITH_OUTPUT]->()
 ```
 
-This separation allows presentational layers to be derived more flexibly. _Searching_ the text visible in a documentary is useful; _captioning_ it would be redundant.
 
-All `:Transcription`s produce `:Text`.
-
-```cypher
-(:Transcription:Speech)-[:TRANSCRIBED_INTO]->(:Text)
-```
-
-Timings are still stashed on edges in this iteration.
-
-```cypher
-[:TRANSCRIBED_INTO {
-    startTime:     FLOAT
-    endTime:       FLOAT
-}]
-```
-
-Mapping transcription text to timestamps in a stable, indexed way is the single problem the MVP is meant to solve, and the simple "big bag of properties" design of the `:INTO` edge reflects a need to commit and ship. It's a hand-wave. "At what timestamp does this speech appear in that interview" is actually a whole class of problem. At what timestamp is this poster visible in that documentary? On what physical page does this broadsheet mention AZT? In what paragraph of text? At which word? A principled, generalized locatability pattern is crucial but out of scope.
-
-`:Transcription` includes metadata fields reflecting the process that generated it.
+### Transcription
+Raw inference results are parsed and transformed into the graph's native schema.
 
 ```cypher
 (:Transcription {
-    createdAt:  ZONED DATETIME
-    updatedAt:  ZONED DATETIME
-    model:      STRING
+    language:   STRING
+    duration:   DURATION
+})
+
+(:Segment {
+    language:   STRING
+    duration:   DURATION
+    startTime:  FLOAT
+    endTime:    FLOAT
+})
+
+(:Word {
+    text:           STRING
+    startTime:      FLOAT
+    endTime:        FLOAT
+    duration:       DURATION
+    confidence:     FLOAT
+})
+
+(:Speaker {
+    label:  STRING
 })
 ```
 
-A `:Caption` has edges to `:Statement` nodes. `:Statement` holds on to `embedding` and `text`, drops `words`. Caption timings remain on `:HAS_STATEMENT` edges.
+Each Whisper run has exactly one transcription. Running Whisper again on the
+same input will tombstone the previous run.
 
 
-### Search
-<!-- TKTK: Search is presentational -->
-<!-- TKTK: Embeddings index both raw transcript text and presentational text? -->
-<!-- TKTK: ?
-    (:Video)-[:SEARCHABLE_AS]->
-    (:Transcription)-[:SEARCHABLE_AS]->
--->
+### Semantic Content
+Inference targets and results construct a representation of the source
+artifact's content.
 
-### Schema Changes
-- `:Transcription`
+```cypher
+(:Speech {
+    duration:   DURATION
+    statement:  STRING
+})
+
+(:Video)-[:WITH_CONTENT]->(:Speech)
+```
+
+The abstraction anticipates extension into different artifacts. The content of
+an interview video is exclusively speech, a broadsheet image would be mostly
+text, and a documentary video might include OCR'd poster text alongside speech.
+Visual artifacts might have descriptive text, which could be created by users or
+generated by ML workflows.
+
+Content nodes are generated by constructing edges to their data sources.
+
+```cypher
+(:Statement)-[:AS_SPEECH]->(:Speech)
+```
+
+As lightest-weight shippable approach to
+[locatability](#principled-locatability), `:WITH_CONTENT` edges include the
+second in the video at which content first appears as `timeIndex`.
+
+Once generated, a content node may be edited independently of its data sources.
+Edits do not propagate back to the original data, and edges guarantee a stable
+reference to a single source of truth. When the originating data source is
+tombstoned, content is not destroyed, but flagged as stale in editorial
+workflows. Content nodes are not tombstoned by editing or deletion.
+
+
+### Captions
+A caption is another content type, like `:Speech`.
+
+```cypher
+/**
+ *  PtFu8XCdnp
+ *  01:01:38.780 --> 01:01:41.119
+ *  I think he died of leukemia
+ */
+
+(:Caption:VTT {
+    duration:     DURATION
+    identifier:   STRING // PtFu8XCdnp
+    timings:      STRING // 01:01:38.780 --> 01:01:41.119
+    payload:      STRING // I think he died of leukemia
+})
+
+(:Caption)
+            <-[:AS_CAPTION]-(:Statement)
+            <-[:WITH_CONTENT]-(:Video)
+```
+
+`:Caption` is wholly distinct from `:Speech`, independently constructed from a
+`:Transcription`. Derived independently, captions can pull a purpose-dedicated
+subset of metadata from inference results. Edited independently, changes
+supporting rendering behavior, timestamp nudges, and conformance with WebVTT
+standards do not affect lower-abstraction, non-presentational data.
+
+
+### Abstracted Search
+The MVP must discover relevant interview text by text or vector search, then
+enhance the results with data drawn from statement metadata, interview metadata,
+and graph walks.
+
+- **Statement metadata.** Timings are displayed; deeplinks are constructed by
+  time index.
+- **Interview metadata.** Interview numbers are displayed; links are constructed
+  by interview number.
+- **Graph walks.** Currently, speaker name; in future, knowledge-rich
+  tagging/relatedness/etc.
+
+Indexing `embedding` and `text` properties on `:Statement` nodes is the most
+lightweight approach to giving a search result access to all three, and a lazy
+partial approach to [locatability](#principled-locatability). But this approach
+binds the shape of useful search queries to the shape of a caption. If "Gay
+Men's Health Crisis" is split across two presentational captions, it's
+effectively unindexed.
+
+In addition to node-local `embedding`/`text`, add abstract `:Indexable`
+vertices, treating the search index as another presentational layer.
+
+```cypher
+(:Indexable {
+    vector: VECTOR
+    text:   STRING
+})
+
+(:Indexable)
+            <-[:INDEXED_INTO {properties: ["statement"]}]-(:Speech {uid: 123})
+            <-[:INDEXED_INTO {properties: ["statement"]}]-(:Speech {uid: 456})
+
+(:Indexable)
+            <-[:INDEXED_INTO {properties: ["name"]}]-(:Speaker)
+            <-[:INDEXED_INTO {properties: ["statement"]}]-(:Speech)
+```
+
+Node-local index sources are ephemeral, created, updated, and destroyed as the
+underlying data changes. `:Indexable`s are created deliberately as part of an
+editing workflow.
+
+`:Indexable`s for vector search are linked to inference runs.
+
+Alternative approaches considered and discarded:
+
+- **Lean on Neo4j schema configuration.** Defining an index across multiple node
+  labels _might_ surface more relevant results, given enough tuning and testing,
+  but would not solve searches spanning multiple nodes of the same type.
+- **Defer as a [locatability](#principled-locatability) problem.** Scoping
+  results by timestamp is the core challenge. "This interview mentions AZT
+  somewhere, good luck" is a non-feature. An index to which "Gay Men's Health
+  Crisis" becomes invisible when it is aesthetically preferable to break the
+  text across two captions is a non-feature. Worth doing eventually but should
+  not block refinements achievable in this refactoring pass.
+- **Adapt Cypher hybrid search logic.** Deviates from the "schema data, not app
+  logic" thrust of the abstraction.
+
+
+### Workflow
+> [!WARNING]
+>
+> TKTKTK: Define transformations
+>
+> - Input data
+> - Operation
+> - Output data
+
+### Editorial UI
+> [!WARNING]
+>
+> TKTKTK
+
+### Cypher Queries
+> [!WARNING]
+>
+> TKTKTK
+
+### GraphQL Schema
+> [!WARNING]
+>
+> TKTKTK
+
+
+## Out of Scope
+### Principled Locatability
+Mapping transcription text to timestamps in a stable, indexed way is the single
+problem the MVP is meant to solve. It will ship with a principled commitment to
+cramming timestamp properties onto edges.
+
+It's a hand-wave. "At what timestamp does this speech appear in that interview"
+is actually a whole class of problem. At what timestamp is this poster visible
+in that documentary? On what physical page does this broadsheet mention AZT? In
+what paragraph of text? At which word? A principled, generalized locatability
+pattern would make schema abstractions cleaner; however, it is not necessary for
+a first refinement pass.
+
+Prior art for locatability includes the W3C Web Annotation Model and
+digital-humanities tooling such as IIIF.
+
+
+### Knowledge Graph
+The shape of the knowledge graph is still being explored. In the absence of
+stakeholder interaction and a complete index of the oral histories,
+front-loading it would yield an anemic schema polluted by the developer's
+suppositions, presumptions, and vibes-historiography.
