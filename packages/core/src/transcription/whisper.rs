@@ -252,10 +252,7 @@ pub const VAD_MODEL_FILE: &str = "ggml-silero-v6.2.0.bin";
 /// A transcription segment returned by Whisper.
 ///
 /// Times are in seconds (f64). `words` holds per-word timing from DTW token
-/// timestamps, and that is the pipeline's final word timing --- CTC forced
-/// alignment via [`super::align`] is a standalone capability for text Whisper
-/// never produced, deliberately not wired in to re-time these words. See the
-/// module doc on [`super::align`] for why.
+/// timestamps, and that is the pipeline's final word timing.
 pub struct WhisperSegment {
     pub text: String,
     pub start: f64,

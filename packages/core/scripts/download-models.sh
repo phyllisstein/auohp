@@ -93,16 +93,5 @@ download \
     "https://huggingface.co/Wespeaker/wespeaker-voxceleb-ecapa-tdnn1024-LM/resolve/main/voxceleb_ECAPA1024_LM.onnx" \
     "$MODELS_DIR/wespeaker_en_voxceleb_ECAPA1024.onnx"
 
-# ── wav2vec2-base-960h, quantized (ONNX, ≈95 MB) ────────────────────────────
-# CTC forced alignment model. Not used by the default transcription pipeline
-# (whisper.cpp's own DTW handles per-word timing for Whisper's own
-# transcript) --- this is for force-aligning externally supplied or
-# human-corrected text to audio. See `transcription/align.rs`'s doc comment.
-echo
-echo "==> wav2vec2-base-960h, quantized (ONNX)"
-download \
-    "$HF_BASE/onnx-community/wav2vec2-base-960h-ONNX/resolve/main/onnx/model_quantized.onnx" \
-    "$MODELS_DIR/wav2vec2-base-960h-quantized.onnx"
-
 echo
 echo "Done. All models in $MODELS_DIR"

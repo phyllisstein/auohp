@@ -1,4 +1,3 @@
-mod align;
 mod audio;
 mod config;
 mod diarize;
@@ -8,9 +7,8 @@ mod types;
 mod whisper;
 
 // Each model's filename is owned by the module that drives that model, so the
-// re-exports below disambiguate the three that are all just `MODEL_FILE` in
+// re-exports below disambiguate the two that are both just `MODEL_FILE` in
 // their own namespace.
-pub use align::{Aligner, MODEL_FILE as ALIGNMENT_MODEL_FILE};
 pub use audio::{decode_file, decode_file_with, DecodedAudio};
 pub use config::{
     AudioConfig, DecodeConfig, DiarizeConfig, Interpolation, TranscribeConfig, VadConfig,
