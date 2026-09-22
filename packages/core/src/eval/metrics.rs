@@ -137,12 +137,19 @@ pub struct StructureStats {
 
 /// Whether VAD segment boundaries happen to fall on speaker changes.
 ///
-/// The pipeline does not diarize --- speaker labels are assigned by hand later.
-/// But if segmentation already breaks where the speaker changes, the remaining
-/// work is *labelling existing segments* (a two-class assignment) rather than
-/// *detecting boundaries*, which is a far easier problem and the one that got
-/// diarization abandoned in the first place. So this is worth measuring even
-/// though nothing currently consumes it.
+/// Written when the pipeline did not diarize and speaker labels were
+/// assigned by hand; if segmentation already breaks where the speaker
+/// changes, the remaining work is *labelling existing segments* (a
+/// two-class assignment) rather than *detecting boundaries*, a far easier
+/// problem. Diarization has since been restored (see
+/// `crate::transcription::diarize`), which gives boundaries *and* labels
+/// directly and makes this metric's original motivation partly moot ---
+/// it's kept because VAD-boundary quality is still worth knowing
+/// independent of diarization accuracy, but this and
+/// [`super::diarization`]'s boundary-recall metric are now two different
+/// measurements of a related question (text-anchored turns vs. diarized
+/// segments) that have not been reconciled. Treat that reconciliation as
+/// open, not settled.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SpeakerBoundaries {
     /// Speaker changes that could be located in the hypothesis.

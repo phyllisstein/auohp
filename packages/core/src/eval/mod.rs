@@ -22,6 +22,7 @@
 //! not interchangeable with each other either.
 
 mod align;
+pub mod diarization;
 mod metrics;
 mod normalize;
 
