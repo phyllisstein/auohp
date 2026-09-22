@@ -27,40 +27,20 @@ for f in .env .envrc; do
 	if [ -f "$repo_root/$f" ] && [ ! -e "$worktree_root/$f" ]; then
 		cp "$repo_root/$f" "$worktree_root/$f"
 	fi
+
+	for p in packages/*; do
+		if [ -f "$repo_root/$p/$f" ] && [ ! -e "$worktree_root/$p/$f" ]; then
+			mkdir -p "$worktree_root/$p"
+			cp "$repo_root/$p/$f" "$worktree_root/$p/$f"
+		fi
+	done
 done
 
-# Prepend a back-pointer to the worktree's CLAUDE.md so a fresh session
-# immediately knows it's a satellite of the main repo, not the primary
-# checkout, without needing a shared (and write-contended) memory directory.
-claude_md="$worktree_root/CLAUDE.md"
-marker="# Worktree of $(basename "$repo_root")"
-if [ -f "$claude_md" ] && ! grep -qF "$marker" "$claude_md" 2>/dev/null; then
-	tmp="$(mktemp)"
-	{
-		printf '%s\n\n' "$marker"
-		printf 'This directory is a git worktree of the main repo at\n'
-		printf '`%s` (branch `%s`, created %s).\n' "$repo_root" "$branch_name" "$(date +%Y-%m-%d)"
-		printf 'It is NOT the primary checkout. Project conventions, architecture notes,\n'
-		printf "and collaboration style live in that repo's CLAUDE.md --- read it for full\n"
-		printf 'context if this file alone seems insufficient.\n\n---\n\n'
-		cat "$claude_md"
-	} > "$tmp"
-	mv "$tmp" "$claude_md"
+# Tag this worktree's Compose virtual hosts with the branch name, so
+# `editor.auohp` on main becomes `editor.foo-branch.auohp` here --- lets
+# main and worktree stacks run against nginx-proxy at the same time
+# without host collisions. HOST_TAG defaults to empty in docker-compose.yml,
+# so main (not a worktree, never runs this hook) is unaffected.
+if [ ! -f "$worktree_root/.env" ] || ! grep -q '^HOST_TAG=' "$worktree_root/.env"; then
+	echo "HOST_TAG=.$branch_name" >> "$worktree_root/.env"
 fi
-
-# Rename the VS Code multi-root workspace file so this worktree gets its
-# own distinguishable entry in VS Code's window title and recent-workspaces
-# picker. Folder `path` entries inside it are relative to the file's own
-# location, so they still resolve correctly unmodified.
-for ws in "$repo_root"/*.code-workspace; do
-	[ -e "$ws" ] || continue
-	base="$(basename "$ws" .code-workspace)"
-	dest="$worktree_root/$base-$branch_name.code-workspace"
-	if [ ! -e "$dest" ]; then
-		cp "$ws" "$dest"
-	fi
-	stray="$worktree_root/$(basename "$ws")"
-	if [ -e "$stray" ] && [ "$stray" != "$dest" ]; then
-		rm -f "$stray"
-	fi
-done
