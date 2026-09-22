@@ -11,15 +11,13 @@
 //!   cargo run --example align_reference --features metal
 
 use anyhow::{Context, Result};
-use auohp_core::transcription::{decode_file, Aligner};
+use auohp_core::transcription::{decode_file, models_dir, Aligner, ALIGNMENT_MODEL_FILE};
 use std::path::PathBuf;
 
 fn main() -> Result<()> {
     tracing_subscriber::fmt().with_writer(std::io::stderr).init();
 
-    let models_dir = PathBuf::from(
-        std::env::var("MODELS_DIR").unwrap_or_else(|_| "/opt/auohp/models".to_string()),
-    );
+    let models_dir = models_dir();
     let asset_dir = PathBuf::from(
         std::env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| ".".to_string()),
     )
@@ -41,7 +39,7 @@ fn main() -> Result<()> {
     let audio_slice = &decoded.samples[start_sample..end_sample];
 
     eprintln!("Loading wav2vec2...");
-    let mut aligner = Aligner::load(&models_dir.join("wav2vec2-base-960h-quantized.onnx"))
+    let mut aligner = Aligner::load(&models_dir.join(ALIGNMENT_MODEL_FILE))
         .context("failed to load aligner")?;
 
     eprintln!("Aligning {} known words against {:.1}s of audio...", text.split_whitespace().count(), end - start);

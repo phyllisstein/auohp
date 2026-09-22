@@ -24,6 +24,7 @@
 //! kaldi-compatible fbank extractor `pyannote-rs` used) and produces an
 //! L2-normalizable speaker embedding.
 
+use std::collections::HashMap;
 use std::path::Path;
 
 use anyhow::{Context, Result};
@@ -33,6 +34,10 @@ use ort::session::Session;
 
 use super::segmentation::Segmenter;
 
+/// Filename of the embedding model under `$MODELS_DIR`, as
+/// `scripts/download-models.sh` writes it.
+pub const EMBEDDING_MODEL_FILE: &str = "wespeaker_en_voxceleb_ECAPA1024.onnx";
+
 /// A diarized speech segment: a time range attributed to a speaker.
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct DiarizedSegment {
@@ -40,6 +45,15 @@ pub struct DiarizedSegment {
     pub speaker: String,
     pub start: f64,
     pub end: f64,
+}
+
+/// A speech segment and the speaker embedding extracted from it, before
+/// clustering has decided which speaker it belongs to.
+#[derive(Debug, Clone)]
+pub struct SegmentEmbedding {
+    pub start: f64,
+    pub end: f64,
+    pub embedding: Vec<f32>,
 }
 
 /// Minimum samples wespeaker's fbank frontend needs. `knf-rs` uses a 25 ms
@@ -102,9 +116,8 @@ impl EmbeddingExtractor {
     }
 }
 
-/// Run segmentation + embedding extraction, without clustering. Returns
-/// `(start, end, embedding)` per kept speech segment. Factored out of
-/// [`diarize`] so validation tooling can inspect embeddings directly ---
+/// Run segmentation + embedding extraction, without clustering. Factored out
+/// of [`diarize`] so validation tooling can inspect embeddings directly ---
 /// e.g. checking whether same-speaker segments actually land closer together
 /// than different-speaker ones is a much more direct diagnostic than reading
 /// clustering output when diarization behaves unexpectedly on real audio.
@@ -113,7 +126,7 @@ pub fn extract_segment_embeddings(
     sample_rate: u32,
     segmentation_model: &Path,
     embedding_model: &Path,
-) -> Result<Vec<(f64, f64, Vec<f32>)>> {
+) -> Result<Vec<SegmentEmbedding>> {
     let samples_i16 = f32_to_i16(samples);
 
     let mut segmenter = Segmenter::new(segmentation_model)?;
@@ -127,7 +140,8 @@ pub fn extract_segment_embeddings(
 
     let mut extractor = EmbeddingExtractor::new(embedding_model)?;
 
-    let mut segment_embeddings: Vec<(f64, f64, Vec<f32>)> = Vec::with_capacity(speech_segments.len());
+    let mut segment_embeddings: Vec<SegmentEmbedding> =
+        Vec::with_capacity(speech_segments.len());
     let mut skipped_short = 0usize;
     let mut skipped_nonfinite = 0usize;
 
@@ -149,7 +163,11 @@ pub fn extract_segment_embeddings(
             continue;
         }
 
-        segment_embeddings.push((seg.start, seg.end, embedding));
+        segment_embeddings.push(SegmentEmbedding {
+            start: seg.start,
+            end: seg.end,
+            embedding,
+        });
     }
 
     tracing::info!(
@@ -190,10 +208,10 @@ pub fn diarize(
     Ok(segment_embeddings
         .iter()
         .zip(labels.iter())
-        .map(|((start, end, _), &speaker_id)| DiarizedSegment {
+        .map(|(seg, &speaker_id)| DiarizedSegment {
             speaker: format!("SPEAKER_{speaker_id:02}"),
-            start: *start,
-            end: *end,
+            start: seg.start,
+            end: seg.end,
         })
         .collect())
 }
@@ -220,18 +238,21 @@ pub fn diarize(
 /// pairwise distance instead, so a single stray close pair can't drag two
 /// otherwise well-separated clusters together --- it took the same 24-minute
 /// clip from ~58% to ~71% dominant-speaker accuracy in that harness.
-fn cluster_embeddings(segment_embeddings: &[(f64, f64, Vec<f32>)], max_speakers: usize) -> Vec<usize> {
+fn cluster_embeddings(segment_embeddings: &[SegmentEmbedding], max_speakers: usize) -> Vec<usize> {
     let n = segment_embeddings.len();
     if n == 1 {
         return vec![0];
     }
 
+    // `kodama` takes a *condensed* distance matrix: the strict upper triangle
+    // flattened row by row, since a distance matrix is symmetric with a zero
+    // diagonal. n(n-1)/2 entries instead of n².
     let mut condensed: Vec<f64> = Vec::with_capacity(n * (n - 1) / 2);
     for i in 0..n - 1 {
         for j in i + 1..n {
             condensed.push(cosine_distance(
-                &segment_embeddings[i].2,
-                &segment_embeddings[j].2,
+                &segment_embeddings[i].embedding,
+                &segment_embeddings[j].embedding,
             ));
         }
     }
@@ -258,7 +279,7 @@ fn cluster_embeddings(segment_embeddings: &[(f64, f64, Vec<f32>)], max_speakers:
     }
 
     let roots: Vec<usize> = (0..n).map(|i| find(&mut parent, i)).collect();
-    let mut label_map: std::collections::HashMap<usize, usize> = std::collections::HashMap::new();
+    let mut label_map: HashMap<usize, usize> = HashMap::new();
     let mut next_label = 0usize;
     roots
         .iter()
@@ -272,8 +293,39 @@ fn cluster_embeddings(segment_embeddings: &[(f64, f64, Vec<f32>)], max_speakers:
         .collect()
 }
 
+/// The speaker who holds the most of `start..end`, by total overlap with the
+/// diarized turns covering that span. `None` when nothing overlaps at all ---
+/// callers treat that as "still needs a human label" rather than guessing.
+///
+/// Aggregating per *speaker* rather than per *segment* is load-bearing, not
+/// incidental: diarization emits one `DiarizedSegment` per contiguous speech
+/// run from the frame classifier, so a single Whisper segment routinely spans
+/// many of them. Taking the longest individual overlapping segment would let
+/// one uninterrupted eight-second answer outvote twenty short runs from the
+/// speaker who actually holds most of the span.
+pub fn dominant_speaker<'a>(
+    start: f64,
+    end: f64,
+    diarized: &'a [DiarizedSegment],
+) -> Option<&'a str> {
+    let mut totals: HashMap<&str, f64> = HashMap::new();
+    for d in diarized {
+        let overlap = (end.min(d.end) - start.max(d.start)).max(0.0);
+        if overlap > 0.0 {
+            *totals.entry(d.speaker.as_str()).or_insert(0.0) += overlap;
+        }
+    }
+    totals
+        .into_iter()
+        .max_by(|a, b| a.1.total_cmp(&b.1))
+        .map(|(speaker, _)| speaker)
+}
+
 /// Cosine distance between two vectors: 1 - cos(a, b).
-fn cosine_distance(a: &[f32], b: &[f32]) -> f64 {
+///
+/// Public so validation tooling can score embeddings against the same metric
+/// the clustering step uses, instead of keeping a drifting copy.
+pub fn cosine_distance(a: &[f32], b: &[f32]) -> f64 {
     let mut dot = 0.0f64;
     let mut norm_a = 0.0f64;
     let mut norm_b = 0.0f64;

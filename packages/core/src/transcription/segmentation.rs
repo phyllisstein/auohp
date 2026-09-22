@@ -44,6 +44,10 @@ use anyhow::{Context, Result};
 use ort::session::builder::GraphOptimizationLevel;
 use ort::session::Session;
 
+/// Filename of the segmentation model under `$MODELS_DIR`, as
+/// `scripts/download-models.sh` writes it.
+pub const MODEL_FILE: &str = "pyannote-segmentation-3.0.onnx";
+
 /// Number of samples between consecutive output frames. Empirically tuned to
 /// this specific ONNX export --- see the design doc cited above. If the model
 /// file ever changes, these must be re-derived from its published frame rate.
@@ -142,6 +146,15 @@ impl Segmenter {
                 .context("failed to extract segmentation output")?;
 
             // Shape is (batch, frames, classes). We only ever run batch=1.
+            // Checked rather than assumed: the model file is downloaded from
+            // a release URL, so a re-pointed or re-exported model is the
+            // realistic failure, and a bare index would surface it as an
+            // out-of-bounds panic several frames deep.
+            anyhow::ensure!(
+                shape.len() == 3,
+                "segmentation output has rank {}, expected 3 (batch, frames, classes)",
+                shape.len()
+            );
             let n_frames = shape[1] as usize;
             let n_classes = shape[2] as usize;
 

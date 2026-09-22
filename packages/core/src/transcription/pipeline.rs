@@ -6,15 +6,26 @@ use std::path::{Path, PathBuf};
 
 use super::audio;
 use super::config::TranscribeConfig;
-use super::diarize::{self, DiarizedSegment};
+use super::diarize;
+use super::segmentation;
 use super::types::*;
 use super::whisper;
 
-const WHISPER_MODEL_FILE: &str = "ggml-large-v3.bin";
-const VAD_MODEL_FILE: &str = "ggml-silero-v6.2.0.bin";
-const SEGMENTATION_MODEL_FILE: &str = "pyannote-segmentation-3.0.onnx";
-const EMBEDDING_MODEL_FILE: &str = "wespeaker_en_voxceleb_ECAPA1024.onnx";
+/// Where `scripts/download-models.sh` installs models when `$MODELS_DIR` is
+/// unset. Each module owns the *filename* of the model it drives
+/// ([`whisper::MODEL_FILE`], [`segmentation::MODEL_FILE`], and so on); this
+/// only resolves the directory they all sit in.
 const DEFAULT_MODELS_DIR: &str = "/opt/auohp/models";
+
+/// Resolve the models directory from `$MODELS_DIR`, falling back to
+/// [`DEFAULT_MODELS_DIR`].
+///
+/// Public because the crate's validation examples load the same models from
+/// the same place; duplicating the env-var lookup there is how a harness ends
+/// up silently scoring a different model than the pipeline runs.
+pub fn models_dir() -> PathBuf {
+    PathBuf::from(std::env::var("MODELS_DIR").unwrap_or_else(|_| DEFAULT_MODELS_DIR.to_string()))
+}
 
 /// Run the transcription pipeline on an audio/video file.
 ///
@@ -71,13 +82,11 @@ pub fn run_with(input_path: &Path, cfg: &TranscribeConfig) -> Result<Transcripti
     // goal; do not load the weights early.
     //
     // All models live under $MODELS_DIR, pre-downloaded by download-models.sh.
-    let models_dir = PathBuf::from(
-        std::env::var("MODELS_DIR").unwrap_or_else(|_| DEFAULT_MODELS_DIR.to_string()),
-    );
+    let models_dir = models_dir();
 
     let mut whisper_model = whisper::load_model(
-        &models_dir.join(WHISPER_MODEL_FILE),
-        &models_dir.join(VAD_MODEL_FILE),
+        &models_dir.join(whisper::MODEL_FILE),
+        &models_dir.join(whisper::VAD_MODEL_FILE),
     )?;
     let whisper_segments = whisper::transcribe(&mut whisper_model, &decoded.samples, cfg)?;
 
@@ -85,8 +94,8 @@ pub fn run_with(input_path: &Path, cfg: &TranscribeConfig) -> Result<Transcripti
         diarize::diarize(
             &decoded.samples,
             decoded.sample_rate,
-            &models_dir.join(SEGMENTATION_MODEL_FILE),
-            &models_dir.join(EMBEDDING_MODEL_FILE),
+            &models_dir.join(segmentation::MODEL_FILE),
+            &models_dir.join(diarize::EMBEDDING_MODEL_FILE),
             cfg.diarize.max_speakers,
         )?
     } else {
@@ -96,7 +105,12 @@ pub fn run_with(input_path: &Path, cfg: &TranscribeConfig) -> Result<Transcripti
     let segments: Vec<Segment> = whisper_segments
         .iter()
         .map(|s| Segment {
-            speaker: best_speaker_overlap(s.start, s.end, &diarized),
+            // `dominant_speaker` borrows its answer out of `diarized`, so the
+            // owned `String` the caption editor's schema wants is allocated
+            // here and only for the segments that actually matched --- an
+            // unmatched segment stays `None`, which is that editor's existing
+            // signal that a speaker still needs a human label.
+            speaker: diarize::dominant_speaker(s.start, s.end, &diarized).map(str::to_owned),
             text: s.text.clone(),
             start_time: s.start,
             end_time: s.end,
@@ -105,21 +119,4 @@ pub fn run_with(input_path: &Path, cfg: &TranscribeConfig) -> Result<Transcripti
         .collect();
 
     Ok(TranscriptionResult { segments })
-}
-
-/// Assign a speaker label to a Whisper segment by maximum temporal overlap
-/// with diarized turns. Returns `None` (rather than guessing) when there's no
-/// diarization data at all, or no diarized turn overlaps this segment ---
-/// which is the caption editor's existing signal that a speaker still needs a
-/// human label.
-fn best_speaker_overlap(start: f64, end: f64, diarized: &[DiarizedSegment]) -> Option<String> {
-    diarized
-        .iter()
-        .map(|d| {
-            let overlap = (end.min(d.end) - start.max(d.start)).max(0.0);
-            (overlap, &d.speaker)
-        })
-        .filter(|(overlap, _)| *overlap > 0.0)
-        .max_by(|a, b| a.0.total_cmp(&b.0))
-        .map(|(_, speaker)| speaker.clone())
 }

@@ -17,10 +17,12 @@
 //! of scope --- see the task brief); instead it asks two turn-taking
 //! questions per ground-truth turn:
 //!
-//!   1. **Dominant-speaker accuracy**: does the single most-overlapping
-//!      predicted speaker label for this turn's time span, after mapping
-//!      predicted labels to reference names by whichever assignment
-//!      maximizes agreement, match the reference speaker?
+//!   1. **Dominant-speaker accuracy**: does the predicted speaker label
+//!      holding the most of this turn's time span --- summed across all that
+//!      speaker's overlapping segments, via `transcription::dominant_speaker`,
+//!      the same function the pipeline labels segments with --- match the
+//!      reference speaker, after mapping predicted labels to reference names
+//!      by whichever assignment maximizes agreement?
 //!   2. **Boundary accuracy**: at each reference speaker change, does the
 //!      predicted diarization also change speaker within a tolerance window?
 //!
@@ -32,7 +34,10 @@
 use std::path::PathBuf;
 
 use anyhow::{Context, Result};
-use auohp_core::transcription::{decode_file, diarize, extract_segment_embeddings, DiarizedSegment};
+use auohp_core::transcription::{
+    cosine_distance, decode_file, diarize, dominant_speaker, extract_segment_embeddings,
+    models_dir, EMBEDDING_MODEL_FILE, SEGMENTATION_MODEL_FILE,
+};
 
 const REFERENCE_FPS: f64 = 30.0;
 /// How close a predicted speaker change must land to a ground-truth change
@@ -45,27 +50,6 @@ struct ReferenceTurn {
     start: f64,
     end: f64,
     speaker: String,
-}
-
-/// Mirrors `diarize::cosine_distance` (private to that module) so this
-/// diagnostic can compute the same metric the clustering step uses.
-fn cosine_distance(a: &[f32], b: &[f32]) -> f64 {
-    let mut dot = 0.0f64;
-    let mut norm_a = 0.0f64;
-    let mut norm_b = 0.0f64;
-    for (x, y) in a.iter().zip(b.iter()) {
-        let x = *x as f64;
-        let y = *y as f64;
-        dot += x * y;
-        norm_a += x * x;
-        norm_b += y * y;
-    }
-    let denom = norm_a.sqrt() * norm_b.sqrt();
-    if denom == 0.0 {
-        1.0
-    } else {
-        (1.0 - (dot / denom)).clamp(0.0, 2.0)
-    }
 }
 
 fn parse_timecode(tc: &str) -> Result<f64> {
@@ -115,34 +99,10 @@ fn parse_reference(text: &str) -> Result<Vec<ReferenceTurn>> {
     Ok(turns)
 }
 
-/// For each reference turn, find the predicted label with the most
-/// overlapping duration. `None` if nothing overlaps at all.
-fn dominant_predicted_label<'a>(
-    turn: &ReferenceTurn,
-    predicted: &'a [DiarizedSegment],
-) -> Option<&'a str> {
-    predicted
-        .iter()
-        .map(|p| {
-            let overlap = (turn.end.min(p.end) - turn.start.max(p.start)).max(0.0);
-            (overlap, p.speaker.as_str())
-        })
-        .filter(|(overlap, _)| *overlap > 0.0)
-        .fold(std::collections::HashMap::new(), |mut acc, (overlap, label)| {
-            *acc.entry(label).or_insert(0.0) += overlap;
-            acc
-        })
-        .into_iter()
-        .max_by(|a, b| a.1.total_cmp(&b.1))
-        .map(|(label, _)| label)
-}
-
 fn main() -> Result<()> {
     tracing_subscriber::fmt().with_writer(std::io::stderr).init();
 
-    let models_dir = PathBuf::from(
-        std::env::var("MODELS_DIR").unwrap_or_else(|_| "/opt/auohp/models".to_string()),
-    );
+    let models_dir = models_dir();
     let asset_dir = PathBuf::from(
         std::env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| ".".to_string()),
     )
@@ -166,8 +126,8 @@ fn main() -> Result<()> {
         let embeddings = extract_segment_embeddings(
             &decoded.samples,
             decoded.sample_rate,
-            &models_dir.join("pyannote-segmentation-3.0.onnx"),
-            &models_dir.join("wespeaker_en_voxceleb_ECAPA1024.onnx"),
+            &models_dir.join(SEGMENTATION_MODEL_FILE),
+            &models_dir.join(EMBEDDING_MODEL_FILE),
         )?;
 
         // Label each embedded segment by whichever reference speaker covers
@@ -177,16 +137,16 @@ fn main() -> Result<()> {
         // pairs should sit measurably closer than cross-speaker pairs; if
         // the two numbers come out indistinguishable, the embeddings
         // themselves --- not the clustering cutoff --- are the problem.
-        let labeled: Vec<(f64, f64, &str, &Vec<f32>)> = embeddings
+        let labeled: Vec<(&str, &[f32])> = embeddings
             .iter()
-            .filter_map(|(start, end, emb)| {
-                let mid_turn = reference
-                    .iter()
-                    .max_by(|a, b| {
-                        let overlap = |t: &ReferenceTurn| (end.min(t.end) - start.max(t.start)).max(0.0);
-                        overlap(a).total_cmp(&overlap(b))
-                    })?;
-                Some((*start, *end, mid_turn.speaker.as_str(), emb))
+            .filter_map(|seg| {
+                let mid_turn = reference.iter().max_by(|a, b| {
+                    let overlap = |t: &ReferenceTurn| {
+                        (seg.end.min(t.end) - seg.start.max(t.start)).max(0.0)
+                    };
+                    overlap(a).total_cmp(&overlap(b))
+                })?;
+                Some((mid_turn.speaker.as_str(), seg.embedding.as_slice()))
             })
             .collect();
 
@@ -196,8 +156,8 @@ fn main() -> Result<()> {
         let mut diff_n = 0u64;
         for i in 0..labeled.len() {
             for j in (i + 1)..labeled.len() {
-                let d = cosine_distance(labeled[i].3, labeled[j].3);
-                if labeled[i].2 == labeled[j].2 {
+                let d = cosine_distance(labeled[i].1, labeled[j].1);
+                if labeled[i].0 == labeled[j].0 {
                     same_sum += d;
                     same_n += 1;
                 } else {
@@ -220,7 +180,13 @@ fn main() -> Result<()> {
         );
         let norms: Vec<f64> = embeddings
             .iter()
-            .map(|(_, _, e)| e.iter().map(|&x| (x as f64).powi(2)).sum::<f64>().sqrt())
+            .map(|seg| {
+                seg.embedding
+                    .iter()
+                    .map(|&x| (x as f64).powi(2))
+                    .sum::<f64>()
+                    .sqrt()
+            })
             .collect();
         println!(
             "Embedding L2 norm: min={:.4} max={:.4} mean={:.4}",
@@ -235,8 +201,8 @@ fn main() -> Result<()> {
     let predicted = diarize(
         &decoded.samples,
         decoded.sample_rate,
-        &models_dir.join("pyannote-segmentation-3.0.onnx"),
-        &models_dir.join("wespeaker_en_voxceleb_ECAPA1024.onnx"),
+        &models_dir.join(SEGMENTATION_MODEL_FILE),
+        &models_dir.join(EMBEDDING_MODEL_FILE),
         2,
     )?;
     eprintln!("Predicted {} diarized segments", predicted.len());
@@ -261,7 +227,7 @@ fn main() -> Result<()> {
         .iter()
         .map(|t| {
             (
-                dominant_predicted_label(t, &predicted).map(str::to_string),
+                dominant_speaker(t.start, t.end, &predicted).map(str::to_string),
                 t.speaker.as_str(),
             )
         })

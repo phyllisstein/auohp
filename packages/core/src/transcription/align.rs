@@ -55,6 +55,10 @@ use ort::session::Session;
 
 use super::types::Word;
 
+/// Filename of the wav2vec2 model under `$MODELS_DIR`, as
+/// `scripts/download-models.sh` writes it.
+pub const MODEL_FILE: &str = "wav2vec2-base-960h-quantized.onnx";
+
 /// Sample rate expected by wav2vec2 (same as Whisper).
 const SAMPLE_RATE: f64 = 16_000.0;
 
@@ -122,8 +126,9 @@ impl Aligner {
             return Ok(Vec::new());
         }
 
-        // Split text into words BEFORE uppercasing so we preserve the original
-        // casing in the output Word structs.
+        // Split text into words *before* uppercasing, so the output `Word`s
+        // keep the caller's original casing --- only the vocabulary lookup
+        // below needs the uppercase form.
         let word_strs: Vec<&str> = text.split_whitespace().collect();
         if word_strs.is_empty() {
             return Ok(Vec::new());
@@ -197,15 +202,27 @@ impl Aligner {
     /// row-major `Vec<f32>` of shape `(n_frames, n_vocab)`. Values are
     /// log-softmax probabilities.
     fn forward(&mut self, samples: &[f32]) -> Result<(usize, usize, Vec<f32>)> {
-        let input =
-            ort::value::Tensor::from_array(([1i64, samples.len() as i64], samples.to_vec()))?;
+        let input = ort::value::Tensor::from_array(([1i64, samples.len() as i64], samples.to_vec()))
+            .context("failed to build wav2vec2 input tensor")?;
 
-        let outputs = self.session.run(ort::inputs!["input_values" => input])?;
+        let outputs = self
+            .session
+            .run(ort::inputs!["input_values" => input])
+            .context("wav2vec2 inference failed")?;
 
-        let output = &outputs["logits"];
-        let (shape, data) = output.try_extract_tensor::<f32>()?;
+        let output = outputs
+            .get("logits")
+            .context("wav2vec2 model has no \"logits\" tensor")?;
+        let (shape, data) = output
+            .try_extract_tensor::<f32>()
+            .context("failed to extract wav2vec2 logits")?;
 
         // Shape: [1, T, V] where T = frames, V = vocab size (32).
+        anyhow::ensure!(
+            shape.len() == 3,
+            "wav2vec2 logits have rank {}, expected 3 (batch, frames, vocab)",
+            shape.len()
+        );
         let n_frames = shape[1] as usize;
         let n_vocab = shape[2] as usize;
 
@@ -271,7 +288,7 @@ fn normalize(samples: &[f32]) -> Vec<f32> {
 ///               α(t-1, s-2))         // skip blank (only if allowed)
 /// ```
 ///
-/// The skip transition is allowed when the current label is not blank AND
+/// The skip transition is allowed when the current label is not blank *and*
 /// differs from the label two positions back (to handle repeated characters
 /// like "LL" which must have a blank between them).
 ///

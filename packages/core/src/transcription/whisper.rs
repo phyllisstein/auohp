@@ -241,11 +241,21 @@ pub fn apply_vad(
 
 // ── Public types ─────────────────────────────────────────────────────────────
 
+/// Filename of the Whisper ggml model under `$MODELS_DIR`, as
+/// `scripts/download-models.sh` writes it.
+pub const MODEL_FILE: &str = "ggml-large-v3.bin";
+
+/// Filename of the silero VAD ggml model under `$MODELS_DIR`, as
+/// `scripts/download-models.sh` writes it.
+pub const VAD_MODEL_FILE: &str = "ggml-silero-v6.2.0.bin";
+
 /// A transcription segment returned by Whisper.
 ///
-/// Times are in seconds (f64).  `words` holds per-word timing from DTW
-/// token timestamps; the wav2vec2 aligner will later replace these with
-/// CTC-aligned timestamps for finer precision.
+/// Times are in seconds (f64). `words` holds per-word timing from DTW token
+/// timestamps, and that is the pipeline's final word timing --- CTC forced
+/// alignment via [`super::align`] is a standalone capability for text Whisper
+/// never produced, deliberately not wired in to re-time these words. See the
+/// module doc on [`super::align`] for why.
 pub struct WhisperSegment {
     pub text: String,
     pub start: f64,
