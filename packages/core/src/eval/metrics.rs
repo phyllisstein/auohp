@@ -2,8 +2,8 @@
 
 use serde::{Deserialize, Serialize};
 
-use super::align::{align, anchor, Op};
-use super::normalize::{is_filler, normalize, FILLER_PHRASES};
+use super::align::{Op, align, anchor};
+use super::normalize::{FILLER_PHRASES, is_filler, normalize};
 use crate::transcription::TranscriptionResult;
 
 /// Bumped whenever scoring behaviour changes.
@@ -137,12 +137,19 @@ pub struct StructureStats {
 
 /// Whether VAD segment boundaries happen to fall on speaker changes.
 ///
-/// The pipeline does not diarize --- speaker labels are assigned by hand later.
-/// But if segmentation already breaks where the speaker changes, the remaining
-/// work is *labelling existing segments* (a two-class assignment) rather than
-/// *detecting boundaries*, which is a far easier problem and the one that got
-/// diarization abandoned in the first place. So this is worth measuring even
-/// though nothing currently consumes it.
+/// Written when the pipeline did not diarize and speaker labels were
+/// assigned by hand; if segmentation already breaks where the speaker
+/// changes, the remaining work is *labelling existing segments* (a
+/// two-class assignment) rather than *detecting boundaries*, a far easier
+/// problem. Diarization has since been restored (see
+/// `crate::transcription::diarize`), which gives boundaries *and* labels
+/// directly and makes this metric's original motivation partly moot ---
+/// it's kept because VAD-boundary quality is still worth knowing
+/// independent of diarization accuracy, but this and
+/// [`super::diarization`]'s boundary-recall metric are now two different
+/// measurements of a related question (text-anchored turns vs. diarized
+/// segments) that have not been reconciled. Treat that reconciliation as
+/// open, not settled.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SpeakerBoundaries {
     /// Speaker changes that could be located in the hypothesis.
@@ -238,8 +245,13 @@ pub fn score_with_turns(
     turns: &[Turn],
 ) -> Scorecard {
     let truth_all = normalize(truth_text);
-    let hyp_all =
-        normalize(&hyp.segments.iter().map(|s| s.text.as_str()).collect::<Vec<_>>().join(" "));
+    let hyp_all = normalize(
+        &hyp.segments
+            .iter()
+            .map(|s| s.text.as_str())
+            .collect::<Vec<_>>()
+            .join(" "),
+    );
 
     // Clamp both streams to the span they share. The hypothesis may cover a whole
     // interview of which the truth is only a middle excerpt, so the hypothesis
@@ -261,7 +273,11 @@ pub fn score_with_turns(
     // incomparable to any WER anyone else computes.
     let errors = subs + dels + ins_filler + ins_content;
     let wer = WordErrorRate {
-        rate: if truth.is_empty() { 0.0 } else { errors as f64 / truth.len() as f64 },
+        rate: if truth.is_empty() {
+            0.0
+        } else {
+            errors as f64 / truth.len() as f64
+        },
         subs,
         dels,
         ins_filler,
@@ -319,7 +335,11 @@ fn taxonomy(ops: &[Op]) -> ErrorTaxonomy {
     s.sort_by(|a, b| b.2.cmp(&a.2).then(a.0.cmp(&b.0)));
     s.truncate(40);
 
-    ErrorTaxonomy { substitutions: s, insertions: rank1(ins, 40), deletions: rank1(dels, 40) }
+    ErrorTaxonomy {
+        substitutions: s,
+        insertions: rank1(ins, 40),
+        deletions: rank1(dels, 40),
+    }
 }
 
 /// Split insertions into "the transcriber tidied this away" and "the model may
@@ -395,18 +415,16 @@ fn classify_insertions(ops: &[Op]) -> (usize, usize) {
     (filler, content)
 }
 
-fn score_lexicon(
-    truth: &[String],
-    hyp: &[String],
-    ops: &[Op],
-    lex: &Lexicon,
-) -> LexiconReport {
+fn score_lexicon(truth: &[String], hyp: &[String], ops: &[Op], lex: &Lexicon) -> LexiconReport {
     // Substitutions indexed by the truth token they replaced, so a term that went
     // missing can report what the model wrote instead.
     let mut confusion_by_token: std::collections::HashMap<&str, Vec<&str>> = Default::default();
     for op in ops {
         if let Op::Sub { truth: t, hyp: h } = op {
-            confusion_by_token.entry(t.as_str()).or_default().push(h.as_str());
+            confusion_by_token
+                .entry(t.as_str())
+                .or_default()
+                .push(h.as_str());
         }
     }
 
@@ -434,7 +452,12 @@ fn score_lexicon(
 
         tot_expected += expected;
         tot_found += found;
-        terms.push(LexiconRecall { term: display.clone(), expected, found, confusions });
+        terms.push(LexiconRecall {
+            term: display.clone(),
+            expected,
+            found,
+            confusions,
+        });
     }
 
     terms.sort_by(|a, b| {
@@ -443,7 +466,11 @@ fn score_lexicon(
     });
 
     LexiconReport {
-        recall: if tot_expected == 0 { 1.0 } else { tot_found as f64 / tot_expected as f64 },
+        recall: if tot_expected == 0 {
+            1.0
+        } else {
+            tot_found as f64 / tot_expected as f64
+        },
         terms,
     }
 }
@@ -512,7 +539,9 @@ fn score_drift(
             // such anchors would silently never match rather than matching whole.
             let floor = phrase.len().min(3).max(1);
             let media = (floor..=phrase.len()).rev().find_map(|n| {
-                find_all(stream, &phrase[..n]).first().map(|i| words[base + *i].1)
+                find_all(stream, &phrase[..n])
+                    .first()
+                    .map(|i| words[base + *i].1)
             });
             AnchorDrift {
                 label: a.label.clone(),
@@ -640,9 +669,13 @@ fn score_speaker_boundaries(
         if speaker_of[i] == speaker_of[i - 1] {
             continue;
         }
-        let lo = (i.saturating_sub(REACH)..i).rev().find_map(|k| t2h.get(&k).copied());
+        let lo = (i.saturating_sub(REACH)..i)
+            .rev()
+            .find_map(|k| t2h.get(&k).copied());
         let hi_ = (i..(i + REACH).min(speaker_of.len())).find_map(|k| t2h.get(&k).copied());
-        let (Some(lo), Some(hi_)) = (lo, hi_) else { continue };
+        let (Some(lo), Some(hi_)) = (lo, hi_) else {
+            continue;
+        };
         changes += 1;
         if (lo + 1..=hi_).any(|b| boundaries.contains(&b)) {
             covered += 1;
@@ -659,7 +692,11 @@ fn score_speaker_boundaries(
         covered,
         bleed: changes - covered,
         expected_by_chance: expected,
-        lift: if expected > 0.0 { covered as f64 / expected } else { 0.0 },
+        lift: if expected > 0.0 {
+            covered as f64 / expected
+        } else {
+            0.0
+        },
         mean_segment_tokens: hyp_tokens.len() as f64 / segments,
     })
 }
@@ -704,7 +741,10 @@ fn structure_stats(hyp: &TranscriptionResult, time_slope: Option<f64>) -> Struct
     StructureStats {
         segments: hyp.segments.len(),
         words: words.len(),
-        control_token_words: words.iter().filter(|w| is_control_token_word(&w.word)).count(),
+        control_token_words: words
+            .iter()
+            .filter(|w| is_control_token_word(&w.word))
+            .count(),
         zero_duration_words: words.iter().filter(|w| w.end <= w.start).count(),
         implausible_duration_words: implausible,
         backwards_time_words: words.iter().filter(|w| w.end < w.start).count(),
@@ -725,21 +765,23 @@ mod tests {
     use crate::transcription::{Segment, Word};
 
     fn result(segs: Vec<(&str, f64, f64, Vec<(&str, f64, f64)>)>) -> TranscriptionResult {
-        TranscriptionResult {
-            segments: segs
-                .into_iter()
-                .map(|(text, start, end, ws)| Segment {
-                    speaker: None,
-                    text: text.into(),
-                    start_time: start,
-                    end_time: end,
-                    words: ws
-                        .into_iter()
-                        .map(|(w, s, e)| Word { word: w.into(), start: s, end: e, p: 1.0 })
-                        .collect(),
-                })
-                .collect(),
-        }
+        segs.into_iter()
+            .map(|(text, start, end, ws)| Segment {
+                speaker: None,
+                text: text.into(),
+                start_time: start,
+                end_time: end,
+                words: ws
+                    .into_iter()
+                    .map(|(w, s, e)| Word {
+                        word: w.into(),
+                        start: s,
+                        end: e,
+                        p: 1.0,
+                    })
+                    .collect(),
+            })
+            .collect()
     }
 
     #[test]
@@ -759,7 +801,11 @@ mod tests {
         let card = score("ACT UP received badly.", &hyp, &lex, &[]);
         let t = &card.lexicon.terms[0];
         assert_eq!((t.expected, t.found), (1, 0));
-        assert!(t.confusions.contains(&"acta".to_string()), "{:?}", t.confusions);
+        assert!(
+            t.confusions.contains(&"acta".to_string()),
+            "{:?}",
+            t.confusions
+        );
         assert_eq!(card.lexicon.recall, 0.0);
     }
 
@@ -767,7 +813,10 @@ mod tests {
     fn lexicon_collapses_entries_that_normalise_alike() {
         let lex = Lexicon::parse("Silence = Death\nSILENCE = DEATH\nsilence equals death");
         assert_eq!(lex.terms.len(), 1, "three spellings, one term");
-        assert_eq!(lex.terms[0].0, "Silence = Death", "keeps the first spelling");
+        assert_eq!(
+            lex.terms[0].0, "Silence = Death",
+            "keeps the first spelling"
+        );
 
         // But a genuinely different phrase stays separate.
         let lex = Lexicon::parse("Silence = Death\nSilence Death");
@@ -805,7 +854,10 @@ mod tests {
         // Same words, used for real: not a tic.
         let hyp = result(vec![("do you know him", 0.0, 2.0, vec![])]);
         let card = score("Do him", &hyp, &Lexicon::parse(""), &[]);
-        assert_eq!(card.wer.ins_filler, 2, "still adjacent, still the tic phrase");
+        assert_eq!(
+            card.wer.ins_filler, 2,
+            "still adjacent, still the tic phrase"
+        );
 
         let hyp = result(vec![("we know things", 0.0, 2.0, vec![])]);
         let card = score("We things", &hyp, &Lexicon::parse(""), &[]);
@@ -851,8 +903,18 @@ mod tests {
         let words = vec![("alpha", 700.0, 700.5), ("beta", 1000.0, 1000.5)];
         let hyp = result(vec![("alpha beta", 700.0, 1000.5, words)]);
         let anchors = vec![
-            AnchorSpec { tape: 3, label: "A".into(), tape_seconds: 800.0, following_text: "alpha".into() },
-            AnchorSpec { tape: 3, label: "B".into(), tape_seconds: 1100.0, following_text: "beta".into() },
+            AnchorSpec {
+                tape: 3,
+                label: "A".into(),
+                tape_seconds: 800.0,
+                following_text: "alpha".into(),
+            },
+            AnchorSpec {
+                tape: 3,
+                label: "B".into(),
+                tape_seconds: 1100.0,
+                following_text: "beta".into(),
+            },
         ];
         let card = score("alpha beta", &hyp, &Lexicon::parse(""), &anchors);
         assert!((card.structure.time_slope.unwrap() - 1.0).abs() < 1e-9);
