@@ -144,12 +144,34 @@ impl Default for DecodeConfig {
     }
 }
 
+/// Speaker diarization parameters.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct DiarizeConfig {
+    pub enabled: bool,
+    /// Caps the number of distinct speaker clusters. AUOHP interviews are
+    /// near-universally a two-person Q&A (interviewer + interviewee); this
+    /// mirrors a deliberate constraint from the last time diarization ran
+    /// (`4330866`, "Cap diarized speakers at 2"), kept here as a documented
+    /// default rather than hard-coded into the clustering algorithm.
+    pub max_speakers: usize,
+}
+
+impl Default for DiarizeConfig {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            max_speakers: 2,
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 #[serde(default)]
 pub struct TranscribeConfig {
     pub audio: AudioConfig,
     pub decode: DecodeConfig,
     pub vad: VadConfig,
+    pub diarize: DiarizeConfig,
 }
 
 impl TranscribeConfig {

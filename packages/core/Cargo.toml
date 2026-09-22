@@ -40,6 +40,15 @@ symphonia = { version = "0.5", features = ["isomp4", "aac", "wav", "pcm"] }
 rubato = "1"
 audioadapter-buffers = "2"
 
+# Speaker diarization --- pyannote-segmentation-3.0 and wespeaker ONNX models,
+# driven directly through `ort` above (not through the `pyannote-rs` crate:
+# see `transcription/segmentation.rs`'s doc comment for why). `knf-rs` is the
+# same kaldi-compatible log-mel filterbank feature extractor `pyannote-rs`
+# used internally for its embedding model; `kodama` is hierarchical
+# agglomerative clustering for turning embeddings into speaker labels.
+knf-rs = "0.3"
+kodama = "0.3"
+
 # On-device sentence embeddings --- fastembed wraps ONNX sentence transformers
 # (BAAI/bge-small-en-v1.5, 384-dim).
 #

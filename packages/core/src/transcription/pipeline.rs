@@ -1,24 +1,30 @@
 //! Transcription pipeline: orchestrates audio decoding --> VAD --> Whisper ASR
-//! into word-timed segments.
+//! --> speaker diarization into word-timed, speaker-labeled segments.
 
 use anyhow::{Context, Result};
 use std::path::{Path, PathBuf};
 
 use super::audio;
 use super::config::TranscribeConfig;
+use super::diarize::{self, DiarizedSegment};
 use super::types::*;
 use super::whisper;
 
 const WHISPER_MODEL_FILE: &str = "ggml-large-v3.bin";
 const VAD_MODEL_FILE: &str = "ggml-silero-v6.2.0.bin";
+const SEGMENTATION_MODEL_FILE: &str = "pyannote-segmentation-3.0.onnx";
+const EMBEDDING_MODEL_FILE: &str = "wespeaker_en_voxceleb_ECAPA1024.onnx";
 const DEFAULT_MODELS_DIR: &str = "/opt/auohp/models";
 
 /// Run the transcription pipeline on an audio/video file.
 ///
-/// Returns Whisper segments with per-word timestamps from DTW.  Speaker labels
-/// are not assigned here---they are filled in later via the manual labeling UI.
+/// Returns Whisper segments with per-word timestamps from DTW, each labeled
+/// with a speaker turn from diarization when `cfg.diarize.enabled` (the
+/// default). Diarization only assigns turn-level labels (`SPEAKER_00`,
+/// `SPEAKER_01`, ...) --- mapping those labels to real names is still a job
+/// for the manual labeling UI.
 ///
-/// This is blocking (Whisper is CPU-bound). Call from
+/// This is blocking (Whisper and diarization are both CPU-bound). Call from
 /// `tokio::task::spawn_blocking` to avoid stalling the async runtime.
 pub fn run(input_path: &Path) -> Result<TranscriptionResult> {
     run_with(input_path, &TranscribeConfig::default())
@@ -75,10 +81,22 @@ pub fn run_with(input_path: &Path, cfg: &TranscribeConfig) -> Result<Transcripti
     )?;
     let whisper_segments = whisper::transcribe(&mut whisper_model, &decoded.samples, cfg)?;
 
+    let diarized = if cfg.diarize.enabled {
+        diarize::diarize(
+            &decoded.samples,
+            decoded.sample_rate,
+            &models_dir.join(SEGMENTATION_MODEL_FILE),
+            &models_dir.join(EMBEDDING_MODEL_FILE),
+            cfg.diarize.max_speakers,
+        )?
+    } else {
+        Vec::new()
+    };
+
     let segments: Vec<Segment> = whisper_segments
         .iter()
         .map(|s| Segment {
-            speaker: None,
+            speaker: best_speaker_overlap(s.start, s.end, &diarized),
             text: s.text.clone(),
             start_time: s.start,
             end_time: s.end,
@@ -87,4 +105,21 @@ pub fn run_with(input_path: &Path, cfg: &TranscribeConfig) -> Result<Transcripti
         .collect();
 
     Ok(TranscriptionResult { segments })
+}
+
+/// Assign a speaker label to a Whisper segment by maximum temporal overlap
+/// with diarized turns. Returns `None` (rather than guessing) when there's no
+/// diarization data at all, or no diarized turn overlaps this segment ---
+/// which is the caption editor's existing signal that a speaker still needs a
+/// human label.
+fn best_speaker_overlap(start: f64, end: f64, diarized: &[DiarizedSegment]) -> Option<String> {
+    diarized
+        .iter()
+        .map(|d| {
+            let overlap = (end.min(d.end) - start.max(d.start)).max(0.0);
+            (overlap, &d.speaker)
+        })
+        .filter(|(overlap, _)| *overlap > 0.0)
+        .max_by(|a, b| a.0.total_cmp(&b.0))
+        .map(|(_, speaker)| speaker.clone())
 }

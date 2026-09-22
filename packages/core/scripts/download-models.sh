@@ -70,5 +70,39 @@ download "$HF_BASE/nomic-ai/nomic-embed-text-v1.5/resolve/main/tokenizer_config.
 download "$HF_BASE/nomic-ai/nomic-embed-text-v1.5/resolve/main/config.json"                  "$NOMIC_DIR/config.json"
 download "$HF_BASE/nomic-ai/nomic-embed-text-v1.5/resolve/main/special_tokens_map.json"      "$NOMIC_DIR/special_tokens_map.json"
 
+# ── pyannote segmentation 3.0 (ONNX, ≈6 MB) ─────────────────────────────────
+# Speech/silence frame classifier used to detect speaker turn boundaries.
+# This is the ONNX export from the pyannote-rs v0.1.0 release --- the
+# upstream pyannote HuggingFace repo only ships a pytorch checkpoint.
+# `transcription/segmentation.rs` drives it directly through `ort`.
+echo
+echo "==> pyannote-segmentation-3.0 (ONNX)"
+download \
+    "https://github.com/thewh1teagle/pyannote-rs/releases/download/v0.1.0/segmentation-3.0.onnx" \
+    "$MODELS_DIR/pyannote-segmentation-3.0.onnx"
+
+# ── wespeaker speaker embeddings (ONNX, ≈59 MB) ─────────────────────────────
+# ECAPA-TDNN 1024 trained on VoxCeleb, from the official WeSpeaker
+# HuggingFace org. Turns a diarized speech segment into a fixed-length
+# embedding for clustering; `transcription/diarize.rs` drives it directly
+# through `ort`, with `knf-rs` computing the log-mel filterbank features it
+# expects.
+echo
+echo "==> wespeaker voxceleb ECAPA-TDNN 1024 (ONNX)"
+download \
+    "https://huggingface.co/Wespeaker/wespeaker-voxceleb-ecapa-tdnn1024-LM/resolve/main/voxceleb_ECAPA1024_LM.onnx" \
+    "$MODELS_DIR/wespeaker_en_voxceleb_ECAPA1024.onnx"
+
+# ── wav2vec2-base-960h, quantized (ONNX, ≈95 MB) ────────────────────────────
+# CTC forced alignment model. Not used by the default transcription pipeline
+# (whisper.cpp's own DTW handles per-word timing for Whisper's own
+# transcript) --- this is for force-aligning externally supplied or
+# human-corrected text to audio. See `transcription/align.rs`'s doc comment.
+echo
+echo "==> wav2vec2-base-960h, quantized (ONNX)"
+download \
+    "$HF_BASE/onnx-community/wav2vec2-base-960h-ONNX/resolve/main/onnx/model_quantized.onnx" \
+    "$MODELS_DIR/wav2vec2-base-960h-quantized.onnx"
+
 echo
 echo "Done. All models in $MODELS_DIR"
