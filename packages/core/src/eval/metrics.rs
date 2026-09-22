@@ -732,21 +732,23 @@ mod tests {
     use crate::transcription::{Segment, Word};
 
     fn result(segs: Vec<(&str, f64, f64, Vec<(&str, f64, f64)>)>) -> TranscriptionResult {
-        TranscriptionResult {
-            segments: segs
-                .into_iter()
-                .map(|(text, start, end, ws)| Segment {
-                    speaker: None,
-                    text: text.into(),
-                    start_time: start,
-                    end_time: end,
-                    words: ws
-                        .into_iter()
-                        .map(|(w, s, e)| Word { word: w.into(), start: s, end: e, p: 1.0 })
-                        .collect(),
-                })
-                .collect(),
-        }
+        segs.into_iter()
+            .map(|(text, start, end, ws)| Segment {
+                speaker: None,
+                text: text.into(),
+                start_time: start,
+                end_time: end,
+                words: ws
+                    .into_iter()
+                    .map(|(w, s, e)| Word {
+                        word: w.into(),
+                        start: s,
+                        end: e,
+                        p: 1.0,
+                    })
+                    .collect(),
+            })
+            .collect()
     }
 
     #[test]

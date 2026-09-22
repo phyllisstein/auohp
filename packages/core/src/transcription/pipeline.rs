@@ -118,5 +118,5 @@ pub fn run_with(input_path: &Path, cfg: &TranscribeConfig) -> Result<Transcripti
         })
         .collect();
 
-    Ok(TranscriptionResult { segments })
+    Ok(segments.into())
 }

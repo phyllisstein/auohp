@@ -30,9 +30,9 @@ struct Cli {
 
 #[derive(Serialize)]
 struct ResultsWithConfig {
+    git_hash: String,
     transcription: TranscriptionResult,
     config: TranscribeConfig,
-    git_hash: String,
 }
 
 fn main() -> Result<()> {
