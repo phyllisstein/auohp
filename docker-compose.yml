@@ -13,20 +13,20 @@ services:
       RUSTFLAGS: "-Ctarget-feature=+fp16 -Awarnings"
       HTTPS_METHOD: nohttps
       VIRTUAL_HOST_MULTIPORTS: |-
-        editor${HOST_TAG-}.auohp.local:
+        editor${HOST_TAG-}.auohp.localhost:
           "/":
             port: "3030"
-        search${HOST_TAG-}.auohp.local:
+        search${HOST_TAG-}.auohp.localhost:
           "/":
             port: "4040"
-        api${HOST_TAG-}.auohp.local:
+        api${HOST_TAG-}.auohp.localhost:
           "/":
             port: "6060"
     depends_on: [neo4j]
     extra_hosts:
-      - "api${HOST_TAG-}.auohp.local:host-gateway"
-      - "editor${HOST_TAG-}.auohp.local:host-gateway"
-      - "search${HOST_TAG-}.auohp.local:host-gateway"
+      - "api${HOST_TAG-}.auohp.localhost:host-gateway"
+      - "editor${HOST_TAG-}.auohp.localhost:host-gateway"
+      - "search${HOST_TAG-}.auohp.localhost:host-gateway"
     expose:
       - "3030"
       - "4040"
@@ -65,10 +65,10 @@ services:
       NEO4J_server_memory_pagecache_size: 1G
       HTTPS_METHOD: nohttps
       VIRTUAL_HOST_MULTIPORTS: |-
-        bolt${HOST_TAG-}.auohp.local:
+        bolt${HOST_TAG-}.auohp.localhost:
           "/":
             port: "7687"
-        neo4j${HOST_TAG-}.auohp.local:
+        neo4j${HOST_TAG-}.auohp.localhost:
           "/":
             port: "7474"
     expose:
