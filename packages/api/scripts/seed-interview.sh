@@ -13,6 +13,7 @@
 #   --number N             Interview number (integer).
 #   --date YYYY-MM-DD      ISO 8601 date.
 #   --interviewee NAME     Display name of the interviewee.
+#   --speaker-map JSON       JSON object mapping speaker IDs to display names.
 #   --video URL         Optional video URL (default: null).
 #   --endpoint URL         GraphQL endpoint (default: $SEED_ENDPOINT or
 #                          http://localhost:6060/graphql).
@@ -27,6 +28,7 @@ NUMBER=""
 DATE=""
 INTERVIEWEE=""
 VIDEO=""
+SPEAKER_MAP=""
 
 usage() {
     sed -n '/^# seed-interview/,/^$/{ s/^# \{0,1\}//; p; }' "$0"
@@ -38,6 +40,7 @@ while [[ $# -gt 0 ]]; do
         --number) NUMBER="$2"; shift 2;;
         --date) DATE="$2"; shift 2;;
         --interviewee) INTERVIEWEE="$2"; shift 2;;
+        --speaker-map) SPEAKER_MAP="$2"; shift 2;;
         --video) VIDEO="$2"; shift 2;;
         --endpoint) ENDPOINT="$2"; shift 2;;
         -h|--help) usage 0;;
@@ -58,7 +61,10 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-for var in JSON_FILE NUMBER DATE INTERVIEWEE; do
+for var in JSON_FILE NUMBER DATE INTERVIEWEE SPEAKER_MAP; do
+    if [[ -z "${SPEAKER_MAP:-}" ]]; then
+        SPEAKER_MAP=null
+    fi
     if [[ -z "${VIDEO:-}" ]]; then
         VIDEO=null
     fi
@@ -77,7 +83,6 @@ read -r -d '' QUERY <<'GRAPHQL' || true
 mutation SeedInterview($input: SeedInterviewInput!) {
   seedInterview(input: $input) {
     statementCount
-    speakerCount
     transcriptUid
     embeddingsQueued
     interview {
@@ -103,6 +108,7 @@ PAYLOAD=$(jq -n \
     --arg date "$DATE" \
     --arg interviewee "$INTERVIEWEE" \
     --arg video "$VIDEO" \
+    --argjson speakers "$SPEAKER_MAP" \
     '{
         query: $query,
         variables: {
@@ -113,7 +119,8 @@ PAYLOAD=$(jq -n \
                 assets: {
                     videoUrl: $video
                 },
-                segmentsJson: ($segmentsFile[0].transcription.segments | tojson)
+                segmentsJson: ($segmentsFile[0].transcription.segments | tojson),
+                speakers: $speakers
             }
         }
     }')

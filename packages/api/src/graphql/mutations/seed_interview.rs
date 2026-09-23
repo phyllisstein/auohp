@@ -1,13 +1,11 @@
-use std::sync::Arc;
-
-use async_graphql::{Context, Enum, InputObject, SimpleObject};
-use neo4rs::{BoltMap, BoltString, BoltType, query};
-use serde::{Deserialize, Serialize};
-
 use crate::graphql::queries::interviews::Interview;
 use crate::neo4j::Db;
 use crate::uid;
+use async_graphql::{Context, Enum, InputObject, SimpleObject};
 use auohp_core::embeddings::EmbedderHandle;
+use neo4rs::{BoltMap, BoltString, BoltType, query};
+use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 
 /// Build a BoltMap from string-key / BoltType-value pairs.
 fn bolt_map(pairs: Vec<(&str, BoltType)>) -> BoltType {
@@ -45,21 +43,54 @@ pub struct SeedInterviewInput {
 }
 
 /// Maps a diarization speaker label to a person and their role.
-#[derive(InputObject)]
+#[derive(InputObject, Clone)]
 pub struct SpeakerMappingInput {
     /// Diarization label from the transcription pipeline (e.g. "SPEAKER_00").
     pub label: String,
     /// The person's display name (e.g. "Jim Hubbard").
     pub name: String,
     /// The role this person plays in this interview.
-    pub role: SpeakerRole,
+    pub role: Option<SpeakerRole>,
+    /// Match a preexisting person, or manually set their UID
+    pub uid: Option<String>,
+}
+
+impl From<SpeakerMappingInput> for BoltType {
+    fn from(speaker_mapping: SpeakerMappingInput) -> BoltType {
+        let mut pairs = vec![
+            ("label", BoltType::from(speaker_mapping.label)),
+            ("name", BoltType::from(speaker_mapping.name)),
+        ];
+
+        match speaker_mapping.role {
+            Some(SpeakerRole::Interviewee) => {
+                pairs.push(("role", BoltType::from("Interviewee")));
+            }
+            Some(SpeakerRole::Interviewer) => {
+                pairs.push(("role", BoltType::from("Interviewer")));
+            }
+            None => {}
+        };
+
+        if let Some(uid) = speaker_mapping.uid {
+            pairs.push(("uid", BoltType::from(uid)));
+        }
+
+        bolt_map(pairs)
+    }
 }
 
 /// Whether a speaker is an interviewer or the interviewee.
-#[derive(Enum, Copy, Clone, Eq, PartialEq)]
+#[derive(Enum, Copy, Clone, Eq, PartialEq, Deserialize, Serialize, Debug)]
 pub enum SpeakerRole {
     Interviewer,
     Interviewee,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct Speaker {
+    pub label: String,
+    pub role: Option<SpeakerRole>,
 }
 
 /// A single transcript segment from the transcription pipeline.
@@ -111,7 +142,6 @@ pub struct InterviewAssetsInput {
 pub struct SeedInterviewPayload {
     pub interview: Interview,
     pub statement_count: i64,
-    pub speaker_count: i64,
     pub transcript_uid: String,
     /// Always `true`. Embeddings are written by a background task after the
     /// mutation returns; vector search results for this interview will not be
@@ -230,7 +260,15 @@ pub async fn seed_interview(
 
     let interview_uid = uid::generate();
     let transcript_uid = uid::generate();
-    let interviewee_uid = uid::generate();
+
+    // ── Phase 1: interview scaffold ──────────────────────────────────────
+
+    tracing::info!(
+        interview_uid,
+        transcript_uid,
+        interviewee = input.interviewee.clone(),
+        "creating new interview nodes"
+    );
 
     txn.run(
         query(
@@ -242,35 +280,70 @@ pub async fn seed_interview(
         ).param("interviewNumber", input.number),
     ).await?;
 
-    // ── Phase 1: interview scaffold ──────────────────────────────────────
-
-    tracing::info!(
-        interview_uid,
-        transcript_uid,
-        interviewee = input.interviewee.clone(),
-        "creating new interview nodes"
-    );
     txn.run(query!(
-        "
-                MERGE (interviewee:Person {{name: {intervieweeName}}})
-                    ON CREATE SET interviewee.uid = {intervieweeUid}
-
-                CREATE
-                    (interview:Interview
-                        {{
-                            uid: {interviewUid},
-                            number: {interviewNumber},
-                            date: date({interviewDate}),
-                            interviewee: interviewee.name
-                        }}) -[:HAS_TRANSCRIPT]->(transcript:Transcript {{uid: {transcriptUid}}})
-                MERGE (interview)-[:INTERVIEWS]->(interviewee)
-            ",
-        intervieweeName = input.interviewee.clone(),
-        intervieweeUid = interviewee_uid,
+        r#"
+            CREATE
+                (interview:Interview
+                    {{
+                        uid: {interviewUid},
+                        number: {interviewNumber},
+                        date: date({interviewDate}),
+                        interviewee: {intervieweeName}
+                    }}) -[:HAS_TRANSCRIPT]->(transcript:Transcript {{uid: {transcriptUid}}})
+        "#,
         interviewUid = interview_uid.clone(),
         interviewNumber = input.number,
         interviewDate = input.date.clone(),
         transcriptUid = transcript_uid.clone(),
+        intervieweeName = input.interviewee.clone(),
+    ))
+    .await?;
+
+    let id_speakers: Vec<SpeakerMappingInput> = input
+        .speakers
+        .into_iter()
+        .flatten()
+        .map(|mut s| {
+            s.uid.get_or_insert_with(|| uid::generate());
+            s
+        })
+        .collect();
+
+    txn.run(
+        query(
+            r#"
+                MATCH (interview:Interview {uid: $interviewUid})-[:HAS_TRANSCRIPT]->(transcript)
+
+                UNWIND $speakers as speakerPerson
+
+                MERGE (person:Person {name: speakerPerson.name})
+                    ON CREATE SET person.uid = speakerPerson.uid
+
+                LET roleLabel = CASE
+                        WHEN speakerPerson.role IS NULL THEN []
+                        ELSE speakerPerson.role
+                    END
+
+                CREATE (speaker:Speaker {label: speakerPerson.label, role: speakerPerson.role})
+                SET speaker:$(roleLabel)
+
+                CREATE (person)-[:INTERVIEWS_AS]->(speaker)
+                CREATE (transcript)-[:WITH_SPEAKER]->(speaker)
+            "#,
+        )
+        .param("speakers", id_speakers.clone())
+        .param("interviewUid", interview_uid.clone()),
+    )
+    .await?;
+
+    txn.run(query!(
+        r#"
+                MATCH (interview:Interview {{uid: {interviewUid}}})
+                    -[:HAS_TRANSCRIPT]->()
+                    -[:WITH_SPEAKER]->(interviewee:Interviewee)<-[:INTERVIEWS_AS]-(person)
+                CREATE (interview)-[:INTERVIEWS]->(person)
+        "#,
+        interviewUid = interview_uid.clone(),
     ))
     .await?;
 
@@ -330,14 +403,6 @@ pub async fn seed_interview(
         })
         .collect();
 
-    let speaker_map: std::collections::HashMap<&str, &SpeakerMappingInput> = input
-        .speakers
-        .as_deref()
-        .unwrap_or(&[])
-        .iter()
-        .map(|s| (s.label.as_str(), s))
-        .collect();
-
     for batch in segments.chunks(BATCH_SIZE) {
         let stmt_params: Vec<BoltType> = batch
             .iter()
@@ -350,29 +415,13 @@ pub async fn seed_interview(
 
                 let segment = &s.input;
 
-                // Resolve the speaker label to a name if a mapping exists. In
-                // the absence of a specific mapping, assume the speaker is the
-                // interviewee.
-                let (speaker_name, speaker_uid): (BoltType, BoltType) =
-                    match segment.speaker.as_deref().and_then(|l| speaker_map.get(l)) {
-                        Some(mapping) => (
-                            BoltType::from(mapping.name.clone()),
-                            BoltType::from(uid::generate()),
-                        ),
-                        None => (
-                            BoltType::from(input.interviewee.clone()),
-                            BoltType::from(interview_uid.clone()),
-                        ),
-                    };
-
                 Ok::<BoltType, async_graphql::Error>(bolt_map(vec![
                     ("uid", BoltType::from(s.uid.clone())),
                     ("text", BoltType::from(segment.text.clone())),
                     ("startTime", BoltType::from(segment.start_time)),
                     ("endTime", BoltType::from(segment.end_time)),
+                    ("speaker", BoltType::from(segment.speaker.clone())),
                     ("words", words_json),
-                    ("speakerName", speaker_name),
-                    ("speakerUid", speaker_uid),
                 ]))
             })
             .collect::<Result<Vec<_>, _>>()?;
@@ -389,16 +438,14 @@ pub async fn seed_interview(
                     words: s.words
                  }})
 
-                 CREATE (transcript)-[:CONTAINS {{
+                CREATE (transcript)-[:CONTAINS {{
                    startTime: s.startTime,
                    endTime: s.endTime
                  }}]->(statement)
 
-                 WITH s, statement
-                 WHERE s.speakerName IS NOT NULL
-                 MERGE (person:Person {{name: s.speakerName}})
-                   ON CREATE SET person.uid = s.speakerUid
-                 CREATE (person)-[:SAYS]->(statement)
+                MATCH (transcript)-[:WITH_SPEAKER]->(speaker)
+                    WHERE speaker.label = s.speaker
+                MERGE (speaker)-[:SAYS]->(statement)
             ",
             transcriptUid = transcript_uid.clone(),
             statements = stmt_params,
@@ -502,8 +549,6 @@ pub async fn seed_interview(
 
     // ── Build response ──────────────────────────────────────────────────
 
-    let speaker_count = input.speakers.as_deref().unwrap_or(&[]).len() as i64;
-
     Ok(SeedInterviewPayload {
         interview: Interview {
             uid: interview_uid,
@@ -511,7 +556,6 @@ pub async fn seed_interview(
             date: input.date.parse()?,
         },
         statement_count: segments.len() as i64,
-        speaker_count,
         transcript_uid,
         embeddings_queued: !skip_embedding,
     })
