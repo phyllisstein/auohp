@@ -63,7 +63,7 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-for var in JSON_FILE NUMBER DATE INTERVIEWEE SPEAKER_MAP; do
+for var in JSON_FILE NUMBER DATE INTERVIEWEE; do
     if [[ -z "${!var}" ]]; then
         echo "missing required argument: $var" >&2
         usage 1
