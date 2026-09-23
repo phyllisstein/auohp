@@ -1,12 +1,12 @@
 import { ClientOnly, createFileRoute } from "@tanstack/react-router";
 import { useMemo, useRef, type RefObject } from "react";
 import { LexicalExtensionComposer } from "@lexical/react/LexicalExtensionComposer";
-import { useMutation, useReadQuery } from "@apollo/client/react";
+import { useApolloClient, useMutation, useReadQuery } from "@apollo/client/react";
 import { useSignalEffect } from "@preact/signals-react";
 import styled from "styled-components";
 import { playhead } from "~/playhead";
 import { defineAuohpEditorExtension } from "~/lexical/editor";
-import { TRANSCRIPT_QUERY, EDIT_STATEMENT_MUTATION, CREATE_STATEMENT_MUTATION, DESTROY_STATEMENT_MUTATION } from "~/queries";
+import { TRANSCRIPT_QUERY, EDIT_STATEMENT_MUTATION, CREATE_STATEMENT_MUTATION, DESTROY_STATEMENT_MUTATION, SEARCH_STATEMENTS_QUERY } from "~/queries";
 import { style } from "@react-spectrum/s2/style" with { type: "macro" };
 import { gql } from "@apollo/client";
 import type { HeaderQuery, HeaderQueryVariables } from "./__generated__/$interviewNumber.gql";
@@ -116,6 +116,7 @@ function InterviewEditorPage () {
     const [destroyStatement] = useMutation(DESTROY_STATEMENT_MUTATION, {
         fetchPolicy: "no-cache",
     });
+    const apolloClient = useApolloClient();
 
     const player = useRef<HTMLVideoElement>(null);
     useVideoSync(player);
@@ -144,15 +145,29 @@ function InterviewEditorPage () {
     // it flows through extension signals, which are writable after construction.
     // See SearchInterviewExtension.
     //
-    // `editStatement` is captured deliberately for the same reason: PersistenceExtension
-    // reads it back out of a signal at fire time rather than closing over it.
+    // The executors are captured deliberately: Apollo keeps `useMutation`'s
+    // executor and the client stable across renders, so the first-render values
+    // are the only values. `searchStatements` closes over the client rather than
+    // a `useLazyQuery` tuple for the same reason --- the tuple changes identity
+    // on every state transition.
+    //
+    // The playhead is the module singleton, handed in through config so the
+    // editor never imports it. Scoping it per interview (so a switch cannot
+    // replay the previous interview's `seek`) is a one-line change here, left
+    // for when the `createModel` singletons are decoupled.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     const extension = useMemo(() =>
         defineAuohpEditorExtension({
             editStatement,
             destroyStatement,
             createStatement,
+            searchStatements: variables => apolloClient.query({
+                query: SEARCH_STATEMENTS_QUERY,
+                variables,
+                fetchPolicy: "network-only",
+            }),
             interviewUid,
+            playhead,
             statements,
         }), [interviewUid]);
 

@@ -1,6 +1,5 @@
 import { $getRoot, COMMAND_PRIORITY_LOW, defineExtension } from "lexical";
 import { mergeRegister } from "@lexical/utils";
-import { playhead } from "~/playhead";
 import { SEEK_VIDEO_COMMAND } from "./commands";
 import { StatementExtension } from "./StatementExtension";
 import { $isStatementNode, STATEMENT_CHROME_CLASS, STATEMENT_NODE_CLASS } from "./StatementNode";
@@ -37,7 +36,9 @@ export const StatementSeekExtension = /* @__PURE__ */ defineExtension({
     dependencies: [StatementExtension],
     name: "@auohp/statement-seek",
 
-    register (editor) {
+    register (editor, _config, state) {
+        const playhead = state.getDependency(StatementExtension).output;
+
         // Hoisted out of the root listener deliberately. `registerRootListener`
         // fires with (nextRoot, prevRoot) on every root change, and removing a
         // listener requires the SAME function reference --- a handler defined
@@ -85,7 +86,7 @@ export const StatementSeekExtension = /* @__PURE__ */ defineExtension({
                     const startTime = editor.read(() => {
                         const statement = $getRoot()
                             .getChildren()
-                            .find(node => $isStatementNode(node) && node.getUid() === uid)!;
+                            .find(node => $isStatementNode(node) && node.getUid() === uid);
 
                         return $isStatementNode(statement) ? statement.getStartTime() : null;
                     });

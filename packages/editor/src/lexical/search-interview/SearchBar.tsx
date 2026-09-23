@@ -159,7 +159,7 @@ export function SearchBar (): JSX.Element {
                     size="M"
                     value={ queryValue ?? "" }
                     onChange={ value =>
-                        // Writing the signal is the request; SearchDriver is what makes it a network call.
+                        // Writing the signal is the request; SearchInterviewExtension is what makes it a network call.
                         query.value = value.length > 0 ? value : null } />
             </SearchFieldContainer>
             <ButtonGroupContainer>

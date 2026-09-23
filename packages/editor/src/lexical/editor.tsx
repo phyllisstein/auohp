@@ -5,6 +5,7 @@ import { ReactExtension, type EditorChildrenComponentProps } from "@lexical/reac
 import { useExtensionComponent } from "@lexical/react/useExtensionComponent";
 import type { JSX } from "react";
 import type { TranscriptQuery } from "~/__generated__/queries.gql";
+import type { PlayheadModel } from "~/playhead";
 import { LatencyExtension } from "~/lexical/latency/LatencyExtension";
 import {
     PersistenceExtension,
@@ -13,7 +14,7 @@ import {
     type EditStatementFn,
 } from "~/lexical/persistence/PersistenceExtension";
 import { SearchBar } from "~/lexical/search-interview/SearchBar";
-import { SearchInterviewExtension } from "~/lexical/search-interview/SearchInterviewExtension";
+import { SearchInterviewExtension, type SearchStatementsFn } from "~/lexical/search-interview/SearchInterviewExtension";
 import { StatementExtension } from "~/lexical/statement/StatementExtension";
 import { $createStatementNode, type StatementNode } from "~/lexical/statement/StatementNode";
 import { StatementSeekExtension } from "~/lexical/statement/StatementSeekExtension";
@@ -78,29 +79,43 @@ export type TranscriptStatements = TranscriptQuery["interview"]["transcript"]["s
 // Because `$initialEditorState` is declared here it closes directly over
 // `statements` --- no config plumbing, no `$getExtensionDependency` lookup.
 // -----------------------------------------------------------------------------
-// Note what is not here any more: nothing search-related. Every option in this
-// interface must be stable for the editor's entire lifetime, because the route
-// has to memoise the returned extension and any change to it destroys the
-// document. Live data belongs in signals, not here.
+// Every option in this interface must be stable for the editor's entire
+// lifetime, because the route has to memoise the returned extension and any
+// change to it destroys the document. Collaborators (the playhead, the GraphQL
+// executors) are fine: they never take a second value. Live data belongs in
+// signals, not here.
 export interface AuohpEditorOptions {
     statements: TranscriptStatements;
+    playhead: PlayheadModel;
     editStatement: EditStatementFn;
     createStatement: CreateStatementFn;
     destroyStatement: DestroyStatementFn;
+    searchStatements: SearchStatementsFn;
     interviewUid: string;
 }
 
 
-export function defineAuohpEditorExtension ({ statements, editStatement, createStatement, destroyStatement, interviewUid }: AuohpEditorOptions) {
+export function defineAuohpEditorExtension ({
+    statements,
+    playhead,
+    editStatement,
+    createStatement,
+    destroyStatement,
+    searchStatements,
+    interviewUid,
+}: AuohpEditorOptions) {
     return defineExtension({
         dependencies: [
+            configExtension(StatementExtension, { playhead }),
             configExtension(PersistenceExtension, { editStatement, createStatement, destroyStatement, interviewUid }),
-            SearchInterviewExtension,
+            // `interviewUid` goes to search directly rather than being read off
+            // PersistenceExtension's output: the read path should not depend on
+            // the write path to learn which interview it is searching.
+            configExtension(SearchInterviewExtension, { searchStatements, interviewUid }),
             configExtension(ReactExtension, { EditorChildrenComponent: EditorChrome }),
             HistoryExtension,
             LatencyExtension,
             RichTextExtension,
-            StatementExtension,
             StatementSeekExtension,
             TagChipExtension,
             TagSplitBoundaryExtension,
@@ -112,9 +127,11 @@ export function defineAuohpEditorExtension ({ statements, editStatement, createS
             throw error;
         },
 
-        // Runs once, inside an `editor.update()` tagged for history-merge, after
-        // every extension's `register` and before any `afterRegistration`. That
-        // ordering is what lets PersistenceExtension drop the old "seed" tag check.
+        // Seeded from InitialStateExtension's own `afterRegistration` --- root index
+        // 0, so first in that loop, ahead of PersistenceExtension's --- inside an
+        // `editor.update()` tagged history-merge whose commit lands a microtask
+        // later. That tag, not run order, is what keeps the seed out of
+        // PersistenceExtension's write path; see its header.
         $initialEditorState () {
             const root = $getRoot();
             root.clear();

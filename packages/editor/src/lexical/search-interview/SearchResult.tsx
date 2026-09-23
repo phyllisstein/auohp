@@ -57,19 +57,18 @@ export const SearchResultStyles = createGlobalStyle`
     }
 `;
 
-// The chip's React face. It is not rendered in place by Lexical --- MarkNode is
+// A match's React face. It is not rendered in place by Lexical --- MarkNode is
 // an ElementNode, so there is no `decorate()` hook --- it is portalled into the
-// unmanaged badge span that TagChipNode.createDOM builds (see TagChipPortals).
-//
-// It receives only a NodeKey. Everything else is read back out of EditorState
-// via `editor.read()` / `editor.update()`, which keeps the component a pure
-// function of editor state rather than a second copy of it.
+// unmanaged badge span that SearchResultNode.createDOM builds (see
+// SearchResultPortals). It scrolls itself into view when it becomes the focused
+// result; SearchInterviewExtension moves the selection.
 export function SearchResult ({ nodeKey, focused }: { nodeKey: NodeKey; focused: boolean }): JSX.Element {
     const container = useRef<HTMLSpanElement>(null);
 
     useEffect(() => {
         if (focused && container.current) {
-            container.current.scrollIntoView({ behavior: "smooth", block: "center" });
+            const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+            container.current.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "center" });
         }
     }, [focused]);
 

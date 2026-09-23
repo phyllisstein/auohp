@@ -9,8 +9,9 @@ import {
     type SerializedElementNode,
     type Spread,
 } from "lexical";
-import { playhead } from "~/playhead";
+import { $getExtensionDependency } from "@lexical/extension";
 import { SYNTHETIC_UID_MARKER } from "~/lexical/persistence/synthetic-uid";
+import { StatementExtension } from "./StatementExtension";
 import { formatTimestamp } from "./timestamps";
 
 // -----------------------------------------------------------------------------
@@ -115,10 +116,15 @@ export class StatementNode extends ElementNode {
     // statement from getTextContent() and therefore destroyed every chip in it.
     //
     // Return null to refuse the split (what CodeNode does).
-    insertNewAfter (selection: RangeSelection, restoreSelection = true): ElementNode | null {
+    insertNewAfter (_selection: RangeSelection, restoreSelection = true): ElementNode | null {
         const newUid = `${ this.getUid() }${ SYNTHETIC_UID_MARKER }${ Date.now() }`;
-        // FIXME: New node's startTime, old node's endTime = current position of the playhead
-        const currentTime = playhead.timestamp.peek();
+        // The split point is the video's current position: it ends this caption
+        // window and starts the continuation's. This is a `$`-function, so an
+        // editor is active; resolve that editor's playhead through its
+        // StatementExtension rather than an ambient import. Throws if the
+        // extension is absent from the editor's graph --- a hard edge, but one
+        // every editor that registers this node already has.
+        const currentTime = $getExtensionDependency(StatementExtension).output.timestamp.peek();
         const continuation = $createStatementNode(newUid, currentTime, this.getEndTime());
         this.setEndTime(currentTime);
 
@@ -237,6 +243,6 @@ export function $adoptStatementIdentity (
     return node.setUid(uid).setStartTime(startTime).setEndTime(endTime);
 }
 
-export function $isStatementNode (node: LexicalNode): node is StatementNode {
+export function $isStatementNode (node: LexicalNode | null | undefined): node is StatementNode {
     return node instanceof StatementNode;
 }

@@ -17,12 +17,11 @@ import type {
 // -----------------------------------------------------------------------------
 // Operation documents.
 //
-// These lived in the route until the search plumbing moved INSIDE the editor
-// extension. `lexical/search-interview/` now needs SEARCH_STATEMENTS_QUERY, and
-// the route already imports the editor --- so leaving the documents in the route
-// would close an import cycle. A neutral module breaks it, and co-locating the
-// operations is better hygiene anyway: codegen's `documents` glob is
-// `src/**/*.{ts,tsx}`, so nothing about the generated types changes.
+// The route builds the editor's executors from these (the persistence
+// mutations, the interview-scoped search) and injects them through extension
+// config, so the editor imports only the generated result types, never a
+// document or a client. Codegen's `documents` glob is `src/**/*.{ts,tsx}`, so
+// where a document lives does not change its generated types.
 //
 // Worth noting what `graphql()` actually is under the client preset: not a
 // runtime parser. It is a lookup into a generated map keyed by the verbatim

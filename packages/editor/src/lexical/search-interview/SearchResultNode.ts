@@ -50,7 +50,7 @@ export class SearchResultNode extends MarkNode {
         return super.updateFromJSON(serializedNode).setIDs(serializedNode.ids);
     }
 
-    insertNewAfter (selection: RangeSelection, restoreSelection: boolean = true): ElementNode | null {
+    insertNewAfter (_selection: RangeSelection, restoreSelection: boolean = true): ElementNode | null {
         const searchResultNode = $createSearchResultNode(this.__ids);
         this.insertAfter(searchResultNode, restoreSelection);
         return searchResultNode;

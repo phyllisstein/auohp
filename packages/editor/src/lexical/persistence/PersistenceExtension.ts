@@ -12,7 +12,7 @@ import type {
     EditStatementMutationVariables,
 } from "~/__generated__/queries.gql";
 import { StatementExtension } from "~/lexical/statement/StatementExtension";
-import { $adoptStatementIdentity, $isStatementNode, type StatementNode } from "~/lexical/statement/StatementNode";
+import { $adoptStatementIdentity, $isStatementNode, StatementNode } from "~/lexical/statement/StatementNode";
 import { SYNTHETIC_UID_MARKER } from "./synthetic-uid";
 
 
@@ -33,20 +33,19 @@ export type CreateStatementInput = CreateStatementMutationVariables["statement"]
 //
 // Two things  changed in the port beyond the mechanical de-componentisation:
 //
-// 1. It registers in `afterRegistration`, not `register`. Beware the tempting
-//    inference here --- it is wrong, and it cost us a bug. The lifecycle is
-//    ordered `init -> build -> register -> InitialStateExtension.afterRegistration
-//    -> ... -> afterRegistration`, but that ordering governs initiation, not
-//    completion. InitialStateExtension seeds via `editor.update()`, and
-//    `$beginUpdate` defers its commit to a microtask
-//    (`scheduleMicroTask(() => $commitPendingUpdates(editor))`), while
-//    `LexicalBuilder.registerEditor` runs both of its loops synchronously.
-//    Update listeners fire from `$commitPendingUpdates`, so the seed's dirty-node
-//    wave lands after every `afterRegistration` has already returned --- and an
-//    unguarded listener sees all of it: one spurious mutation per statement.
+// 1. It registers in `afterRegistration`, not `register` --- the phase that runs
+//    once every extension is wired. But registration order is not what keeps the
+//    seed out of the write path, and it is tempting to think it is.
+//    InitialStateExtension seeds from its own `afterRegistration`, and as root
+//    index 0 it runs first in that loop, before this one. Its `editor.update()`
+//    defers the commit to a microtask anyway, while
+//    `LexicalBuilder.registerEditor` runs both of its loops synchronously, so the
+//    seed's dirty-node wave lands after every `afterRegistration` has returned
+//    and an unguarded listener sees all of it: one spurious save per statement.
 //
-//    Tags would work (the seed carries HISTORY_MERGE_TAG), but see `lastPersisted`
-//    below for why we ask a question about state instead of one about provenance.
+//    What actually shields the listener is the `tags.has("history-merge")` guard
+//    below: the seed update carries HISTORY_MERGE_TAG. That guard is load-bearing,
+//    not belt-and-braces.
 //
 // 2. `config` replaces props, but `build` is SELECTIVE about what becomes a
 //    signal --- and that selectivity is the pattern, not a one-off. `config` is
@@ -146,6 +145,11 @@ export const PersistenceExtension = /* @__PURE__ */ defineExtension({
                 // stable for the editor's lifetime (see point 2 of the header).
                 editStatement?.({
                     variables: { uid, text, startTime, endTime },
+                    // Without an `onError`, a failed mutation rejects the executor's
+                    // promise, which nothing here awaits --- an unhandled rejection.
+                    onError: error => {
+                        console.error(`PersistenceExtension: editStatement failed for ${ uid }:`, error);
+                    },
                     onCompleted: data => {
                         console.debug(`Edit completed for statement ${ data.editStatement.statement.uid }:`, data.editStatement);
                     },
@@ -158,6 +162,9 @@ export const PersistenceExtension = /* @__PURE__ */ defineExtension({
             debounce(() => {
                 destroyStatement?.({
                     variables: { uid },
+                    onError: error => {
+                        console.error(`PersistenceExtension: destroyStatement failed for ${ uid }:`, error);
+                    },
                     onCompleted: data => {
                         console.debug(`Destroy completed for statement ${ data.destroyStatement.statement.uid }:`, data.destroyStatement);
                     },
@@ -204,6 +211,9 @@ export const PersistenceExtension = /* @__PURE__ */ defineExtension({
 
                 createStatement?.({
                     variables: { statement: payload, interviewUid: uid },
+                    onError: error => {
+                        console.error(`PersistenceExtension: createStatement failed for ${ key }:`, error);
+                    },
                     onCompleted: data => {
                         console.debug(`Create completed for statement ${ data.createStatement.statement.uid }:`, data.createStatement);
                         editor.update(() => {
@@ -263,6 +273,16 @@ export const PersistenceExtension = /* @__PURE__ */ defineExtension({
         };
 
         const unregister = mergeRegister(
+            // `mutatedNodes` below is only populated when the editor has at least
+            // one mutation listener: Lexical's `setMutatedNode` returns early while
+            // `_listeners.mutation` is empty, and that set is editor-global, not
+            // per-class. Without this registration persistence would save only
+            // because TagChipExtension/SearchInterviewExtension happen to register
+            // listeners of their own (from React effects, so not even at
+            // construction) --- and drop both, and saves stop with no error. The
+            // no-op makes the precondition ours instead of a borrowed side effect.
+            editor.registerMutationListener(StatementNode, () => {}),
+
             editor.registerUpdateListener(
                 ({ dirtyLeaves, dirtyElements, editorState, tags, mutatedNodes, prevEditorState }) => {
                     console.log(`PersistenceExtension: %o mutations, ${ dirtyLeaves?.size } dirty leaves, ${ dirtyElements?.size } dirty elements, tags: ${ Array.from(tags).join(", ") }`, mutatedNodes);

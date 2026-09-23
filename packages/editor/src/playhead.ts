@@ -20,4 +20,8 @@ export const Playhead = createModel(() => {
 });
 
 
+export type PlayheadModel = InstanceType<typeof Playhead>;
+
+// Read by the editor only through StatementExtension's config (see
+// `defineAuohpEditorExtension`), never imported by editor code directly.
 export const playhead = new Playhead();

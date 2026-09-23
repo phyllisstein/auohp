@@ -27,7 +27,7 @@ export interface MatchRange {
 // statement matching only one of them is still a hit. Such a statement is
 // returned with no literal occurrence of the full fragment, and therefore gets
 // no highlight. Closing that gap belongs at the query (phrase-quoting the
-// fragment in SearchDriver), not here.
+// fragment in SearchInterviewExtension's executor), not here.
 // Escape every character the RegExp grammar treats as special, so a selection
 // containing `(`, `.`, `?`, `[` and friends is matched literally rather than
 // compiled as a pattern. Without this, selecting "ACT UP (1987)" throws
