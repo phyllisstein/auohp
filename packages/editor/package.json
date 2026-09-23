@@ -12,7 +12,8 @@
         "codegen": "trash './src/**/__generated__/' && graphql-codegen --config codegen.ts",
         "dev": "vite dev",
         "editor:dev": "vite dev",
-        "start": "vite preview"
+        "start": "vite preview",
+        "test": "vitest run"
     },
     "devDependencies": {
         "@0no-co/graphqlsp": "^1.17.4",
