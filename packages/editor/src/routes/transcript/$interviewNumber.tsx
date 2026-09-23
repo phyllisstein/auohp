@@ -3,9 +3,9 @@ import { useMemo, useRef, type RefObject } from "react";
 import { LexicalExtensionComposer } from "@lexical/react/LexicalExtensionComposer";
 import { useMutation, useReadQuery } from "@apollo/client/react";
 import { useSignalEffect } from "@preact/signals-react";
-import styled, { createGlobalStyle } from "styled-components";
+import styled from "styled-components";
 import { playhead } from "~/playhead";
-import { defineAuohpEditorExtension } from "~/lexical/extensions";
+import { defineAuohpEditorExtension } from "~/lexical/editor";
 import { TRANSCRIPT_QUERY, EDIT_STATEMENT_MUTATION, CREATE_STATEMENT_MUTATION, DESTROY_STATEMENT_MUTATION } from "~/queries";
 import { style } from "@react-spectrum/s2/style" with { type: "macro" };
 import { gql } from "@apollo/client";
@@ -37,46 +37,6 @@ function useVideoSync (player: RefObject<HTMLVideoElement | null>) {
     });
 }
 
-
-// Styles for the statement wrapper, its non-editable chrome column, and the
-// editable content element (see StatementNode.createDOM / getDOMSlot).
-const EditorStyle = createGlobalStyle`
-    .auohp-statement {
-        display: flex;
-        gap: 0.75rem;
-        align-items: flex-start;
-        padding: 0.25rem 0;
-    }
-
-    .auohp-statement__chrome {
-        /* Seeking moved off selection-change and onto a click here specifically
-           (see StatementSeekExtension), so the chrome has to advertise itself as
-           the target --- otherwise the only way to discover the gesture is to
-           perform it by accident. */
-        cursor: pointer;
-        user-select: none;
-
-        display: flex;
-        flex-direction: column;
-        flex-shrink: 0;
-
-        min-width: 6rem;
-
-        font-family: monospace;
-        font-size: 0.75rem;
-        color: #888;
-
-        transition: color 0.12s ease;
-
-        &:hover {
-            color: #333;
-        }
-    }
-
-    .auohp-statement__content {
-        flex: 1;
-    }
-`;
 
 const EditorContainer = styled.div`
     position: relative;
@@ -206,7 +166,6 @@ function InterviewEditorPage () {
 
     return (
         <PageContainer>
-            <EditorStyle />
             <VideoContainer>
                 {
                     videoUri && (

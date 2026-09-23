@@ -18,8 +18,8 @@ import type {
 // Operation documents.
 //
 // These lived in the route until the search plumbing moved INSIDE the editor
-// extension. `extensions.tsx` now needs SEARCH_STATEMENTS_QUERY, and the route
-// already imports `extensions.tsx` --- so leaving the documents in the route
+// extension. `lexical/search-interview/` now needs SEARCH_STATEMENTS_QUERY, and
+// the route already imports the editor --- so leaving the documents in the route
 // would close an import cycle. A neutral module breaks it, and co-locating the
 // operations is better hygiene anyway: codegen's `documents` glob is
 // `src/**/*.{ts,tsx}`, so nothing about the generated types changes.
