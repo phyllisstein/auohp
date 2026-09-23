@@ -4,7 +4,7 @@ import { ReactExtension } from "@lexical/react/ReactExtension";
 import type { JSX } from "react";
 import { useNodeDecorators, type ResolveHost } from "~/lexical/react-decorator";
 import { INSERT_TAG_CHIP_COMMAND } from "./commands";
-import { TagChip } from "./TagChip";
+import { TagChip, TagChipStyles } from "./TagChip";
 import { $createTagChipNode, TAG_CHIP_BADGE_CLASS, TagChipNode } from "./TagChipNode";
 
 // -----------------------------------------------------------------------------
@@ -48,10 +48,17 @@ export const TagChipExtension = /* @__PURE__ */ defineExtension({
 const resolveTagChipHost: ResolveHost = element =>
     element.querySelector<HTMLElement>(`:scope > .${ TAG_CHIP_BADGE_CLASS }`);
 
-// The chips' React faces, portalled into each TagChipNode's unmanaged badge
+// The chips' React faces and styles, portalled into each TagChipNode's unmanaged badge
 // through the shared decorator seam (see react-decorator.tsx). Rendered via
 // ReactExtension's `decorators` channel, which exists precisely for "JSX inside
 // the editor context that is not location-dependent".
 export function TagChipPortals (): JSX.Element {
-    return useNodeDecorators(TagChipNode, resolveTagChipHost, key => <TagChip nodeKey={ key } />);
+    const portals = useNodeDecorators(TagChipNode, resolveTagChipHost, key => <TagChip nodeKey={ key } />);
+
+    return (
+        <>
+            <TagChipStyles />
+            { portals }
+        </>
+    );
 }

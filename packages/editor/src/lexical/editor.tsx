@@ -21,7 +21,6 @@ import { StatementSeekExtension } from "~/lexical/statement/StatementSeekExtensi
 import { StatementStyles } from "~/lexical/statement/StatementStyles";
 import { UpdateTimestampExtension } from "~/lexical/statement/UpdateTimestampExtension";
 import { TagButton } from "~/lexical/tag-chip/TagButton";
-import { TagMarkStyles } from "~/lexical/tag-chip/TagChip";
 import { TagChipExtension } from "~/lexical/tag-chip/TagChipExtension";
 import { TagSplitBoundaryExtension } from "~/lexical/tag-chip/TagSplitBoundaryExtension";
 
@@ -175,7 +174,6 @@ function EditorChrome ({ contentEditable, children }: EditorChildrenComponentPro
     return (
         <>
             <StatementStyles />
-            <TagMarkStyles />
             <SearchBar />
             <div style={{ display: "flex", gap: "1rem", alignItems: "center", padding: "0.5rem 0" }}>
                 <TagButton />

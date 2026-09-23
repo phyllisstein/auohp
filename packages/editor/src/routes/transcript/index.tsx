@@ -71,22 +71,22 @@ function TranscriptPage () {
     return (
         <div className={ style({ backgroundColor: "layer-2", height: "full", padding: "edge-to-text", margin: "text-to-control", borderRadius: "sm" }) }>
             <div className={ style({ width: "max", height: "max" }) }>
-                <h3>Interviews</h3>
+                <h1>Interviews</h1>
                 <ul>
                     { interviews.map(interview => (
                         <li key={ interview.number }>
-                            <StackLink to={ InterviewRoute.to } params={{ interviewNumber: `${ interview.number }` }} title={ `Interview ${ interview.number }` }>
+                            <StackLink to={ InterviewRoute.to } params={{ interviewNumber: `${ interview.number }` }}>
                                 #{ interview.number } - { interview.interviewee.name }
                             </StackLink>
                         </li>
                     )) }
                 </ul>
-                <h3>Search</h3>
-                <StackLink to={ SearchRoute.to } title="Search">
+                <h2>Search</h2>
+                <StackLink to={ SearchRoute.to }>
                     Search
                 </StackLink>
-                <h3>New</h3>
-                <StackLink to={ CreateRoute.to } title="Search">
+                <h2>New</h2>
+                <StackLink to={ CreateRoute.to }>
                     Create
                 </StackLink>
             </div>
