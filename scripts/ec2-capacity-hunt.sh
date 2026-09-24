@@ -10,8 +10,8 @@
 # 1 = no capacity this sweep, 2 = configuration error.
 #
 # Safe to run from several places at once (cloud session, local CLI): before
-# every launch attempt it looks for an existing instance of this type with this
-# key pair in any listed region and stops if it finds one. Two runners landing
+# every launch attempt it looks for an existing On-Demand instance of this type
+# with this key pair in any listed region and stops if it finds one. Two runners landing
 # in the same second can still both launch; the window is small.
 
 set -euo pipefail
@@ -25,7 +25,9 @@ TAG_VALUE=auohp-capacity-hunt
 
 log() { printf '%s  %s\n' "$(date -u +%H:%M:%SZ)" "$*" >&2; }
 
-# Print "region instance-id state" for any live instance we'd count as success.
+# Print "region instance-id state" for any live On-Demand instance we'd count as
+# success. Spot instances are ignored: On-Demand ones carry no InstanceLifecycle,
+# and describe-instances can't filter on an absent field, so the query does it.
 # Fails if any region can't be checked, so callers never mistake an API error
 # for "nothing running" and launch a duplicate.
 find_existing() {
@@ -35,7 +37,7 @@ find_existing() {
             --filters "Name=instance-type,Values=$INSTANCE_TYPE" \
                       "Name=key-name,Values=$KEY_NAME" \
                       "Name=instance-state-name,Values=pending,running" \
-            --query 'Reservations[].Instances[].[InstanceId,State.Name]' \
+            --query 'Reservations[].Instances[] | [?InstanceLifecycle==null].[InstanceId,State.Name]' \
             --output text)" || return 1
         [[ -z "$found" ]] || printf '%s %s\n' "$region" "$found"
     done
