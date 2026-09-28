@@ -11,7 +11,8 @@ mod whisper;
 // their own namespace.
 pub use audio::{DecodedAudio, decode_file, decode_file_with};
 pub use config::{
-    AudioConfig, DecodeConfig, DiarizeConfig, Interpolation, TranscribeConfig, VadConfig,
+    AudioConfig, DecodeConfig, DiarizeConfig, Interpolation, TranscribeConfig, TranscriptionConfig,
+    VadConfig,
 };
 pub use diarize::{
     DiarizedSegment, EMBEDDING_MODEL_FILE, SegmentEmbedding, cosine_distance, diarize,

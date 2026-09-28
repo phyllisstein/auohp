@@ -245,6 +245,11 @@ fn resample(
     to_rate: u32,
     cfg: &AudioConfig,
 ) -> Result<Vec<f32>> {
+    anyhow::ensure!(
+        from_rate > 0 && to_rate > 0,
+        "sample rates must be positive, got from_rate={from_rate}, to_rate={to_rate}"
+    );
+
     // Chunk size must match the `chunk_size` given to `new_sinc` below.
     // 4096 frames by default --- large enough to amortise per-call overhead,
     // small enough to sit comfortably in L1/L2 cache.
@@ -415,5 +420,14 @@ mod tests {
         let out_split = resample(&split_audio, 48_000, WHISPER_SAMPLE_RATE, &cfg).unwrap();
         let expected_split = (1025.0f64 * 16_000.0 / 48_000.0).round() as usize;
         assert!((out_split.len() as i64 - expected_split as i64).abs() <= 2);
+    }
+
+    #[test]
+    fn test_resample_zero_rates_return_error() {
+        let cfg = AudioConfig::default();
+        let samples = vec![0.1f32; 100];
+        assert!(resample(&samples, 0, WHISPER_SAMPLE_RATE, &cfg).is_err());
+        assert!(resample(&samples, 48_000, 0, &cfg).is_err());
+        assert!(resample(&samples, 0, 0, &cfg).is_err());
     }
 }

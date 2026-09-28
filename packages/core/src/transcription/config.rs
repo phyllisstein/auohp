@@ -179,7 +179,6 @@ pub struct TranscribeConfig {
 }
 
 /// Alias for [`TranscribeConfig`].
-#[allow(dead_code)]
 pub type TranscriptionConfig = TranscribeConfig;
 
 impl std::str::FromStr for TranscribeConfig {

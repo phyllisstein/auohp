@@ -55,11 +55,6 @@ pub mod model;
 pub mod runner;
 pub mod vad;
 
-#[allow(unused_imports)]
-pub use alignment::{assemble_words, collect_words, round_to, strip_turn_dash};
-#[allow(unused_imports)]
-pub use model::{load_model, WhisperModel, MODEL_FILE};
-#[allow(unused_imports)]
-pub use runner::{transcribe, WhisperSegment};
-#[allow(unused_imports)]
-pub use vad::{apply_vad, VadRegion, VadTimeline, VAD_GLUE_SECONDS, VAD_MODEL_FILE};
+pub use model::{load_model, MODEL_FILE};
+pub use runner::transcribe;
+pub use vad::VAD_MODEL_FILE;
