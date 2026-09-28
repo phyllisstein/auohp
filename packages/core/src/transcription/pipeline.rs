@@ -103,7 +103,7 @@ pub fn run_with(input_path: &Path, cfg: &TranscribeConfig) -> Result<Transcripti
     };
 
     let segments: Vec<Segment> = whisper_segments
-        .iter()
+        .into_iter()
         .map(|s| Segment {
             // `dominant_speaker` borrows its answer out of `diarized`, so the
             // owned `String` the caption editor's schema wants is allocated
@@ -111,10 +111,10 @@ pub fn run_with(input_path: &Path, cfg: &TranscribeConfig) -> Result<Transcripti
             // unmatched segment stays `None`, which is that editor's existing
             // signal that a speaker still needs a human label.
             speaker: diarize::dominant_speaker(s.start, s.end, &diarized).map(str::to_owned),
-            text: s.text.clone(),
+            text: s.text,
             start_time: s.start,
             end_time: s.end,
-            words: s.words.clone(),
+            words: s.words,
         })
         .collect();
 
