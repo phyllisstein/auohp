@@ -48,6 +48,8 @@ audioadapter-buffers = "2"
 # agglomerative clustering for turning embeddings into speaker labels.
 knf-rs = "0.3"
 kodama = "0.3"
+petgraph = "0.6"
+simsimd = "6.5"
 
 # On-device sentence embeddings --- fastembed wraps ONNX sentence transformers
 # (BAAI/bge-small-en-v1.5, 384-dim).

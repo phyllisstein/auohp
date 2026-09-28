@@ -2,7 +2,6 @@ mod audio;
 mod config;
 mod diarize;
 mod pipeline;
-mod segmentation;
 mod types;
 mod whisper;
 
@@ -19,6 +18,6 @@ pub use diarize::{
     dominant_speaker, extract_segment_embeddings,
 };
 pub use pipeline::{models_dir, run, run_with};
-pub use segmentation::MODEL_FILE as SEGMENTATION_MODEL_FILE;
+pub use diarize::segmentation::MODEL_FILE as SEGMENTATION_MODEL_FILE;
 pub use types::{ModelConfig, Segment, TranscriptionResult, Word};
 pub use whisper::{MODEL_FILE as WHISPER_MODEL_FILE, VAD_MODEL_FILE};

@@ -7,7 +7,7 @@ use std::path::{Path, PathBuf};
 use super::audio;
 use super::config::TranscribeConfig;
 use super::diarize;
-use super::segmentation;
+use super::diarize::segmentation;
 use super::types::*;
 use super::whisper;
 

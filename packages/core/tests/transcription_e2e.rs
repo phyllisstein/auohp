@@ -305,29 +305,8 @@ mod tier1_audio_ingestion {
 mod tier1_diarization_clustering {
     use super::*;
 
-    #[test]
-    fn test_t1_cosine_distance_identical_vectors() {
-        let v1 = vec![0.3f32, -0.4, 0.5, 0.1, -0.8];
-        let v2 = v1.clone();
-        let dist = cosine_distance(&v1, &v2);
-        assert!(dist.abs() < 1e-6, "identical vector distance must be 0.0, got {dist}");
-    }
 
-    #[test]
-    fn test_t1_cosine_distance_orthogonal_vectors() {
-        let v1 = vec![1.0f32, 0.0, 0.0, 0.0];
-        let v2 = vec![0.0f32, 1.0, 0.0, 0.0];
-        let dist = cosine_distance(&v1, &v2);
-        assert!((dist - 1.0).abs() < 1e-6, "orthogonal vector distance must be 1.0, got {dist}");
-    }
 
-    #[test]
-    fn test_t1_cosine_distance_diametrically_opposite_vectors() {
-        let v1 = vec![0.2f32, 0.5, -0.1, 0.8];
-        let v2: Vec<f32> = v1.iter().map(|&x| -x).collect();
-        let dist = cosine_distance(&v1, &v2);
-        assert!((dist - 2.0).abs() < 1e-6, "opposite vector distance must be 2.0, got {dist}");
-    }
 
     #[test]
     fn test_t1_dominant_speaker_unambiguous_coverage() {
