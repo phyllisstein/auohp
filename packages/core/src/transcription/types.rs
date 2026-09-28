@@ -43,10 +43,7 @@ impl TranscriptionResult {
         let speakers: Vec<String> = segments
             .iter()
             .filter_map(|s| s.speaker.clone())
-            .fold(HashSet::new(), |mut acc, el| {
-                acc.insert(el);
-                acc
-            })
+            .collect::<HashSet<_>>()
             .into_iter()
             .collect();
 
