@@ -82,10 +82,7 @@ impl EmbeddingExtractor {
         Ok(Self { session })
     }
 
-    fn compute(&mut self, samples_i16: &[i16]) -> Result<Vec<f32>> {
-        let mut samples_f32 = vec![0.0f32; samples_i16.len()];
-        knf_rs::convert_integer_to_float_audio(samples_i16, &mut samples_f32);
-
+    fn compute(&mut self, samples: &[f32]) -> Result<Vec<f32>> {
         // `knf-rs` returns its features as an `ndarray::Array2` from *its*
         // ndarray version (0.16), which is not the same crate instance as
         // the one `ort` rc.13 integrates with (0.17) --- Cargo happily links
@@ -93,7 +90,7 @@ impl EmbeddingExtractor {
         // other crate's conversion traits. Round-tripping through
         // `(shape, Vec<f32>)` sidesteps the mismatch entirely: `ort::Tensor`
         // accepts any `(shape, Vec<T>)` tuple without needing ndarray at all.
-        let features = knf_rs::compute_fbank(&samples_f32)
+        let features = knf_rs::compute_fbank(samples)
             .map_err(|e| anyhow::anyhow!("fbank extraction failed: {e}"))?;
         let shape = features.shape().to_vec();
         let data = features.into_raw_vec_and_offset().0;
@@ -127,10 +124,8 @@ pub fn extract_segment_embeddings(
     segmentation_model: &Path,
     embedding_model: &Path,
 ) -> Result<Vec<SegmentEmbedding>> {
-    let samples_i16 = f32_to_i16(samples);
-
     let mut segmenter = Segmenter::new(segmentation_model)?;
-    let speech_segments = segmenter.segment(&samples_i16, sample_rate)?;
+    let speech_segments = segmenter.segment(samples, sample_rate)?;
 
     if speech_segments.is_empty() {
         tracing::warn!("no speech segments detected");
@@ -146,12 +141,12 @@ pub fn extract_segment_embeddings(
     let mut skipped_nonfinite = 0usize;
 
     for seg in &speech_segments {
-        let start_idx = ((seg.start * sample_rate as f64) as usize).min(samples_i16.len());
-        let end_idx = ((seg.end * sample_rate as f64) as usize).min(samples_i16.len());
+        let start_idx = ((seg.start * sample_rate as f64) as usize).min(samples.len());
+        let end_idx = ((seg.end * sample_rate as f64) as usize).min(samples.len());
         if end_idx <= start_idx {
             continue;
         }
-        let seg_samples = &samples_i16[start_idx..end_idx];
+        let seg_samples = &samples[start_idx..end_idx];
         if seg_samples.len() < MIN_SAMPLES {
             skipped_short += 1;
             continue;
@@ -303,11 +298,11 @@ fn cluster_embeddings(segment_embeddings: &[SegmentEmbedding], max_speakers: usi
 /// many of them. Taking the longest individual overlapping segment would let
 /// one uninterrupted eight-second answer outvote twenty short runs from the
 /// speaker who actually holds most of the span.
-pub fn dominant_speaker<'a>(
+pub fn dominant_speaker(
     start: f64,
     end: f64,
-    diarized: &'a [DiarizedSegment],
-) -> Option<&'a str> {
+    diarized: &[DiarizedSegment],
+) -> Option<&str> {
     let mut totals: HashMap<&str, f64> = HashMap::new();
     for d in diarized {
         let overlap = (end.min(d.end) - start.max(d.start)).max(0.0);
@@ -344,10 +339,94 @@ pub fn cosine_distance(a: &[f32], b: &[f32]) -> f64 {
     }
 }
 
-/// Convert f32 samples ([-1.0, 1.0]) to i16, the scale both ONNX models expect.
-fn f32_to_i16(samples: &[f32]) -> Vec<i16> {
-    samples
-        .iter()
-        .map(|&s| (s * i16::MAX as f32).clamp(i16::MIN as f32, i16::MAX as f32) as i16)
-        .collect()
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn cosine_distance_properties() {
+        let unit_x = vec![1.0, 0.0];
+        let unit_y = vec![0.0, 1.0];
+        let neg_x = vec![-1.0, 0.0];
+        let zero = vec![0.0, 0.0];
+
+        // Identical vectors -> distance 0.0
+        assert!((cosine_distance(&unit_x, &unit_x) - 0.0).abs() < 1e-6);
+        // Orthogonal vectors -> distance 1.0
+        assert!((cosine_distance(&unit_x, &unit_y) - 1.0).abs() < 1e-6);
+        // Opposite vectors -> distance 2.0
+        assert!((cosine_distance(&unit_x, &neg_x) - 2.0).abs() < 1e-6);
+        // Zero vector -> fallback 1.0
+        assert!((cosine_distance(&unit_x, &zero) - 1.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn dominant_speaker_aggregation() {
+        let diarized = vec![
+            DiarizedSegment {
+                speaker: "SPEAKER_00".into(),
+                start: 0.0,
+                end: 2.0,
+            },
+            DiarizedSegment {
+                speaker: "SPEAKER_01".into(),
+                start: 2.0,
+                end: 5.0,
+            },
+            DiarizedSegment {
+                speaker: "SPEAKER_00".into(),
+                start: 5.0,
+                end: 8.0,
+            },
+        ];
+
+        // Range [0.0, 4.0]: SPEAKER_00 has [0.0..2.0] = 2.0s; SPEAKER_01 has [2.0..4.0] = 2.0s.
+        // Range [0.0, 8.0]: SPEAKER_00 has 2.0s + 3.0s = 5.0s; SPEAKER_01 has 3.0s.
+        assert_eq!(dominant_speaker(0.0, 8.0, &diarized), Some("SPEAKER_00"));
+        // Range [2.5, 4.5]: only SPEAKER_01 overlaps.
+        assert_eq!(dominant_speaker(2.5, 4.5, &diarized), Some("SPEAKER_01"));
+        // Range [10.0, 12.0]: no overlap -> None
+        assert_eq!(dominant_speaker(10.0, 12.0, &diarized), None);
+    }
+
+    #[test]
+    fn cluster_embeddings_separates_speakers() {
+        // Single segment
+        let single = vec![SegmentEmbedding {
+            start: 0.0,
+            end: 1.0,
+            embedding: vec![1.0, 0.0],
+        }];
+        assert_eq!(cluster_embeddings(&single, 2), vec![0]);
+
+        // Four segments: two clusters
+        let segments = vec![
+            SegmentEmbedding {
+                start: 0.0,
+                end: 1.0,
+                embedding: vec![1.0, 0.0, 0.0],
+            },
+            SegmentEmbedding {
+                start: 1.0,
+                end: 2.0,
+                embedding: vec![0.95, 0.05, 0.0],
+            },
+            SegmentEmbedding {
+                start: 2.0,
+                end: 3.0,
+                embedding: vec![0.0, 1.0, 0.0],
+            },
+            SegmentEmbedding {
+                start: 3.0,
+                end: 4.0,
+                embedding: vec![0.0, 0.95, 0.05],
+            },
+        ];
+
+        let labels = cluster_embeddings(&segments, 2);
+        assert_eq!(labels.len(), 4);
+        assert_eq!(labels[0], labels[1]);
+        assert_eq!(labels[2], labels[3]);
+        assert_ne!(labels[0], labels[2]);
+    }
 }
