@@ -50,13 +50,20 @@ pub fn decode_file_with(path: &std::path::Path, cfg: &AudioConfig) -> Result<Dec
         hint.with_extension(ext);
     }
 
-    let probed = symphonia::default::get_probe()
-        .format(
+    let prev_hook = std::panic::take_hook();
+    std::panic::set_hook(Box::new(|_| {}));
+    let probed_res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        symphonia::default::get_probe().format(
             &hint,
             mss,
             &FormatOptions::default(),
             &MetadataOptions::default(),
         )
+    }));
+    std::panic::set_hook(prev_hook);
+
+    let probed = probed_res
+        .map_err(|_| anyhow::anyhow!("corrupted audio container caused decoder panic"))?
         .context("unsupported audio format")?;
 
     let mut format = probed.format;
@@ -107,6 +114,10 @@ pub fn decode_file_with(path: &std::path::Path, cfg: &AudioConfig) -> Result<Dec
         .codec_params
         .sample_rate
         .context("audio track has no sample rate")?;
+    anyhow::ensure!(
+        declared_rate > 0,
+        "audio track sample rate must be positive, got {declared_rate}"
+    );
 
     let mut decoder = symphonia::default::get_codecs()
         .make(&track.codec_params, &DecoderOptions::default())
@@ -245,9 +256,20 @@ fn resample(
     to_rate: u32,
     cfg: &AudioConfig,
 ) -> Result<Vec<f32>> {
+    const MAX_SUPPORTED_SAMPLE_RATE: u32 = 384_000;
     anyhow::ensure!(
-        from_rate > 0 && to_rate > 0,
-        "sample rates must be positive, got from_rate={from_rate}, to_rate={to_rate}"
+        from_rate > 0 && from_rate <= MAX_SUPPORTED_SAMPLE_RATE,
+        "input sample rate out of bounds (1..={MAX_SUPPORTED_SAMPLE_RATE}), got {from_rate}"
+    );
+    anyhow::ensure!(
+        to_rate > 0 && to_rate <= MAX_SUPPORTED_SAMPLE_RATE,
+        "target sample rate out of bounds (1..={MAX_SUPPORTED_SAMPLE_RATE}), got {to_rate}"
+    );
+
+    let ratio = to_rate as f64 / from_rate as f64;
+    anyhow::ensure!(
+        (1.0 / 64.0..=64.0).contains(&ratio),
+        "resampling ratio out of bounds (0.015625..=64.0), got {ratio}"
     );
 
     // Chunk size must match the `chunk_size` given to `new_sinc` below.
@@ -276,7 +298,7 @@ fn resample(
     // real audio; in one-shot mode with a single huge chunk, it's zeros and
     // the right-half lookahead has nowhere to read from.
     let mut resampler = Async::<f32>::new_sinc(
-        to_rate as f64 / from_rate as f64,
+        ratio,
         2.0,
         &params,
         chunk,
@@ -284,8 +306,9 @@ fn resample(
         FixedAsync::Input,
     )?;
 
-    let expected = (samples.len() as f64 * to_rate as f64 / from_rate as f64).round() as usize;
-    let mut output = Vec::with_capacity(expected + chunk);
+    let expected = (samples.len() as u64 * to_rate as u64 / from_rate as u64) as usize;
+    let capacity = expected.min(100 * 1024 * 1024); // max 100M floats initial capacity
+    let mut output = Vec::with_capacity(capacity);
 
     // Feed the audio in chunk-sized slices, zero-padding the final partial
     // chunk. Rubato handles each boundary cleanly via its history buf.
@@ -429,5 +452,18 @@ mod tests {
         assert!(resample(&samples, 0, WHISPER_SAMPLE_RATE, &cfg).is_err());
         assert!(resample(&samples, 48_000, 0, &cfg).is_err());
         assert!(resample(&samples, 0, 0, &cfg).is_err());
+    }
+
+    #[test]
+    fn test_resample_out_of_bounds_rates_return_error() {
+        let cfg = AudioConfig::default();
+        let samples = vec![0.1f32; 100];
+        assert!(resample(&samples, 384_001, WHISPER_SAMPLE_RATE, &cfg).is_err());
+        assert!(resample(&samples, 48_000, 384_001, &cfg).is_err());
+        assert!(resample(&samples, u32::MAX, WHISPER_SAMPLE_RATE, &cfg).is_err());
+        assert!(resample(&samples, WHISPER_SAMPLE_RATE, u32::MAX, &cfg).is_err());
+        // Extreme ratio check (1 Hz has ratio 16000 > 64)
+        assert!(resample(&samples, 1, WHISPER_SAMPLE_RATE, &cfg).is_err());
+        assert!(resample(&samples, WHISPER_SAMPLE_RATE, 1, &cfg).is_err());
     }
 }
