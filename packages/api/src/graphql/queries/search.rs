@@ -1,9 +1,8 @@
 //! Vector search over Statement embeddings.
 //!
-//! `search_statements` embeds the caller's query string on-device
-//! (nomic-embed-text-v1.5, 768-dim) and queries the `statementEmbedding`
-//! HNSW index in Neo4j, joining back to the parent Interview for context.
-//! Results are ordered by cosine similarity descending.
+//! `search_statements` embeds the caller's query string on-device and queries
+//! the `statementEmbedding` HNSW index in Neo4j, joining back to the parent
+//! Interview for context. Results are ordered by cosine similarity descending.
 
 use std::sync::Arc;
 
@@ -48,6 +47,10 @@ impl Search {
         fragment: String,
         interview_uid: Option<String>,
     ) -> async_graphql::Result<Vec<SearchHit>> {
+        if fragment.is_empty() {
+            return Ok(vec![]);
+        }
+
         let db = ctx.data::<Db>()?;
         let mut q = String::from("
             CALL db.index.fulltext.queryNodes('statementSearchText', $queryText) YIELD node AS statement, score
@@ -95,6 +98,10 @@ impl Search {
         #[graphql(name = "query")] query_text: String,
         limit: Option<i64>,
     ) -> async_graphql::Result<Vec<SearchHit>> {
+        if query_text.is_empty() {
+            return Ok(vec![]);
+        }
+
         let db = ctx.data::<Db>()?;
         let embedder = ctx.data::<Arc<EmbedderHandle>>()?;
 

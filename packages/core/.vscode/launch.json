@@ -1,0 +1,34 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug executable 'embed'",
+            "type": "lldb",
+            "request": "launch",
+            "cargo": {
+                "args": [
+                    "run",
+                    "--bin=embed",
+                    "--package=auohp-core",
+                    "--",
+                    "${input:embedString}",
+                ],
+            },
+            "args": [],
+            "env": {
+                "MODELS_DIR": "${fileWorkspaceFolder}/packages/core/models",
+            },
+        },
+    ],
+    "inputs": [
+        {
+            "type": "promptString",
+            "default": "Five Reasons Drinking Milk on the Toilet Is Kind of a Game Changer",
+            "id": "embedString",
+            "description": "String to vectorize",
+        },
+    ]
+}

@@ -9,7 +9,7 @@ services:
       - source: environment
         mode: 0440
     environment:
-      RUST_LOG: auohp_api=debug,transcribe=debug
+      RUST_LOG: auohp_api=debug,auohp_core=debug,auohp_desktop=debug
       RUSTFLAGS: "-Ctarget-feature=+fp16 -Awarnings"
       HTTPS_METHOD: nohttps
       VIRTUAL_HOST_MULTIPORTS: |-
@@ -43,12 +43,15 @@ services:
       - type: volume
         source: cargo_registry
         target: /usr/local/cargo/registry
+      - type: volume
+        source: auohp_models
+        target: /models
 
   neo4j:
     networks:
       - default
       - nginx-proxy
-    image: neo4j:latest
+    image: neo4j:2026.09
     environment:
       NEO4J_AUTH: neo4j/auohpauohp
       NEO4J_PLUGINS: '["apoc", "genai"]'
@@ -80,6 +83,7 @@ volumes:
   graph_data:
   node_modules:
   rust_target:
+  auohp_models:
 
 secrets:
   environment:

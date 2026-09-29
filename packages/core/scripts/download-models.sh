@@ -59,19 +59,23 @@ download \
     "$HF_BASE/ggml-org/whisper-vad/resolve/main/ggml-silero-v6.2.0.bin" \
     "$MODELS_DIR/ggml-silero-v6.2.0.bin"
 
-# ── nomic-embed-text-v1.5 (ONNX, ≈275 MB) ───────────────────────────────────
+# ── Qwen3-Embedding-0.6B ───────────────────────────────────
 # Sentence embedding model used by the search indexer.  fastembed loads it
 # via UserDefinedEmbeddingModel (five flat files), so we download them here
 # rather than relying on fastembed's HuggingFace Hub auto-download.
-NOMIC_DIR="$MODELS_DIR/nomic-embed-text-v1.5"
-mkdir -p "$NOMIC_DIR"
+QWEN3_DIR="$MODELS_DIR/Qwen3-Embedding-0.6B"
+mkdir -p "$QWEN3_DIR"
 echo
-echo "==> nomic-embed-text-v1.5 (ONNX)"
-download "$HF_BASE/nomic-ai/nomic-embed-text-v1.5/resolve/main/onnx/model.onnx"              "$NOMIC_DIR/model.onnx"
-download "$HF_BASE/nomic-ai/nomic-embed-text-v1.5/resolve/main/tokenizer.json"               "$NOMIC_DIR/tokenizer.json"
-download "$HF_BASE/nomic-ai/nomic-embed-text-v1.5/resolve/main/tokenizer_config.json"        "$NOMIC_DIR/tokenizer_config.json"
-download "$HF_BASE/nomic-ai/nomic-embed-text-v1.5/resolve/main/config.json"                  "$NOMIC_DIR/config.json"
-download "$HF_BASE/nomic-ai/nomic-embed-text-v1.5/resolve/main/special_tokens_map.json"      "$NOMIC_DIR/special_tokens_map.json"
+echo "==> Qwen3-Embedding-0.6B (ONNX)"
+
+uv tool run --from 'optimum-onnx[onnxruntime]' --with 'sentence-transformers<6' --with accelerate \
+    optimum-cli export onnx \
+        --model Qwen/Qwen3-Embedding-0.6B \
+        --task feature-extraction \
+        --library sentence_transformers \
+        "$QWEN3_DIR" &> "$QWEN3_DIR/export.log"
+
+# uv run ./scripts/quantize.py
 
 # ── pyannote segmentation 3.0 (ONNX, ≈6 MB) ─────────────────────────────────
 # Speech/silence frame classifier used to detect speaker turn boundaries.

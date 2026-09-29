@@ -3,10 +3,10 @@ import { StrictMode } from "react";
 import { ApolloClient, HttpLink, InMemoryCache } from "@apollo/client";
 import { ApolloProvider } from "@apollo/client/react";
 
-const { VITE_GRAPHQL_URI: GRAPHQL_URI = "http://localhost:4000/graphql" } = import.meta.env;
+const { VITE_AUOHP_API_URI: API_URI = "http://localhost:4000/graphql" } = import.meta.env;
 
 const client = new ApolloClient({
-    link: new HttpLink({ uri: GRAPHQL_URI }),
+    link: new HttpLink({ uri: API_URI }),
     cache: new InMemoryCache(),
 });
 

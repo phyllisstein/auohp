@@ -48,7 +48,10 @@ async fn main() -> Result<()> {
     // Tracing goes to stderr so structured logs don't mix with any stdout
     // output (e.g. health-check scripts that parse the server's stdout).
     tracing_subscriber::registry()
-        .with(EnvFilter::try_from_default_env().unwrap_or_else(|_| "auohp_api=debug".into()))
+        .with(
+            EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| "auohp_api=debug,auohp_core=debug".into()),
+        )
         .with(tracing_subscriber::fmt::layer().with_writer(std::io::stderr))
         .init();
 
@@ -74,8 +77,10 @@ async fn main() -> Result<()> {
         "CREATE VECTOR INDEX statementEmbedding IF NOT EXISTS
          FOR (s:Statement) ON s.embedding
          OPTIONS {indexConfig: {
-           `vector.dimensions`: 768,
-           `vector.similarity_function`: 'cosine'
+           `vector.dimensions`: 1024,
+           `vector.similarity_function`: 'cosine',
+           `vector.quantization.type`: 'binary',
+           `vector.default_search_expansion_factor`: 3.0
          }}",
     ))
     .await?;

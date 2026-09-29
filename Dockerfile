@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.7-labs
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Watchman Binaries ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
-FROM phyllisstein/watchman:v2026.03.02.00-arm64 AS watchman
+FROM phyllisstein/watchman:v2026.07.27.00 AS watchman
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ App ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 FROM ubuntu:24.04 AS app
@@ -13,12 +13,13 @@ COPY --from=watchman /usr/local/lib/* /usr/local/lib/
 
 ENV CARGO_HOME=/usr/local/cargo \
     CARGO_TARGET_DIR=/target \
+    MODELS_DIR=/models \
     NODE_MAJOR=26 \
     PATH="/app/node_modules/.bin:/usr/share/nodejs/yarn/bin:/usr/local/cargo/bin:$PATH" \
     PROJECT_PATH=/app \
     RUSTFLAGS="-C target-feature=+fp16" \
     RUSTUP_HOME=/usr/local/rustup \
-    RUSTUP_TOOLCHAIN=nightly-2026-05-02
+    RUSTUP_TOOLCHAIN=nightly-2026-09-22
 
 RUN mkdir -p ${CARGO_TARGET_DIR} ${CARGO_HOME} ${RUSTUP_HOME} /usr/local/var/run/watchman \
     && chmod a+w ${CARGO_TARGET_DIR} ${CARGO_HOME} ${RUSTUP_HOME} /usr/local/var/run/watchman \
@@ -44,6 +45,7 @@ RUN mkdir -p ${CARGO_TARGET_DIR} ${CARGO_HOME} ${RUSTUP_HOME} /usr/local/var/run
         nodejs \
         yarn \
     && curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- --profile default --default-toolchain ${RUSTUP_TOOLCHAIN} -y \
+    && curl -Ls https://astral.sh/uv/install.sh | sh \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
