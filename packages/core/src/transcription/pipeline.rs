@@ -7,7 +7,7 @@ use std::path::{Path, PathBuf};
 use super::audio;
 use super::config::TranscribeConfig;
 use super::diarize;
-use super::segmentation;
+use super::diarize::segmentation;
 use super::types::*;
 use super::whisper;
 
@@ -84,26 +84,36 @@ pub fn run_with(input_path: &Path, cfg: &TranscribeConfig) -> Result<Transcripti
     // All models live under $MODELS_DIR, pre-downloaded by download-models.sh.
     let models_dir = models_dir();
 
-    let mut whisper_model = whisper::load_model(
-        &models_dir.join(whisper::MODEL_FILE),
-        &models_dir.join(whisper::VAD_MODEL_FILE),
-    )?;
-    let whisper_segments = whisper::transcribe(&mut whisper_model, &decoded.samples, cfg)?;
+    let (whisper_segments, diarized) = std::thread::scope(|s| {
+        let whisper_thread = s.spawn(|| {
+            let mut whisper_model = whisper::load_model(
+                &models_dir.join(whisper::MODEL_FILE),
+                &models_dir.join(whisper::VAD_MODEL_FILE),
+            )?;
+            whisper::transcribe(&mut whisper_model, &decoded.samples, cfg)
+        });
 
-    let diarized = if cfg.diarize.enabled {
-        diarize::diarize(
-            &decoded.samples,
-            decoded.sample_rate,
-            &models_dir.join(segmentation::MODEL_FILE),
-            &models_dir.join(diarize::EMBEDDING_MODEL_FILE),
-            cfg.diarize.max_speakers,
-        )?
-    } else {
-        Vec::new()
-    };
+        let diarize_thread = s.spawn(|| {
+            if cfg.diarize.enabled {
+                diarize::diarize(
+                    &decoded.samples,
+                    decoded.sample_rate,
+                    &models_dir.join(segmentation::MODEL_FILE),
+                    &models_dir.join(diarize::EMBEDDING_MODEL_FILE),
+                    cfg.diarize.max_speakers,
+                )
+            } else {
+                Ok(Vec::new())
+            }
+        });
+
+        let w_res = whisper_thread.join().unwrap()?;
+        let d_res = diarize_thread.join().unwrap()?;
+        Ok::<_, anyhow::Error>((w_res, d_res))
+    })?;
 
     let segments: Vec<Segment> = whisper_segments
-        .iter()
+        .into_iter()
         .map(|s| Segment {
             // `dominant_speaker` borrows its answer out of `diarized`, so the
             // owned `String` the caption editor's schema wants is allocated
@@ -111,10 +121,10 @@ pub fn run_with(input_path: &Path, cfg: &TranscribeConfig) -> Result<Transcripti
             // unmatched segment stays `None`, which is that editor's existing
             // signal that a speaker still needs a human label.
             speaker: diarize::dominant_speaker(s.start, s.end, &diarized).map(str::to_owned),
-            text: s.text.clone(),
+            text: s.text,
             start_time: s.start,
             end_time: s.end,
-            words: s.words.clone(),
+            words: s.words,
         })
         .collect();
 

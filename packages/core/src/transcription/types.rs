@@ -42,18 +42,14 @@ impl TranscriptionResult {
     fn from_segments(segments: Vec<Segment>) -> Self {
         let speakers: Vec<String> = segments
             .iter()
-            .map(|s| s.speaker.clone())
-            .flatten()
-            .fold(HashSet::new(), |mut acc, el| {
-                acc.insert(el.clone());
-                acc
-            })
+            .filter_map(|s| s.speaker.clone())
+            .collect::<HashSet<_>>()
             .into_iter()
             .collect();
 
         TranscriptionResult {
             segments,
-            speakers: Some(speakers.into()),
+            speakers: Some(speakers),
             created: Utc::now(),
             models: Some(ModelConfig {
                 segmentation_model: SEGMENTATION_MODEL_FILE.into(),
@@ -61,6 +57,12 @@ impl TranscriptionResult {
                 whisper_model: WHISPER_MODEL_FILE.into(),
             }),
         }
+    }
+}
+
+impl FromIterator<Segment> for TranscriptionResult {
+    fn from_iter<T: IntoIterator<Item = Segment>>(iter: T) -> Self {
+        Self::from(iter.into_iter().collect::<Vec<Segment>>())
     }
 }
 
@@ -75,4 +77,51 @@ pub struct ModelConfig {
     pub segmentation_model: String,
     pub vad_model: String,
     pub whisper_model: String,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn transcription_result_from_iterator() {
+        let segments = vec![
+            Segment {
+                speaker: Some("SPEAKER_00".into()),
+                text: "Hello".into(),
+                start_time: 0.0,
+                end_time: 1.0,
+                words: vec![],
+            },
+            Segment {
+                speaker: Some("SPEAKER_01".into()),
+                text: "World".into(),
+                start_time: 1.0,
+                end_time: 2.0,
+                words: vec![],
+            },
+            Segment {
+                speaker: Some("SPEAKER_00".into()),
+                text: "Again".into(),
+                start_time: 2.0,
+                end_time: 3.0,
+                words: vec![],
+            },
+            Segment {
+                speaker: None,
+                text: "Silence".into(),
+                start_time: 3.0,
+                end_time: 4.0,
+                words: vec![],
+            },
+        ];
+
+        let result: TranscriptionResult = segments.into_iter().collect();
+        assert_eq!(result.segments.len(), 4);
+        let speakers = result.speakers.expect("speakers should be populated");
+        assert_eq!(speakers.len(), 2);
+        assert!(speakers.contains(&"SPEAKER_00".to_string()));
+        assert!(speakers.contains(&"SPEAKER_01".to_string()));
+        assert!(result.models.is_some());
+    }
 }

@@ -4,7 +4,7 @@
 //! and resamples to 16 kHz mono f32---the format whisper.cpp expects.
 
 use anyhow::{Context, Result};
-use audioadapter_buffers::direct::SequentialSliceOfVecs;
+use audioadapter_buffers::direct::InterleavedSlice;
 use rubato::{
     Async, FixedAsync, Resampler, SincInterpolationParameters, SincInterpolationType,
     WindowFunction,
@@ -21,6 +21,7 @@ use super::config::{AudioConfig, Interpolation};
 const WHISPER_SAMPLE_RATE: u32 = 16_000;
 
 /// Decoded audio ready for Whisper: 16 kHz mono f32 samples in [-1.0, 1.0].
+#[derive(Debug, Clone, PartialEq)]
 pub struct DecodedAudio {
     pub samples: Vec<f32>,
     pub sample_rate: u32,
@@ -49,13 +50,20 @@ pub fn decode_file_with(path: &std::path::Path, cfg: &AudioConfig) -> Result<Dec
         hint.with_extension(ext);
     }
 
-    let probed = symphonia::default::get_probe()
-        .format(
+    let prev_hook = std::panic::take_hook();
+    std::panic::set_hook(Box::new(|_| {}));
+    let probed_res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        symphonia::default::get_probe().format(
             &hint,
             mss,
             &FormatOptions::default(),
             &MetadataOptions::default(),
         )
+    }));
+    std::panic::set_hook(prev_hook);
+
+    let probed = probed_res
+        .map_err(|_| anyhow::anyhow!("corrupted audio container caused decoder panic"))?
         .context("unsupported audio format")?;
 
     let mut format = probed.format;
@@ -106,6 +114,10 @@ pub fn decode_file_with(path: &std::path::Path, cfg: &AudioConfig) -> Result<Dec
         .codec_params
         .sample_rate
         .context("audio track has no sample rate")?;
+    anyhow::ensure!(
+        declared_rate > 0,
+        "audio track sample rate must be positive, got {declared_rate}"
+    );
 
     let mut decoder = symphonia::default::get_codecs()
         .make(&track.codec_params, &DecoderOptions::default())
@@ -159,10 +171,10 @@ pub fn decode_file_with(path: &std::path::Path, cfg: &AudioConfig) -> Result<Dec
         // `channels.is_none()` is exactly "this is the first decoded frame", which
         // is the first moment the true layout is known --- see above for why the
         // container's channel count cannot be trusted for it.
-        if channels.is_none() {
-            if let Some(frames) = declared_frames {
-                raw_samples.reserve_exact(frames as usize * spec.channels.count());
-            }
+        if channels.is_none()
+            && let Some(frames) = declared_frames
+        {
+            raw_samples.reserve_exact(frames as usize * spec.channels.count());
         }
         channels.get_or_insert(spec.channels.count());
         decoded_rate.get_or_insert(spec.rate);
@@ -244,6 +256,22 @@ fn resample(
     to_rate: u32,
     cfg: &AudioConfig,
 ) -> Result<Vec<f32>> {
+    const MAX_SUPPORTED_SAMPLE_RATE: u32 = 384_000;
+    anyhow::ensure!(
+        from_rate > 0 && from_rate <= MAX_SUPPORTED_SAMPLE_RATE,
+        "input sample rate out of bounds (1..={MAX_SUPPORTED_SAMPLE_RATE}), got {from_rate}"
+    );
+    anyhow::ensure!(
+        to_rate > 0 && to_rate <= MAX_SUPPORTED_SAMPLE_RATE,
+        "target sample rate out of bounds (1..={MAX_SUPPORTED_SAMPLE_RATE}), got {to_rate}"
+    );
+
+    let ratio = to_rate as f64 / from_rate as f64;
+    anyhow::ensure!(
+        (1.0 / 64.0..=64.0).contains(&ratio),
+        "resampling ratio out of bounds (0.015625..=64.0), got {ratio}"
+    );
+
     // Chunk size must match the `chunk_size` given to `new_sinc` below.
     // 4096 frames by default --- large enough to amortise per-call overhead,
     // small enough to sit comfortably in L1/L2 cache.
@@ -270,7 +298,7 @@ fn resample(
     // real audio; in one-shot mode with a single huge chunk, it's zeros and
     // the right-half lookahead has nowhere to read from.
     let mut resampler = Async::<f32>::new_sinc(
-        to_rate as f64 / from_rate as f64,
+        ratio,
         2.0,
         &params,
         chunk,
@@ -278,19 +306,36 @@ fn resample(
         FixedAsync::Input,
     )?;
 
-    let expected = (samples.len() as f64 * to_rate as f64 / from_rate as f64).round() as usize;
-    let mut output = Vec::with_capacity(expected + chunk);
+    let expected = (samples.len() as u64 * to_rate as u64 / from_rate as u64) as usize;
+    let capacity = expected.min(100 * 1024 * 1024); // max 100M floats initial capacity
+    let mut output = Vec::with_capacity(capacity);
 
     // Feed the audio in chunk-sized slices, zero-padding the final partial
-    // chunk.  Rubato handles each boundary cleanly via its history buf.
-    for block in samples.chunks(chunk) {
-        let mut buf = block.to_vec();
-        buf.resize(chunk, 0.0); // no-op for full chunks
+    // chunk. Rubato handles each boundary cleanly via its history buf.
+    //
+    // Reusable buffers eliminate per-chunk heap allocations during resampling.
+    let mut tail_buf = vec![0.0f32; chunk];
+    let max_out = resampler.output_frames_max();
+    let mut out_chunk = vec![0.0f32; max_out];
 
-        let input = vec![buf];
-        let adapter = SequentialSliceOfVecs::new(&input, 1, chunk)
-            .map_err(|e| anyhow::anyhow!("adapter error: {e}"))?;
-        output.extend_from_slice(&resampler.process(&adapter, 0, None)?.take_data());
+    for block in samples.chunks(chunk) {
+        let in_adapter = if block.len() == chunk {
+            InterleavedSlice::new(block, 1, chunk)
+                .map_err(|e| anyhow::anyhow!("input adapter error: {e}"))?
+        } else {
+            tail_buf[..block.len()].copy_from_slice(block);
+            tail_buf[block.len()..].fill(0.0);
+            InterleavedSlice::new(&tail_buf, 1, chunk)
+                .map_err(|e| anyhow::anyhow!("input adapter error: {e}"))?
+        };
+
+        let needed_out = resampler.output_frames_next();
+        let mut out_adapter = InterleavedSlice::new_mut(&mut out_chunk, 1, needed_out)
+            .map_err(|e| anyhow::anyhow!("output adapter error: {e}"))?;
+
+        let (_in_frames, out_frames) =
+            resampler.process_into_buffer(&in_adapter, &mut out_adapter, None)?;
+        output.extend_from_slice(&out_chunk[..out_frames]);
     }
 
     // Trim to the exact expected length; the last few chunks may produce a
@@ -345,5 +390,80 @@ mod tests {
     fn mix_to_mono_drops_a_trailing_partial_frame() {
         let interleaved = vec![1.0, 3.0, 5.0];
         assert_eq!(mix_to_mono(interleaved, 2), vec![2.0]);
+    }
+
+    #[test]
+    fn resample_empty_input_returns_empty() {
+        let cfg = AudioConfig::default();
+        let res = resample(&[], 44_100, WHISPER_SAMPLE_RATE, &cfg).unwrap();
+        assert!(res.is_empty());
+    }
+
+    #[test]
+    fn resample_preserves_sine_frequency_and_length() {
+        let cfg = AudioConfig::default();
+        let from_rate = 44_100;
+        let to_rate = WHISPER_SAMPLE_RATE;
+        let duration_s = 0.5;
+        let freq = 440.0;
+        let n_samples = (from_rate as f64 * duration_s) as usize;
+        let samples: Vec<f32> = (0..n_samples)
+            .map(|i| (2.0 * std::f32::consts::PI * freq * (i as f32) / from_rate as f32).sin())
+            .collect();
+
+        let resampled = resample(&samples, from_rate, to_rate, &cfg).unwrap();
+        let expected_len = (samples.len() as f64 * to_rate as f64 / from_rate as f64).round() as usize;
+        assert_eq!(resampled.len(), expected_len);
+
+        let max_val = resampled.iter().fold(0.0f32, |acc, &x| acc.max(x.abs()));
+        assert!(max_val > 0.8 && max_val <= 1.05, "amplitude preserved: {max_val}");
+    }
+
+    #[test]
+    fn resample_handles_arbitrary_and_partial_chunk_lengths() {
+        let cfg = AudioConfig {
+            resample_chunk: 1024,
+            ..AudioConfig::default()
+        };
+
+        // Smaller than 1 chunk (e.g. 500 samples)
+        let short_audio = vec![0.1f32; 500];
+        let out_short = resample(&short_audio, 48_000, WHISPER_SAMPLE_RATE, &cfg).unwrap();
+        let expected_short = (500.0f64 * 16_000.0 / 48_000.0).round() as usize;
+        assert!((out_short.len() as i64 - expected_short as i64).abs() <= 2);
+
+        // Exactly 1 chunk (1024 samples)
+        let exact_audio = vec![0.1f32; 1024];
+        let out_exact = resample(&exact_audio, 48_000, WHISPER_SAMPLE_RATE, &cfg).unwrap();
+        let expected_exact = (1024.0f64 * 16_000.0 / 48_000.0).round() as usize;
+        assert!((out_exact.len() as i64 - expected_exact as i64).abs() <= 2);
+
+        // 1 chunk + 1 sample (1025 samples)
+        let split_audio = vec![0.1f32; 1025];
+        let out_split = resample(&split_audio, 48_000, WHISPER_SAMPLE_RATE, &cfg).unwrap();
+        let expected_split = (1025.0f64 * 16_000.0 / 48_000.0).round() as usize;
+        assert!((out_split.len() as i64 - expected_split as i64).abs() <= 2);
+    }
+
+    #[test]
+    fn test_resample_zero_rates_return_error() {
+        let cfg = AudioConfig::default();
+        let samples = vec![0.1f32; 100];
+        assert!(resample(&samples, 0, WHISPER_SAMPLE_RATE, &cfg).is_err());
+        assert!(resample(&samples, 48_000, 0, &cfg).is_err());
+        assert!(resample(&samples, 0, 0, &cfg).is_err());
+    }
+
+    #[test]
+    fn test_resample_out_of_bounds_rates_return_error() {
+        let cfg = AudioConfig::default();
+        let samples = vec![0.1f32; 100];
+        assert!(resample(&samples, 384_001, WHISPER_SAMPLE_RATE, &cfg).is_err());
+        assert!(resample(&samples, 48_000, 384_001, &cfg).is_err());
+        assert!(resample(&samples, u32::MAX, WHISPER_SAMPLE_RATE, &cfg).is_err());
+        assert!(resample(&samples, WHISPER_SAMPLE_RATE, u32::MAX, &cfg).is_err());
+        // Extreme ratio check (1 Hz has ratio 16000 > 64)
+        assert!(resample(&samples, 1, WHISPER_SAMPLE_RATE, &cfg).is_err());
+        assert!(resample(&samples, WHISPER_SAMPLE_RATE, 1, &cfg).is_err());
     }
 }

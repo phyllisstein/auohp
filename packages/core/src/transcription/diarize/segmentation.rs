@@ -96,7 +96,7 @@ impl Segmenter {
         Ok(Self { session })
     }
 
-    /// Run segmentation over 16-bit PCM samples, returning every detected
+    /// Run segmentation over f32 audio samples in [-1.0, 1.0], returning every detected
     /// speech region in chronological order.
     ///
     /// Unlike `pyannote_rs::get_segments`, this runs to completion eagerly
@@ -104,7 +104,7 @@ impl Segmenter {
     /// this codebase collects the whole result anyway, and the eager API
     /// can't be silently truncated by a consumer that treats a momentary
     /// empty batch as end-of-stream.
-    pub fn segment(&mut self, samples_i16: &[i16], sample_rate: u32) -> Result<Vec<SpeechSegment>> {
+    pub fn segment(&mut self, samples: &[f32], sample_rate: u32) -> Result<Vec<SpeechSegment>> {
         let window_size = sample_rate as usize * WINDOW_SECS;
         if window_size == 0 {
             anyhow::bail!("sample_rate must be > 0");
@@ -112,10 +112,10 @@ impl Segmenter {
 
         // Zero-pad so the final window is full-length, matching the model's
         // fixed input shape.
-        let pad_len = (window_size - (samples_i16.len() % window_size)) % window_size;
-        let mut padded = Vec::with_capacity(samples_i16.len() + pad_len);
-        padded.extend_from_slice(samples_i16);
-        padded.resize(padded.len() + pad_len, 0);
+        let pad_len = (window_size - (samples.len() % window_size)) % window_size;
+        let mut padded = Vec::with_capacity(samples.len() + pad_len);
+        padded.extend_from_slice(samples);
+        padded.resize(padded.len() + pad_len, 0.0f32);
 
         let mut segments = Vec::new();
         let mut is_speeching = false;
@@ -129,10 +129,9 @@ impl Segmenter {
             let window_end = (window_start + window_size).min(padded.len());
             let window = &padded[window_start..window_end];
 
-            let window_f32: Vec<f32> = window.iter().map(|&s| s as f32).collect();
             // Shape [1, 1, samples]: batch=1, channels=1, raw waveform.
             let input =
-                ort::value::Tensor::from_array(([1i64, 1i64, window_f32.len() as i64], window_f32))
+                ort::value::Tensor::from_array(([1i64, 1i64, window.len() as i64], window.to_vec()))
                     .context("failed to build segmentation input tensor")?;
             let outputs = self
                 .session
@@ -188,7 +187,7 @@ impl Segmenter {
         if is_speeching {
             segments.push(SpeechSegment {
                 start: speech_start_sample as f64 / sample_rate as f64,
-                end: (samples_i16.len().max(speech_start_sample)) as f64 / sample_rate as f64,
+                end: (samples.len().max(speech_start_sample)) as f64 / sample_rate as f64,
             });
         }
 

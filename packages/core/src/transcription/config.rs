@@ -28,6 +28,7 @@ pub enum Interpolation {
 /// 16 kHz mono skips this path entirely, which is exactly why the WAV cannot be
 /// used to validate it.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
 pub struct AudioConfig {
     pub resample_chunk: usize,
     pub sinc_len: usize,
@@ -55,6 +56,7 @@ impl Default for AudioConfig {
 /// boundaries quantising to VAD window edges was one of the observed defects,
 /// and it cannot be investigated through a knob that does not exist.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
 pub struct VadConfig {
     pub enabled: bool,
     pub threshold: Option<f32>,
@@ -81,6 +83,7 @@ impl Default for VadConfig {
 
 /// Whisper decoding parameters.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
 pub struct DecodeConfig {
     pub language: Option<String>,
     pub beam_size: i32,
@@ -146,6 +149,7 @@ impl Default for DecodeConfig {
 
 /// Speaker diarization parameters.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
 pub struct DiarizeConfig {
     pub enabled: bool,
     /// Caps the number of distinct speaker clusters. AUOHP interviews are
@@ -174,8 +178,72 @@ pub struct TranscribeConfig {
     pub diarize: DiarizeConfig,
 }
 
+/// Alias for [`TranscribeConfig`].
+pub type TranscriptionConfig = TranscribeConfig;
+
+impl std::str::FromStr for TranscribeConfig {
+    type Err = serde_json::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        serde_json::from_str(s)
+    }
+}
+
+impl std::fmt::Display for TranscribeConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match serde_json::to_string(self) {
+            Ok(s) => write!(f, "{s}"),
+            Err(_) => write!(f, "TranscribeConfig"),
+        }
+    }
+}
+
 impl TranscribeConfig {
     pub fn from_json(s: &str) -> Result<Self, serde_json::Error> {
-        serde_json::from_str(s)
+        s.parse()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::str::FromStr;
+
+    #[test]
+    fn default_config_roundtrips_json() {
+        let default_cfg = TranscribeConfig::default();
+        let json = serde_json::to_string(&default_cfg).unwrap();
+        let parsed: TranscribeConfig = json.parse().unwrap();
+        assert_eq!(default_cfg, parsed);
+    }
+
+    #[test]
+    fn transcription_config_from_str() {
+        let json = r#"{"diarize": {"max_speakers": 4}}"#;
+        let cfg = TranscriptionConfig::from_str(json).unwrap();
+        assert_eq!(cfg.diarize.max_speakers, 4);
+        assert!(cfg.diarize.enabled);
+        assert_eq!(cfg.audio.resample_chunk, 4096);
+    }
+
+    #[test]
+    fn from_json_convenience_method() {
+        let json = r#"{"audio": {"resample_chunk": 2048}}"#;
+        let cfg = TranscribeConfig::from_json(json).unwrap();
+        assert_eq!(cfg.audio.resample_chunk, 2048);
+    }
+
+    #[test]
+    fn invalid_json_fails_parsing() {
+        let bad_json = r#"{"diarize": "not-an-object"}"#;
+        assert!(bad_json.parse::<TranscribeConfig>().is_err());
+    }
+
+    #[test]
+    fn display_formats_valid_json() {
+        let cfg = TranscribeConfig::default();
+        let displayed = format!("{cfg}");
+        let reparsed: TranscribeConfig = displayed.parse().unwrap();
+        assert_eq!(cfg, reparsed);
     }
 }
