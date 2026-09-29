@@ -10,12 +10,23 @@ mod embeddings;
 
 use anyhow::Result;
 use clap::Parser;
+use cruet::Inflector;
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
+use unicode_segmentation::UnicodeSegmentation;
 
 #[derive(Parser, Debug)]
 struct Cli {
     /// Strings to embed
     queries: Vec<String>,
+}
+
+fn truncated_camel_case(other_cased: &str) -> String {
+    other_cased
+        .unicode_words()
+        .take(3)
+        .collect::<Vec<&str>>()
+        .join(" ")
+        .to_camel_case()
 }
 
 fn main() -> Result<()> {
@@ -26,21 +37,15 @@ fn main() -> Result<()> {
 
     let cli = Cli::parse();
 
-    let mut embedder = if let Ok(embedder) = embeddings::Embedder::new() {
-        embedder
-    } else {
-        panic!("Could not create embedder");
-    };
+    let mut embedder = embeddings::Embedder::new()?;
 
     for query in cli.queries {
-        if let Ok(vector) = embedder.embed(std::slice::from_ref(&query)) {
-            println!(
-                "\n\n:param {query}Embedding => {:?}",
-                vector.first().unwrap()
-            );
-        } else {
-            tracing::error!(query, "embedding failed")
-        }
+        let vector = embedder.embed(std::slice::from_ref(&query))?;
+        let camel = truncated_camel_case(&query);
+        println!(
+            "\n\n:param {camel}Embedding => {:?}",
+            vector.first().unwrap()
+        );
     }
 
     Ok(())

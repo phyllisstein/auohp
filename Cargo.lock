@@ -560,6 +560,7 @@ dependencies = [
  "audioadapter-buffers",
  "chrono",
  "clap",
+ "cruet",
  "fastembed",
  "knf-rs",
  "kodama",
@@ -574,6 +575,7 @@ dependencies = [
  "tokio",
  "tracing",
  "tracing-subscriber",
+ "unicode-segmentation",
  "whisper-rs",
 ]
 
@@ -1464,6 +1466,15 @@ name = "crossbeam-utils"
 version = "0.8.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "61803da095bee82a81bb1a452ecc25d3b2f1416d1897eb86430c6159ef717c17"
+
+[[package]]
+name = "cruet"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "28049cb85be0d073a0e90983c15b50d730f59292985cd17bfab0ce090f158c31"
+dependencies = [
+ "regex",
+]
 
 [[package]]
 name = "crunchy"
