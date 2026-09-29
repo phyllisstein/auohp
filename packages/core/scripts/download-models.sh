@@ -63,19 +63,23 @@ download \
 # Sentence embedding model used by the search indexer.  fastembed loads it
 # via UserDefinedEmbeddingModel (five flat files), so we download them here
 # rather than relying on fastembed's HuggingFace Hub auto-download.
+
+# FIXME: Export ONNX in advance to avoid runtime conversion.
+# FIXME: Quantize the ONNX model to reduce memory footprint and improve inference speed.
 QWEN3_DIR="$MODELS_DIR/Qwen3-Embedding-0.6B"
 mkdir -p "$QWEN3_DIR"
 echo
 echo "==> Qwen3-Embedding-0.6B (ONNX)"
 
-uv tool run --from 'optimum-onnx[onnxruntime]' --with 'sentence-transformers<6' --with accelerate \
-    optimum-cli export onnx \
-        --model Qwen/Qwen3-Embedding-0.6B \
-        --task feature-extraction \
-        --library sentence_transformers \
-        "$QWEN3_DIR" &> "$QWEN3_DIR/export.log"
+if [ ! -f "$QWEN3_DIR/config.json" ]; then
+    uv tool run --from 'optimum-onnx[onnxruntime]' --with 'sentence-transformers<6' --with accelerate \
+        optimum-cli export onnx \
+            --model Qwen/Qwen3-Embedding-0.6B \
+            --task feature-extraction \
+            --library sentence_transformers \
+            "$QWEN3_DIR"
+fi
 
-# uv run ./scripts/quantize.py
 
 # ── pyannote segmentation 3.0 (ONNX, ≈6 MB) ─────────────────────────────────
 # Speech/silence frame classifier used to detect speaker turn boundaries.
