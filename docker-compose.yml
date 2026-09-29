@@ -22,7 +22,6 @@ services:
         api${HOST_TAG-}.auohp.localhost:
           "/":
             port: "6060"
-    depends_on: [neo4j]
     extra_hosts:
       - "api${HOST_TAG-}.auohp.localhost:host-gateway"
       - "editor${HOST_TAG-}.auohp.localhost:host-gateway"
