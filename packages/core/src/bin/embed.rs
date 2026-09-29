@@ -5,10 +5,8 @@
 //!
 //! Writes the embedded vector to stdout; logs go to stderr.
 
-#[path = "../embeddings/mod.rs"]
-mod embeddings;
-
 use anyhow::Result;
+use auohp_core::embeddings::Embedder;
 use clap::Parser;
 use cruet::Inflector;
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};

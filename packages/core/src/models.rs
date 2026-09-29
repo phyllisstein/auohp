@@ -5,7 +5,7 @@ use std::path::PathBuf;
 /// ([`whisper::MODEL_FILE`], [`segmentation::MODEL_FILE`], and so on); this
 /// only resolves the directory they all sit in.
 fn default_models_dir() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../models")
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("models")
 }
 
 /// Resolve the models directory from `$MODELS_DIR`, falling back to the

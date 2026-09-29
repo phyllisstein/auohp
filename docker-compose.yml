@@ -9,7 +9,7 @@ services:
       - source: environment
         mode: 0440
     environment:
-      RUST_LOG: auohp_api=debug,transcribe=debug
+      RUST_LOG: auohp_api=debug,auohp_core=debug,auohp_desktop=debug
       RUSTFLAGS: "-Ctarget-feature=+fp16 -Awarnings"
       HTTPS_METHOD: nohttps
       VIRTUAL_HOST_MULTIPORTS: |-
@@ -83,6 +83,7 @@ volumes:
   graph_data:
   node_modules:
   rust_target:
+  auohp_models:
 
 secrets:
   environment:

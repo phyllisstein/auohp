@@ -14,12 +14,10 @@
 //!                           blocks the async executor.
 //!   - `EmbedResult`     --- type alias for the return type of `embed()`.
 
-use std::path::PathBuf;
-
+use crate::models;
 use anyhow::{Context, Result};
 use fastembed::{InitOptionsUserDefined, TextEmbedding, TokenizerFiles, UserDefinedEmbeddingModel};
 
-const DEFAULT_MODELS_DIR: &str = "/opt/auohp/models";
 const QWEN_MODEL_DIR: &str = "Qwen3-Embedding-0.6B";
 
 /// Drives the ONNX embedding session directly.
@@ -37,13 +35,13 @@ pub struct Embedder {
 impl Embedder {
     /// Load Qwen3-Embedding-0.6B (1024-dim) from pre-downloaded files.
     pub fn new() -> Result<Self> {
-        let model_dir = PathBuf::from(
-            std::env::var("MODELS_DIR").unwrap_or_else(|_| DEFAULT_MODELS_DIR.to_string()),
-        )
-        .join(QWEN_MODEL_DIR);
+        let model_dir = models::models_dir();
+        tracing::info!("loading embedding model... {:?}", &model_dir);
+        let qwen_dir = model_dir.join(QWEN_MODEL_DIR);
+        tracing::info!("model path files: {:?}", &qwen_dir);
 
         let read = |name: &str| -> Result<Vec<u8>> {
-            std::fs::read(model_dir.join(name))
+            std::fs::read(qwen_dir.join(name))
                 .with_context(|| format!("failed to read {}/{}", QWEN_MODEL_DIR, name))
         };
 

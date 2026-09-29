@@ -48,7 +48,10 @@ async fn main() -> Result<()> {
     // Tracing goes to stderr so structured logs don't mix with any stdout
     // output (e.g. health-check scripts that parse the server's stdout).
     tracing_subscriber::registry()
-        .with(EnvFilter::try_from_default_env().unwrap_or_else(|_| "auohp_api=debug".into()))
+        .with(
+            EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| "auohp_api=debug,auohp_core=debug".into()),
+        )
         .with(tracing_subscriber::fmt::layer().with_writer(std::io::stderr))
         .init();
 
