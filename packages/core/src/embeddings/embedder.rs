@@ -1,12 +1,11 @@
 //! On-device sentence embeddings via fastembed (ONNX).
 //!
-//! Wraps nomic-embed-text-v1.5 (768-dim) using fastembed's
-//! `UserDefinedEmbeddingModel` API, which loads the ONNX weights and
-//! tokenizer files directly from disk rather than relying on fastembed's
-//! HuggingFace Hub auto-download.  The five required files are
-//! pre-downloaded by `scripts/download-models.sh` into
-//! `$MODELS_DIR/nomic-embed-text-v1.5/` (default `/opt/auohp/models`),
-//! so no network access occurs at inference time.
+//! Wraps Qwen3-Embedding-0.6B using fastembed's `UserDefinedEmbeddingModel`
+//! API, which loads the ONNX weights and tokenizer files directly from disk
+//! rather than relying on fastembed's HuggingFace Hub auto-download.  The
+//! required files are pre-downloaded by `scripts/download-models.sh` into
+//! `$MODELS_DIR` (default `/opt/auohp/models`), so no network access occurs at
+//! inference time.
 //!
 //! Public API surface:
 //!   - `Embedder`        --- owns and drives the ONNX session directly.
@@ -21,8 +20,7 @@ use anyhow::{Context, Result};
 use fastembed::{InitOptionsUserDefined, TextEmbedding, TokenizerFiles, UserDefinedEmbeddingModel};
 
 const DEFAULT_MODELS_DIR: &str = "/opt/auohp/models";
-/// Subdirectory within MODELS_DIR holding the five nomic model files.
-const NOMIC_MODEL_DIR: &str = "nomic-embed-text-v1.5";
+const QWEN_MODEL_DIR: &str = "Qwen3-Embedding-0.6B";
 
 /// Drives the ONNX embedding session directly.
 ///
@@ -37,25 +35,16 @@ pub struct Embedder {
 }
 
 impl Embedder {
-    /// Load nomic-embed-text-v1.5 (768-dim) from pre-downloaded files.
-    ///
-    /// Reads five files from `$MODELS_DIR/nomic-embed-text-v1.5/`:
-    ///   - `model.onnx`               --- ONNX weights (≈275 MB)
-    ///   - `tokenizer.json`           ---
-    ///   - `tokenizer_config.json`    --- tokenizer config files
-    ///   - `config.json`              ---
-    ///   - `special_tokens_map.json`  ---
-    ///
-    /// All five are fetched by `scripts/download-models.sh`.
+    /// Load Qwen3-Embedding-0.6B (1024-dim) from pre-downloaded files.
     pub fn new() -> Result<Self> {
         let model_dir = PathBuf::from(
             std::env::var("MODELS_DIR").unwrap_or_else(|_| DEFAULT_MODELS_DIR.to_string()),
         )
-        .join(NOMIC_MODEL_DIR);
+        .join(QWEN_MODEL_DIR);
 
         let read = |name: &str| -> Result<Vec<u8>> {
             std::fs::read(model_dir.join(name))
-                .with_context(|| format!("failed to read {}/{}", NOMIC_MODEL_DIR, name))
+                .with_context(|| format!("failed to read {}/{}", QWEN_MODEL_DIR, name))
         };
 
         let onnx_file = read("model.onnx")?;
@@ -66,15 +55,18 @@ impl Embedder {
             tokenizer_config_file: read("tokenizer_config.json")?,
         };
 
+        let model_definition = UserDefinedEmbeddingModel::new(onnx_file, tokenizer_files);
+        let model_definition = model_definition
+            .with_external_initializer("model.onnx_data".into(), read("model.onnx_data")?);
         let model = TextEmbedding::try_new_from_user_defined(
-            UserDefinedEmbeddingModel::new(onnx_file, tokenizer_files),
+            model_definition,
             InitOptionsUserDefined::default(),
         )
         .context("failed to initialise embedding model")?;
 
         Ok(Self {
             model,
-            dimensions: 768,
+            dimensions: 1024,
         })
     }
 

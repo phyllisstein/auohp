@@ -461,8 +461,6 @@ pub async fn seed_interview(
 
     // ── Enqueue background embedding ──────────────────────────────────────
     //
-    // nomic-embed-text-v1.5 is heavy enough that running it synchronously
-    // would exceed any reasonable HTTP timeout for full-length interviews.
     // We commit first so the interview is immediately visible, then hand
     // embedding off to a detached Tokio task.
     //
