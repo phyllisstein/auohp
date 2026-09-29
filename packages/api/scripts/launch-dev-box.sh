@@ -5,12 +5,11 @@ set -euo pipefail
 # Quick-and-dirty AWS CLI bootstrap for an AUOHP GPU dev box.
 #
 # What this script does:
-# - Resolves the current Ubuntu 22.04 LTS AMI via AWS SSM.
-# - Launches a g4dn.xlarge instance.
+# - Resolves the current Ubuntu 24.04 Deep Learning Base AMI (CUDA/driver
+#   pre-baked) via AWS SSM.
+# - Launches a GPU instance.
 # - Waits for the instance to come up.
-# - SSHes in to install build tools, CUDA 12.9, and the NVIDIA server driver.
-# - Reboots the machine once, because the driver/kernel integration is not
-#   reliably usable until after a reboot.
+# - SSHes in to install build tools and reboot once for a clean slate.
 # - SSHes in again to verify the GPU, install Rust, clone/pull the repo, and
 #   print the cargo command that worked for manual pipeline runs.
 #
@@ -28,11 +27,13 @@ set -euo pipefail
 : "${AWS_KEY_NAME:=}"
 : "${AWS_SECURITY_GROUP_ID:=}"
 : "${AWS_SUBNET_ID:=}"
+: "${AWS_ACCESS_KEY_ID:=}"
+: "${AWS_SECRET_ACCESS_KEY:=}"
 
 # Optional inputs.
-: "${AWS_INSTANCE_NAME:=auohp-g4-dev}"
-: "${AWS_INSTANCE_TYPE:=g4dn.xlarge}"
-: "${AWS_DISK_SIZE_GB:=200}"
+: "${AWS_INSTANCE_NAME:=auohp-g7-dev}"
+: "${AWS_INSTANCE_TYPE:=g7.2xlarge}"
+: "${AWS_DISK_SIZE_GB:=50}"
 : "${AWS_SSH_USER:=ubuntu}"
 : "${AWS_SSH_KEY_PATH:=}"
 : "${AWS_INSTANCE_PROFILE_NAME:=}"
@@ -47,10 +48,12 @@ Set at least:
     AWS_KEY_NAME=...
     AWS_SECURITY_GROUP_ID=...
     AWS_SUBNET_ID=...
+    AWS_ACCESS_KEY_ID=...
+    AWS_SECRET_ACCESS_KEY=...
+    AWS_REGION=...
 
 Optional but usually useful:
     AWS_PROFILE=default
-    AWS_REGION=us-east-2
     AWS_SSH_KEY_PATH=~/.ssh/your-key.pem
 EOF
     exit 1
@@ -68,9 +71,9 @@ fi
 
 AWS_BASE=(aws --profile "${AWS_PROFILE}" --region "${AWS_REGION}")
 
-echo "Resolving the current Ubuntu 22.04 AMI from AWS SSM..."
+echo "Resolving the current Ubuntu 24.04 Deep Learning Base AMI from AWS SSM..."
 AMI_ID="$(${AWS_BASE[@]} ssm get-parameter \
-    --name /aws/service/canonical/ubuntu/server/22.04/stable/current/amd64/hvm/ebs-gp3/ami-id \
+    --name /aws/service/deeplearning/ami/x86_64/base-with-single-cuda-ubuntu-24.04/latest/ami-id \
     --query 'Parameter.Value' \
     --output text)"
 
@@ -78,15 +81,16 @@ echo "Using AMI: ${AMI_ID}"
 
 RUN_ARGS=(
     ec2 run-instances
-    --image-id "${AMI_ID}"
-    --instance-type "${AWS_INSTANCE_TYPE}"
-    --key-name "${AWS_KEY_NAME}"
-    --security-group-ids "${AWS_SECURITY_GROUP_ID}"
-    --subnet-id "${AWS_SUBNET_ID}"
-    --block-device-mappings "[{\"DeviceName\":\"/dev/sda1\",\"Ebs\":{\"VolumeSize\":${AWS_DISK_SIZE_GB},\"VolumeType\":\"gp3\"}}]"
-    --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=${AWS_INSTANCE_NAME}}]"
-    --query 'Instances[0].InstanceId'
-    --output text
+        --block-device-mappings "[{\"DeviceName\":\"/dev/sda1\",\"Ebs\":{\"VolumeSize\":${AWS_DISK_SIZE_GB},\"VolumeType\":\"gp3\"}}]"
+        --ebs-optimized
+        --image-id "${AMI_ID}"
+        --instance-type "${AWS_INSTANCE_TYPE}"
+        --key-name "${AWS_KEY_NAME}"
+        --output text
+        --query 'Instances[0].InstanceId'
+        --security-group-ids "${AWS_SECURITY_GROUP_ID}"
+        --subnet-id "${AWS_SUBNET_ID}"
+        --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=${AWS_INSTANCE_NAME}}]"
 )
 
 if [[ -n "${AWS_INSTANCE_PROFILE_NAME}" ]]; then
@@ -133,12 +137,14 @@ echo "Giving cloud-init and SSH a few extra seconds to settle..."
 sleep 15
 wait_for_ssh
 
-echo "Stage 1: install OS packages, CUDA 13.0 toolkit, and NVIDIA server driver."
+echo "Stage 1: install OS packages"
 ssh_box bash -s <<EOF
 set -euo pipefail
 
+export DEBIAN_FRONTEND=noninteractive
+
 sudo apt-get update
-sudo apt-get install -y \
+sudo apt-get install -y -o Dpkg::Options::="--force-confold" -o Dpkg::Options::="--force-confdef" --allow-downgrades --allow-remove-essential --allow-change-held-packages \
     build-essential \
     clang \
     cmake \
@@ -159,22 +165,15 @@ sudo apt-get install -y \
     pkg-config \
     wget
 
-# Install the NVIDIA CUDA apt repo.
-wget -q https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/cuda-keyring_1.1-1_all.deb
-sudo dpkg -i cuda-keyring_1.1-1_all.deb
-rm -f cuda-keyring_1.1-1_all.deb
-
-sudo apt-get update
-sudo apt-get install -y cuda-toolkit-12 cuda-drivers
-
-# Make the chosen toolkit easy to find in fresh login shells.
-grep -q cuda ~/.bashrc || cat >> ~/.bashrc <<EOF
-export PATH=/usr/local/cuda-12/bin:\$PATH
-export LD_LIBRARY_PATH=/usr/local/cuda-12/lib64:\$LD_LIBRARY_PATH
-EOF
+sudo mkdir -p /root/.aws
+sudo tee -a /root/.aws/credentials >/dev/null <<AWSCRED
+    [default]
+    aws_access_key_id = $AWS_ACCESS_KEY_ID
+    aws_secret_access_key = $AWS_SECRET_ACCESS_KEY
+AWSCRED
 
 echo
-echo "First-stage bootstrap complete. Rebooting so the NVIDIA kernel driver loads cleanly."
+echo "First-stage bootstrap complete."
 sudo reboot
 EOF
 
@@ -184,19 +183,38 @@ wait_for_ssh
 
 echo "Stage 2: verify GPU/toolchain, install Rust, and prepare the repo."
 ssh_box bash -s <<EOF
-set -euo pipefail
-
-export PATH=/usr/local/cuda-12/bin:$PATH
-export LD_LIBRARY_PATH=/usr/local/cuda-12/lib64:$LD_LIBRARY_PATH
-
-echo "== nvcc =="
+echo "# ----------------------------------- nvcc ----------------------------------- #"
 nvcc --version
 
-echo "== nvidia-smi =="
+echo "# -------------------------------- nvidia-smi -------------------------------- #"
 nvidia-smi
 
 if ! command -v cargo >/dev/null 2>&1; then
-    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- --profile complete -y
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+fi
+
+if ! command -v ast-grep >/dev/null 2>&1; then
+    cargo install ast-grep --locked
+fi
+
+if ! command -v uv >/dev/null 2>&1; then
+    curl -Ls https://astral.sh/uv/install.sh | sh
+fi
+
+if ! command -v node >/dev/null 2>&1; then
+    export DEBIAN_FRONTEND=noninteractive
+    sudo mkdir -p /etc/apt/keyrings
+    curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
+        | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
+    echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_26.x nodistro main" \
+        | sudo tee /etc/apt/sources.list.d/nodesource.list
+    curl -sL https://dl.yarnpkg.com/debian/pubkey.gpg | gpg --dearmor | sudo tee /usr/share/keyrings/yarnkey.gpg >/dev/null
+    echo "deb [signed-by=/usr/share/keyrings/yarnkey.gpg] https://dl.yarnpkg.com/debian stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
+    sudo apt-get update && sudo apt-get install -y nodejs yarn
+fi
+
+if ! command -v claude >/dev/null 2>&1; then
+    curl -fsSL https://claude.ai/install.sh | bash
 fi
 
 source "\$HOME/.cargo/env"
