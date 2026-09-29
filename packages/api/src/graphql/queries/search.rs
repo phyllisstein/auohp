@@ -47,6 +47,10 @@ impl Search {
         fragment: String,
         interview_uid: Option<String>,
     ) -> async_graphql::Result<Vec<SearchHit>> {
+        if fragment.is_empty() {
+            return Ok(vec![]);
+        }
+
         let db = ctx.data::<Db>()?;
         let mut q = String::from("
             CALL db.index.fulltext.queryNodes('statementSearchText', $queryText) YIELD node AS statement, score
@@ -94,6 +98,10 @@ impl Search {
         #[graphql(name = "query")] query_text: String,
         limit: Option<i64>,
     ) -> async_graphql::Result<Vec<SearchHit>> {
+        if query_text.is_empty() {
+            return Ok(vec![]);
+        }
+
         let db = ctx.data::<Db>()?;
         let embedder = ctx.data::<Arc<EmbedderHandle>>()?;
 
