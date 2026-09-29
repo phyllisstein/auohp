@@ -1,31 +1,15 @@
 //! Transcription pipeline: orchestrates audio decoding --> VAD --> Whisper ASR
 //! --> speaker diarization into word-timed, speaker-labeled segments.
 
-use anyhow::{Context, Result};
-use std::path::{Path, PathBuf};
-
 use super::audio;
 use super::config::TranscribeConfig;
 use super::diarize;
 use super::diarize::segmentation;
 use super::types::*;
 use super::whisper;
-
-/// Where `scripts/download-models.sh` installs models when `$MODELS_DIR` is
-/// unset. Each module owns the *filename* of the model it drives
-/// ([`whisper::MODEL_FILE`], [`segmentation::MODEL_FILE`], and so on); this
-/// only resolves the directory they all sit in.
-const DEFAULT_MODELS_DIR: &str = "/opt/auohp/models";
-
-/// Resolve the models directory from `$MODELS_DIR`, falling back to
-/// [`DEFAULT_MODELS_DIR`].
-///
-/// Public because the crate's validation examples load the same models from
-/// the same place; duplicating the env-var lookup there is how a harness ends
-/// up silently scoring a different model than the pipeline runs.
-pub fn models_dir() -> PathBuf {
-    PathBuf::from(std::env::var("MODELS_DIR").unwrap_or_else(|_| DEFAULT_MODELS_DIR.to_string()))
-}
+use crate::models;
+use anyhow::{Context, Result};
+use std::path::Path;
 
 /// Run the transcription pipeline on an audio/video file.
 ///
@@ -82,7 +66,7 @@ pub fn run_with(input_path: &Path, cfg: &TranscribeConfig) -> Result<Transcripti
     // goal; do not load the weights early.
     //
     // All models live under $MODELS_DIR, pre-downloaded by download-models.sh.
-    let models_dir = models_dir();
+    let models_dir = models::models_dir();
 
     let (whisper_segments, diarized) = std::thread::scope(|s| {
         let whisper_thread = s.spawn(|| {

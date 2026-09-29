@@ -42,9 +42,6 @@ services:
         source: rust_target
         target: /target
       - type: volume
-        source: auohp_models
-        target: /models
-      - type: volume
         source: cargo_registry
         target: /usr/local/cargo/registry
 
@@ -80,7 +77,6 @@ services:
         target: /data
 
 volumes:
-  auohp_models:
   cargo_registry:
   graph_data:
   node_modules:

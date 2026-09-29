@@ -23,9 +23,10 @@ use anyhow::{Context, Result};
 use clap::Parser;
 
 use auohp_core::eval::diarization::{embedding_diagnostic, parse_reference, score};
+use auohp_core::models;
 use auohp_core::transcription::{
-    decode_file, diarize, dominant_speaker, extract_segment_embeddings, models_dir,
-    EMBEDDING_MODEL_FILE, SEGMENTATION_MODEL_FILE,
+    EMBEDDING_MODEL_FILE, SEGMENTATION_MODEL_FILE, decode_file, diarize, dominant_speaker,
+    extract_segment_embeddings,
 };
 
 #[derive(Parser, Debug)]
@@ -46,13 +47,15 @@ struct Cli {
 }
 
 fn main() -> Result<()> {
-    tracing_subscriber::fmt().with_writer(std::io::stderr).init();
+    tracing_subscriber::fmt()
+        .with_writer(std::io::stderr)
+        .init();
     let cli = Cli::parse();
 
     let audio_file = format!("{}.mp4", cli.basename);
     let reference_file = format!("{}.mp4.txt", cli.basename);
 
-    let models_dir = models_dir();
+    let models_dir = models::models_dir();
     let asset_dir =
         PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| ".".to_string()))
             .join("../../assets");

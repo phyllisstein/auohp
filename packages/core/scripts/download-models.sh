@@ -10,7 +10,10 @@
 
 set -euo pipefail
 
-MODELS_DIR="${1:-${MODELS_DIR:-/opt/auohp/models}}"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
+DEFAULT_MODELS_DIR="$SCRIPT_DIR/../models"
+
+MODELS_DIR="${1:-${MODELS_DIR:-$DEFAULT_MODELS_DIR}}"
 mkdir -p "$MODELS_DIR"
 echo "Models directory: $MODELS_DIR"
 
