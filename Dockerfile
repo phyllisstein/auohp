@@ -18,7 +18,7 @@ ENV CARGO_HOME=/usr/local/cargo \
     PROJECT_PATH=/app \
     RUSTFLAGS="-C target-feature=+fp16" \
     RUSTUP_HOME=/usr/local/rustup \
-    RUSTUP_TOOLCHAIN=nightly-2026-05-02
+    RUSTUP_TOOLCHAIN=nightly-2026-09-22
 
 RUN mkdir -p ${CARGO_TARGET_DIR} ${CARGO_HOME} ${RUSTUP_HOME} /usr/local/var/run/watchman \
     && chmod a+w ${CARGO_TARGET_DIR} ${CARGO_HOME} ${RUSTUP_HOME} /usr/local/var/run/watchman \
@@ -44,6 +44,7 @@ RUN mkdir -p ${CARGO_TARGET_DIR} ${CARGO_HOME} ${RUSTUP_HOME} /usr/local/var/run
         nodejs \
         yarn \
     && curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- --profile default --default-toolchain ${RUSTUP_TOOLCHAIN} -y \
+    && curl -Ls https://astral.sh/uv/install.sh | sh \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
