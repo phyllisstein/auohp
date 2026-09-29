@@ -7,15 +7,18 @@
 # Usage:
 #   seed-interview.sh <transcribe.json> \
 #       --number 26 \
-#       --date 2003-05-16
+#       --date 2003-05-16 \
+#       --interviewee "Iris Long" \
+#       --speaker-map '[{ "label": "SPEAKER_00", "name": "Iris Long", "role": "INTERVIEWEE" },{ "label": "SPEAKER_01", "name": "Sarah Schulman", "role": "INTERVIEWER" }]' \
+#       --video "https://example.com/video.mp4"
 #
 # Flags:
 #   --number N             Interview number (integer).
 #   --date YYYY-MM-DD      ISO 8601 date.
 #   --interviewee NAME     Display name of the interviewee.
-#   --video URL         Optional video URL (default: null).
-#   --endpoint URL         GraphQL endpoint (default: $SEED_ENDPOINT or
-#                          http://localhost:6060/graphql).
+#   --speaker-map JSON     JSON array mapping speaker labels to names and roles.
+#   --video URL            Optional video URL (default: null).
+#   --endpoint URL         GraphQL endpoint (default: $SEED_ENDPOINT or http://localhost:6060/graphql).
 #
 # Requires: bash, curl, jq.
 
@@ -27,6 +30,7 @@ NUMBER=""
 DATE=""
 INTERVIEWEE=""
 VIDEO=""
+SPEAKER_MAP=""
 
 usage() {
     sed -n '/^# seed-interview/,/^$/{ s/^# \{0,1\}//; p; }' "$0"
@@ -38,6 +42,7 @@ while [[ $# -gt 0 ]]; do
         --number) NUMBER="$2"; shift 2;;
         --date) DATE="$2"; shift 2;;
         --interviewee) INTERVIEWEE="$2"; shift 2;;
+        --speaker-map) SPEAKER_MAP="$2"; shift 2;;
         --video) VIDEO="$2"; shift 2;;
         --endpoint) ENDPOINT="$2"; shift 2;;
         -h|--help) usage 0;;
@@ -58,15 +63,19 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-for var in JSON_FILE NUMBER DATE INTERVIEWEE; do
-    if [[ -z "${VIDEO:-}" ]]; then
-        VIDEO=null
-    fi
+for var in JSON_FILE NUMBER DATE INTERVIEWEE SPEAKER_MAP; do
     if [[ -z "${!var}" ]]; then
         echo "missing required argument: $var" >&2
         usage 1
     fi
 done
+
+if [[ -z "${SPEAKER_MAP:-}" ]]; then
+    SPEAKER_MAP=null
+fi
+if [[ -z "${VIDEO:-}" ]]; then
+    VIDEO=null
+fi
 
 if [[ ! -f "$JSON_FILE" ]]; then
     echo "transcribe JSON not found: $JSON_FILE" >&2
@@ -77,7 +86,6 @@ read -r -d '' QUERY <<'GRAPHQL' || true
 mutation SeedInterview($input: SeedInterviewInput!) {
   seedInterview(input: $input) {
     statementCount
-    speakerCount
     transcriptUid
     embeddingsQueued
     interview {
@@ -103,6 +111,7 @@ PAYLOAD=$(jq -n \
     --arg date "$DATE" \
     --arg interviewee "$INTERVIEWEE" \
     --arg video "$VIDEO" \
+    --argjson speakers "$SPEAKER_MAP" \
     '{
         query: $query,
         variables: {
@@ -113,7 +122,8 @@ PAYLOAD=$(jq -n \
                 assets: {
                     videoUrl: $video
                 },
-                segmentsJson: ($segmentsFile[0].transcription.segments | tojson)
+                segmentsJson: ($segmentsFile[0].transcription.segments | tojson),
+                speakers: $speakers
             }
         }
     }')
