@@ -74,8 +74,10 @@ async fn main() -> Result<()> {
         "CREATE VECTOR INDEX statementEmbedding IF NOT EXISTS
          FOR (s:Statement) ON s.embedding
          OPTIONS {indexConfig: {
-           `vector.dimensions`: 768,
-           `vector.similarity_function`: 'cosine'
+           `vector.dimensions`: 1024,
+           `vector.similarity_function`: 'cosine',
+           `vector.quantization.type`: 'binary',
+           `vector.default_search_expansion_factor`: 3.0
          }}",
     ))
     .await?;
