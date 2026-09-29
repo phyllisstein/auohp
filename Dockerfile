@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.7-labs
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Watchman Binaries ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
-FROM phyllisstein/watchman:v2026.03.02.00-arm64 AS watchman
+FROM phyllisstein/watchman:v2026.07.27.00 AS watchman
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ App ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 FROM ubuntu:24.04 AS app
@@ -13,6 +13,7 @@ COPY --from=watchman /usr/local/lib/* /usr/local/lib/
 
 ENV CARGO_HOME=/usr/local/cargo \
     CARGO_TARGET_DIR=/target \
+    MODELS_DIR=/models \
     NODE_MAJOR=26 \
     PATH="/app/node_modules/.bin:/usr/share/nodejs/yarn/bin:/usr/local/cargo/bin:$PATH" \
     PROJECT_PATH=/app \
