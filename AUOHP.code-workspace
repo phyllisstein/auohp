@@ -21,6 +21,10 @@
             "path": "packages/editor"
         },
         {
+            "name": "✏️ @auohp/editor-svelte",
+            "path": "packages/editor-svelte"
+        },
+        {
             "name": "🕵️ @auohp/search-component",
             "path": "packages/search-component"
         },
@@ -64,9 +68,12 @@
             "javascript",
             "typescript",
             "javascriptreact",
-            "typescriptreact"
+            "typescriptreact",
+            "svelte"
         ],
         "oxc.enable.oxlint": true,
+        "oxc.fixKind": "all",
+        "oxc.requireConfig": true,
         "js/ts.experimental.useTsgo": true,
         "licenser.useSingleLineStyle": false,
         "rust-analyzer.files.exclude": [
@@ -97,6 +104,14 @@
             ],
         },
         "[typescript]": {
+            "editor.formatOnSave": false,
+            "editor.defaultFormatter": "oxc.oxc-vscode",
+            "editor.codeActionsOnSave": [
+                "source.fixAll.stylelint",
+                "source.fixAll.oxc"
+            ],
+        },
+        "[svelte]": {
             "editor.formatOnSave": false,
             "editor.defaultFormatter": "oxc.oxc-vscode",
             "editor.codeActionsOnSave": [
