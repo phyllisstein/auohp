@@ -37,14 +37,15 @@ let hits = $derived(searchQuery.results?.search.statementText ?? null);
 </div>
 
 <style>
-    .col {
-        display: flex;
-        flex-direction: column;
-        gap: var(--spectrum-spacing-100, 1rem);
-        width: 100%;
-    }
-    .times {
-        font-style: italic;
-        color: var(--spectrum-gray-700, #666);
-    }
+.col {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spectrum-spacing-100, 1rem);
+    width: 100%;
+}
+
+.times {
+    font-style: italic;
+    color: var(--spectrum-gray-700, #666);
+}
 </style>

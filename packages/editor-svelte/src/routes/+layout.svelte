@@ -12,23 +12,25 @@ let { children } = $props();
 {@render children()}
 
 <style>
-    :global(body) {
-        margin: 0;
-        background-color: var(--spectrum-gray-200);
-        color: var(--spectrum-gray-900);
-        font-family:
-            "Adobe Clean",
-            system-ui,
-            -apple-system,
-            BlinkMacSystemFont,
-            "Segoe UI",
-            Roboto,
-            Oxygen,
-            Ubuntu,
-            Cantarell,
-            "Open Sans",
-            "Helvetica Neue",
-            sans-serif;
-        font-size: var(--spectrum-body-size-m, 112.5%);
-    }
+:global(body) {
+    margin: 0;
+
+    font-family:
+        "Adobe Clean",
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        Oxygen,
+        Ubuntu,
+        Cantarell,
+        "Open Sans",
+        "Helvetica Neue",
+        sans-serif;
+    font-size: var(--spectrum-body-size-m, 112.5%);
+    color: var(--spectrum-gray-900);
+
+    background-color: var(--spectrum-gray-200);
+}
 </style>

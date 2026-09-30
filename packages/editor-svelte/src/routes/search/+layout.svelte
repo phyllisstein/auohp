@@ -75,26 +75,29 @@ function onKeydown (event: KeyboardEvent) {
 </section>
 
 <style>
-    /* Gen-1 Spectrum CSS custom properties, each with a plain fallback for when
-	   the theme fragment hasn't loaded (e.g. SSR, first paint). */
-    .search-bar,
-    .results {
-        background: var(--spectrum-gray-100, #f5f5f5);
-        padding: var(--spectrum-spacing-200, 1rem);
-        margin: var(--spectrum-spacing-200, 1rem);
-        border-radius: var(--spectrum-spacing-75, 4px);
-    }
-    .search-bar {
-        display: flex;
-        flex-direction: row;
-        gap: var(--spectrum-spacing-200, 1rem);
-        align-items: center;
-        justify-content: space-between;
-    }
-    .results {
-        display: flex;
-    }
-    .grow {
-        flex: 1;
-    }
+/* Gen-1 Spectrum CSS custom properties, each with a plain fallback for when
+    the theme fragment hasn't loaded (e.g. SSR, first paint). */
+.search-bar,
+.results {
+    margin: var(--spectrum-spacing-200, 1rem);
+    padding: var(--spectrum-spacing-200, 1rem);
+    border-radius: var(--spectrum-spacing-75, 4px);
+    background: var(--spectrum-gray-100, #F5F5F5);
+}
+
+.search-bar {
+    display: flex;
+    flex-direction: row;
+    gap: var(--spectrum-spacing-200, 1rem);
+    align-items: center;
+    justify-content: space-between;
+}
+
+.results {
+    display: flex;
+}
+
+.grow {
+    flex: 1;
+}
 </style>

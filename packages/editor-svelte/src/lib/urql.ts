@@ -4,7 +4,7 @@ import { Client, cacheExchange, fetchExchange } from "@urql/svelte";
 // PUBLIC_GRAPHQL_ENDPOINT if the API lives elsewhere.
 const url =
     import.meta.env.PUBLIC_GRAPHQL_ENDPOINT ??
-    "http://api.auohp.localhost/graphql";
+      "http://api.auohp.localhost/graphql";
 
 export const client = new Client({
     url,

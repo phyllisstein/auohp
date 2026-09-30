@@ -42,7 +42,7 @@ interface Entry {
  * Register a per-node Svelte decorator, keyed by NodeKey, driven by a Lexical
  * mutation listener. Returns a teardown that unmounts everything.
  */
-export function registerSvelteDecorator<Props extends Record<string, unknown>>(
+export function registerSvelteDecorator<Props extends Record<string, unknown>> (
     editor: LexicalEditor,
     nodeClass: Klass<LexicalNode>,
     spec: DecoratorSpec<Props>,

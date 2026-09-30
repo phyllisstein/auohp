@@ -34,30 +34,30 @@ let { data }: PageProps = $props();
 </div>
 
 <style>
-    .panel {
-        background-color: var(--spectrum-gray-100, #f5f5f5);
-        height: 100%;
-        padding: var(--spectrum-spacing-300, 1.5rem);
-        border-radius: var(--spectrum-spacing-75, 4px);
-    }
+.panel {
+    height: 100%;
+    padding: var(--spectrum-spacing-300, 1.5rem);
+    border-radius: var(--spectrum-spacing-75, 4px);
+    background-color: var(--spectrum-gray-100, #F5F5F5);
+}
 
-    .content {
-        width: max-content;
-        height: max-content;
-    }
+.content {
+    width: max-content;
+    height: max-content;
+}
 
-    a {
-        color: var(--spectrum-accent-color-800, #0d66d0);
-        cursor: pointer;
-        transition: color 0.12s ease;
-    }
+a {
+    cursor: pointer;
+    color: var(--spectrum-accent-color-800, #0D66D0);
+    transition: color 0.12s ease;
+}
 
-    a:hover {
-        color: var(--spectrum-accent-color-900, #0a52ab);
-    }
+a:hover {
+    color: var(--spectrum-accent-color-900, #0A52AB);
+}
 
-    a:focus-visible {
-        outline: 2px solid var(--spectrum-accent-color-800, #0d66d0);
-        outline-offset: 2px;
-    }
+a:focus-visible {
+    outline: 2px solid var(--spectrum-accent-color-800, #0D66D0);
+    outline-offset: 2px;
+}
 </style>

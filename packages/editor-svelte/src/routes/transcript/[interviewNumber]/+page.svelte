@@ -1,74 +1,74 @@
 <script lang="ts">
-    // Port of packages/editor/src/routes/transcript/$interviewNumber.tsx.
-    //
-    // `LexicalExtensionComposer` (React) memoises the editor on the extension's
-    // identity and disposes the old one when it changes -- that is what the
-    // source's `useMemo(..., [interviewUid])` bought it. `{#key interviewUid}`
-    // is the direct Svelte analogue: it destroys and recreates everything
-    // inside the block, including the editor host component below, whenever
-    // interviewUid changes.
-    import { browser } from "$app/environment";
-    import { client } from "$lib/urql";
-    import { createPlayhead } from "$lib/playhead.svelte";
-    import { defineAuohpEditorExtension } from "$lib/editor/editor";
-    import { SEARCH_STATEMENTS_QUERY } from "$lib/editor/search-interview/queries";
-    import type { SearchStatementsQuery, SearchStatementsQueryVariables } from "$lib/editor/search-interview/__generated__/queries.gql";
-    import {
-        EDIT_STATEMENT_MUTATION,
-        CREATE_STATEMENT_MUTATION,
-        DESTROY_STATEMENT_MUTATION,
-    } from "./queries";
-    import type {
-        EditStatementMutation,
-        EditStatementMutationVariables,
-        CreateStatementMutation,
-        CreateStatementMutationVariables,
-        DestroyStatementMutation,
-        DestroyStatementMutationVariables,
-    } from "./__generated__/queries.gql";
-    import EditorHost from "./EditorHost.svelte";
-    import type { PageProps } from "./$types";
+// Port of packages/editor/src/routes/transcript/$interviewNumber.tsx.
+//
+// `LexicalExtensionComposer` (React) memoises the editor on the extension's
+// identity and disposes the old one when it changes -- that is what the
+// source's `useMemo(..., [interviewUid])` bought it. `{#key interviewUid}`
+// is the direct Svelte analogue: it destroys and recreates everything
+// inside the block, including the editor host component below, whenever
+// interviewUid changes.
+import { browser } from "$app/environment";
+import { client } from "$lib/urql";
+import { createPlayhead } from "$lib/playhead.svelte";
+import { defineAuohpEditorExtension } from "$lib/editor/editor";
+import { SEARCH_STATEMENTS_QUERY } from "$lib/editor/search-interview/queries";
+import type { SearchStatementsQuery, SearchStatementsQueryVariables } from "$lib/editor/search-interview/__generated__/queries.gql";
+import {
+    EDIT_STATEMENT_MUTATION,
+    CREATE_STATEMENT_MUTATION,
+    DESTROY_STATEMENT_MUTATION,
+} from "./queries";
+import type {
+    EditStatementMutation,
+    EditStatementMutationVariables,
+    CreateStatementMutation,
+    CreateStatementMutationVariables,
+    DestroyStatementMutation,
+    DestroyStatementMutationVariables,
+} from "./__generated__/queries.gql";
+import EditorHost from "./EditorHost.svelte";
+import type { PageProps } from "./$types";
 
-    const { VITE_AUOHP_API_URI: AUOHP_API_URI } = import.meta.env;
+const { VITE_AUOHP_API_URI: AUOHP_API_URI } = import.meta.env;
 
-    let { data }: PageProps = $props();
+let { data }: PageProps = $props();
 
-    let interviewUid = $derived(data.transcript?.interview?.uid ?? "");
-    let interviewName = $derived(data.header?.interview?.interviewee?.name ?? "Unknown Interviewee");
-    let statements = $derived(data.transcript?.interview?.transcript?.statements ?? []);
-    let videoUri = $derived(data.transcript?.interview?.videos?.[0]?.uri);
-    let statementHash = $state<string | undefined>(undefined);
+let interviewUid = $derived(data.transcript?.interview?.uid ?? "");
+let interviewName = $derived(data.header?.interview?.interviewee?.name ?? "Unknown Interviewee");
+let statements = $derived(data.transcript?.interview?.transcript?.statements ?? []);
+let videoUri = $derived(data.transcript?.interview?.videos?.[0]?.uri);
+let statementHash = $state<string | undefined>(undefined);
 
-    let player = $state<HTMLVideoElement | null>(null);
+let player = $state<HTMLVideoElement | null>(null);
 
-    // Plain async functions closing over the urql client -- the natural
-    // equivalent of Apollo's useMutation executors, and what
-    // PersistenceExtension's config expects (see PLAN.md sec 3.4).
-    async function editStatement (variables: EditStatementMutationVariables) {
-        const result = await client
-            .mutation<EditStatementMutation, EditStatementMutationVariables>(EDIT_STATEMENT_MUTATION, variables)
-            .toPromise();
-        statementHash = result.data?.editStatement.newHash;
-        return result;
-    }
+// Plain async functions closing over the urql client -- the natural
+// equivalent of Apollo's useMutation executors, and what
+// PersistenceExtension's config expects (see PLAN.md sec 3.4).
+async function editStatement (variables: EditStatementMutationVariables) {
+    const result = await client
+        .mutation<EditStatementMutation, EditStatementMutationVariables>(EDIT_STATEMENT_MUTATION, variables)
+        .toPromise();
+    statementHash = result.data?.editStatement.newHash;
+    return result;
+}
 
-    async function createStatement (variables: CreateStatementMutationVariables) {
-        return client
-            .mutation<CreateStatementMutation, CreateStatementMutationVariables>(CREATE_STATEMENT_MUTATION, variables)
-            .toPromise();
-    }
+async function createStatement (variables: CreateStatementMutationVariables) {
+    return client
+        .mutation<CreateStatementMutation, CreateStatementMutationVariables>(CREATE_STATEMENT_MUTATION, variables)
+        .toPromise();
+}
 
-    async function destroyStatement (variables: DestroyStatementMutationVariables) {
-        return client
-            .mutation<DestroyStatementMutation, DestroyStatementMutationVariables>(DESTROY_STATEMENT_MUTATION, variables)
-            .toPromise();
-    }
+async function destroyStatement (variables: DestroyStatementMutationVariables) {
+    return client
+        .mutation<DestroyStatementMutation, DestroyStatementMutationVariables>(DESTROY_STATEMENT_MUTATION, variables)
+        .toPromise();
+}
 
-    async function searchStatements (variables: SearchStatementsQueryVariables) {
-        return client
-            .query<SearchStatementsQuery, SearchStatementsQueryVariables>(SEARCH_STATEMENTS_QUERY, variables)
-            .toPromise();
-    }
+async function searchStatements (variables: SearchStatementsQueryVariables) {
+    return client
+        .query<SearchStatementsQuery, SearchStatementsQueryVariables>(SEARCH_STATEMENTS_QUERY, variables)
+        .toPromise();
+}
 </script>
 
 <svelte:head>
@@ -135,64 +135,64 @@
 </div>
 
 <style>
-    /* Statement wrapper, its non-editable chrome column, and the editable
+/* Statement wrapper, its non-editable chrome column, and the editable
        content element -- see StatementNode.createDOM / getDOMSlot. Global
        because the class names are stamped by Lexical's own DOM building, not
-       by any Svelte component that could own a scoped <style>. */
-    :global(.auohp-statement) {
-        display: flex;
-        gap: 0.75rem;
-        align-items: flex-start;
-        padding: 0.25rem 0;
-    }
+       by any Svelte component that could own a scoped \3c style>. */
+:global(.auohp-statement) {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    padding: 0.25rem 0;
+}
 
-    :global(.auohp-statement__chrome) {
-        /* Seeking is a click on this column specifically (see
+:global(.auohp-statement__chrome) {
+    /* Seeking is a click on this column specifically (see
            StatementSeekExtension), so the chrome has to look clickable --
            otherwise the only way to discover the gesture is by accident. */
-        cursor: pointer;
-        user-select: none;
+    cursor: pointer;
+    user-select: none;
 
-        display: flex;
-        flex-direction: column;
-        flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
 
-        min-width: 6rem;
+    min-width: 6rem;
 
-        font-family: monospace;
-        font-size: 0.75rem;
-        color: #888;
+    font-family: monospace;
+    font-size: 0.75rem;
+    color: #888;
 
-        transition: color 0.12s ease;
-    }
+    transition: color 0.12s ease;
+}
 
-    :global(.auohp-statement__chrome:hover) {
-        color: #333;
-    }
+:global(.auohp-statement__chrome:hover) {
+    color: #333;
+}
 
-    :global(.auohp-statement__content) {
-        flex: 1;
-    }
+:global(.auohp-statement__content) {
+    flex: 1;
+}
 
-    .page {
-        overflow: hidden;
-        display: grid;
-        grid-template-rows: 1fr auto;
+.page {
+    overflow: hidden;
+    display: grid;
+    grid-template-rows: 1fr auto;
 
-        width: 100vw;
-        height: 100vh;
-    }
+    width: 100vw;
+    height: 100vh;
+}
 
-    .video-container {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
+.video-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
 
-    .editor-container {
-        position: relative;
-        overflow-y: auto;
-        background: var(--spectrum-gray-75, #f8f8f8);
-        padding: 12px;
-    }
+.editor-container {
+    position: relative;
+    overflow-y: auto;
+    padding: 12px;
+    background: var(--spectrum-gray-75, #F8F8F8);
+}
 </style>

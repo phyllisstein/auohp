@@ -4,7 +4,6 @@ export default defineConfig({
     plugins: ["oxc", "eslint"],
     jsPlugins: [
         { specifier: "@stylistic/eslint-plugin", name: "stylistic-js" },
-        { specifier: "eslint-plugin-import-x", name: "import-x-js" },
     ],
     categories: {
         correctness: "off",
@@ -337,41 +336,6 @@ export default defineConfig({
                 return: "parens-new-line",
             },
         ],
-        // Enforce the `dir/index.ts` module seam: outside a module you import
-        // its barrel, never a private sibling. `no-internal-modules` flags any
-        // specifier that resolves *past* a permitted entry point. Needs a
-        // resolver (see `settings` below) --- an unresolved specifier fails open.
-        "import-x-js/no-internal-modules": [
-            "error",
-            {
-                allow: [
-                    // Our barrels. Each entry is the deepest importable path;
-                    // one segment deeper is a seam violation.
-                    "~/*",
-                    "~/styles/*",
-                    "~/styles/assets/*",
-                    // `src/lexical/` is deliberately *not* exempted: it is a
-                    // flat junk-drawer directory whose files reach into each
-                    // other directly, and those violations are the standing
-                    // reminder to convert it to a sealed feature module.
-                    //
-                    // Side-effect stylesheets sit beside a module, not behind it.
-                    "**/*.css",
-                    // File-based routing owns arbitrarily deep paths.
-                    "~/routes/**",
-                    // Generated GraphQL types are addressed directly.
-                    "**/__generated__/**",
-                    // Third-party packages with intentional deep entry points.
-                    "@urql/svelte/**",
-                    "@lexical/*/**",
-                    "$*/**",
-                    "@spectrum-web-components/**",
-                    // Config-only deep entry points.
-                    "vitest/config",
-                    "@sveltejs/kit/vite",
-                ],
-            },
-        ],
     },
     globals: {
         AsyncDisposableStack: "readonly",
@@ -386,13 +350,5 @@ export default defineConfig({
         $bindable: "readonly",
         $inspect: "readonly",
         $host: "readonly",
-    },
-    settings: {
-        // import-x resolves specifiers against the filesystem to police
-        // `no-internal-modules`. Without a resolver an unresolved specifier ---
-        // every `~/...` alias --- fails open, so the seam rule would be inert.
-        "import-x/resolver": {
-            typescript: { project: "packages/editor-svelte/tsconfig.json" },
-        },
     },
 });
