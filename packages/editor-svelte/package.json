@@ -11,7 +11,7 @@
         "build": "vite build",
         "codegen": "trash './src/**/__generated__/' && graphql-codegen --config codegen.ts",
         "dev": "vite dev",
-        "editor:dev": "vite dev",
+        "svelte-editor:dev": "vite dev",
         "prepare": "svelte-kit sync || echo ''",
         "start": "vite preview",
         "test": "vitest run"

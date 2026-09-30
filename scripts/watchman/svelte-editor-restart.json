@@ -1,0 +1,25 @@
+[
+    "trigger",
+    "/app",
+    {
+        "name": "editor-restart",
+        "expression": [
+            "allof",
+            ["not", ["match", "**/node_modules/**", "wholename"]],
+            ["not", ["match", "**/.svelte-kit/**", "wholename"]],
+            ["dirname", "packages/svelte-editor"],
+            ["name",
+                [
+                    ".env",
+                    "tsconfig.json",
+                    "vite.config.ts"
+                ]
+            ]
+        ],
+        "command": [
+            "/app/scripts/develop.sh",
+            "svelte-editor"
+        ],
+        "append_files": false
+    }
+]
