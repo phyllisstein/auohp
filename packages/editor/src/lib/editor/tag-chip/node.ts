@@ -11,65 +11,12 @@ import {
     type SerializedElementNode,
     type Spread,
 } from "lexical";
-import styled, { createGlobalStyle } from "styled-components";
 import { MarkNode } from "@lexical/mark";
-import numberSignSVG from "./number.sign.square.svgo.svg?inline";
+import { createGlobalStyle } from "styled-components";
 
 const NO_IDS: readonly string[] = [];
 
-type SerializedTagChipNode = Spread<{ ids: string[] }, SerializedElementNode>;
-
-// Shared by createDOM (which writes it) and getDOMSlot (which must re-find the
-// element it names) --- keeping them in sync by construction rather than by
-// two matching string literals.
-export const TAG_CHIP_BADGE_CLASS = "auohp-tag-chip__badge";
-
-const TagChipContainer = styled.span`
-    user-select: none;
-
-    position: absolute;
-    z-index: -1;
-    top: 0;
-    left: -1em;
-
-    display: block;
-
-    width: calc(100% + 1.6em);
-    height: 100%;
-
-    font-size: 100%;
-    font-weight: 600;
-    color: #0B0B0B;
-
-    background: #7DD3FC;
-
-    &::before {
-        content: ${ () => `url("${ numberSignSVG }") ` };
-
-        position: absolute;
-        left: 0;
-
-        display: block;
-
-        width: 0.8em;
-        height: 0.8em;
-
-        color: #000;
-
-        fill: #000;
-        stroke: #000;
-    }
-`;
-
-export const TagMarkStyles = createGlobalStyle`
-    .auohp-tag-chip {
-        position: relative;
-        display: inline-block;
-        margin: 0 1.5rem;
-        background: none;
-    }
-`;
-
+// -----------------------------------------------------------------------------
 // TagChipNode --- React-in-editor, the hard way.
 //
 // The obvious move is a DecoratorNode, whose `decorate()` returns JSX that the
@@ -83,13 +30,30 @@ export const TagMarkStyles = createGlobalStyle`
 // tagged text --- transparent to getTextContent, copy/paste, and search. That
 // costs us `decorate()`, since only DecoratorNodes have one. React gets in by
 // the other door instead: createDOM builds an unmanaged badge span, and
-// TagChipPortals (extensions.tsx) portals <TagChip/> into it, driven by a
+// TagChipPortals (components.tsx) portals <TagChip/> into it, driven by a
 // mutation listener. Pull becomes push.
 //
 // MarkNode also brings semantics we would otherwise hand-roll: __ids with
 // overlap merging, canInsertTextBefore/After() === false and canBeEmpty() ===
 // false (so the chip is already sealed at its boundaries), and isInline() ===
 // true.
+// -----------------------------------------------------------------------------
+export const TagMarkStyles = createGlobalStyle`
+    .auohp-tag-chip {
+        position: relative;
+        display: inline-block;
+        margin: 0 1.5rem;
+        background: none;
+    }
+`;
+
+type SerializedTagChipNode = Spread<{ ids: string[] }, SerializedElementNode>;
+
+// Shared by createDOM (which writes it) and getDOMSlot (which must re-find the
+// element it names) --- keeping them in sync by construction rather than by
+// two matching string literals.
+export const TAG_CHIP_BADGE_CLASS = "auohp-tag-chip__badge";
+
 export class TagChipNode extends MarkNode {
     static clone (node: TagChipNode): TagChipNode {
         return new TagChipNode(node.__ids, node.__key);

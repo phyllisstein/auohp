@@ -1,36 +1,20 @@
 import {
     $applyNodeReplacement,
     addClassNamesToElement,
-    createGlobalStyle,
     setDOMUnmanaged,
     type EditorConfig,
+    type ElementNode,
     type LexicalNode,
     type LexicalUpdateJSON,
     type NodeKey,
+    type RangeSelection,
     type SerializedElementNode,
     type Spread,
 } from "lexical";
-import { useEffect, useRef, type JSX } from "react";
-import styled from "styled-components";
 import { MarkNode } from "@lexical/mark";
+import { createGlobalStyle } from "styled-components";
 
 const NO_IDS: readonly string[] = [];
-
-// The badge host's face. It stays a portal target (so a per-match affordance ---
-// hit counter, jump-to-next, hover popover --- has somewhere to live) but it no
-// longer paints the highlight itself.
-const SearchResultContainer = styled.span`
-    user-select: none;
-
-    /* Out of flow without being positioned: the badge must not consume layout
-       space between the words it sits inside. It is a hook for portalled
-       chrome, so it has no size of its own until something is portalled in. */
-    display: inline;
-
-    font-size: 100%;
-    font-weight: 600;
-    color: #0B0B0B;
-`;
 
 export const SearchResultStyles = createGlobalStyle`
     /* The highlight is now painted by the <mark> itself, inline, so it flows
@@ -71,27 +55,6 @@ type SerializedSearchResultNode = Spread<{ ids: string[] }, SerializedElementNod
 // two matching string literals.
 export const SEARCH_RESULT_BADGE_CLASS = "auohp-search-result__badge";
 
-// The result's React face. It is not rendered in place by Lexical --- MarkNode is
-// an ElementNode, so there is no `decorate()` hook --- it is portalled into the
-// unmanaged badge span that SearchResultNode.createDOM builds.
-//
-// It receives only a NodeKey and a focused flag. Everything else is read back out
-// of EditorState via `editor.read()` / `editor.update()`, which keeps the component
-// a pure function of editor state rather than a second copy of it.
-export function SearchResult ({ nodeKey, focused }: { nodeKey: NodeKey; focused: boolean }): JSX.Element {
-    const container = useRef<HTMLSpanElement>(null);
-
-    useEffect(() => {
-        if (focused && container.current) {
-            container.current.scrollIntoView({ behavior: "smooth", block: "center" });
-        }
-    }, [focused]);
-
-    return (
-        <SearchResultContainer ref={ container } data-node-key={ nodeKey } className="auohp-search-result__container" />
-    );
-}
-
 export class SearchResultNode extends MarkNode {
     static clone (node: SearchResultNode): SearchResultNode {
         return new SearchResultNode(node.__ids, node.__key);
@@ -120,7 +83,7 @@ export class SearchResultNode extends MarkNode {
         return super.updateFromJSON(serializedNode).setIDs(serializedNode.ids);
     }
 
-    insertNewAfter (selection: any, restoreSelection: boolean = true): any {
+    insertNewAfter (selection: RangeSelection, restoreSelection: boolean = true): ElementNode | null {
         const searchResultNode = $createSearchResultNode(this.__ids);
         this.insertAfter(searchResultNode, restoreSelection);
         return searchResultNode;

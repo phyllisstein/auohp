@@ -1,14 +1,67 @@
-import { COMMAND_PRIORITY_LOW, KEY_ENTER_COMMAND, $getSelection, $isRangeSelection, $getRoot, $createTextNode, configExtension, createCommand, defineExtension, $isTextNode, type LexicalCommand, type NodeKey, type Signal } from "lexical";
-import { MarkExtension, $wrapSelectionInMarkNode, $unwrapMarkNode, $findMatchingParent } from "@lexical/mark";
+import {
+    $createTextNode,
+    $getRoot,
+    $getSelection,
+    $isRangeSelection,
+    $isTextNode,
+    COMMAND_PRIORITY_LOW,
+    configExtension,
+    defineExtension,
+    type NodeKey,
+    type TextNode,
+} from "lexical";
+import { namedSignals, type Signal } from "@lexical/extension";
+import { $unwrapMarkNode, $wrapSelectionInMarkNode } from "@lexical/mark";
 import { ReactExtension } from "@lexical/react/ReactExtension";
-import { $dfs, mergeRegister } from "@lexical/utils";
-import { namedSignals } from "@lexical/extension";
-import { $isStatementNode } from "../statement/node";
-import { $isSearchResultNode, $createSearchResultNode } from "./node";
-import type { SearchStatementsData } from "../shared";
+import { $dfs, $findMatchingParent, mergeRegister } from "@lexical/utils";
+import { $isStatementNode, StatementExtension, type StatementNode } from "../statement";
+import { type SearchStatementsData } from "../shared";
+import { INSERT_SEARCH_RESULT_COMMAND } from "./commands";
+import { SearchDriver, SearchResultPortals } from "./components";
+import { $createSearchResultNode, $isSearchResultNode, SearchResultNode } from "./node";
 
-export const INSERT_SEARCH_RESULT_COMMAND: LexicalCommand<string> = createCommand("INSERT_SEARCH_RESULT_COMMAND");
-
+// -----------------------------------------------------------------------------
+// SearchInterviewExtension --- the read path, and a worked example of the one
+// mechanism that carries live data into an extension.
+//
+// The tempting-but-broken shape was to hand Apollo's `useLazyQuery` tuple to
+// this extension as config. It cannot work, and the reason is worth internalising
+// because it generalises to every "how do I update my extension" question:
+//
+//   `LexicalBuilder` calls `build(editor, config)` exactly once, at editor
+//   construction. `namedSignals(config)` then copies each config value into a
+//   fresh signal at that instant. There is no later re-apply pass, because there
+//   is no re-render for an extension --- an extension is a value, not a
+//   component. So config is the signal's seed; the signal is the channel.
+//   `namedSignals`' own docstring concedes this: it exists "so it can be
+//   reconfigured at runtime".
+//
+// Worse, trying to force it through config poisons the editor's lifetime. The
+// route must `useMemo` the extension, `LexicalExtensionComposer` memoises the
+// editor on that extension's identity and disposes the old one --- so putting a
+// per-render Apollo result in the dep array rebuilds the editor mid-search and
+// throws away the user's unsaved edits and caret.
+//
+// Hence: this extension takes no config and owns its query outright. Data flows
+// one way, and every hop is a signal write:
+//
+//   PERFORM_SEARCH_COMMAND -> `query` signal
+//                          -> SearchDriver (React) runs Apollo
+//                          -> `data` / `loading` signals
+//                          -> consumers (React, or register-time subscribers)
+//
+// The command handler stays a pure state write --- it never touches Apollo. That
+// is what keeps it synchronous (Lexical command handlers must return a boolean
+// immediately) and what makes "what does this command do" answerable without
+// knowing anything about the network.
+// -----------------------------------------------------------------------------
+// Unlike PersistenceConfig, every field here earns its Signal: each one takes a
+// second value mid-session and something reacts to it --- `data.subscribe(...)`
+// in `register` repaints the highlights, the React consumers re-render off
+// `.value` reads. The `.peek()` calls inside the subscriber (`query.peek()`,
+// `focusedResult.peek()`) are the correct kind: reading a sibling signal's
+// current value without cross-subscribing to it. Contrast PersistenceConfig's
+// peeks, which unwrap a box around a value that never moves.
 export interface SearchOutput {
     /** The pending search string. `null` means idle --- no search requested yet. */
     query: Signal<string | null>;
@@ -45,13 +98,31 @@ export interface MatchRange {
     end: number;
 }
 
-// Stamped on the `editor.update()` that paints search highlights, so listeners
-// can tell the search's own writes apart from a human's typing. Without it the
-// re-search-on-edit listener in SearchDriver would react to the repaint it just
-// caused and spin forever --- the marks it watches are destroyed and recreated
-// on every result set.
-const SEARCH_TAG = "auohp-search-highlight";
 
+// Where the highlight ranges come from.
+//
+// The server cannot tell us. `db.index.fulltext.queryNodes` scores whole
+// Statement nodes against the Lucene index and returns the node --- the
+// token -> character-offset mapping Lucene built while analysing the text is
+// internal to the index and never surfaces through Cypher. `SearchHit` carries
+// `statement { uid, text }`, and that is the whole of it.
+//
+// So the ranges are recomputed here, from the text we already have. That is
+// only defensible because the index is created with no analyzer argument
+// (`CREATE FULLTEXT INDEX statementText ... ON EACH [s.text]` in api/src/main.rs),
+// which means Neo4j's default `standard` analyzer: it lowercases and splits on
+// non-word boundaries, but does NOT stem and does NOT strip stopwords. Had the
+// index been built with the `english` analyzer, "organizing" would index as the
+// stem "organ" and match a statement reading "organized" --- and a literal scan
+// for "organizing" would find nothing to highlight in a statement that
+// legitimately matched.
+//
+// One divergence survives and is accepted by design: the fragment is sent to
+// Lucene unquoted, so a multi-word selection parses as OR'd terms and a
+// statement matching only one of them is still a hit. Such a statement is
+// returned with no literal occurrence of the full fragment, and therefore gets
+// no highlight. Closing that gap belongs at the query (phrase-quoting the
+// fragment in SearchDriver), not here.
 // Escape every character the RegExp grammar treats as special, so a selection
 // containing `(`, `.`, `?`, `[` and friends is matched literally rather than
 // compiled as a pattern. Without this, selecting "ACT UP (1987)" throws
@@ -119,6 +190,15 @@ function findMatchRanges (text: string, fragment: string): MatchRange[] {
     return ranges;
 }
 
+
+// Stamped on the `editor.update()` that paints search highlights, so listeners
+// can tell the search's own writes apart from a human's typing. Without it the
+// re-search-on-edit listener in SearchDriver would react to the repaint it just
+// caused and spin forever --- the marks it watches are destroyed and recreated
+// on every result set.
+export const SEARCH_TAG = "auohp-search-highlight";
+
+
 // Contract: given a result set (or `undefined`, meaning "no search"), leave the
 // document holding exactly the marks that set implies --- nothing stale from the
 // previous search, nothing missing from this one.
@@ -168,13 +248,14 @@ function $applySearchResults (results: SearchStatementsData, fragment: string | 
     return keys;
 }
 
+
 // Remove every SearchResultNode beneath `statement`, hoisting its children back
 // into the parent, then heal the text runs the unwrap leaves behind.
 //
 // The old version only looked at direct grandchildren, which was sufficient when
 // a mark WAS the statement's only child. Inline marks sit at arbitrary depth
 // among the text, so the search has to be a traversal.
-function $clearSearchResults (statement: any): void {
+function $clearSearchResults (statement: StatementNode): void {
     // Collect before mutating: `$dfs` walks live node versions, and unwrapping
     // during the walk invalidates the cursor it is holding.
     const marks = $dfs(statement)
@@ -190,6 +271,7 @@ function $clearSearchResults (statement: any): void {
     }
 }
 
+
 // Unwrapping a mark hoists its TextNode children up beside their former
 // siblings, so `[Text("We shut "), Mark[Text("ACT UP")], Text(" down")]` becomes
 // three sibling TextNodes where the document logically has one run. Left
@@ -202,8 +284,8 @@ function $clearSearchResults (statement: any): void {
 // anchor/focus pointing into the absorbed node onto the survivor. `isSimpleText`
 // is the guard --- it is false for TextNodes carrying format/style/mode, and
 // merging those would silently drop the formatting of one side.
-function $mergeAdjacentTextNodes (statement: any): void {
-    let previous: any = null;
+function $mergeAdjacentTextNodes (statement: StatementNode): void {
+    let previous: TextNode | null = null;
 
     for (const child of statement.getChildren()) {
         if ($isTextNode(child) && child.isSimpleText()) {
@@ -218,6 +300,7 @@ function $mergeAdjacentTextNodes (statement: any): void {
     }
 }
 
+
 // Wrap each occurrence of `fragment` in `statement` in its own SearchResultNode.
 //
 // Offsets from `findMatchRanges` are relative to the statement's FLATTENED text
@@ -225,7 +308,7 @@ function $mergeAdjacentTextNodes (statement: any): void {
 // may be interrupted by TagChipNodes. So the walk below re-derives each child's
 // span in flattened coordinates and intersects it with the ranges --- which is
 // also why ranges are processed per-child rather than per-range.
-function $markMatchesInStatement (statement: any, fragment: string): readonly NodeKey[] {
+function $markMatchesInStatement (statement: StatementNode, fragment: string): readonly NodeKey[] {
     const ranges = findMatchRanges(statement.getTextContent(), fragment);
     if (ranges.length === 0) {
         return [];
@@ -315,6 +398,7 @@ function $markMatchesInStatement (statement: any, fragment: string): readonly No
     return keys;
 }
 
+
 // Replace the text inside one mark, leaving the surrounding run intact.
 //
 // The mark is an ElementNode wrapping one or more TextNodes, so "replace the
@@ -329,7 +413,7 @@ function $markMatchesInStatement (statement: any, fragment: string): readonly No
 // with every replace.
 //
 // Returns the containing statement so callers can report what changed.
-function $replaceMark (mark: any, replacement: string): any | null {
+export function $replaceMark (mark: SearchResultNode, replacement: string): StatementNode | null {
     // `$findMatchingParent` already narrows to StatementNode via its type-guard
     // overload, so this is a null check rather than a second type test --- the
     // guard itself will not accept a nullable argument.
@@ -365,11 +449,21 @@ function $replaceMark (mark: any, replacement: string): any | null {
     return statement;
 }
 
+
 export const SearchInterviewExtension = /* @__PURE__ */ defineExtension({
-    nodes: () => [],  // Will be populated by dependencies
-    dependencies: [],  // Simplified for now, proper deps in composition
+    nodes: () => [SearchResultNode],
+    dependencies: [
+        StatementExtension,
+        configExtension(ReactExtension, { decorators: [SearchResultPortals, SearchDriver] }),
+    ],
     name: "@auohp/search-interview",
 
+    // The return type is annotated rather than inferred, and that is load-bearing
+    // for a reason that has nothing to do with documentation: `dependencies` above
+    // names `SearchDriver`, and `SearchDriver`'s body asks for this extension's
+    // output. Left to inference that is a cycle TypeScript refuses to resolve.
+    // Annotating here (and annotating SearchDriver's return type) cuts it in both
+    // directions --- neither side needs the other's body to compute its type.
     build: (): SearchOutput => namedSignals({
         query: null as string | null,
         data: undefined as SearchStatementsData,
@@ -383,15 +477,52 @@ export const SearchInterviewExtension = /* @__PURE__ */ defineExtension({
     register (editor, _config, state) {
         const { query, data, focusedResult, resultCount, resultKeys } = state.getOutput();
 
+        // Preact's `subscribe` invokes its callback immediately with the current
+        // value. At registration that value is `undefined` and the document is not
+        // even seeded yet ($initialEditorState runs after every `register`), so the
+        // first call is noise. Swallowing it explicitly beats guarding on
+        // `results === undefined` inside the subscriber, because `data` legitimately
+        // returns to `undefined` later and that case must still clear the marks.
         let primed = false;
 
+        // `mergeRegister` folds several disposers into one. The previous version
+        // returned nothing from `register`, so both command handlers outlived the
+        // editor --- revisiting the route stacked a second handler on the same
+        // command, and one click fired two searches.
         return mergeRegister(
+            // The read path's terminus, and note that no React is involved: signals
+            // are subscribable anywhere, and `register` already holds the editor.
+            // React appears in this extension only where something is painted
+            // (SearchResultPortals) or where a hook is unavoidable (SearchDriver).
             data.subscribe(results => {
                 if (!primed) {
                     primed = true;
                     return;
                 }
 
+                // `history-merge` is load-bearing, not decoration. Wrapping text in
+                // a MarkNode leaves `getTextContent()` byte-identical, so
+                // PersistenceExtension would happily fire an `editStatement` per
+                // highlighted statement, saving text that never changed. It skips
+                // this tag --- and search highlighting is genuinely not a user edit,
+                // so it should not enter the undo stack as one either.
+                // `query.peek()`, not `query.value`: this callback is already a
+                // subscriber to `data`, and reading `.value` here would enrol it
+                // as a subscriber to `query` too --- so merely typing a new
+                // search would re-run the highlight pass against the OLD results.
+                // `peek` reads without subscribing.
+                // SEARCH_TAG rides alongside: `history-merge` says "this is not a
+                // user edit" (to persistence and undo), while SEARCH_TAG says who
+                // wrote it, so SearchDriver's update listener can decline to
+                // re-search in response to its own highlight pass. Tags compose ---
+                // the two claims are orthogonal and both are needed.
+                //
+                // The highlight pass is also where the result COUNT is settled,
+                // rather than in `onSearchUpdate` where it used to live. The
+                // response only knows how many statements matched; a statement
+                // reading "ACT UP ... ACT UP" is one hit to the server and two
+                // marks on the page, and the navigation UI means the second thing.
+                // Counting what was painted is the only way the two agree.
                 editor.update(
                     () => {
                         const keys = $applySearchResults(results, query.peek());
@@ -399,6 +530,11 @@ export const SearchInterviewExtension = /* @__PURE__ */ defineExtension({
                         resultKeys.value = keys;
                         resultCount.value = keys.length;
 
+                        // Clamp rather than reset. A re-search triggered by the
+                        // user editing the transcript must not throw them back to
+                        // the first hit --- they are typically standing on the hit
+                        // they just edited. Only fall back to 0 when there was no
+                        // position to keep, and to null when nothing matched.
                         const focused = focusedResult.peek();
                         focusedResult.value = keys.length === 0
                             ? null
@@ -416,6 +552,11 @@ export const SearchInterviewExtension = /* @__PURE__ */ defineExtension({
                         return false;
                     }
 
+                    // `$wrapSelectionInMarkNode` does the whole selection -> element
+                    // wrap, including splitting boundary TextNodes. The 4th argument
+                    // is the factory hook that lets us substitute our subclass for a
+                    // plain MarkNode --- it receives the accumulated ids, so
+                    // overlapping marks merge rather than nest.
                     $wrapSelectionInMarkNode(selection, false, id, ids => $createSearchResultNode(ids));
                     return true;
                 },
@@ -424,6 +565,3 @@ export const SearchInterviewExtension = /* @__PURE__ */ defineExtension({
         );
     },
 });
-
-// Export helper for use in driver/portals
-export { $replaceMark, SEARCH_TAG };

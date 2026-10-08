@@ -1,37 +1,22 @@
 import {
     $applyNodeReplacement,
-    addClassNamesToElement,
     ElementNode,
     setDOMUnmanaged,
     type EditorConfig,
     type LexicalNode,
-    type LexicalUpdateJSON,
     type NodeKey,
     type RangeSelection,
     type SerializedElementNode,
     type Spread,
 } from "lexical";
-import { formatTimestamp } from "./format-timestamp";
+import { $getExtensionDependency } from "@lexical/extension";
 import { SYNTHETIC_UID_MARKER } from "../shared";
+import { StatementExtension } from "./extension";
+import { formatTimestamp } from "./format-timestamp";
 
-// Exported because StatementSeekExtension delegates a single click listener from
-// the editor root and needs these to identify the chrome and walk back to the
-// statement wrapper carrying `data-uid`.
-export const STATEMENT_NODE_CLASS = "auohp-statement";
-export const STATEMENT_CHROME_CLASS = "auohp-statement__chrome";
-const STATEMENT_CONTENT_CLASS = "auohp-statement__content";
-const STATEMENT_TIME_CLASS = "auohp-statement__time";
-
-type SerializedStatementNode = Spread<
-    {
-        uid: string;
-        startTime: number;
-        endTime: number;
-    },
-    SerializedElementNode
->;
-
-// StatementNode is the Lexical analogue of the Slate `statement` element.
+// -----------------------------------------------------------------------------
+// StatementNode --- the Lexical analogue of the Slate `statement` element.
+//
 // It extends ElementNode (a block that HOLDS the editable TextNode children) and
 // carries the graph identity (uid) plus the caption window (startTime/endTime).
 //
@@ -44,6 +29,25 @@ type SerializedStatementNode = Spread<
 // reconciliation ignore it entirely. This is what lets chrome grow past a text
 // label --- speaker <Select>s, confidence meters, tag affordances --- which a
 // pseudo-element (text-only, max two per element, no React) could never hold.
+// -----------------------------------------------------------------------------
+type SerializedStatementNode = Spread<
+    {
+        uid: string;
+        startTime: number;
+        endTime: number;
+    },
+    SerializedElementNode
+>;
+
+// Exported because StatementSeekExtension delegates a single click listener from
+// the editor root and needs these to identify the chrome and walk back to the
+// statement wrapper carrying `data-uid` --- the same reason TAG_CHIP_BADGE_CLASS
+// is exported below.
+export const STATEMENT_NODE_CLASS = "auohp-statement";
+export const STATEMENT_CHROME_CLASS = "auohp-statement__chrome";
+const STATEMENT_CONTENT_CLASS = "auohp-statement__content";
+const STATEMENT_TIME_CLASS = "auohp-statement__time";
+
 export class StatementNode extends ElementNode {
     __uid: string;
     __startTime: number;
@@ -113,9 +117,13 @@ export class StatementNode extends ElementNode {
     //
     // Return null to refuse the split (what CodeNode does).
     insertNewAfter (selection: RangeSelection, restoreSelection = true): ElementNode | null {
-        const { playhead } = require("~/playhead");
         const newUid = `${ this.getUid() }${ SYNTHETIC_UID_MARKER }${ Date.now() }`;
-        const currentTime = playhead.timestamp.peek();
+        // FIXME: New node's startTime, old node's endTime = current position of the playhead
+        // Lexical constructs and calls nodes itself, so there is no call site to
+        // inject a Playhead through. This resolves the current editor's
+        // StatementExtension instead --- per-editor by construction, and it throws
+        // if the extension is missing rather than defaulting silently.
+        const currentTime = $getExtensionDependency(StatementExtension).output.timestamp.peek();
         const continuation = $createStatementNode(newUid, currentTime, this.getEndTime());
         this.setEndTime(currentTime);
 

@@ -511,11 +511,7 @@ export default defineConfig({
                     "~/*",
                     "~/styles/*",
                     "~/styles/assets/*",
-                    // `src/lexical/` is deliberately *not* exempted: it is a
-                    // flat junk-drawer directory whose files reach into each
-                    // other directly, and those violations are the standing
-                    // reminder to convert it to a sealed feature module.
-                    //
+                    "~/lib/*",
                     // Side-effect stylesheets sit beside a module, not behind it.
                     "**/*.css",
                     // File-based routing owns arbitrarily deep paths.

@@ -1,20 +1,59 @@
 import {
     $getRoot,
+    $getSelection,
+    $isRangeSelection,
     COMMAND_PRIORITY_LOW,
-    createCommand,
+    KEY_ENTER_COMMAND,
     defineExtension,
-    type LexicalCommand,
+    safeCast,
 } from "lexical";
-import { mergeRegister } from "@lexical/utils";
-import { playhead } from "~/playhead";
-import { STATEMENT_CHROME_CLASS, STATEMENT_NODE_CLASS, $isStatementNode } from "./node";
+import { $getExtensionDependency } from "@lexical/extension";
+import { $findMatchingParent, mergeRegister } from "@lexical/utils";
+import { type Playhead } from "~/playhead";
+import { SEEK_VIDEO_COMMAND } from "./commands";
+import { $isStatementNode, STATEMENT_CHROME_CLASS, STATEMENT_NODE_CLASS, StatementNode } from "./node";
 
-// A typed command is the discoverable, first-class way to expose an editor
-// action --- `createCommand<Payload>()` gives us a token any component can
-// `dispatchCommand(TOKEN, payload)` against, decoupling the toolbar button from
-// the node-mutation logic in the plugin.
-export const SEEK_VIDEO_COMMAND: LexicalCommand<string> = createCommand("SEEK_VIDEO_COMMAND");
+// -----------------------------------------------------------------------------
+// StatementExtension --- the statement schema, and the editor's playhead.
+//
+// It contributes StatementNode to the editor. Under the old
+// model this lived in a distant `initialConfig.nodes` array, structurally
+// divorced from the plugins that used it; here the behavioural extensions below
+// simply `dependencies: [StatementExtension]`, which both registers the node and
+// documents the coupling. Listing it repeatedly is harmless --- the builder
+// merges the dependency graph, so a node is registered once no matter how many
+// extensions ask for it.
+//
+// It also owns the Playhead this editor is coupled to. The route creates one per
+// interview and supplies it with `configExtension`; `build` vends it back out, so
+// anything in this editor resolves it with
+// `$getExtensionDependency(StatementExtension).output`. That lookup is what lets
+// StatementNode.insertNewAfter reach a per-editor playhead: Lexical constructs and
+// calls nodes itself, so there is no call site to inject one through.
+//
+// The `null` default exists only so `config` type-checks. An editor that never
+// configured a playhead has nowhere to send a seek, and `build` throws rather than
+// quietly running against a detached instance.
+// -----------------------------------------------------------------------------
+export interface StatementConfig {
+    playhead: Playhead | null;
+}
 
+export const StatementExtension = /* @__PURE__ */ defineExtension({
+    config: /* @__PURE__ */ safeCast<StatementConfig>({
+        playhead: null,
+    }),
+    name: "@auohp/statement",
+    nodes: () => [StatementNode],
+
+    build: (_editor, config): Playhead => {
+        if (!config.playhead) {
+            throw new Error("StatementExtension: no playhead configured; supply one with configExtension");
+        }
+        return config.playhead;
+    },
+});
+// -----------------------------------------------------------------------------
 // StatementSeekExtension --- click-to-seek, driven by the chrome.
 //
 // This used to hang off SELECTION_CHANGE_COMMAND, which made *any* arrival in a
@@ -41,8 +80,9 @@ export const SEEK_VIDEO_COMMAND: LexicalCommand<string> = createCommand("SEEK_VI
 // the node and reads its CURRENT startTime, so a seek is always to where the
 // statement is now, not to whatever the chrome happened to render when it was
 // built.
+// -----------------------------------------------------------------------------
 export const StatementSeekExtension = /* @__PURE__ */ defineExtension({
-    dependencies: [],
+    dependencies: [StatementExtension],
     name: "@auohp/statement-seek",
 
     register (editor) {
@@ -106,7 +146,7 @@ export const StatementSeekExtension = /* @__PURE__ */ defineExtension({
 
                     // Seek to the START of the caption window: the user is asking to
                     // hear this statement, which means from its beginning.
-                    playhead.seek.value = startTime;
+                    $getExtensionDependency(StatementExtension).output.seek.value = startTime;
                     console.debug(`Seeking to statement ${ uid } (${ startTime })`);
 
                     // `true` --- this command is fully handled here, and nothing
@@ -122,4 +162,51 @@ export const StatementSeekExtension = /* @__PURE__ */ defineExtension({
             }),
         );
     },
+});
+
+export const UpdateTimestampExtension = /* @__PURE__ */ defineExtension({
+    dependencies: [StatementExtension],
+    name: "@auohp/update-timestamp",
+    register: editor =>
+        editor.registerCommand(
+            KEY_ENTER_COMMAND,
+            event => {
+                console.log("UpdateTimestampExtension: KEY_ENTER_COMMAND fired");
+                const selection = $getSelection();
+
+                if (!$isRangeSelection(selection) || !selection.isCollapsed()) {
+                    return false;
+                }
+
+                const anchor = selection.anchor.getNode();
+                const statement = $isStatementNode(anchor)
+                    ? anchor!
+                    : $findMatchingParent(anchor, $isStatementNode)!;
+
+                const { timestamp } = $getExtensionDependency(StatementExtension).output;
+
+                if (selection.anchor.offset === 0) {
+                    console.log("UpdateTimestampExtension: caret at start of statement, updating startTime");
+                    editor.update(() => {
+                        const currentTime = timestamp.peek();
+                        statement.setStartTime(currentTime);
+                    });
+                    event?.preventDefault();
+                    return true;
+                }
+
+                if (selection.anchor.offset === anchor.getTextContentSize()) {
+                    console.log("UpdateTimestampExtension: caret at end of statement, updating endTime");
+                    editor.update(() => {
+                        const currentTime = timestamp.peek();
+                        statement.setEndTime(currentTime);
+                    });
+                    event?.preventDefault();
+                    return true;
+                }
+
+                return false;
+            },
+            COMMAND_PRIORITY_LOW,
+        ),
 });
