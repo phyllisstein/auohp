@@ -21,9 +21,3 @@ export const Playhead = createModel(() => {
 
 
 export const playhead = new Playhead();
-
-// Factory function for creating new instances when needed
-export function createPlayhead() {
-    return new Playhead();
-}
-

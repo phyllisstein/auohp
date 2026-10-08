@@ -5,7 +5,7 @@ import { useMutation, useReadQuery } from "@apollo/client/react";
 import { useSignalEffect } from "@preact/signals-react";
 import styled, { createGlobalStyle } from "styled-components";
 import { playhead } from "~/playhead";
-import { defineAuohpEditorExtension } from "~/lib/editor";
+import { defineAuohpEditorExtension } from "~/lexical/extensions";
 import { TRANSCRIPT_QUERY, EDIT_STATEMENT_MUTATION, CREATE_STATEMENT_MUTATION, DESTROY_STATEMENT_MUTATION } from "~/queries";
 import { style } from "@react-spectrum/s2/style" with { type: "macro" };
 import { gql } from "@apollo/client";
