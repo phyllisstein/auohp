@@ -1,3 +1,3 @@
-export { SearchBar, SearchResultPortals } from "./components";
+export { SearchBar } from "./components";
 export { SearchInterviewExtension } from "./extension";
 export { SearchResultStyles } from "./node";

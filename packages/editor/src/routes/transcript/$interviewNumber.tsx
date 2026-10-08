@@ -1,10 +1,10 @@
 import { ClientOnly, createFileRoute } from "@tanstack/react-router";
-import { useMemo, useRef, type RefObject } from "react";
+import { useEffect, useMemo, useRef, type RefObject } from "react";
 import { LexicalExtensionComposer } from "@lexical/react/LexicalExtensionComposer";
 import { useMutation, useReadQuery } from "@apollo/client/react";
-import { useSignalEffect } from "@preact/signals-react";
+import { effect } from "@preact/signals-react";
 import styled, { createGlobalStyle } from "styled-components";
-import { playhead } from "~/playhead";
+import { createPlayhead, type Playhead } from "~/playhead";
 import { defineAuohpEditorExtension } from "~/lib/editor";
 import { TRANSCRIPT_QUERY, EDIT_STATEMENT_MUTATION, CREATE_STATEMENT_MUTATION, DESTROY_STATEMENT_MUTATION } from "~/queries";
 import { style } from "@react-spectrum/s2/style" with { type: "macro" };
@@ -29,12 +29,20 @@ export const HEADER_QUERY: TypedDocumentNode<HeaderQuery, HeaderQueryVariables> 
     }
 `;
 
-// Drives the <video> from the shared playhead. Identical machinery to the Slate
-// route --- kept here rather than in an extension because it needs the video ref.
-function useVideoSync (player: RefObject<HTMLVideoElement | null>) {
-    useSignalEffect(() => {
-        !!player.current && (player.current.currentTime = playhead.seek.value);
-    });
+// Drives the <video> from this interview's playhead --- kept here rather than in
+// an extension because it needs the video ref.
+//
+// Not `useSignalEffect`: it creates its effect once, on mount, and re-tracks
+// dependencies only when a signal it already read changes. The route component
+// survives navigation between interviews, so after the first switch it would
+// keep watching the previous interview's `seek` and click-to-seek would go
+// silent. Keying a plain `useEffect` on the playhead disposes the old effect
+// (`effect` returns its own disposer) and subscribes the new one.
+function useVideoSync (player: RefObject<HTMLVideoElement | null>, playhead: Playhead) {
+    useEffect(() =>
+        effect(() => {
+            !!player.current && (player.current.currentTime = playhead.seek.value);
+        }), [player, playhead]);
 }
 
 
@@ -157,10 +165,16 @@ function InterviewEditorPage () {
         fetchPolicy: "no-cache",
     });
 
-    const player = useRef<HTMLVideoElement>(null);
-    useVideoSync(player);
-
     const interviewUid = transcriptData?.interview?.uid ?? "";
+
+    // One playhead per interview, shared by the <video> and the editor. Keyed on
+    // the same dependency as the editor below, so a new interview gets a fresh
+    // playhead alongside its fresh editor and neither outlives the other.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const playhead = useMemo(() => createPlayhead(), [interviewUid]);
+
+    const player = useRef<HTMLVideoElement>(null);
+    useVideoSync(player, playhead);
     const { statements } = transcriptData?.interview.transcript ?? { statements: [] };
 
     // The whole editor is now one value. Everything the old route spelled out in
@@ -193,6 +207,7 @@ function InterviewEditorPage () {
             destroyStatement,
             createStatement,
             interviewUid,
+            playhead,
             statements,
         }), [interviewUid]);
 

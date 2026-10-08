@@ -5,26 +5,53 @@ import {
     COMMAND_PRIORITY_LOW,
     KEY_ENTER_COMMAND,
     defineExtension,
+    safeCast,
 } from "lexical";
+import { $getExtensionDependency } from "@lexical/extension";
 import { $findMatchingParent, mergeRegister } from "@lexical/utils";
-import { playhead } from "~/playhead";
+import { type Playhead } from "~/playhead";
 import { SEEK_VIDEO_COMMAND } from "./commands";
 import { $isStatementNode, STATEMENT_CHROME_CLASS, STATEMENT_NODE_CLASS, StatementNode } from "./node";
 
 // -----------------------------------------------------------------------------
-// StatementExtension --- pure schema.
+// StatementExtension --- the statement schema, and the editor's playhead.
 //
-// It contributes StatementNode to the editor and nothing else. Under the old
+// It contributes StatementNode to the editor. Under the old
 // model this lived in a distant `initialConfig.nodes` array, structurally
 // divorced from the plugins that used it; here the behavioural extensions below
 // simply `dependencies: [StatementExtension]`, which both registers the node and
 // documents the coupling. Listing it repeatedly is harmless --- the builder
 // merges the dependency graph, so a node is registered once no matter how many
 // extensions ask for it.
+//
+// It also owns the Playhead this editor is coupled to. The route creates one per
+// interview and supplies it with `configExtension`; `build` vends it back out, so
+// anything in this editor resolves it with
+// `$getExtensionDependency(StatementExtension).output`. That lookup is what lets
+// StatementNode.insertNewAfter reach a per-editor playhead: Lexical constructs and
+// calls nodes itself, so there is no call site to inject one through.
+//
+// The `null` default exists only so `config` type-checks. An editor that never
+// configured a playhead has nowhere to send a seek, and `build` throws rather than
+// quietly running against a detached instance.
 // -----------------------------------------------------------------------------
+export interface StatementConfig {
+    playhead: Playhead | null;
+}
+
 export const StatementExtension = /* @__PURE__ */ defineExtension({
+    config: /* @__PURE__ */ safeCast<StatementConfig>({
+        playhead: null,
+    }),
     name: "@auohp/statement",
     nodes: () => [StatementNode],
+
+    build: (_editor, config): Playhead => {
+        if (!config.playhead) {
+            throw new Error("StatementExtension: no playhead configured; supply one with configExtension");
+        }
+        return config.playhead;
+    },
 });
 // -----------------------------------------------------------------------------
 // StatementSeekExtension --- click-to-seek, driven by the chrome.
@@ -119,7 +146,7 @@ export const StatementSeekExtension = /* @__PURE__ */ defineExtension({
 
                     // Seek to the START of the caption window: the user is asking to
                     // hear this statement, which means from its beginning.
-                    playhead.seek.value = startTime;
+                    $getExtensionDependency(StatementExtension).output.seek.value = startTime;
                     console.debug(`Seeking to statement ${ uid } (${ startTime })`);
 
                     // `true` --- this command is fully handled here, and nothing
@@ -156,10 +183,12 @@ export const UpdateTimestampExtension = /* @__PURE__ */ defineExtension({
                     ? anchor!
                     : $findMatchingParent(anchor, $isStatementNode)!;
 
+                const { timestamp } = $getExtensionDependency(StatementExtension).output;
+
                 if (selection.anchor.offset === 0) {
                     console.log("UpdateTimestampExtension: caret at start of statement, updating startTime");
                     editor.update(() => {
-                        const currentTime = playhead.timestamp.peek();
+                        const currentTime = timestamp.peek();
                         statement.setStartTime(currentTime);
                     });
                     event?.preventDefault();
@@ -169,7 +198,7 @@ export const UpdateTimestampExtension = /* @__PURE__ */ defineExtension({
                 if (selection.anchor.offset === anchor.getTextContentSize()) {
                     console.log("UpdateTimestampExtension: caret at end of statement, updating endTime");
                     editor.update(() => {
-                        const currentTime = playhead.timestamp.peek();
+                        const currentTime = timestamp.peek();
                         statement.setEndTime(currentTime);
                     });
                     event?.preventDefault();

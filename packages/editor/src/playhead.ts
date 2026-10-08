@@ -1,23 +1,30 @@
 import { createModel, signal } from "@preact/signals-react";
 
 
-// The Playhead is a tiny reactive model shared by BOTH caption-editor routes ---
-// the incumbent Slate route and the Lexical spike --- so the two implementations
-// are measured against identical video-sync machinery. Lifting it here keeps the
-// comparison honest: neither editor gets a private, subtly-different playhead.
+// The Playhead couples one <video> to one editor: the route that owns the video
+// creates an instance per interview and hands it to the editor as
+// StatementExtension config.
+//
+// There is deliberately no module-level instance. A shared singleton was an
+// artifact of measuring the Slate and Lexical routes against identical
+// video-sync machinery; with one video per interview route, ambient shared
+// state only lets two editors seek each other's video.
 //
 // `createModel` mints a class whose instances own the signals returned by the
-// factory. `new Playhead()` therefore hands each caller its own {seek, timestamp}
-// pair; below we export a single module-scoped singleton that both routes import.
+// factory. The class stays private to this module: `createPlayhead()` is the only
+// way to get one, which matches editor-svelte's `playhead.svelte.ts`.
 //
 //   - seek       --- write target: "move the video to this time" (click-to-seek).
 //   - timestamp  --- read source: the video's current playback position.
-export const Playhead = createModel(() => {
+const PlayheadModel = createModel(() => {
     const seek = signal<number>(0);
     const timestamp = signal<number>(0);
 
     return { seek, timestamp };
 });
 
+export type Playhead = InstanceType<typeof PlayheadModel>;
 
-export const playhead = new Playhead();
+export function createPlayhead (): Playhead {
+    return new PlayheadModel();
+}

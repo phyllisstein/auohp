@@ -9,8 +9,9 @@ import {
     type SerializedElementNode,
     type Spread,
 } from "lexical";
-import { playhead } from "~/playhead";
+import { $getExtensionDependency } from "@lexical/extension";
 import { SYNTHETIC_UID_MARKER } from "../shared";
+import { StatementExtension } from "./extension";
 import { formatTimestamp } from "./format-timestamp";
 
 // -----------------------------------------------------------------------------
@@ -118,7 +119,11 @@ export class StatementNode extends ElementNode {
     insertNewAfter (selection: RangeSelection, restoreSelection = true): ElementNode | null {
         const newUid = `${ this.getUid() }${ SYNTHETIC_UID_MARKER }${ Date.now() }`;
         // FIXME: New node's startTime, old node's endTime = current position of the playhead
-        const currentTime = playhead.timestamp.peek();
+        // Lexical constructs and calls nodes itself, so there is no call site to
+        // inject a Playhead through. This resolves the current editor's
+        // StatementExtension instead --- per-editor by construction, and it throws
+        // if the extension is missing rather than defaulting silently.
+        const currentTime = $getExtensionDependency(StatementExtension).output.timestamp.peek();
         const continuation = $createStatementNode(newUid, currentTime, this.getEndTime());
         this.setEndTime(currentTime);
 

@@ -4,9 +4,10 @@ import { HistoryExtension } from "@lexical/history";
 import { ReactExtension, type EditorChildrenComponentProps } from "@lexical/react/ReactExtension";
 import { useExtensionComponent } from "@lexical/react/useExtensionComponent";
 import { RichTextExtension } from "@lexical/rich-text";
+import { type Playhead } from "~/playhead";
 import { LatencyExtension } from "./latency";
 import { PersistenceExtension } from "./persistence";
-import { SearchBar, SearchInterviewExtension, SearchResultPortals } from "./search-interview";
+import { SearchBar, SearchInterviewExtension } from "./search-interview";
 import { type CreateStatementFn, type DestroyStatementFn, type EditStatementFn, type TranscriptStatements } from "./shared";
 import {
     $createStatementNode,
@@ -57,26 +58,10 @@ export interface AuohpEditorOptions {
     createStatement: CreateStatementFn;
     destroyStatement: DestroyStatementFn;
     interviewUid: string;
+    playhead: Playhead;
 }
 
-export function defineSearchResultsExtension () {
-    return defineExtension({
-        dependencies: [
-            SearchInterviewExtension,
-            configExtension(ReactExtension, { decorators: [SearchResultPortals] }),
-            HistoryExtension,
-            RichTextExtension,
-            PersistenceExtension,
-        ],
-        name: "@auohp/search-results",
-        namespace: "auohp-lexical-spike",
-        onError: (error: Error) => {
-            throw error;
-        },
-    });
-}
-
-export function defineAuohpEditorExtension ({ statements, editStatement, createStatement, destroyStatement, interviewUid }: AuohpEditorOptions) {
+export function defineAuohpEditorExtension ({ statements, editStatement, createStatement, destroyStatement, interviewUid, playhead }: AuohpEditorOptions) {
     return defineExtension({
         dependencies: [
             configExtension(PersistenceExtension, { editStatement, createStatement, destroyStatement, interviewUid }),
@@ -85,7 +70,7 @@ export function defineAuohpEditorExtension ({ statements, editStatement, createS
             HistoryExtension,
             LatencyExtension,
             RichTextExtension,
-            StatementExtension,
+            configExtension(StatementExtension, { playhead }),
             StatementSeekExtension,
             TagChipExtension,
             TagSplitBoundaryExtension,
