@@ -15,7 +15,6 @@ import { $unwrapMarkNode, $wrapSelectionInMarkNode } from "@lexical/mark";
 import { ReactExtension } from "@lexical/react/ReactExtension";
 import { $dfs, $findMatchingParent, mergeRegister } from "@lexical/utils";
 import { $isStatementNode, StatementExtension, type StatementNode } from "../statement";
-import { TagChipPortals } from "../tag-chip";
 import { type SearchStatementsData } from "../shared";
 import { INSERT_SEARCH_RESULT_COMMAND } from "./commands";
 import { SearchDriver, SearchResultPortals } from "./components";
@@ -455,7 +454,7 @@ export const SearchInterviewExtension = /* @__PURE__ */ defineExtension({
     nodes: () => [SearchResultNode],
     dependencies: [
         StatementExtension,
-        configExtension(ReactExtension, { decorators: [TagChipPortals, SearchResultPortals, SearchDriver] }),
+        configExtension(ReactExtension, { decorators: [SearchResultPortals, SearchDriver] }),
     ],
     name: "@auohp/search-interview",
 

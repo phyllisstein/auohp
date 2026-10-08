@@ -43,13 +43,14 @@ const SearchResultContainer = styled.span`
     color: #0B0B0B;
 `;
 
-// The chip's React face. It is not rendered in place by Lexical --- MarkNode is
-// an ElementNode, so there is no `decorate()` hook --- it is portalled into the
-// unmanaged badge span that TagChipNode.createDOM builds (see TagChipPortals).
+// The search result's React face. It is not rendered in place by Lexical ---
+// MarkNode is an ElementNode, so there is no `decorate()` hook --- it is
+// portalled into the unmanaged badge span that SearchResultNode.createDOM builds
+// (see SearchResultPortals).
 //
-// It receives only a NodeKey. Everything else is read back out of EditorState
-// via `editor.read()` / `editor.update()`, which keeps the component a pure
-// function of editor state rather than a second copy of it.
+// It receives only a NodeKey and whether it is the focused result, and uses the
+// latter solely to scroll itself into view. The highlight is painted by the mark
+// itself (see SearchResultStyles), not by this component.
 export function SearchResult ({ nodeKey, focused }: { nodeKey: NodeKey; focused: boolean }): JSX.Element {
     const container = useRef<HTMLSpanElement>(null);
 
