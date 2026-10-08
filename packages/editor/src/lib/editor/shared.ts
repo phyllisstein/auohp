@@ -9,20 +9,6 @@ import type { EditStatementMutation, EditStatementMutationVariables, TranscriptQ
 // BACKEND GAP: a `splitStatement(uid, atOffset)` mutation would let these persist.
 export const SYNTHETIC_UID_MARKER = "::split-";
 
-
-export const formatTimestamp = (timestamp: number) =>
-    Temporal.Duration.from({ seconds: Math.round(timestamp) })
-        .round({
-            largestUnit: "hours",
-            smallestUnit: "seconds",
-        })
-        .toLocaleString("en-US", {
-            style: "digital",
-            hoursDisplay: "auto",
-            hours: "numeric",
-        });
-
-
 // ---- GraphQL result-shape aliases (derived from the reused operations) --------
 export type TranscriptStatements = TranscriptQuery["interview"]["transcript"]["statements"];
 export type EditStatementFn = ReturnType<typeof useMutation<EditStatementMutation, EditStatementMutationVariables>>[0];

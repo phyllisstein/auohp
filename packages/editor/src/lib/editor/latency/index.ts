@@ -1,0 +1,1 @@
+export { LatencyExtension } from "./extension";

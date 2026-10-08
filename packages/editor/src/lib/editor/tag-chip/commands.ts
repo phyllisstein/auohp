@@ -6,7 +6,3 @@ import { createCommand, type LexicalCommand } from "lexical";
 // `dispatchCommand(TOKEN, payload)` against, decoupling the toolbar button from
 // the node-mutation logic in the plugin.
 export const INSERT_TAG_CHIP_COMMAND: LexicalCommand<string> = createCommand("INSERT_TAG_CHIP_COMMAND");
-
-export const INSERT_SEARCH_RESULT_COMMAND: LexicalCommand<string> = createCommand("INSERT_SEARCH_RESULT_COMMAND");
-
-export const SEEK_VIDEO_COMMAND: LexicalCommand<string> = createCommand("SEEK_VIDEO_COMMAND");

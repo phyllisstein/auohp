@@ -1,0 +1,1 @@
+export { PersistenceExtension } from "./extension";
