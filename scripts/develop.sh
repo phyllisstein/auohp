@@ -177,7 +177,7 @@ yarn_install() {
 
 
 [[ -e "/run/secrets/environment" ]] || { echo "Missing secret environment file." && exit 0; }
-source /run/secrets/environment && export NEO4J_PASSWORD NEO4J_USERNAME NEO4J_URI NEO4J_DATABASE HF_TOKEN
+source /run/secrets/environment && export NEO4J_PASSWORD NEO4J_USERNAME NEO4J_URI NEO4J_DATABASE HF_TOKEN HOST_TAG
 
 # Tracing is opt-in, and deliberately switched on only *after* the secret is
 # sourced. `set -x` traces the assignments inside a sourced file, so enabling it
