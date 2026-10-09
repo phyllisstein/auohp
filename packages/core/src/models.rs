@@ -1,9 +1,13 @@
 use std::path::PathBuf;
 
-/// Where `scripts/download-models.sh` installs models when `$MODELS_DIR` is
+/// Where `scripts/download-models.py` installs models when `$MODELS_DIR` is
 /// unset. Each module owns the *filename* of the model it drives
 /// ([`whisper::MODEL_FILE`], [`segmentation::MODEL_FILE`], and so on); this
 /// only resolves the directory they all sit in.
+// FIXME: `env!` expands at compile time, so this is the build machine's
+// source tree, contrary to what `models_dir()` claims below; a relocated
+// binary looks for models where it was built. Settle on a real default and
+// change `scripts/download-models.py` to match.
 fn default_models_dir() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("models")
 }

@@ -65,7 +65,7 @@ pub fn run_with(input_path: &Path, cfg: &TranscribeConfig) -> Result<Transcripti
     // the hardware that matters. Validate the model *path* early if that is the
     // goal; do not load the weights early.
     //
-    // All models live under $MODELS_DIR, pre-downloaded by download-models.sh.
+    // All models live under $MODELS_DIR, pre-downloaded by download-models.py.
     let models_dir = models::models_dir();
 
     let (whisper_segments, diarized) = std::thread::scope(|s| {

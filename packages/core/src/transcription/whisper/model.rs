@@ -8,7 +8,7 @@ use whisper_rs::{
 };
 
 /// Filename of the Whisper ggml model under `$MODELS_DIR`, as
-/// `scripts/download-models.sh` writes it.
+/// `scripts/download-models.py` writes it.
 pub const MODEL_FILE: &str = "ggml-large-v3.bin";
 
 /// Dedicated memory arena size allocated for Dynamic Time Warping (128 MB).
@@ -25,7 +25,7 @@ pub struct WhisperModel {
 impl WhisperModel {
     /// Load the Whisper ggml model from `model_path`.
     ///
-    /// Both files must already exist---use `scripts/download-models.sh` to
+    /// Both files must already exist---use `scripts/download-models.py` to
     /// fetch them. The pipeline resolves paths from `$MODELS_DIR` before
     /// calling this function. `vad_model_path` is stored in the returned
     /// `WhisperModel` and referenced on every `transcribe` call.

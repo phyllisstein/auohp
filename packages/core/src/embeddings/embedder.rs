@@ -3,7 +3,7 @@
 //! Wraps Qwen3-Embedding-0.6B using fastembed's `UserDefinedEmbeddingModel`
 //! API, which loads the ONNX weights and tokenizer files directly from disk
 //! rather than relying on fastembed's HuggingFace Hub auto-download.  The
-//! required files are pre-downloaded by `scripts/download-models.sh` into
+//! required files are pre-downloaded by `scripts/download-models.py` into
 //! `$MODELS_DIR` (default `/opt/auohp/models`), so no network access occurs at
 //! inference time.
 //!

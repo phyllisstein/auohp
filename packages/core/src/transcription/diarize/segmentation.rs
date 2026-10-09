@@ -36,7 +36,7 @@
 //! `pyannote-segmentation-3.0.onnx`, the ONNX export published alongside the
 //! `pyannote-rs` v0.1.0 release. It classifies non-overlapping 270-sample
 //! frames (~16.9 ms at 16 kHz) within a 10 s sliding window as silence (class
-//! 0) or speech (any other class). Downloaded by `scripts/download-models.sh`.
+//! 0) or speech (any other class). Downloaded by `scripts/download-models.py`.
 
 use std::path::Path;
 
@@ -45,7 +45,7 @@ use ort::session::builder::GraphOptimizationLevel;
 use ort::session::Session;
 
 /// Filename of the segmentation model under `$MODELS_DIR`, as
-/// `scripts/download-models.sh` writes it.
+/// `scripts/download-models.py` writes it.
 pub const MODEL_FILE: &str = "pyannote-segmentation-3.0.onnx";
 
 /// Number of samples between consecutive output frames. Empirically tuned to

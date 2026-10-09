@@ -26,7 +26,7 @@ anyhow = "1"
 thiserror = "2"
 
 # Transcription --- whisper-rs wraps whisper.cpp (C++ FFI) for Whisper ASR.
-# Models are pre-downloaded by scripts/download-models.sh into $MODELS_DIR.
+# Models are pre-downloaded by scripts/download-models.py into $MODELS_DIR.
 # symphonia decodes audio from MP4/WAV/etc. containers.
 # rubato resamples to 16 kHz mono as required by Whisper.
 #

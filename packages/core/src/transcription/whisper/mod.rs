@@ -10,7 +10,7 @@
 //!
 //! ## Model management
 //!
-//! Both ggml files are downloaded once by `scripts/download-models.sh` into
+//! Both ggml files are downloaded once by `scripts/download-models.py` into
 //! `$MODELS_DIR` (default `/opt/auohp/models`). The pipeline resolves paths
 //! and passes them here---no network I/O at inference time.
 //!

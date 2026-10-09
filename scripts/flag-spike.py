@@ -7,7 +7,7 @@ replacements, or assert anything. Flag only --- machine points, human types.
 
 Eyeball the flags against the real errors found in the gold comparison.
 
-  python3 flag_spike.py [interview_number]   # default 027 (a CLEAN transcript)
+  python3 flag-spike.py [interview_number]   # default 027 (a CLEAN transcript)
 """
 
 import re
@@ -17,7 +17,7 @@ import json
 from pathlib import Path
 from dataclasses import dataclass, asdict
 
-ASSETS = Path(__file__).parent.parent / "assets"
+ASSETS = Path(__file__).resolve().parent.parent / "assets"
 NUM = sys.argv[1] if len(sys.argv) > 1 else "027"  # use a CLEAN transcript only
 
 

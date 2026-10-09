@@ -143,7 +143,7 @@ restart_api() {
     stop_service api
 
     echo "Starting API development server..."
-    ./packages/core/scripts/download-models.sh
+    ./scripts/download-models.py
     start_service api cargo run --package auohp-api --bin auohp-api
 }
 

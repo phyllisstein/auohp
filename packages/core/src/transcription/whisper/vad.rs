@@ -24,7 +24,7 @@ const SAMPLE_RATE: f64 = 16_000.0;
 pub const VAD_GLUE_SECONDS: f64 = 0.1;
 
 /// Filename of the silero VAD ggml model under `$MODELS_DIR`, as
-/// `scripts/download-models.sh` writes it.
+/// `scripts/download-models.py` writes it.
 pub const VAD_MODEL_FILE: &str = "ggml-silero-v6.2.0.bin";
 
 /// One kept speech region, in both timelines.

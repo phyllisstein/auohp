@@ -8,7 +8,7 @@ use super::segmentation::Segmenter;
 use super::SegmentEmbedding;
 
 /// Filename of the embedding model under `$MODELS_DIR`, as
-/// `scripts/download-models.sh` writes it.
+/// `scripts/download-models.py` writes it.
 pub const EMBEDDING_MODEL_FILE: &str = "wespeaker_en_voxceleb_ECAPA1024.onnx";
 
 /// Minimum samples wespeaker's fbank frontend needs. `knf-rs` uses a 25 ms

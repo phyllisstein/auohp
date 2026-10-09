@@ -9,7 +9,7 @@ labels, normalise both sides, and report an approximate WER plus the genuine
 Bulk text stays in Python; only the summary table is printed. Full per-interview
 lexical diffs are written to `NNN.lexical-diffs.txt` for eyeballing.
 
-Run:  python3 compare_all.py [assets_dir]
+Run:  python3 compare-all.py [assets_dir]
 """
 
 import re
@@ -19,7 +19,7 @@ import subprocess
 from pathlib import Path
 
 ASSETS = (
-    Path(sys.argv[1]) if len(sys.argv) > 1 else Path(__file__).parent.parent / "assets"
+    Path(sys.argv[1]) if len(sys.argv) > 1 else Path(__file__).resolve().parent.parent / "assets"
 )
 
 # Speaker labels: ALL-CAPS full names ("SARAH SCHULMAN:") or initials

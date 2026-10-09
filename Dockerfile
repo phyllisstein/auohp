@@ -18,8 +18,7 @@ ENV CARGO_HOME=/usr/local/cargo \
     PATH="/app/node_modules/.bin:/usr/share/nodejs/yarn/bin:/usr/local/cargo/bin:$PATH" \
     PROJECT_PATH=/app \
     RUSTFLAGS="-C target-feature=+fp16" \
-    RUSTUP_HOME=/usr/local/rustup \
-    RUSTUP_TOOLCHAIN=nightly-2026-09-22
+    RUSTUP_HOME=/usr/local/rustup
 
 RUN mkdir -p ${CARGO_TARGET_DIR} ${CARGO_HOME} ${RUSTUP_HOME} /usr/local/var/run/watchman \
     && chmod a+w ${CARGO_TARGET_DIR} ${CARGO_HOME} ${RUSTUP_HOME} /usr/local/var/run/watchman \
@@ -44,12 +43,15 @@ RUN mkdir -p ${CARGO_TARGET_DIR} ${CARGO_HOME} ${RUSTUP_HOME} /usr/local/var/run
     && DEBIAN_FRONTEND=noninteractive apt-get install -y -o Dpkg::Options::="--force-confold" -o Dpkg::Options::="--force-confdef" --allow-downgrades --allow-remove-essential --allow-change-held-packages \
         nodejs \
         yarn \
-    && curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- --profile default --default-toolchain ${RUSTUP_TOOLCHAIN} -y \
-    && curl -Ls https://astral.sh/uv/install.sh | sh \
+    && curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- --profile default --default-toolchain none -y \
+    && curl -Ls https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local/bin UV_NO_MODIFY_PATH=1 sh \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 WORKDIR /app
+
+COPY rust-toolchain.toml ./
+RUN rustup toolchain install
 
 COPY --parents ./scripts ./
 
