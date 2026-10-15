@@ -60,9 +60,7 @@ services:
       NEO4J_server_jvm_additional: -Dapoc.ttl.enabled=true --add-modules=jdk.incubator.vector
       NEO4J_dbms_security_auth__minimum__password__length: "1"
       NEO4J_dbms_security_procedures_unrestricted: apoc.*, genai.*
-      NEO4J_server_memory_heap_initial__size: 2G
       NEO4J_server_memory_heap_max__size: 2G
-      NEO4J_server_memory_pagecache_size: 1G
       HTTPS_METHOD: nohttps
       VIRTUAL_HOST_MULTIPORTS: |-
         bolt${HOST_TAG-}.auohp.localhost:
@@ -74,6 +72,9 @@ services:
     expose:
       - "7474"
       - "7687"
+    ports:
+      - "7474:7474"
+      - "7687:7687"
     volumes:
       - type: volume
         source: graph_data
