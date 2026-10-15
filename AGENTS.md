@@ -15,9 +15,13 @@ graph database, then exposes them via a caption editor and search interface.
 ## Tooling
 - You are operating in an environment where ast-grep is installed. For any code
   search that requires understanding of syntax or code structure, you should
-  default to using `ast-grep --lang [language] -p '<pattern>'`. Adjust the `--lang`
-  flag as needed for the specific programming language. Avoid using text-only
-  search tools unless a plain-text search is explicitly requested.
+  default to using `ast-grep --lang [language] -p '<pattern>'`. Adjust the
+  `--lang` flag as needed for the specific programming language. Avoid using
+  text-only search tools unless a plain-text search is explicitly requested.
+- Use the ast-grep skill to avoid reading complete source files into context. It
+  is declared as a shared plugin in `.claude/settings.json` and installs on
+  first trust; the skill shells out to the `ast-grep` binary, so run
+  `brew install ast-grep` (provides `ast-grep` and `sg`) once per machine.
 
 
 ## Collaboration Style
