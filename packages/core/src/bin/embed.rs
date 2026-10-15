@@ -35,7 +35,7 @@ fn main() -> Result<()> {
 
     let cli = Cli::parse();
 
-    let mut embedder = embeddings::Embedder::new()?;
+    let mut embedder = Embedder::new()?;
 
     for query in cli.queries {
         let vector = embedder.embed(std::slice::from_ref(&query))?;

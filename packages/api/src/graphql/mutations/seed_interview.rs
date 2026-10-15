@@ -87,12 +87,6 @@ pub enum SpeakerRole {
     Interviewee,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct Speaker {
-    pub label: String,
-    pub role: Option<SpeakerRole>,
-}
-
 /// A single transcript segment from the transcription pipeline.
 #[derive(InputObject, Deserialize)]
 pub struct TranscriptSegmentInput {

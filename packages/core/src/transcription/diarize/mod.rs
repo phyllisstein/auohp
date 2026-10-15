@@ -28,13 +28,13 @@ mod cluster;
 mod embedding;
 pub mod segmentation;
 
-pub use embedding::EMBEDDING_MODEL_FILE;
 pub use cluster::{cluster_embeddings, cosine_distance};
-pub use embedding::{extract_segment_embeddings, EmbeddingExtractor};
+pub use embedding::EMBEDDING_MODEL_FILE;
+pub use embedding::extract_segment_embeddings;
 
+use anyhow::Result;
 use std::collections::HashMap;
 use std::path::Path;
-use anyhow::Result;
 
 /// A diarized speech segment: a time range attributed to a speaker.
 #[derive(Debug, Clone, serde::Serialize)]
@@ -99,11 +99,7 @@ pub fn diarize(
 /// many of them. Taking the longest individual overlapping segment would let
 /// one uninterrupted eight-second answer outvote twenty short runs from the
 /// speaker who actually holds most of the span.
-pub fn dominant_speaker(
-    start: f64,
-    end: f64,
-    diarized: &[DiarizedSegment],
-) -> Option<&str> {
+pub fn dominant_speaker(start: f64, end: f64, diarized: &[DiarizedSegment]) -> Option<&str> {
     let mut totals: HashMap<&str, f64> = HashMap::new();
     for d in diarized {
         let overlap = (end.min(d.end) - start.max(d.start)).max(0.0);
