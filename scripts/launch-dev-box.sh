@@ -36,7 +36,7 @@ set -euo pipefail
 : "${AWS_DISK_SIZE_GB:=50}"
 : "${AWS_SSH_USER:=ubuntu}"
 : "${AWS_SSH_KEY_PATH:=}"
-: "${AWS_INSTANCE_PROFILE_NAME:=}"
+: "${AWS_INSTANCE_PROFILE_NAME:=auohp-dev-box}"
 : "${AUOHP_REPO_URL:=https://github.com/phyllisstein/auohp.git}"
 : "${AUOHP_REPO_DIR:=/home/ubuntu/auohp}"
 
@@ -55,6 +55,7 @@ Set at least:
 Optional but usually useful:
     AWS_PROFILE=default
     AWS_SSH_KEY_PATH=~/.ssh/your-key.pem
+    AWS_INSTANCE_PROFILE_NAME=auohp-dev-box
 EOF
     exit 1
 fi
@@ -164,13 +165,6 @@ sudo apt-get install -y -o Dpkg::Options::="--force-confold" -o Dpkg::Options::=
     pciutils \
     pkg-config \
     wget
-
-sudo mkdir -p /root/.aws
-sudo tee -a /root/.aws/credentials >/dev/null <<AWSCRED
-    [default]
-    aws_access_key_id = $AWS_ACCESS_KEY_ID
-    aws_secret_access_key = $AWS_SECRET_ACCESS_KEY
-AWSCRED
 
 echo
 echo "First-stage bootstrap complete."
@@ -284,9 +278,19 @@ EOF
 # sudo apt-get update && sudo apt-get install -y nodejs yarn
 
 # S3 Files
+#
+# Attach an INSTANCE_PROFILE_NAME with an IAM role that grants
+# `ec2.amazonaws.com` permissions to access S3 files
+#
 # curl https://amazon-efs-utils.aws.com/efs-utils-installer.sh | sudo sh -s -- --install
 # sudo mkdir -p /mnt/s3/fs1
 # sudo mount -t s3files fs-<mount id> /mnt/s3/fs1
 # echo "fs-<mount id>  /mnt/s3/fs1  s3files  _netdev,nofail  0  0" | sudo tee -a /etc/fstab
 # sudo systemctl daemon-reload
 # sudo umount /mnt/s3/fs1 && sudo mount /mnt/s3/fs1
+
+# Docker
+#
+# curl -fsSL https://get.docker.com | sudo sh
+# sudo usermod -aG docker $USER
+# logout
