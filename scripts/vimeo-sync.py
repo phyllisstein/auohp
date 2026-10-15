@@ -2,7 +2,7 @@
 """Mirror a Vimeo folder into the transcription inbox, one video at a time.
 
     VIMEO_TOKEN=... scripts/vimeo-sync.py list          # write the canonical manifest, print what's missing
-    VIMEO_TOKEN=... scripts/vimeo-sync.py next DIR      # download the first missing video into DIR, print its path
+    VIMEO_TOKEN=... scripts/vimeo-sync.py next          # download the first missing video into $INBOX, print its path
 
 The folder listing comes from the Vimeo API rather than yt-dlp, which is unreliable
 on semi-visible assets in a shared team library. The token needs the `private` and
@@ -128,7 +128,11 @@ def main():
         todo = [r for r in todo if r["downloadable"]]
         if not todo:
             return
-        print(download(todo[0], Path(sys.argv[2])))
+        print(download(todo[0], INBOX))
+    elif cmd == "all":
+        for r in todo:
+            if r["downloadable"]:
+                print(download(r, INBOX))
     else:
         raise SystemExit(__doc__)
 
