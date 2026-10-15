@@ -47,9 +47,6 @@ services:
       - type: volume
         source: cargo_registry
         target: /usr/local/cargo/registry
-      - type: volume
-        source: auohp_models
-        target: /models
 
   neo4j:
     networks:
@@ -87,7 +84,6 @@ volumes:
   graph_data:
   node_modules:
   rust_target:
-  auohp_models:
 
 secrets:
   environment:

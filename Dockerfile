@@ -13,7 +13,6 @@ COPY --from=watchman /usr/local/lib/* /usr/local/lib/
 
 ENV CARGO_HOME=/usr/local/cargo \
     CARGO_TARGET_DIR=/target \
-    MODELS_DIR=/models \
     NODE_MAJOR=26 \
     PATH="/app/node_modules/.bin:/usr/share/nodejs/yarn/bin:/usr/local/cargo/bin:$PATH" \
     PROJECT_PATH=/app \
