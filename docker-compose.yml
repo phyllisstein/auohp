@@ -7,7 +7,6 @@ services:
       context: .
     secrets:
       - source: environment
-        mode: 0440
     environment:
       RUST_LOG: auohp_api=debug,auohp_core=debug,auohp_desktop=debug
       RUSTFLAGS: "-Ctarget-feature=+fp16 -Awarnings"
@@ -32,6 +31,7 @@ services:
       - "search${HOST_TAG-}.auohp.localhost:host-gateway"
     expose:
       - "3030"
+      - "2020"
       - "4040"
       - "6060"
     volumes:
