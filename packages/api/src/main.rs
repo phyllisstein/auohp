@@ -17,10 +17,7 @@ use axum::{
 use http::StatusCode;
 use std::sync::Arc;
 use tower::ServiceBuilder;
-use tower_http::{
-    cors::{AllowOrigin, CorsLayer},
-    trace::TraceLayer,
-};
+use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tracing::{error, info};
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 

@@ -8,5 +8,30 @@ const SAFE: [char; 59] = [
 /// Generate a 12-character nanoid, omitting Crockford-ambigous characters.
 /// Fixed to 12 characters in length, safe for around a billion IDs.
 pub fn generate() -> String {
-    nanoid::nanoid!(12, &SAFE)
+    loop {
+        let nid = nanoid::nanoid!(12, &SAFE);
+
+        if !nid.starts_with(&['.', '~']) && !nid.ends_with(&['.', '~']) {
+            return nid;
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use asserting::prelude::*;
+
+    #[test]
+    fn inner_punctution_only() {
+        let u = generate();
+        assert_that!(u).does_not_start_with('.');
+        let u = generate();
+        assert_that!(u).does_not_start_with('~');
+
+        let u = generate();
+        assert_that!(u).does_not_end_with('.');
+        let u = generate();
+        assert_that!(u).does_not_end_with('~');
+    }
 }

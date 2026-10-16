@@ -7,7 +7,6 @@ services:
       context: .
     secrets:
       - source: environment
-        mode: 0440
     environment:
       RUST_LOG: auohp_api=debug,auohp_core=debug,auohp_desktop=debug
       RUSTFLAGS: "-Ctarget-feature=+fp16 -Awarnings"
@@ -32,6 +31,7 @@ services:
       - "search${HOST_TAG-}.auohp.localhost:host-gateway"
     expose:
       - "3030"
+      - "2020"
       - "4040"
       - "6060"
     volumes:
@@ -47,9 +47,6 @@ services:
       - type: volume
         source: cargo_registry
         target: /usr/local/cargo/registry
-      - type: volume
-        source: auohp_models
-        target: /models
 
   neo4j:
     networks:
@@ -57,15 +54,13 @@ services:
       - nginx-proxy
     image: neo4j:2026.09
     environment:
-      NEO4J_AUTH: neo4j/auohpauohp
+      NEO4J_AUTH: neo4j/auohp
       NEO4J_PLUGINS: '["apoc", "genai"]'
       NEO4J_server_default__listen__address: "0.0.0.0"
       NEO4J_server_jvm_additional: -Dapoc.ttl.enabled=true --add-modules=jdk.incubator.vector
       NEO4J_dbms_security_auth__minimum__password__length: "1"
       NEO4J_dbms_security_procedures_unrestricted: apoc.*, genai.*
-      NEO4J_server_memory_heap_initial__size: 2G
       NEO4J_server_memory_heap_max__size: 2G
-      NEO4J_server_memory_pagecache_size: 1G
       HTTPS_METHOD: nohttps
       VIRTUAL_HOST_MULTIPORTS: |-
         bolt${HOST_TAG-}.auohp.localhost:
@@ -77,6 +72,9 @@ services:
     expose:
       - "7474"
       - "7687"
+    ports:
+      - "7474:7474"
+      - "7687:7687"
     volumes:
       - type: volume
         source: graph_data
@@ -87,7 +85,6 @@ volumes:
   graph_data:
   node_modules:
   rust_target:
-  auohp_models:
 
 secrets:
   environment:

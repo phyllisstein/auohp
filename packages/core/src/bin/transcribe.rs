@@ -15,16 +15,17 @@ use std::{fs::File, io::Write, path::PathBuf, process::Command};
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 
 #[derive(Parser, Debug)]
+#[clap(name = "transcribe")]
 struct Cli {
-    /// Result output path (defaults to stdout)
+    /// Directory for saving transcription JSON. Default: the input path.
     #[arg(short, long)]
     output: Option<PathBuf>,
 
     /// TranscribeConfig JSON. Defaults to the baseline configuration.
-    #[arg(short, long)]
+    #[arg(long)]
     config: Option<PathBuf>,
 
-    /// File to transcribe
+    /// Source audio/video file, or a directory containing multiple sources
     file: PathBuf,
 }
 
@@ -41,16 +42,7 @@ fn main() -> Result<()> {
         .with(tracing_subscriber::fmt::layer().with_writer(std::io::stderr))
         .init();
 
-    let cli = Cli::parse();
-
-    let config = match &cli.config {
-        Some(p) => transcription::TranscribeConfig::from_json(&std::fs::read_to_string(p)?)?,
-        None => transcription::TranscribeConfig::default(),
-    };
-
-    let transcription = transcription::run_with(&cli.file, &config)?;
-
-    let git_hash = match Command::new("git")
+    let git_hash: String = match Command::new("git")
         .arg("rev-parse")
         .arg("--short")
         .arg("HEAD")
@@ -73,19 +65,72 @@ fn main() -> Result<()> {
     .trim()
     .into();
 
-    let results = ResultsWithConfig {
-        transcription,
-        config,
-        git_hash,
+    let cli = Cli::parse();
+
+    let config = match &cli.config {
+        Some(p) => transcription::TranscribeConfig::from_json(&std::fs::read_to_string(p)?)?,
+        None => transcription::TranscribeConfig::default(),
     };
 
-    let json = serde_json::to_string_pretty(&results)?;
+    if cli.file.is_file() {
+        let transcription = transcription::run_with(&cli.file, &config)?;
+        let config = config.clone();
+        let git_hash = git_hash.clone();
+        let results = ResultsWithConfig {
+            transcription,
+            config,
+            git_hash,
+        };
+        let json = serde_json::to_string_pretty(&results)?;
 
-    if let Some(output_path) = cli.output {
-        let mut file = File::create(output_path)?;
-        file.write_all(json.as_bytes())?;
-    } else {
-        println!("{}", json);
+        if let Some(mut output_path) = cli.output.clone() {
+            let fname = cli.file.file_name().unwrap();
+            output_path = output_path.canonicalize()?;
+            output_path.push(fname);
+            output_path.set_extension("json");
+
+            let mut file = File::create(output_path)?;
+            file.write_all(json.as_bytes())?;
+        } else {
+            let mut fname = cli.file.clone();
+            fname.set_extension("json");
+
+            let mut file = File::create(fname)?;
+            file.write_all(json.as_bytes())?;
+        }
+    }
+
+    if cli.file.is_dir() {
+        for f in cli.file.read_dir()? {
+            let f = f?.path();
+            if f.is_file() {
+                let config = config.clone();
+                let git_hash = git_hash.clone();
+                let transcription = transcription::run_with(&f, &config)?;
+                let results = ResultsWithConfig {
+                    transcription,
+                    config,
+                    git_hash,
+                };
+                let json = serde_json::to_string_pretty(&results)?;
+
+                if let Some(mut output_path) = cli.output.clone() {
+                    let fname = f.file_name().unwrap();
+                    output_path = output_path.canonicalize()?;
+                    output_path.push(fname);
+                    output_path.set_extension("json");
+
+                    let mut file = File::create(output_path)?;
+                    file.write_all(json.as_bytes())?;
+                } else {
+                    let mut fname = f.clone();
+                    fname.set_extension("json");
+
+                    let mut file = File::create(fname)?;
+                    file.write_all(json.as_bytes())?;
+                }
+            }
+        }
     }
 
     Ok(())

@@ -32,8 +32,8 @@ tokio-retry = "0.3"
 # It uses type-safe extractors and composes well with the rest of this stack.
 axum = "0.8"
 tower = { version = "0.5.3" }
-tower-http = { version = "0.6.8", features = ["trace", "cors"] }
-http = "1.4.0"
+tower-http = { version = "0.7", features = ["trace", "cors"] }
+http = "1.5"
 
 # GraphQL --- async-graphql is code-driven: you define Rust types and derive the
 # schema from them via macros. async-graphql-axum bridges the two frameworks.
@@ -55,7 +55,7 @@ dotenvy = "0.15"
 
 # Neo4j --- neo4rs is the async Bolt client for Neo4j. It manages a connection
 # pool internally, so one Graph handle is shared across the whole server.
-neo4rs = "0.9.0-rc.9"
+neo4rs = "0.9.0-rc.10"
 
 # Serialization --- serde is the standard Rust serialization framework.
 # serde_json is used to encode per-word timing data as a JSON string property
@@ -73,5 +73,6 @@ chrono = "0.4"
 nanoid = "0.5"
 
 rustls = { version = "0.23", features = ["aws-lc-rs"] }
-md5 = "0.8.1"
-rand = "0.10.2"
+md5 = "0.8"
+rand = "0.10"
+asserting = "0.17.0"

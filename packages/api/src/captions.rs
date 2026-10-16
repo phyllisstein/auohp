@@ -75,7 +75,9 @@ pub async fn generate_vtt(db: &Db, interview_number: i64) -> Result<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rand::Rng;
+    use asserting::prelude::*;
+    use rand::RngExt;
+    use rand::rngs::ThreadRng;
 
     #[test]
     fn creates_timestamp_from_fractional_seconds() {
@@ -86,12 +88,12 @@ mod tests {
         println!("ms: {SECONDS}");
         println!("timestamp: {as_str}");
 
-        assert_eq!(as_str, STAMP);
+        assert_that!(as_str).is_equal_to(STAMP);
     }
 
     #[test]
     fn pads_contiguous_timestamps() {
-        let base_r: i64 = rand::thread_rng().gen_range(500..=5_000);
+        let base_r: i64 = rand::rng().random_range(500..=5_000);
 
         let t1 = base_r + 500;
         let t2 = base_r - 500;
@@ -103,6 +105,6 @@ mod tests {
         println!("ts_1:\t{ts_1}");
         println!("ts_2:\t{ts_2}");
 
-        assert_ne!(ts_1, ts_2);
+        assert_that!(ts_1).is_not_equal_to(ts_2);
     }
 }

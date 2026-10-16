@@ -1,5 +1,5 @@
 use crate::{graphql::nodes::StatementNode, neo4j::Db};
-use async_graphql::{Context, InputObject, SimpleObject};
+use async_graphql::{Context, SimpleObject};
 use neo4rs::query;
 
 #[derive(SimpleObject)]

@@ -9,7 +9,6 @@ use anyhow::Result;
 use auohp_core::embeddings::Embedder;
 use clap::Parser;
 use cruet::Inflector;
-use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 use unicode_segmentation::UnicodeSegmentation;
 
 #[derive(Parser, Debug)]
@@ -28,20 +27,16 @@ fn truncated_camel_case(other_cased: &str) -> String {
 }
 
 fn main() -> Result<()> {
-    tracing_subscriber::registry()
-        .with(EnvFilter::try_from_default_env().unwrap_or_else(|_| "auohp_core=debug".into()))
-        .with(tracing_subscriber::fmt::layer().with_writer(std::io::stdout))
-        .init();
-
     let cli = Cli::parse();
 
-    let mut embedder = embeddings::Embedder::new()?;
+    let mut embedder = Embedder::new()?;
 
     for query in cli.queries {
         let vector = embedder.embed(std::slice::from_ref(&query))?;
         let camel = truncated_camel_case(&query);
         println!(
-            "\n\n:param {camel}Embedding => {:?}",
+            "\n:param {}Embedding => vector({:?}, 1024, FLOAT64);\n",
+            camel,
             vector.first().unwrap()
         );
     }

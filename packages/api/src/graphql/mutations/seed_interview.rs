@@ -32,12 +32,8 @@ pub struct SeedInterviewInput {
     /// Maps diarization labels to person names and roles.
     /// Optional --- omit when speaker labels are not yet assigned.
     pub speakers: Option<Vec<SpeakerMappingInput>>,
-    /// Raw transcript segments from the transcription pipeline.
-    /// Either `segments_json` or `segments` must be specified.
-    pub segments: Option<Vec<TranscriptSegmentInput>>,
     /// JSON string of transcript segments.
-    /// Either `segments_json` or `segments` must be specified.
-    pub segments_json: Option<String>,
+    pub segments: String,
     /// Optional asset URLs associated with the interview.
     pub assets: Option<InterviewAssetsInput>,
 }
@@ -87,12 +83,6 @@ pub enum SpeakerRole {
     Interviewee,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct Speaker {
-    pub label: String,
-    pub role: Option<SpeakerRole>,
-}
-
 /// A single transcript segment from the transcription pipeline.
 #[derive(InputObject, Deserialize)]
 pub struct TranscriptSegmentInput {
@@ -126,11 +116,7 @@ pub struct WordTimingInput {
 /// Optional media assets to attach to the interview.
 #[derive(InputObject)]
 pub struct InterviewAssetsInput {
-    pub video_url: Option<String>,
-    pub vtt_url: Option<String>,
-    pub vtt_text: Option<String>,
-    pub json_caption_url: Option<String>,
-    pub json_caption_text: Option<String>,
+    pub vimeo_id: Option<String>,
 }
 
 // ---------------------------------------------------------------------------
@@ -260,6 +246,7 @@ pub async fn seed_interview(
 
     let interview_uid = uid::generate();
     let transcript_uid = uid::generate();
+    let interviewee_uid = uid::generate();
 
     // ── Phase 1: interview scaffold ──────────────────────────────────────
 
@@ -267,6 +254,7 @@ pub async fn seed_interview(
         interview_uid,
         transcript_uid,
         interviewee = input.interviewee.clone(),
+        interview_number = input.number,
         "creating new interview nodes"
     );
 
@@ -280,92 +268,44 @@ pub async fn seed_interview(
         ).param("interviewNumber", input.number),
     ).await?;
 
-    txn.run(query!(
-        r#"
-            CREATE
-                (interview:Interview
-                    {{
-                        uid: {interviewUid},
-                        number: {interviewNumber},
-                        date: date({interviewDate}),
-                        interviewee: {intervieweeName}
-                    }}) -[:HAS_TRANSCRIPT]->(transcript:Transcript {{uid: {transcriptUid}}})
-        "#,
-        interviewUid = interview_uid.clone(),
-        interviewNumber = input.number,
-        interviewDate = input.date.clone(),
-        transcriptUid = transcript_uid.clone(),
-        intervieweeName = input.interviewee.clone(),
-    ))
-    .await?;
-
-    let id_speakers: Vec<SpeakerMappingInput> = input
-        .speakers
-        .into_iter()
-        .flatten()
-        .map(|mut s| {
-            s.uid.get_or_insert_with(|| uid::generate());
-            s
-        })
-        .collect();
-
     txn.run(
         query(
             r#"
-                MATCH (interview:Interview {uid: $interviewUid})-[:HAS_TRANSCRIPT]->(transcript)
-
-                UNWIND $speakers as speakerPerson
-
-                MERGE (person:Person {name: speakerPerson.name})
-                    ON CREATE SET person.uid = speakerPerson.uid
-
-                LET roleLabel = CASE
-                        WHEN speakerPerson.role IS NULL THEN []
-                        ELSE speakerPerson.role
-                    END
-
-                CREATE (speaker:Speaker {label: speakerPerson.label, role: speakerPerson.role})
-                SET speaker:$(roleLabel)
-
-                CREATE (person)-[:INTERVIEWS_AS]->(speaker)
-                CREATE (transcript)-[:WITH_SPEAKER]->(speaker)
-            "#,
+            MERGE
+                (interview:Interview
+                    {
+                        uid: $interviewUid,
+                        number: $interviewNumber,
+                        date: date($interviewDate),
+                        interviewee: $intervieweeName
+                    })
+            MERGE (transcript:Transcript {uid: $transcriptUid})
+            MERGE (interviewee:Person {name: $intervieweeName, uid: $intervieweeUid})
+            MERGE (interview)-[:INTERVIEWS]->(interviewee)
+            MERGE (interview)-[:HAS_TRANSCRIPT]->(transcript)
+        "#,
         )
-        .param("speakers", id_speakers.clone())
-        .param("interviewUid", interview_uid.clone()),
+        .param("interviewUid", interview_uid.clone())
+        .param("interviewNumber", input.number)
+        .param("intervieweeName", input.interviewee.clone())
+        .param("transcriptUid", transcript_uid.clone())
+        .param("intervieweeUid", interviewee_uid.clone())
+        .param("interviewDate", input.date.clone()),
     )
     .await?;
 
-    txn.run(query!(
-        r#"
-                MATCH (interview:Interview {{uid: {interviewUid}}})
-                    -[:HAS_TRANSCRIPT]->()
-                    -[:WITH_SPEAKER]->(interviewee:Interviewee)<-[:INTERVIEWS_AS]-(person)
-                CREATE (interview)-[:INTERVIEWS]->(person)
-        "#,
-        interviewUid = interview_uid.clone(),
-    ))
-    .await?;
+    let vimeo_id = input.assets.and_then(|a| a.vimeo_id);
 
-    let video_uid = uid::generate();
-    let video_url = input.assets.as_ref().and_then(|a| a.video_url.clone());
-    tracing::debug!(
-        video_uid = video_uid.clone(),
-        video_url = video_url.clone(),
-        interviewee = input.interviewee.clone(),
-        interview_number = input.number,
-        "seeding with video"
-    );
+    if vimeo_id.is_some() {
+        tracing::debug!(vimeo_id, "seeding with Vimeo video");
 
-    if video_url.is_some() {
         txn.run(query!(
             r#"
                 MATCH (i:Interview {{uid: {interviewUid}}})
-                CREATE (i)-[:HAS_ASSET]->(video:Video:Asset {{uri: {uri}, uid: {videoUid}}})
+                CREATE (i)-[:HAS_ASSET]->(video:Vimeo:Asset {{vimeoId: {vid}}})
                 RETURN video
             "#,
-            uri = video_url.clone(),
-            videoUid = video_uid.clone(),
+            vid = vimeo_id.clone(),
             interviewUid = interview_uid.clone(),
         ))
         .await?
@@ -383,19 +323,8 @@ pub async fn seed_interview(
     // Batch statements in groups of 100
     const BATCH_SIZE: usize = 500;
 
-    let segment_inputs: Vec<TranscriptSegmentInput> = if let Some(segment_json) =
-        input.segments_json
-    {
-        serde_json::from_str(&segment_json).map_err(|e| async_graphql::Error::new(e.to_string()))
-    } else if let Some(segment_gql) = input.segments {
-        Ok(segment_gql)
-    } else {
-        Err(async_graphql::Error::new(
-            "Either segments or segmentsJson must be provided",
-        ))
-    }?;
-
-    let segments: Vec<TranscriptSegment> = segment_inputs
+    let segments: Vec<TranscriptSegmentInput> = serde_json::from_str(&input.segments)?;
+    let segments: Vec<TranscriptSegment> = segments
         .into_iter()
         .map(|i| TranscriptSegment {
             input: i,
@@ -427,7 +356,7 @@ pub async fn seed_interview(
             .collect::<Result<Vec<_>, _>>()?;
 
         txn.run(query!(
-            "
+            r#"
                 MATCH (transcript:Transcript {{uid: {transcriptUid}}})
 
                 UNWIND {statements} AS s
@@ -443,47 +372,13 @@ pub async fn seed_interview(
                    endTime: s.endTime
                  }}]->(statement)
 
-                MATCH (transcript)-[:WITH_SPEAKER]->(speaker)
-                    WHERE speaker.label = s.speaker
+                MERGE (transcript)-[:WITH_SPEAKER]->(speaker:Speaker {{label: coalesce(s.speaker, "SPEAKER_??")}})
                 MERGE (speaker)-[:SAYS]->(statement)
-            ",
+            "#,
             transcriptUid = transcript_uid.clone(),
             statements = stmt_params,
         ))
         .await?;
-    }
-
-    // ── Phase 3: attach caption files (optional) ────────────────────────
-
-    if let Some(assets) = &input.assets {
-        let has_vtt = assets.vtt_url.is_some() || assets.vtt_text.is_some();
-        let has_json = assets.json_caption_url.is_some() || assets.json_caption_text.is_some();
-
-        if has_vtt {
-            txn.run(query!(
-                "MATCH (v:Video:Asset {{uid: {videoUid}}})
-                     CREATE (vtt:VTT:Caption {{uid: {vttUid}, url: {vttUrl}, text: {vttText}}})
-                     MERGE (v)-[:HAS_CAPTIONS]->(vtt)",
-                videoUid = video_uid.clone(),
-                vttUid = uid::generate(),
-                vttUrl = assets.vtt_url.clone().unwrap_or_default(),
-                vttText = assets.vtt_text.clone().unwrap_or_default(),
-            ))
-            .await?;
-        }
-
-        if has_json {
-            txn.run(query!(
-                "MATCH (v:Video:Asset {{uid: {videoUid}}})
-                     CREATE (json:JSON:Caption {{uid: {jsonUid}, url: {jsonUrl}, text: {jsonText}}})
-                     MERGE (v)-[:HAS_CAPTIONS]->(json)",
-                videoUid = video_uid.clone(),
-                jsonUid = uid::generate(),
-                jsonUrl = assets.json_caption_url.clone().unwrap_or_default(),
-                jsonText = assets.json_caption_text.clone().unwrap_or_default(),
-            ))
-            .await?;
-        }
     }
 
     // ── Commit ────────────────────────────────────────────────────────────
