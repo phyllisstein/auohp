@@ -164,7 +164,7 @@ impl Default for DiarizeConfig {
     fn default() -> Self {
         Self {
             enabled: true,
-            max_speakers: 2,
+            max_speakers: 4,
         }
     }
 }
