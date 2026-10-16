@@ -85,6 +85,7 @@ fn main() -> Result<()> {
 
         if let Some(mut output_path) = cli.output.clone() {
             let fname = cli.file.file_name().unwrap();
+            output_path = output_path.canonicalize()?;
             output_path.push(fname);
             output_path.set_extension("json");
 
@@ -114,14 +115,15 @@ fn main() -> Result<()> {
                 let json = serde_json::to_string_pretty(&results)?;
 
                 if let Some(mut output_path) = cli.output.clone() {
-                    let fname = cli.file.file_name().unwrap();
+                    let fname = f.file_name().unwrap();
+                    output_path = output_path.canonicalize()?;
                     output_path.push(fname);
                     output_path.set_extension("json");
 
                     let mut file = File::create(output_path)?;
                     file.write_all(json.as_bytes())?;
                 } else {
-                    let mut fname = cli.file.clone();
+                    let mut fname = f.clone();
                     fname.set_extension("json");
 
                     let mut file = File::create(fname)?;
