@@ -1,4 +1,12 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.12,<3.14"
+# dependencies = [
+#   "click",
+#   "pyyaml",
+# ]
+# ///
+
 """Mirror a Vimeo folder into the transcription inbox, one video at a time.
 
     VIMEO_TOKEN=... scripts/vimeo-sync.py list          # write the canonical manifest, print what's missing
@@ -19,12 +27,14 @@ import sys
 import urllib.parse
 import urllib.request
 from pathlib import Path
+import argparse
+import yaml
 
 API = "https://api.vimeo.com"
 OWNER = os.environ.get("VIMEO_OWNER", "9495833")
 FOLDER = os.environ.get("VIMEO_FOLDER", "3570988")
 INBOX = Path(os.environ.get("INBOX", "/mnt/s3/fs1/in"))
-MANIFEST = Path(os.environ.get("MANIFEST", "/mnt/s3/fs1/vimeo-manifest.json"))
+MANIFEST = Path(os.environ.get("MANIFEST", "docs/vimeo-manifest.yaml"))
 FIELDS = "uri,name,duration,type,download.quality,download.type,download.width,download.size,download.link"
 EXT = {"video/mp4": ".mp4", "video/quicktime": ".mov", "video/x-m4v": ".m4v"}
 
@@ -68,7 +78,7 @@ def best_download(video):
     return max(pool, key=lambda f: (f.get("width") or 0, f.get("size") or 0), default=None)
 
 
-def manifest():
+def create_download_manifest():
     rows = []
     for v in walk(FOLDER):
         dl = best_download(v)
@@ -83,7 +93,6 @@ def manifest():
             "downloadable": bool(dl and dl.get("link")),
         })
     rows.sort(key=lambda r: r["stem"])
-    MANIFEST.write_text(json.dumps(rows, indent=2) + "\n")
     return rows
 
 
@@ -91,7 +100,7 @@ def present():
     return {stem(p.name) for p in INBOX.iterdir() if p.is_file()}
 
 
-def missing(rows):
+def get_missing_rows(rows):
     have = present()
     return [r for r in rows if r["stem"] not in have]
 
@@ -107,8 +116,18 @@ def download(row, dest_dir):
     have = part.stat().st_size if part.exists() else 0
     req = urllib.request.Request(dl["link"], headers={"Range": f"bytes={have}-"} if have else {})
     with urllib.request.urlopen(req, timeout=120) as r, open(part, "ab" if have and r.status == 206 else "wb") as out:
-        while chunk := r.read(8 << 20):
+        total = dl.get("size") or 0
+        done = have if r.status == 206 else 0
+        while chunk := r.read(1 << 20):
             out.write(chunk)
+            done += len(chunk)
+            if total:
+                pct = min(done / total, 1)
+                bar = "#" * int(pct * 30)
+                print(f"\r{row['stem']} [{bar:<30}] {pct:6.1%} {done >> 20}/{total >> 20} MiB", end="", file=sys.stderr, flush=True)
+            else:
+                print(f"\r{row['stem']} {done >> 20} MiB", end="", file=sys.stderr, flush=True)
+        print(file=sys.stderr)
     if dl.get("size") and part.stat().st_size != dl["size"]:
         raise SystemExit(f"{row['name']}: size mismatch ({part.stat().st_size} != {dl['size']})")
     part.rename(final)
@@ -116,25 +135,29 @@ def download(row, dest_dir):
 
 
 def main():
-    cmd = sys.argv[1] if len(sys.argv) > 1 else "list"
-    rows = manifest()
-    todo = missing(rows)
-    if cmd == "list":
+    parser = argparse.ArgumentParser(description="Sync Vimeo videos")
+    parser.add_argument("command", nargs="?", default=None, choices=["check", "sync"])
+    parser.add_argument("--inbox", default=str(INBOX), help="Directory to download videos into")
+    parser.add_argument("--manifest", default=str(MANIFEST), help="Path to the download manifest")
+    args = parser.parse_args()
+    cmd = args.command
+
+    rows = create_download_manifest()
+    Path(args.manifest).write_text(yaml.dump({'videos': rows}) + "\n")
+
+    if cmd == "check":
+        todo = get_missing_rows(rows)
         print(f"{len(rows)} in folder, {len(rows) - len(todo)} present, {len(todo)} missing", file=sys.stderr)
         for r in todo:
             flag = "" if r["downloadable"] else "  [no download link]"
             print(f"{r['id']}\t{r['stem']}{r['ext']}\t{r['quality']}\t{r['size']}{flag}")
-    elif cmd == "next":
+    elif cmd == "sync":
+        todo = get_missing_rows(rows)
         todo = [r for r in todo if r["downloadable"]]
         if not todo:
             return
-        print(download(todo[0], INBOX))
-    elif cmd == "all":
         for r in todo:
-            if r["downloadable"]:
-                print(download(r, INBOX))
-    else:
-        raise SystemExit(__doc__)
+            print(download(r, Path(args.inbox)))
 
 
 if __name__ == "__main__":
