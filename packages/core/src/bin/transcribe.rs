@@ -10,8 +10,9 @@
 use anyhow::Result;
 use auohp_core::transcription::{self, TranscribeConfig, TranscriptionResult};
 use clap::Parser;
-use serde::Serialize;
+use serde_json::json;
 use std::{fs::File, io::Write, path::PathBuf, process::Command};
+use tokio::task;
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 
 #[derive(Parser, Debug)]
@@ -29,16 +30,10 @@ struct Cli {
     file: PathBuf,
 }
 
-#[derive(Serialize)]
-struct ResultsWithConfig {
-    git_hash: String,
-    transcription: TranscriptionResult,
-    config: TranscribeConfig,
-}
-
-fn main() -> Result<()> {
+#[tokio::main]
+async fn main() -> Result<()> {
     tracing_subscriber::registry()
-        .with(EnvFilter::try_from_default_env().unwrap_or_else(|_| "auohp_core=debug".into()))
+        .with(EnvFilter::try_from_default_env().unwrap_or_else(|_| "auohp_core=warn".into()))
         .with(tracing_subscriber::fmt::layer().with_writer(std::io::stderr))
         .init();
 
@@ -65,6 +60,8 @@ fn main() -> Result<()> {
     .trim()
     .into();
 
+    let run_start = chrono::Utc::now();
+
     let cli = Cli::parse();
 
     let config = match &cli.config {
@@ -72,65 +69,48 @@ fn main() -> Result<()> {
         None => transcription::TranscribeConfig::default(),
     };
 
-    if cli.file.is_file() {
-        let transcription = transcription::run_with(&cli.file, &config)?;
-        let config = config.clone();
-        let git_hash = git_hash.clone();
-        let results = ResultsWithConfig {
-            transcription,
-            config,
-            git_hash,
+    let input_path = cli.file.canonicalize()?;
+    let pths = if input_path.is_file() {
+        vec![input_path.clone()]
+    } else {
+        input_path
+            .read_dir()?
+            .map(|rd| rd.unwrap().path())
+            .filter(|pth| pth.extension().unwrap() == "mp4")
+            .collect()
+    };
+
+    for p in pths {
+        let p_cfg = config.clone();
+        let p_hsh = git_hash.clone();
+
+        let mut p_fn = p.clone().with_added_extension("json");
+        if let Some(opth) = &cli.output {
+            p_fn = opth.join(p_fn.file_name().unwrap());
         };
-        let json = serde_json::to_string_pretty(&results)?;
 
-        if let Some(mut output_path) = cli.output.clone() {
-            let fname = cli.file.file_name().unwrap();
-            output_path = output_path.canonicalize()?;
-            output_path.push(fname);
-            output_path.set_extension("json");
-
-            let mut file = File::create(output_path)?;
-            file.write_all(json.as_bytes())?;
-        } else {
-            let mut fname = cli.file.clone();
-            fname.set_extension("json");
-
-            let mut file = File::create(fname)?;
-            file.write_all(json.as_bytes())?;
+        if p_fn.exists() {
+            continue;
         }
-    }
 
-    if cli.file.is_dir() {
-        for f in cli.file.read_dir()? {
-            let f = f?.path();
-            if f.is_file() {
-                let config = config.clone();
-                let git_hash = git_hash.clone();
-                let transcription = transcription::run_with(&f, &config)?;
-                let results = ResultsWithConfig {
-                    transcription,
-                    config,
-                    git_hash,
-                };
-                let json = serde_json::to_string_pretty(&results)?;
+        let transcription_output = task::spawn_blocking(move || {
+            let transcription = transcription::run_with(&p, &p_cfg).unwrap();
+            let results = json!({
+                "transcription": transcription,
+                "run": {
+                    "config": p_cfg,
+                    "gitHash": p_hsh,
+                    "start": run_start,
+                    "source": &p.file_name().unwrap().to_string_lossy(),
+                },
+            });
 
-                if let Some(mut output_path) = cli.output.clone() {
-                    let fname = f.file_name().unwrap();
-                    output_path = output_path.canonicalize()?;
-                    output_path.push(fname);
-                    output_path.set_extension("json");
+            serde_json::to_string_pretty(&results).unwrap()
+        })
+        .await?;
 
-                    let mut file = File::create(output_path)?;
-                    file.write_all(json.as_bytes())?;
-                } else {
-                    let mut fname = f.clone();
-                    fname.set_extension("json");
-
-                    let mut file = File::create(fname)?;
-                    file.write_all(json.as_bytes())?;
-                }
-            }
-        }
+        let mut file = File::create(p_fn)?;
+        file.write_all(transcription_output.as_bytes())?;
     }
 
     Ok(())
