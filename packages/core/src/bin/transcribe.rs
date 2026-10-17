@@ -9,6 +9,7 @@
 
 use anyhow::Result;
 use auohp_core::transcription::{self, TranscribeConfig, TranscriptionResult};
+use chrono::Utc;
 use clap::Parser;
 use serde_json::json;
 use std::{fs::File, io::Write, path::PathBuf, process::Command};
@@ -48,19 +49,19 @@ async fn main() -> Result<()> {
                 String::from_utf8_lossy(&o.stdout).into_owned()
             } else {
                 let err = String::from_utf8_lossy(&o.stderr).into_owned();
-                tracing::error!(err, "git rev-parse failed");
+                println!("git rev-parse failed: {:?}", err);
                 "#######".into()
             }
         }
         Err(e) => {
-            tracing::error!(err = e.to_string(), "git rev-parse failed");
+            println!("git rev-parse failed: {:?}", e);
             "#######".into()
         }
     }
     .trim()
     .into();
 
-    let run_start = chrono::Utc::now();
+    let run_start = Utc::now();
 
     let cli = Cli::parse();
 
@@ -88,11 +89,19 @@ async fn main() -> Result<()> {
         if let Some(opth) = &cli.output {
             p_fn = opth.join(p_fn.file_name().unwrap());
         };
+        let p_label = p_fn.file_name().unwrap();
 
         if p_fn.exists() {
+            println!(
+                "[{:?}] {:?}\tskipping ({:?} exists)",
+                Utc::now(),
+                p_label,
+                p_fn
+            );
             continue;
         }
 
+        println!("[{:?}] {:?}\ttranscribing", Utc::now(), p_label);
         let transcription_output = task::spawn_blocking(move || {
             let transcription = transcription::run_with(&p, &p_cfg).unwrap();
             let results = json!({
@@ -108,6 +117,7 @@ async fn main() -> Result<()> {
             serde_json::to_string_pretty(&results).unwrap()
         })
         .await?;
+        println!("[{:?}] {:?}\tsaving", Utc::now(), p_label);
 
         let mut file = File::create(p_fn)?;
         file.write_all(transcription_output.as_bytes())?;
