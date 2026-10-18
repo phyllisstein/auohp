@@ -66,9 +66,10 @@ def most_similar(target: str, options: list[str]) -> str:
     return max(options, key=lambda option: similar(target, option))
 
 
-def find_interview(interview_number: int, interview_data) -> Interview | None:
-    for interview in interview_data.get("interviews", []):
-        if interview.get("interview_number") == interview_number:
+def match_interview(interview_fname: str, interview_data) -> Interview | None:
+    interviews = interview_data.get("interviews", [])
+    for interview in interviews:
+        if interview.get("filename") == most_similar(interview_fname, [i.get("filename") for i in interviews]):
             return Interview(**interview)
     return None
 
@@ -121,7 +122,7 @@ def execute_seed_query(request_data, graphql_endpoint: str):
 
 
 @click.command()
-@click.argument("interview_number", type=int)
+@click.argument("transcript_dir", type=Path)
 @click.option(
     "--vimeo-manifest",
     type=Path,
@@ -140,54 +141,47 @@ def execute_seed_query(request_data, graphql_endpoint: str):
     help="Path to the interview manifest file",
     default="docs/interview-manifest.yaml",
 )
-@click.option(
-    "--transcript", type=Path, help="Path to the JSON transcript", required=True
-)
 def main(
-    interview_number: int,
     vimeo_manifest: Path,
     graphql_endpoint: str,
     interview_manifest: Path,
-    transcript: Path,
+    transcript_dir: Path,
 ):
-    print(f"Seeding interview number: {interview_number}")
-
-    if not interview_manifest.exists():
-        print(f"Interview manifest file not found: {interview_manifest}")
-        return
-
     with open(interview_manifest, "r") as f:
         interview_data = yaml.safe_load(f)
-    interview = find_interview(interview_number, interview_data)
-    if not interview:
-        print(
-            f"Interview number {interview_number} not found in the interview manifest."
-        )
+    if not interview_data:
+        print(f"Failed to load interview data from: {interview_manifest}")
         return
-
-
-    if not vimeo_manifest.exists():
-        print(f"Vimeo manifest file not found: {vimeo_manifest}")
-        return
-
     with open(vimeo_manifest, "r") as f:
         vimeo_data = yaml.safe_load(f)
-    vimeo_video = match_vimeo_video(interview, vimeo_data)
-    if not vimeo_video:
-        print(f"No matching Vimeo video found for interview number {interview_number}.")
-
-    if not transcript.exists():
-        print(f"Transcript file not found: {transcript}")
+    if not vimeo_data:
+        print(f"Failed to load Vimeo data from: {vimeo_manifest}")
         return
 
-    with open(transcript, "r") as f:
-        transcript_data = json.load(f)
-    transcription = transcript_data.get("transcription")
+    for transcript in transcript_dir.glob("*.json"):
+        name = transcript.name
+        print(f"Seeding interview from transcript: {name}")
 
-    seed_query = get_seed_query(interview, vimeo_video, transcription.get("segments", []))
-    # print(f"Seed query: {json.dumps(seed_query)}")
-    res = execute_seed_query(seed_query, graphql_endpoint)
-    print(f"Seed query response: {json.dumps(res, indent=4)}")
+        interview = match_interview(transcript.stem, interview_data)
+        if not interview:
+            print(
+                f"Interview {name} not found in the interview manifest."
+            )
+            return
+
+        vimeo_video = match_vimeo_video(interview, vimeo_data)
+        if not vimeo_video:
+            print(f"No matching Vimeo video found for interview {name}.")
+
+
+        with open(transcript, "r") as f:
+            transcript_data = json.load(f)
+        transcription = transcript_data.get("transcription")
+
+        seed_query = get_seed_query(interview, vimeo_video, transcription.get("segments", []))
+        # print(f"Seed query: {json.dumps(seed_query)}")
+        res = execute_seed_query(seed_query, graphql_endpoint)
+        print(f"Seed query response: {json.dumps(res, indent=4)}")
 
 
 if __name__ == "__main__":
