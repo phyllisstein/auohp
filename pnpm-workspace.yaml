@@ -1,0 +1,16 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+allowBuilds:
+  '@parcel/watcher': true
+  '@swc/core': true
+  esbuild: true
+  pnpm: true
+  unrs-resolver: true
+permissions:
+  '@apollo/client':
+    skills: true
+  '@suspensive/react':
+    skills: false
+  '@tanstack/react-start':
+    skills: true

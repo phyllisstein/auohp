@@ -1,6 +1,6 @@
 # File created using '.gitignore Generator' for Visual Studio Code: https://bit.ly/vscode-gig
-# Created by https://www.toptal.com/developers/gitignore/api/yarn,visualstudiocode,vim,svelte,sublimetext,python,nova,node,macos,leiningen,jetbrains,git,dotenv,direnv,clojure,jetbrains+all
-# Edit at https://www.toptal.com/developers/gitignore?templates=yarn,visualstudiocode,vim,svelte,sublimetext,python,nova,node,macos,leiningen,jetbrains,git,dotenv,direnv,clojure,jetbrains+all
+# Created by https://www.toptal.com/developers/gitignore/api/yarn,visualstudiocode,vim,sublimetext,python,nova,node,macos,leiningen,jetbrains+all,jetbrains,git,dotenv,direnv,clojure
+# Edit at https://www.toptal.com/developers/gitignore?templates=yarn,visualstudiocode,vim,sublimetext,python,nova,node,macos,leiningen,jetbrains+all,jetbrains,git,dotenv,direnv,clojure
 
 ### Clojure ###
 pom.xml
@@ -406,7 +406,6 @@ downloads/
 eggs/
 .eggs/
 lib/
-!packages/*/src/lib/
 lib64/
 parts/
 sdist/
@@ -591,13 +590,6 @@ bh_unicode_properties.cache
 # https://packagecontrol.io/packages/sublime-github
 GitHub.sublime-settings
 
-### Svelte ###
-# gitignore template for the SvelteKit, frontend web component framework
-# website: https://kit.svelte.dev/
-
-.svelte-kit/
-package
-
 ### Vim ###
 # Swap
 [._]*.s[a-v][a-z]
@@ -655,7 +647,7 @@ tags
 # and uncomment the following lines
 # .pnp.*
 
-# End of https://www.toptal.com/developers/gitignore/api/yarn,visualstudiocode,vim,svelte,sublimetext,python,nova,node,macos,leiningen,jetbrains,git,dotenv,direnv,clojure,jetbrains+all
+# End of https://www.toptal.com/developers/gitignore/api/yarn,visualstudiocode,vim,sublimetext,python,nova,node,macos,leiningen,jetbrains+all,jetbrains,git,dotenv,direnv,clojure
 
 # Custom rules (everything added below won't be overriden by 'Generate .gitignore File' if you use 'Update' option)
 
@@ -671,3 +663,6 @@ assets/
 .claude/settings.local.json
 TODO.md
 assets
+cache
+.cargo
+.pnpm

@@ -15,9 +15,6 @@ services:
         editor${HOST_TAG-}.auohp.localhost:
           "/":
             port: "3030"
-        svelte-editor${HOST_TAG-}.auohp.localhost:
-          "/":
-            port: "2020"
         search${HOST_TAG-}.auohp.localhost:
           "/":
             port: "4040"
@@ -26,12 +23,10 @@ services:
             port: "6060"
     extra_hosts:
       - "api${HOST_TAG-}.auohp.localhost:host-gateway"
-      - "svelte-editor${HOST_TAG-}.auohp.localhost:host-gateway"
       - "editor${HOST_TAG-}.auohp.localhost:host-gateway"
       - "search${HOST_TAG-}.auohp.localhost:host-gateway"
     expose:
       - "3030"
-      - "2020"
       - "4040"
       - "6060"
     volumes:

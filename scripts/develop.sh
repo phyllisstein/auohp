@@ -113,19 +113,6 @@ restart_editor() {
     popd >/dev/null
 }
 
-restart_svelte_editor() {
-    pushd packages/editor-svelte >/dev/null
-
-    echo "Terminate existing svelte editor..."
-    stop_service svelte-editor
-
-    echo "Starting svelte editor development server..."
-    start_service svelte-editor yarn svelte-editor:dev
-
-    popd >/dev/null
-}
-
-
 restart_search() {
     pushd packages/search-component >/dev/null
 
@@ -197,10 +184,6 @@ editor)
     restart_editor
     ;;
 
-svelte-editor)
-    restart_svelte_editor
-    ;;
-
 search)
     restart_search
     ;;
@@ -217,7 +200,6 @@ yarn)
     yarn_install
     restart_editor
     restart_search
-    restart_svelte_editor
     ;;
 
 api)

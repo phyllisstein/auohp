@@ -3,21 +3,15 @@ name = "auohp-core"
 version = "0.0.0"
 edition = "2024"
 license = "AGPL-3.0-or-later"
-authors = ["ACT UP New York <contact@actupny.com>"]
+authors = ["ACT UP New York <info@actupny.com>"]
 
 [features]
 default = []
 # GPU acceleration --- enable at build time, not both at once.
 #   cargo build --features metal    (macOS dev, Apple Silicon GPU)
 #   cargo build --features cuda     (production, NVIDIA GPU)
-metal = [
-    "ort/coreml",
-    "whisper-rs/metal",
-]
-cuda = [
-    "ort/cuda",
-    "whisper-rs/cuda",
-]
+metal = ["ort/coreml", "whisper-rs/metal"]
+cuda = ["ort/cuda", "whisper-rs/cuda"]
 
 [dependencies]
 # Error handling --- thiserror generates Error impls for your own types;

@@ -1,57 +1,43 @@
 {
     "folders": [
         {
-            "name": "▲  auohp",
+            "name": "▲",
             "path": "."
         },
         {
-            "name": "💿 @auohp/core",
+            "name": "🖥️ apps/api",
+            "path": "apps/api"
+        },
+        {
+            "name": "📲 apps/editor",
+            "path": "apps/editor"
+        },
+        {
+            "name": "📲 apps/sidecar",
+            "path": "apps/sidecar"
+        },
+        {
+            "name": "📦 packages/core",
             "path": "packages/core"
         },
-        {
-            "name": "🌐 @auohp/api",
-            "path": "packages/api"
-        },
-        {
-            "name": "🖥️ @auohp/desktop",
-            "path": "packages/desktop"
-        },
-        {
-            "name": "✏️ @auohp/editor",
-            "path": "packages/editor"
-        },
-        {
-            "name": "✏️ @auohp/editor-svelte",
-            "path": "packages/editor-svelte"
-        },
-        {
-            "name": "🕵️ @auohp/search-component",
-            "path": "packages/search-component"
-        },
-        {
-            "name": "⚙️ @auohp/scripts",
-            "path": "packages/scripts"
-        }
     ],
     "settings": {
-        "licenser.author": "ACT UP New York <contact@actupny.com>",
+        "licenser.author": "ACT UP New York <info@actupny.com>",
         "licenser.projectName": "ACT UP Oral History Project",
         "licenser.license": "AGPLv3",
         "editor.tabSize": 4,
         "files.exclude": {
             "**/node_modules": true,
-            "**/.yarn": true,
-            "**/target": true
-        },
-        "search.exclude": {
-            "**/assets/**": true,
-            "**/gql/**": true
+            "**/target": true,
+            "**/cache": true,
+            "**/.remember": true
         },
         "files.watcherExclude": {
-            "**/node_modules/**": true,
-            "**/.yarn/**": true,
-            "**/target/**": true,
-            "**/assets/**": true
+            "**/node_modules": true,
+            "**/target": true,
+            "**/cache": true,
+            "**/assets": true,
+            "**/.remember": true
         },
         "eslint.enable": false,
         "[rust]": {
@@ -69,7 +55,6 @@
             "typescript",
             "javascriptreact",
             "typescriptreact",
-            "svelte"
         ],
         "oxc.enable.oxlint": true,
         "oxc.fixKind": "all",
@@ -104,14 +89,6 @@
             ],
         },
         "[typescript]": {
-            "editor.formatOnSave": false,
-            "editor.defaultFormatter": "oxc.oxc-vscode",
-            "editor.codeActionsOnSave": [
-                "source.fixAll.stylelint",
-                "source.fixAll.oxc"
-            ],
-        },
-        "[svelte]": {
             "editor.formatOnSave": false,
             "editor.defaultFormatter": "oxc.oxc-vscode",
             "editor.codeActionsOnSave": [
