@@ -1,0 +1,19 @@
+[
+    "trigger",
+    "/app",
+    {
+        "name": "package-install",
+        "expression": [
+            "name",
+            [
+                "pnpm-lock.yaml",
+                "pnpm-workspace.yaml"
+            ]
+        ],
+        "command": [
+            "/app/scripts/watchman/develop.sh",
+            "yarn"
+        ],
+        "append_files": false
+    }
+]

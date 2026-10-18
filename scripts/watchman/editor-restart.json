@@ -5,9 +5,20 @@
         "name": "editor-restart",
         "expression": [
             "allof",
-            ["not", ["match", "**/node_modules/**", "wholename"]],
-            ["dirname", "packages/editor"],
-            ["name",
+            [
+                "not",
+                [
+                    "match",
+                    "**/node_modules/**",
+                    "wholename"
+                ]
+            ],
+            [
+                "dirname",
+                "apps/editor"
+            ],
+            [
+                "name",
                 [
                     ".env",
                     "tsconfig.json",
@@ -16,7 +27,7 @@
             ]
         ],
         "command": [
-            "/app/scripts/develop.sh",
+            "/app/scripts/watchman/develop.sh",
             "editor"
         ],
         "append_files": false

@@ -1,0 +1,73 @@
+[package]
+name = "auohp-sidecar"
+version = "0.0.0"
+edition = "2024"
+default-run = "auohp-sidecar"
+license = "AGPL-3.0-or-later"
+authors = ["ACT UP New York <info@actupny.com>"]
+publish = false
+
+[features]
+default = []
+# GPU acceleration --- enable at build time, not both at once.
+#   cargo build --features metal    (macOS dev, Apple Silicon GPU)
+#   cargo build --features cuda     (production, NVIDIA GPU)
+#
+# These forward to auohp-core, which owns the actual backend selection for
+# whisper-rs (transcription) and ort (embeddings). Nothing is enabled here
+# directly --- see packages/core/Cargo.toml for what each gate switches on.
+metal = ["auohp-core/metal"]
+cuda = ["auohp-core/cuda"]
+
+[build-dependencies]
+# Error handling --- thiserror generates Error impls for your own types;
+# anyhow provides a flexible Result<T, anyhow::Error> for application code.
+thiserror = "2"
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+anyhow = "1"
+anyhow-tauri = "1.0.1"
+axum = "0.8"
+auohp-core = { workspace = true }
+tauri = { version = "2", features = ["macos-private-api", "tray-icon"] }
+tauri-plugin-opener = "2"
+tauri-plugin-shell = "2"
+tokio = { version = "1", features = ["full"] }
+reqwest = { version = "0.13", features = ["json"] }
+tokio-util = "0.7"
+
+# Bridges a tokio broadcast::Receiver into a Stream for axum SSE responses.
+tokio-stream = { version = "0.1", features = ["sync"] }
+
+# Typed errors for the registry/worker boundaries (anyhow elsewhere).
+thiserror = "2"
+
+# Structured logging --- tracing instruments async code; tracing-subscriber
+# formats and emits those events (to stdout, to files, etc.)
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Serialization --- serde is the standard Rust serialization framework.
+# serde_json is used to encode per-word timing data as a JSON string property
+# on Statement nodes in Neo4j.
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+sysinfo = "0.38"
+machine-info = "1"
+
+# ID generation --- nanoid produces short, URL-safe, unique identifiers.
+# Used for node UIDs in Neo4j, matching the existing TypeScript seeder.
+nanoid = "0.5"
+
+tauri-plugin-deep-link = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-fs = "2"
+tauri-plugin-single-instance = "2"
+tower = "0.5.3"
+tower-http = { version = "0.6.8", features = ["trace", "cors"] }
+http = "1.4.0"
+tauri-plugin-positioner = { version = "2.0.0", features = ["tray-icon"] }
+tauri-plugin-liquid-glass = "0.1.6"
+tauri-macros = "2.6.3"

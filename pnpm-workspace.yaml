@@ -1,0 +1,25 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+allowBuilds:
+  '@parcel/watcher': true
+  '@swc/core': true
+  esbuild: true
+  pnpm: true
+  unrs-resolver: true
+minimumReleaseAgeExclude:
+  - '@tanstack/query-core@5.104.4'
+  - '@tanstack/query-devtools@5.104.4'
+  - '@tanstack/react-query-devtools@5.104.4'
+  - '@tanstack/react-query@5.104.4'
+permissions:
+  '@apollo/client':
+    skills: true
+  '@suspensive/react':
+    skills: true
+  '@tanstack/devtools-event-client':
+    skills: true
+  '@tanstack/devtools-vite':
+    skills: true
+  '@tanstack/react-start':
+    skills: true

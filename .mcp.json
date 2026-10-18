@@ -42,13 +42,6 @@
                 "git+https://github.com/ast-grep/ast-grep-mcp",
                 "ast-grep-server"
             ]
-        },
-        "svelte": {
-            "command": "npx",
-            "args": [
-                "-y",
-                "@sveltejs/mcp"
-            ]
         }
     }
 }

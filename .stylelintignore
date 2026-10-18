@@ -1,7 +1,0 @@
-**/.yarn/**
-**/vendor/**
-**/dist/**
-**/public/**
-**/node_modules/**
-/config/**
-./packages/scripts/**
