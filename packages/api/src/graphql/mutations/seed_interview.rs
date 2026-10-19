@@ -180,7 +180,7 @@ async fn embed_statements(
         "background task: embedding complete, writing to Neo4j"
     );
 
-    const EMBED_BATCH: usize = 500;
+    const EMBED_BATCH: usize = 100;
     for (idx, chunk) in uids
         .iter()
         .zip(vectors.iter())
