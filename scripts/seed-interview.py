@@ -58,19 +58,17 @@ class VimeoVideo:
     ext: str
 
 
-def similar(a: str, b: str) -> float:
-    return SequenceMatcher(None, a, b).ratio()
-
-
-def most_similar(target: str, options: list[str]) -> str:
-    return max(options, key=lambda option: similar(target, option))
-
-
 def match_interview(interview_fname: str, interview_data) -> Interview | None:
     interviews = interview_data.get("interviews", [])
-    for interview in interviews:
-        if interview.get("filename") == most_similar(interview_fname, [i.get("filename") for i in interviews]):
-            return Interview(**interview)
+    sm = SequenceMatcher()
+    sm.set_seq2(interview_fname)
+    ratios = [(interview, sm.set_seq1(interview.get("filename")) or sm.ratio()) for interview in interviews]
+    ratios = sorted(ratios, key=lambda x: x[1], reverse=True)
+    most_similar_interview = ratios[0]
+    if most_similar_interview and most_similar_interview[1] >= 0.5:
+        return Interview(
+            **most_similar_interview[0],
+        )
     return None
 
 

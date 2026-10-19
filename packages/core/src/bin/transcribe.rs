@@ -85,7 +85,9 @@ async fn main() -> Result<()> {
         let p_cfg = config.clone();
         let p_hsh = git_hash.clone();
 
-        let mut p_fn = p.clone().with_added_extension("json");
+        let mut p_fn = p.clone();
+        p_fn.set_extension("json");
+
         if let Some(opth) = &cli.output {
             p_fn = opth.join(p_fn.file_name().unwrap());
         };
