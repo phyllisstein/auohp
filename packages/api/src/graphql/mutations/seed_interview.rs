@@ -207,7 +207,7 @@ async fn embed_statements(
                 "
                     UNWIND {items} AS item
                     MATCH (s:Statement {{uid: item.uid}})
-                    CALL db.create.setNodeVectorProperty(s, 'embedding', item.vector)
+                    SET s.embedding = vector(item.vector, FLOAT64]
                 ",
                 items = items,
             ))
@@ -308,7 +308,7 @@ pub async fn seed_interview(
             vid = vimeo_id.clone(),
             interviewUid = interview_uid.clone(),
         ))
-        .await?
+        .await?;
     }
 
     tracing::info!(

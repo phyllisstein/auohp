@@ -14,6 +14,7 @@ use unicode_segmentation::UnicodeSegmentation;
 #[derive(Parser, Debug)]
 struct Cli {
     /// Strings to embed
+    #[arg(id = "query", long, short)]
     queries: Vec<String>,
 }
 
@@ -33,6 +34,11 @@ fn main() -> Result<()> {
 
     for query in cli.queries {
         let vector = embedder.embed(std::slice::from_ref(&query))?;
+        let vector: Vec<f64> = vector
+            .into_iter()
+            .flat_map(|v| v.into_iter().map(|q| f64::from(q)))
+            .collect();
+
         let camel = truncated_camel_case(&query);
         println!(
             "\n:param {}Embedding => vector({:?}, 1024, FLOAT64);\n",

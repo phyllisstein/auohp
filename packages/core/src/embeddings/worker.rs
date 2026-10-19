@@ -42,7 +42,7 @@ struct EmbedRequest {
 /// inference before it's serviced. Smaller = snappier search, more per-batch
 /// overhead; larger = better seeding throughput, longer worst-case search
 /// wait. Turn this knob if search latency under load is still too high.
-const BACKGROUND_SUB_BATCH: usize = 8;
+const BACKGROUND_SUB_BATCH: usize = 15;
 
 /// Run one request to completion: embed, then ship the result back through
 /// its oneshot. Pulled out of the loop so the loop body is purely about
@@ -149,52 +149,54 @@ impl EmbedderHandle {
         // `spawn_blocking` gives us a dedicated OS thread that is allowed to
         // block. The async executor's worker threads must never block, but
         // ONNX inference is synchronous and CPU-bound, so it has to live here.
-        tokio::task::spawn_blocking(move || loop {
-            // Which queue did the next request come from? The loop needs to
-            // know: priority requests run straight through, but background
-            // requests run *cooperatively* (yielding to priority between
-            // sub-batches), so they dispatch to a different handler.
-            enum Work {
-                Priority(EmbedRequest),
-                Background(EmbedRequest),
-            }
-
-            // Fast path: if a priority request is already sitting in the
-            // channel, take it without paying for a `block_on`/`select!` at
-            // all. This is the common case under load: search traffic
-            // arriving faster than the worker can drain it.
-            let work = if let Ok(req) = priority_rx.try_recv() {
-                Some(Work::Priority(req))
-            } else {
-                // Nothing queued on priority right now --- park until
-                // *either* channel has something. `biased` turns off
-                // `select!`'s default (fair, randomized) arm choice: when
-                // both arms are ready in the same poll, the first-listed
-                // arm always wins, so priority preempts background here.
-                //
-                // `.map(...)` on the `Option<EmbedRequest>` each arm yields
-                // tags the origin without disturbing the `None`-means-closed
-                // signal we match on below.
-                handle.block_on(async {
-                    tokio::select! {
-                        biased;
-                        req = priority_rx.recv() => req.map(Work::Priority),
-                        req = background_rx.recv() => req.map(Work::Background),
-                    }
-                })
-            };
-
-            match work {
-                Some(Work::Priority(req)) => handle_request(&mut embedder, req),
-                Some(Work::Background(req)) => {
-                    handle_background_request(&mut embedder, &mut priority_rx, req)
+        tokio::task::spawn_blocking(move || {
+            loop {
+                // Which queue did the next request come from? The loop needs to
+                // know: priority requests run straight through, but background
+                // requests run *cooperatively* (yielding to priority between
+                // sub-batches), so they dispatch to a different handler.
+                enum Work {
+                    Priority(EmbedRequest),
+                    Background(EmbedRequest),
                 }
-                // `recv()` only returns `None` once a channel is both
-                // closed and drained. Because both senders live inside one
-                // `EmbedderHandle` and are dropped together, they close
-                // together too, so seeing `None` here means there is
-                // nothing left on either side.
-                None => break,
+
+                // Fast path: if a priority request is already sitting in the
+                // channel, take it without paying for a `block_on`/`select!` at
+                // all. This is the common case under load: search traffic
+                // arriving faster than the worker can drain it.
+                let work = if let Ok(req) = priority_rx.try_recv() {
+                    Some(Work::Priority(req))
+                } else {
+                    // Nothing queued on priority right now --- park until
+                    // *either* channel has something. `biased` turns off
+                    // `select!`'s default (fair, randomized) arm choice: when
+                    // both arms are ready in the same poll, the first-listed
+                    // arm always wins, so priority preempts background here.
+                    //
+                    // `.map(...)` on the `Option<EmbedRequest>` each arm yields
+                    // tags the origin without disturbing the `None`-means-closed
+                    // signal we match on below.
+                    handle.block_on(async {
+                        tokio::select! {
+                            biased;
+                            req = priority_rx.recv() => req.map(Work::Priority),
+                            req = background_rx.recv() => req.map(Work::Background),
+                        }
+                    })
+                };
+
+                match work {
+                    Some(Work::Priority(req)) => handle_request(&mut embedder, req),
+                    Some(Work::Background(req)) => {
+                        handle_background_request(&mut embedder, &mut priority_rx, req)
+                    }
+                    // `recv()` only returns `None` once a channel is both
+                    // closed and drained. Because both senders live inside one
+                    // `EmbedderHandle` and are dropped together, they close
+                    // together too, so seeing `None` here means there is
+                    // nothing left on either side.
+                    None => break,
+                }
             }
         });
 

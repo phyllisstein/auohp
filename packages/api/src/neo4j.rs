@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
 use neo4rs::{ConfigBuilder, Graph};
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 use tokio_retry::{Retry, strategy::ExponentialBackoff};
 
 // Db is a cloneable, thread-safe handle to the Neo4j connection pool.
@@ -30,6 +30,9 @@ pub async fn connect(uri: &str, user: &str, password: &str, database: &str) -> R
         .user(user)
         .password(password)
         .db(database)
+        .connection_timeout(Duration::from_secs(15)) // Default: 30
+        .tcp_keepalive(Some(Duration::from_secs(30))) // Default: 60
+        .idle_timeout(Some(Duration::from_secs(300))) // Default: never
         .build()
         .unwrap();
 
@@ -44,7 +47,7 @@ pub async fn connect(uri: &str, user: &str, password: &str, database: &str) -> R
     let strategy = ExponentialBackoff::from_millis(2).factor(500).take(10);
     let mut attempt = 0usize;
 
-    Retry::spawn(strategy, || {
+    Retry::start(strategy, || {
         attempt += 1;
         let attempt = attempt;
         let graph = Arc::clone(&graph);
