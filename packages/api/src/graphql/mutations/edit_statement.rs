@@ -89,7 +89,7 @@ pub async fn edit_statement(
             .param("uid", input.uid)
             .param("vector", bolt_vector),
         )
-        .await?
+        .await?;
     }
 
     let wrote_embedding = embedding.is_some();

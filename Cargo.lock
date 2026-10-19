@@ -146,6 +146,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "approx"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cab112f0a86d568ea0e627cc1d6be74a1e9cd55214684db5561995f6dad897c6"
+dependencies = [
+ "num-traits",
+]
+
+[[package]]
 name = "arbitrary"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3960,6 +3969,33 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bc0287524726960e07b119cebd01678f852f147742ae0d925e6a520dca956126"
 
 [[package]]
+name = "nalgebra"
+version = "0.32.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7b5c17de023a86f59ed79891b2e5d5a94c705dbe904a5b5c9c952ea6221b03e4"
+dependencies = [
+ "approx",
+ "matrixmultiply",
+ "nalgebra-macros",
+ "num-complex",
+ "num-rational",
+ "num-traits",
+ "simba",
+ "typenum",
+]
+
+[[package]]
+name = "nalgebra-macros"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "254a5372af8fc138e36684761d3c0cdb758a4410e938babcff1c860ce14ddbfc"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.119",
+]
+
+[[package]]
 name = "nanoid"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3983,6 +4019,15 @@ dependencies = [
  "security-framework",
  "security-framework-sys",
  "tempfile",
+]
+
+[[package]]
+name = "nav-types"
+version = "0.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "79beb749c537c9cccddfa3039ace093404d4bb42c28313c28cac0342f3d4fd23"
+dependencies = [
+ "nalgebra",
 ]
 
 [[package]]
@@ -4048,8 +4093,7 @@ dependencies = [
 [[package]]
 name = "neo4rs"
 version = "0.9.0-rc.10"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b433ba6b38f863f3f1db1cd2b99da742c5db961d7fec9553663331b5db3bc453"
+source = "git+https://github.com/neo4j-labs/neo4rs.git#3295dad484ad79644d4cdee9f82bba64d6d6dd53"
 dependencies = [
  "backon",
  "bytes",
@@ -4059,6 +4103,7 @@ dependencies = [
  "delegate",
  "futures",
  "log",
+ "nav-types",
  "neo4rs-macros",
  "neo4rs_include_snippet",
  "pastey 0.2.3",
@@ -4069,6 +4114,7 @@ dependencies = [
  "serde",
  "socket2 0.5.10",
  "thiserror 2.0.21",
+ "time",
  "tokio",
  "tokio-rustls",
  "url",
@@ -4077,8 +4123,7 @@ dependencies = [
 [[package]]
 name = "neo4rs-macros"
 version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "53a0d57c55d2d1dc62a2b1d16a0a1079eb78d67c36bdf468d582ab4482ec7002"
+source = "git+https://github.com/neo4j-labs/neo4rs.git#3295dad484ad79644d4cdee9f82bba64d6d6dd53"
 dependencies = [
  "quote",
  "syn 2.0.119",
@@ -4087,8 +4132,7 @@ dependencies = [
 [[package]]
 name = "neo4rs_include_snippet"
 version = "0.9.0-rc.10"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "79f62dfc17e5e779bfed003d02e9ef4ecdb7b25fb9d37f7e60f3f730d9a62726"
+source = "git+https://github.com/neo4j-labs/neo4rs.git#3295dad484ad79644d4cdee9f82bba64d6d6dd53"
 dependencies = [
  "unsynn",
 ]
@@ -5794,6 +5838,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9774ba4a74de5f7b1c1451ed6cd5285a32eddb5cccb8cc655a4e50009e06477f"
 
 [[package]]
+name = "safe_arch"
+version = "0.7.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "96b02de82ddbe1b636e6170c21be622223aea188ef2e139be0a5b219ec215323"
+dependencies = [
+ "bytemuck",
+]
+
+[[package]]
 name = "safetensors"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6191,6 +6244,19 @@ checksum = "c4db69cba1110affc0e9f7bcd48bbf87b3f4fc7c61fc9155afd4c469eb3d6c1b"
 dependencies = [
  "errno",
  "libc",
+]
+
+[[package]]
+name = "simba"
+version = "0.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "061507c94fc6ab4ba1c9a0305018408e312e17c041eb63bef8aa726fa33aceae"
+dependencies = [
+ "approx",
+ "num-complex",
+ "num-traits",
+ "paste",
+ "wide",
 ]
 
 [[package]]
@@ -8248,6 +8314,16 @@ dependencies = [
  "cmake",
  "fs_extra",
  "semver",
+]
+
+[[package]]
+name = "wide"
+version = "0.7.33"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0ce5da8ecb62bcd8ec8b7ea19f69a51275e91299be594ea5cc6ef7819e16cd03"
+dependencies = [
+ "bytemuck",
+ "safe_arch",
 ]
 
 [[package]]

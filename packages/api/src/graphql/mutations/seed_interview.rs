@@ -308,7 +308,7 @@ pub async fn seed_interview(
             vid = vimeo_id.clone(),
             interviewUid = interview_uid.clone(),
         ))
-        .await?
+        .await?;
     }
 
     tracing::info!(

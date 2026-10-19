@@ -55,7 +55,8 @@ dotenvy = "0.15"
 
 # Neo4j --- neo4rs is the async Bolt client for Neo4j. It manages a connection
 # pool internally, so one Graph handle is shared across the whole server.
-neo4rs = "0.9.0-rc.10"
+# TODO: Pin back to a version tag when https://github.com/neo4j-labs/neo4rs/pull/298 lands.
+neo4rs = { git = "https://github.com/neo4j-labs/neo4rs.git", features = ["unstable-bolt-protocol-impl-v2"] }
 
 # Serialization --- serde is the standard Rust serialization framework.
 # serde_json is used to encode per-word timing data as a JSON string property

@@ -67,25 +67,30 @@ def match_interview(interview_fname: str, interview_data) -> Interview | None:
     most_similar_interview = ratios[0]
     if most_similar_interview and most_similar_interview[1] >= 0.5:
         return Interview(
-            **most_similar_interview[0],
+            interview_number=most_similar_interview[0].get("interview_number"),
+            interviewee=most_similar_interview[0].get("interviewee"),
+            interviewer=most_similar_interview[0].get("interviewer"),
+            interview_date=most_similar_interview[0].get("interview_date"),
+            copyright_year=most_similar_interview[0].get("copyright_year"),
+            filename=most_similar_interview[0].get("filename"),
         )
     return None
 
 
 def match_vimeo_video(interview: Interview, vimeo_data) -> VimeoVideo | None:
     videos = vimeo_data.get("videos", [])
-
-    for video in videos:
-        if video.get("name") == most_similar(
-            f"{interview.interview_number} {interview.interviewee}",
-            [v.get("name") for v in videos],
-        ):
-            return VimeoVideo(
-                id=video.get("id"),
-                name=video.get("name"),
-                stem=video.get("stem"),
-                ext=video.get("ext"),
-            )
+    sm = SequenceMatcher()
+    sm.set_seq2(f"{interview.interview_number} {interview.interviewee}")
+    ratios = [(video, sm.set_seq1(video.get("name")) or sm.ratio()) for video in videos]
+    ratios = sorted(ratios, key=lambda x: x[1], reverse=True)
+    most_similar_video = ratios[0] if ratios else None
+    if most_similar_video and most_similar_video[1] >= 0.5:
+        return VimeoVideo(
+            id=most_similar_video[0].get("id"),
+            name=most_similar_video[0].get("name"),
+            stem=most_similar_video[0].get("stem"),
+            ext=most_similar_video[0].get("ext"),
+        )
     return None
 
 
@@ -120,7 +125,7 @@ def execute_seed_query(request_data, graphql_endpoint: str):
 
 
 @click.command()
-@click.argument("transcript_dir", type=Path)
+@click.argument("transcript", type=Path)
 @click.option(
     "--vimeo-manifest",
     type=Path,
@@ -143,7 +148,7 @@ def main(
     vimeo_manifest: Path,
     graphql_endpoint: str,
     interview_manifest: Path,
-    transcript_dir: Path,
+    transcript: Path,
 ):
     with open(interview_manifest, "r") as f:
         interview_data = yaml.safe_load(f)
@@ -156,7 +161,17 @@ def main(
         print(f"Failed to load Vimeo data from: {vimeo_manifest}")
         return
 
-    for transcript in transcript_dir.glob("*.json"):
+    if transcript is None or not transcript.exists():
+        print(f"not found: {transcript}")
+        return
+
+    if transcript.is_file():
+        transcripts = [transcript]
+
+    if transcript.is_dir():
+        transcripts = [transcript_file for transcript_file in transcript.glob("*.json")]
+
+    for transcript in transcripts:
         name = transcript.name
         print(f"Seeding interview from transcript: {name}")
 
@@ -165,7 +180,7 @@ def main(
             print(
                 f"Interview {name} not found in the interview manifest."
             )
-            return
+            continue
 
         vimeo_video = match_vimeo_video(interview, vimeo_data)
         if not vimeo_video:
