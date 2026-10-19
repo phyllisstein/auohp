@@ -32,19 +32,20 @@ fn main() -> Result<()> {
 
     let mut embedder = Embedder::new()?;
 
-    for query in cli.queries {
-        let vector = embedder.embed(std::slice::from_ref(&query))?;
-        let vector: Vec<f64> = vector
-            .into_iter()
-            .flat_map(|v| v.into_iter().map(|q| f64::from(q)))
+    for query in cli.queries.chunks(25) {
+        let vector = embedder.embed(query)?;
+        let vector: Vec<String> = vector
+            .iter()
+            .zip(query)
+            .map(|a| {
+                let n: Vec<f64> = a.0.iter().map(|f| *f as f64).collect();
+                let k = truncated_camel_case(a.1);
+                format!(":param {}Embedding => vector({:?}, 1024, FLOAT64);", k, n)
+            })
             .collect();
 
-        let camel = truncated_camel_case(&query);
-        println!(
-            "\n:param {}Embedding => vector({:?}, 1024, FLOAT64);\n",
-            camel,
-            vector.first().unwrap()
-        );
+        let o = vector.join(&"\n\n");
+        println!("{}", o);
     }
 
     Ok(())
