@@ -207,7 +207,7 @@ async fn embed_statements(
                 "
                     UNWIND {items} AS item
                     MATCH (s:Statement {{uid: item.uid}})
-                    SET s.embedding = vector([item.vector, 1024, FLOAT64])
+                    SET s.embedding = vector(item.vector, 1024, FLOAT64)
                 ",
                 items = items,
             ))
