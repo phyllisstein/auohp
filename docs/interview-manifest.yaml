@@ -3,512 +3,512 @@
 # via pdftotext -layout. interview_date is null where the source
 # date field isn't a single simple date (see interview_date instead).
 interviews:
-  - interview_number: 002
+  - interview_number: 2
     interviewee: Robert Vazquez-Pacheco
     interviewer: Sarah Schulman
     interview_date: 2002-12-14
     copyright_year: 2003
     filename: 002 - Robert Vazquez-Pacheco.pdf
-  - interview_number: 003
+  - interview_number: 3
     interviewee: Moises Agosto
     interviewer: Sarah Schulman
     interview_date: 2002-12-14
     copyright_year: 2003
     filename: 003 - Moises Agosto.pdf
-  - interview_number: 004
+  - interview_number: 4
     interviewee: Gregg Bordowitz
     interviewer: Sarah Schulman
     interview_date: 2002-12-17
     copyright_year: 2003
     filename: 004 - Gregg Bordowitz.pdf
-  - interview_number: 005
+  - interview_number: 5
     interviewee: Jean Carlomusto
     interviewer: Sarah Schulman
     interview_date: 2002-12-19
     copyright_year: 2003
     filename: 005 - Jean Carlomusto.pdf
-  - interview_number: 011
+  - interview_number: 11
     interviewee: Ann Philbin
     interviewer: Sarah Schulman
     interview_date: 2003-01-21
     copyright_year: 2003
     filename: 011 - Ann Philbin.pdf
-  - interview_number: 012
+  - interview_number: 12
     interviewee: Mark Harrington
     interviewer: Sarah Schulman
     interview_date: 2003-03-08
     copyright_year: 2003
     filename: 012 - Mark Harrington.pdf
-  - interview_number: 021
+  - interview_number: 21
     interviewee: Russell Pritchard
     interviewer: Sarah Schulman
     interview_date: 2003-04-23
     copyright_year: 2004
     filename: 021 - Russell Pritchard.pdf
-  - interview_number: 022
+  - interview_number: 22
     interviewee: Rick Loftus
     interviewer: Sarah Schulman
     interview_date: 2003-04-26
     copyright_year: 2004
     filename: 022 - Rick Loftus.pdf
-  - interview_number: 023
+  - interview_number: 23
     interviewee: Emily Nahmanson
     interviewer: Sarah Schulman
     interview_date: 2003-04-27
     copyright_year: 2004
     filename: 023 - Emily Nahmanson.pdf
-  - interview_number: 024
+  - interview_number: 24
     interviewee: Kendall Thomas
     interviewer: Sarah Schulman
     interview_date: 2003-05-03
     copyright_year: 2004
     filename: 024 - Kendall Thomas.pdf
-  - interview_number: 025
+  - interview_number: 25
     interviewee: Lei Chou
     interviewer: Sarah Schulman
     interview_date: 2003-05-05
     copyright_year: 2004
     filename: 025 - Lei Chou.pdf
-  - interview_number: 026
+  - interview_number: 26
     interviewee: Iris Long
     interviewer: Sarah Schulman
     interview_date: 2003-05-16
     copyright_year: 2004
     filename: 026 - Iris Long.pdf
-  - interview_number: 027
+  - interview_number: 27
     interviewee: Ann Northrop
     interviewer: Sarah Schulman
     interview_date: 2003-05-28
     copyright_year: 2004
     filename: 027 - Ann Northrop.pdf
-  - interview_number: 028
+  - interview_number: 28
     interviewee: Richard Deagle
     interviewer: Sarah Schulman
     interview_date: 2003-09-13
     copyright_year: 2004
     filename: 028 - Richard Deagle.pdf
-  - interview_number: 029
+  - interview_number: 29
     interviewee: Michelangelo Signorile
     interviewer: Sarah Schulman
     interview_date: 2003-09-20
     copyright_year: 2004
     filename: 029 - Michelangelo Signorile.pdf
-  - interview_number: 030
+  - interview_number: 30
     interviewee: Mary Dorman
     interviewer: Sarah Schulman
     interview_date: 2003-10-17
     copyright_year: 2004
     filename: 030 - Mary Dorman.pdf
-  - interview_number: 031
+  - interview_number: 31
     interviewee: David Z. Kirschenbaum
     interviewer: Sarah Schulman
     interview_date: 2003-10-19
     copyright_year: 2004
     filename: 031 - David Z. Kirschenbaum.pdf
-  - interview_number: 032
+  - interview_number: 32
     interviewee: Ron Goldberg
     interviewer: Sarah Schulman
     interview_date: 2003-10-25
     copyright_year: 2004
     filename: 032 - Ron Goldberg.pdf
-  - interview_number: 033
+  - interview_number: 33
     interviewee: Frank Jump
     interviewer: Sarah Schulman
     interview_date: 2003-11-01
     copyright_year: 2004
     filename: 033 - Frank Jump.pdf
-  - interview_number: 034
+  - interview_number: 34
     interviewee: Roma Baran
     interviewer: Sarah Schulman
     interview_date: 2003-11-05
     copyright_year: 2004
     filename: 034 - Roma Baran.pdf
-  - interview_number: 035
+  - interview_number: 35
     interviewee: Larry Kramer
     interviewer: Sarah Schulman
     interview_date: 2003-11-15
     copyright_year: 2004
     filename: 035 - Larry Kramer.pdf
-  - interview_number: 036
+  - interview_number: 36
     interviewee: Joy Episalla
     interviewer: Sarah Schulman
     interview_date: 2003-12-06
     copyright_year: 2004
     filename: 036 - Joy Episalla.pdf
-  - interview_number: 037
+  - interview_number: 37
     interviewee: Jamie Leo
     interviewer: Sarah Schulman
     interview_date: 2003-12-21
     copyright_year: 2004
     filename: 037 - Jamie Leo.pdf
-  - interview_number: 038
+  - interview_number: 38
     interviewee: Ron Medley
     interviewer: Sarah Schulman
     interview_date: 2003-12-28
     copyright_year: 2004
     filename: 038 - Ron Medley.pdf
-  - interview_number: 039
+  - interview_number: 39
     interviewee: Karen Moulding
     interviewer: Sarah Schulman
     interview_date: 2004-01-16
     copyright_year: 2004
     filename: 039 - Karen Moulding.pdf
-  - interview_number: 040
+  - interview_number: 40
     interviewee: Steve Quester
     interviewer: Sarah Schulman
     interview_date: 2004-01-17
     copyright_year: 2004
     filename: 040 - Steve Quester.pdf
-  - interview_number: 041
+  - interview_number: 41
     interviewee: Gregg Gonsalves
     interviewer: Sarah Schulman
     interview_date: 2004-01-19
     copyright_year: 2004
     filename: 041 - Gregg Gonsalves.pdf
-  - interview_number: 042
+  - interview_number: 42
     interviewee: Tom Kalin
     interviewer: Sarah Schulman
     interview_date: 2004-02-04
     copyright_year: 2004
     filename: 042 - Tom Kalin.pdf
-  - interview_number: 043
+  - interview_number: 43
     interviewee: Maxine Wolfe
     interviewer: Jim Hubbard
     interview_date: 2004-02-19
     copyright_year: 2004
     filename: 043 - Maxine Wolfe.pdf
-  - interview_number: 044
+  - interview_number: 44
     interviewee: Marlene McCarty
     interviewer: Sarah Schulman
     interview_date: 2004-02-21
     copyright_year: 2004
     filename: 044 - Marlene McCarty.pdf
-  - interview_number: 045
+  - interview_number: 45
     interviewee: Andrew Vélez
     interviewer: Sarah Schulman
     interview_date: 2004-02-26
     copyright_year: 2004
     filename: 045 - Andrew Velez.pdf
-  - interview_number: 046
+  - interview_number: 46
     interviewee: James Wagner
     interviewer: Sarah Schulman
     interview_date: 2004-02-28
     copyright_year: 2004
     filename: 046 - James Wagner.pdf
-  - interview_number: 047
+  - interview_number: 47
     interviewee: Jim Eigo
     interviewer: Sarah Schulman
     interview_date: 2004-03-05
     copyright_year: 2004
     filename: 047 - Jim Eigo.pdf
-  - interview_number: 048
+  - interview_number: 48
     interviewee: Amy Bauer
     interviewer: Sarah Schulman
     interview_date: 2004-03-07
     copyright_year: 2004
     filename: 048 - Amy Bauer.pdf
-  - interview_number: 049
+  - interview_number: 49
     interviewee: Eric Sawyer
     interviewer: Sarah Schulman
     interview_date: 2004-03-10
     copyright_year: 2004
     filename: 049 - Eric Sawyer.pdf
-  - interview_number: 050
+  - interview_number: 50
     interviewee: Peter Cramer
     interviewer: Sarah Schulman
     interview_date: 2002-10-26
     copyright_year: 2004
     filename: 050 - Peter Cramer.pdf
-  - interview_number: 051
+  - interview_number: 51
     interviewee: Elias Guerrero
     interviewer: Sarah Schulman
     interview_date: 2004-03-17
     copyright_year: 2004
     filename: 051 - Elias Guerrero.pdf
-  - interview_number: 052
+  - interview_number: 52
     interviewee: Kate Barnhart
     interviewer: Sarah Schulman
     interview_date: 2004-03-21
     copyright_year: 2004
     filename: 052 - Kate Barnhart.pdf
-  - interview_number: 053
+  - interview_number: 53
     interviewee: Dan Keith Williams
     interviewer: Jim Hubbard
     interview_date: 2004-03-26
     copyright_year: 2004
     filename: 053 - Dan Keith Williams.pdf
-  - interview_number: 054
+  - interview_number: 54
     interviewee: Jay Blotcher
     interviewer: Sarah Schulman
     interview_date: 2004-04-24
     copyright_year: 2004
     filename: 054 - Jay Blotcher.pdf
-  - interview_number: 055
+  - interview_number: 55
     interviewee: Neil Broome
     interviewer: Sarah Schulman
     interview_date: 2004-04-25
     copyright_year: 2004
     filename: 055 - Neil Broome.pdf
-  - interview_number: 056
+  - interview_number: 56
     interviewee: Andrew Miller
     interviewer: Sarah Schulman
     interview_date: 2004-10-04
     copyright_year: 2005
     filename: 056 - Andrew Miller.pdf
-  - interview_number: 057
+  - interview_number: 57
     interviewee: Jose Fidelino
     interviewer: Sarah Schulman
     interview_date: 2004-10-13
     copyright_year: 2006
     filename: 057 - Jose Fidelino.pdf
-  - interview_number: 058
+  - interview_number: 58
     interviewee: Sandy Katz
-    interviewer: "Part I: Sarah Schulman Part II: Jim Hubbard"
-    interview_date: null
+    interviewer: Sarah Schulman
+    interview_date: 2004-10-16
     copyright_year: 2006
     filename: 058 - Sandy Katz.pdf
-  - interview_number: 059
+  - interview_number: 59
     interviewee: MaxZine Weinstein
     interviewer: Sarah Schulman
     interview_date: 2004-10-16
     copyright_year: 2006
     filename: 059 - MaxZine Weinstein.pdf
-  - interview_number: 060
+  - interview_number: 60
     interviewee: Spree
     interviewer: Sarah Schulman
     interview_date: 2004-10-16
     copyright_year: 2005
     filename: 060 - SPREE.pdf
-  - interview_number: 061
+  - interview_number: 61
     interviewee: Nettles (Yaron Schweizer)
     interviewer: Sarah Schulman
     interview_date: 2004-10-17
     copyright_year: 2006
     filename: 061 - Nettles (Yaron Schweizer).pdf
-  - interview_number: 062
+  - interview_number: 62
     interviewee: Stephen Shapiro
     interviewer: "Sarah Schulman & Jim Hubbard"
     interview_date: 2004-10-23
     copyright_year: 2007
     filename: 062 - Stephen Shapiro.pdf
-  - interview_number: 063
+  - interview_number: 63
     interviewee: Jim Lyons
     interviewer: Sarah Schulman
     interview_date: 2005-02-26
     copyright_year: 2007
     filename: 063 - Jim Lyons.pdf
-  - interview_number: 064
+  - interview_number: 64
     interviewee: Vincent Gagliostro
     interviewer: Sarah Schulman
     interview_date: 2005-07-08
     copyright_year: 2007
     filename: 064 - Vincent Gagliostro.pdf
-  - interview_number: 065
+  - interview_number: 65
     interviewee: Bill Dobbs
     interviewer: Sarah Schulman
     interview_date: 2006-11-21
     copyright_year: 2007
     filename: 065 - Bill Dobbs.pdf
-  - interview_number: 066
+  - interview_number: 66
     interviewee: Jim Fouratt
     interviewer: Sarah Schulman
     interview_date: 2006-11-28
     copyright_year: 2007
     filename: 066 - Jim Fouratt.pdf
-  - interview_number: 067
+  - interview_number: 67
     interviewee: Peter Staley
     interviewer: Sarah Schulman
     interview_date: 2006-12-09
     copyright_year: 2007
     filename: 067 - Peter Staley.pdf
-  - interview_number: 068
+  - interview_number: 68
     interviewee: George Carter
     interviewer: Sarah Schulman
     interview_date: 2007-04-16
     copyright_year: 2008
     filename: 068 - George Carter.pdf
-  - interview_number: 069
+  - interview_number: 69
     interviewee: Heidi Dorow
     interviewer: Sarah Schulman
     interview_date: 2007-04-17
     copyright_year: 2008
     filename: 069 - Heidi Dorow.pdf
-  - interview_number: 070
+  - interview_number: 70
     interviewee: Marion Banzhaf
     interviewer: Sarah Schulman
     interview_date: 2007-04-18
     copyright_year: 2007
     filename: 070 - Marion Banzhaf.pdf
-  - interview_number: 071
+  - interview_number: 71
     interviewee: Catherine Gund
     interviewer: Sarah Schulman
     interview_date: 2007-04-20
     copyright_year: 2008
     filename: 071 - Catherine Gund.pdf
-  - interview_number: 072
+  - interview_number: 72
     interviewee: Richard Elovich
     interviewer: Sarah Schulman
     interview_date: 2007-05-14
     copyright_year: 2008
     filename: 072 - Richard Elovich.pdf
-  - interview_number: 073
+  - interview_number: 73
     interviewee: David Barr
     interviewer: Sarah Schulman
     interview_date: 2007-05-15
     copyright_year: 2008
     filename: 073 - David Barr.pdf
-  - interview_number: 074
+  - interview_number: 74
     interviewee: Douglas Crimp
     interviewer: Sarah Schulman
     interview_date: 2007-05-16
     copyright_year: 2008
     filename: 074 - Douglas Crimp.pdf
-  - interview_number: 075
+  - interview_number: 75
     interviewee: Gerri Wells
     interviewer: Sarah Schulman
     interview_date: 2007-05-24
     copyright_year: 2008
     filename: 075 - Gerri Wells.pdf
-  - interview_number: 076
+  - interview_number: 76
     interviewee: Terry McGovern
     interviewer: Sarah Schulman
     interview_date: 2007-05-25
     copyright_year: 2008
     filename: 076 - Terry McGovern.pdf
-  - interview_number: 077
+  - interview_number: 77
     interviewee: Mark Milano
     interviewer: Sarah Schulman
     interview_date: 2007-05-26
     copyright_year: 2008
     filename: 077 - Mark Milano.pdf
-  - interview_number: 078
+  - interview_number: 78
     interviewee: Ken Bing
     interviewer: Sarah Schulman
     interview_date: 2007-05-30
     copyright_year: 2008
     filename: 078 - Ken Bing.pdf
-  - interview_number: 079
+  - interview_number: 79
     interviewee: Bob Huff
     interviewer: Sarah Schulman
     interview_date: 2007-05-31
     copyright_year: 2008
     filename: 079 - Bob Huff.pdf
-  - interview_number: 080
+  - interview_number: 80
     interviewee: Garance Franke-Ruta
     interviewer: Sarah Schulman
     interview_date: 2007-06-06
     copyright_year: 2008
     filename: 080 - Garance Franke-Ruta.pdf
-  - interview_number: 081
+  - interview_number: 81
     interviewee: Matt Ebert
     interviewer: Sarah Schulman
     interview_date: 2007-07-13
     copyright_year: 2008
     filename: 081 - Matt Ebert.pdf
-  - interview_number: 082
+  - interview_number: 82
     interviewee: David Robinson
     interviewer: Sarah Schulman
     interview_date: 2007-07-16
     copyright_year: 2008
     filename: 082 - David Robinson.pdf
-  - interview_number: 083
+  - interview_number: 83
     interviewee: Michael Perelman
     interviewer: Sarah Schulman
     interview_date: 2007-07-18
     copyright_year: 2008
     filename: 083 - Michael Perelman.pdf
-  - interview_number: 084
+  - interview_number: 84
     interviewee: Patricia Navarro
     interviewer: Sarah Schulman
     interview_date: 2007-07-20
     copyright_year: 2008
     filename: 084 - Patricia Navarro.pdf
-  - interview_number: 085
+  - interview_number: 85
     interviewee: BC Craig
     interviewer: Sarah Schulman
     interview_date: 2008-06-23
     copyright_year: 2010
     filename: 085 - BC Craig.pdf
-  - interview_number: 086
+  - interview_number: 86
     interviewee: Robyn Hutt
     interviewer: Sarah Schulman
     interview_date: 2008-06-25
     copyright_year: 2010
     filename: 086 - Robyn Hutt.pdf
-  - interview_number: 087
+  - interview_number: 87
     interviewee: Jill Harris
     interviewer: Sarah Schulman
     interview_date: 2008-06-27
     copyright_year: 2010
     filename: 087 - Jill Harris.pdf
-  - interview_number: 088
+  - interview_number: 88
     interviewee: Rebecca Cole
     interviewer: Sarah Schulman
     interview_date: 2008-06-30
     copyright_year: 2010
     filename: 088 - Rebecca Cole.pdf
-  - interview_number: 099
+  - interview_number: 99
     interviewee: Betty Williams
     interviewer: Sarah Schulman
     interview_date: 2008-08-08
     copyright_year: null
     filename: 089 - Donald Grove.pdf
     note: "Filename says 'Donald Grove' but the PDF's title page and running header both say 'Betty Williams', Interview Number 099 (same number as 099 - Betty Williams.pdf, a different file, 51 pages each). No Donald Grove interview appears to exist in this directory. interview_number and interviewee below are left as extracted (from the PDF, i.e. Betty Williams / 099) -- do not seed this file as interview 089 without resolving the source discrepancy first."
-  - interview_number: 090
+  - interview_number: 90
     interviewee: Herb Spiers
     interviewer: Sarah Schulman
     interview_date: 2008-07-02
     copyright_year: 2010
     filename: 090 - Herb Spiers.pdf
-  - interview_number: 091
+  - interview_number: 91
     interviewee: Lola Flash
     interviewer: Sarah Schulman
     interview_date: 2008-07-08
     copyright_year: 2010
     filename: 091 - Lola Flash.pdf
-  - interview_number: 092
+  - interview_number: 92
     interviewee: Sharon Tramutola
     interviewer: Sarah Schulman
     interview_date: 2008-07-08
     copyright_year: 2004
     filename: 092 - Sharon Tramutola.pdf
-  - interview_number: 093
+  - interview_number: 93
     interviewee: Risa Denenberg
     interviewer: Sarah Schulman
     interview_date: 2008-07-11
     copyright_year: 2010
     filename: 093 - Risa Denenberg.pdf
-  - interview_number: 094
+  - interview_number: 94
     interviewee: Karen Ramspacher
     interviewer: Sarah Schulman
     interview_date: 2008-07-13
     copyright_year: 2010
     filename: 094 - Karen Ramspacher.pdf
-  - interview_number: 095
+  - interview_number: 95
     interviewee: Sandra Elgear
     interviewer: Sarah Schulman
     interview_date: 2008-07-22
     copyright_year: 2010
     filename: 095 - Sandra Elgear.pdf
-  - interview_number: 096
+  - interview_number: 96
     interviewee: Deborah Gavito
     interviewer: Sarah Schulman
     interview_date: 2008-07-24
     copyright_year: 2015
     filename: 096 - Debbie Gavito.pdf
-  - interview_number: 097
+  - interview_number: 97
     interviewee: Victor Mendolia
     interviewer: Sarah Schulman
     interview_date: 2008-08-15
     copyright_year: 2010
     filename: 097 - Victor Mendolia.pdf
-  - interview_number: 098
+  - interview_number: 98
     interviewee: Loring McAlpin
     interviewer: Sarah Schulman
     interview_date: 2008-08-18
     copyright_year: 2010
     filename: 098 - Loring McAlpin.pdf
-  - interview_number: 099
+  - interview_number: 99
     interviewee: Betty Williams
     interviewer: Sarah Schulman
     interview_date: 2008-08-23
