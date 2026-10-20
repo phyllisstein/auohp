@@ -1,7 +1,10 @@
 [workspace]
 resolver = "2"
 members = [
-    "packages/api",
+    "apps/api",
     "packages/core",
-    "packages/desktop",
+    "apps/sidecar",
 ]
+
+[workspace.dependencies]
+auohp-core = { path = "packages/core" }

@@ -1,0 +1,14 @@
+{
+    "$schema": "https://turborepo.dev/schema.json",
+    "ui": "tui",
+    "agentGuidance": true,
+    // FIXME: Consider changing envMode to "strict" for stricter environment handling.
+    //        <https://turborepo.dev/docs/crafting-your-repository/using-environment-variables>
+    "envMode": "loose",
+    "tasks": {
+        "dev": {
+            "cache": false,
+            "persistent": true,
+        },
+    },
+}

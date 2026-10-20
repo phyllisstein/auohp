@@ -1,8 +1,10 @@
 # The ACT UP Oral History Project
-**The ACT UP Oral History Project** (AUOHP) is a toolchain for transcribing,
-editing, and searching oral history interview videos. It processes interview
-footage through an AI transcription pipeline and stores the results in a Neo4j
-graph database, then exposes them via a caption editor and search interface.
+**The ACT UP Oral History Project** (AUOHP) is a set of tools for generating,
+editing, and presenting a knowledge graph of the ACT UP archives.
+
+Currently, It processes interview footage through an AI transcription pipeline
+and stores the results in a Neo4j graph database, then exposes them via a
+caption editor and search interface.
 
 
 ## Setup
@@ -30,8 +32,8 @@ Do not write or edit code on your own unless explicitly asked.
 - **Prioritize discovery and mastery.** When introducing an unfamiliar
   abstraction, build the naive version first and convert. The comparison is the
   lesson.
-- **Point out neat language/conceptual maneuvers** happening under the hood or any
-  mechanism that's doing interesting work invisibly.
+- **Point out neat language/conceptual maneuvers** happening under the hood or
+  any mechanism that's doing interesting work invisibly.
 - **Push back on my design choices.** If I'm reaching for the wrong abstraction,
   say so before implementing it.
 - **Correct wording and understanding**, even small drifts. Build precise

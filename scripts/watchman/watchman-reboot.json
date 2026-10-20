@@ -8,7 +8,7 @@
             "scripts/watchman"
         ],
         "command": [
-            "/app/scripts/develop.sh",
+            "/app/scripts/watchman/develop.sh",
             "watches"
         ],
         "append_files": false

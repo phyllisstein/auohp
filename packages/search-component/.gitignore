@@ -1,7 +1,0 @@
-/src/assets/*
-!src/assets
-!src/assets/.gitkeep
-public/*
-!public/
-!public/.gitkeep
-schema.graphql
