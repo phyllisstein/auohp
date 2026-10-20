@@ -1,27 +1,6 @@
-//! The audio path, measured without Whisper in the loop.
-//!
-//! These tests exist to settle a claim that had lived in a code comment for
-//! months: that extracting audio from MP4 "contributes to corrupted
-//! transcriptions". That claim was untestable as stated, because it bundled
-//! three separable things --- container parsing, AAC decoding, and resampling ---
-//! and blamed the file format for whichever one was actually at fault.
-//!
-//! The fixture set separates them. Each interview supplies three views of the
-//! same audio: an original MP4, a re-encoded MP4, and a WAV resampled to 16 kHz
-//! mono by an external tool. So original-vs-WAV isolates *our resampler against
-//! an external one*, and original-vs-reencode isolates *what the transcode did*.
-//! Neither is "MP4 handling" in the abstract, and the distinction decides which
-//! knob to reach for.
-//!
-//! The two interviews are not the same experiment. 108's original is an
-//! `mp4v`-era master whose `esds` carries no channel map --- the case that
-//! exposed the stereo-read-as-mono bug --- and its re-encode carries an extra
-//! AAC generation. 026's files are both H.264 and its "reencoded" file is
-//! *larger* than the original, so that pair tests container handling but not
-//! generational loss.
-//!
-//! (108's `truth`/`funky` filenames record the order they were made, not their
-//! fidelity. The `funky` one is the original.)
+//! The audio path measured without Whisper: per interview, an original MP4, a re-encoded MP4, and an externally
+//! resampled 16 kHz mono WAV. Original-vs-WAV isolates our resampler against an external one; original-vs-reencode
+//! isolates the transcode. 108's `truth`/`funky` filenames record creation order; `funky` is the original.
 //!
 //! Fixtures are gigabytes and live outside the repo, under `AUOHP_FIXTURE_DIR`,
 //! `/mnt/s3/fs1/in`, or `$HOME`. Interviews whose media is missing skip with a
@@ -32,12 +11,7 @@ use std::path::PathBuf;
 
 const TARGET_RATE: u32 = 16_000;
 
-/// Search the fixture roots for `name`.
-///
-/// Media for different interviews lives in different places (the 108 set beside
-/// the home directory, the 026 set on the data volume), so this looks through a
-/// list rather than a single directory. `AUOHP_FIXTURE_DIR` is tried first when
-/// set, so a caller can always override.
+/// Search the fixture roots for `name`; `AUOHP_FIXTURE_DIR` is tried first when set.
 fn fixture(name: &str) -> Option<PathBuf> {
     let mut roots: Vec<PathBuf> = Vec::new();
     if let Ok(d) = std::env::var("AUOHP_FIXTURE_DIR") {
@@ -70,8 +44,6 @@ const INTERVIEWS: &[Interview] = &[
     Interview { id: "026", original: "026_original.mp4", reencode: "026_reencoded.mp4",
                 wav: "026_audio.wav", source: (44_100, 2) },
 ];
-
-// ── Similarity measures ──────────────────────────────────────────────────────
 
 fn rms(x: &[f32]) -> f64 {
     if x.is_empty() {
@@ -125,33 +97,20 @@ fn best_lag(a: &[f32], b: &[f32], max_lag: isize) -> (f64, isize) {
 
 const BLOCK: usize = 160; // 10 ms at 16 kHz
 
-/// Per-block RMS --- the signal's amplitude envelope.
-///
-/// Raw-sample correlation is useless for a coarse search: speech carries energy
-/// to 8 kHz, so a misalignment of even one millisecond decorrelates two
-/// otherwise-identical streams. The envelope discards phase and keeps only the
-/// syllabic shape, which stays correlated across offsets of many samples. Coarse
-/// on the envelope, then refine on raw samples, finds a large offset for a tiny
-/// fraction of the work a brute-force raw search would need.
+/// Per-block RMS --- the signal's amplitude envelope. Raw-sample correlation decorrelates under sub-millisecond
+/// misalignment; the envelope keeps only syllabic shape, so search coarse on it, then refine on raw samples.
 fn envelope(x: &[f32]) -> Vec<f32> {
     x.chunks(BLOCK).map(|c| rms(c) as f32).collect()
 }
 
-/// Global sample offset between two streams, searched wide.
-///
-/// Encoders prime their output: AAC typically emits 2112 samples of leading
-/// padding at 44.1 kHz, which survives resampling as roughly 766 samples at
-/// 16 kHz. That is an expected, constant offset and *not* a defect --- but it is
-/// far outside any plausible drift window, so it has to be found and removed
-/// before drift can be measured at all.
+/// Global sample offset between two streams, searched wide. Encoder priming (AAC: 2112 samples at 44.1 kHz,
+/// ~766 at 16 kHz) is an expected constant offset that must be removed before drift can be measured.
 fn global_offset(a: &[f32], b: &[f32]) -> isize {
     let (ea, eb) = (envelope(a), envelope(b));
     let n = ea.len().min(eb.len());
-    // Up to +/- 2 s, expressed in envelope blocks.
     let span = (n / 4).min(200) as isize;
     let (_, coarse) = best_lag(&ea[..n], &eb[..n], span);
 
-    // Refine on raw samples within one block either side of the coarse estimate.
     let centre = coarse * BLOCK as isize;
     let probe = (16_000 * 20).min(a.len()).min(b.len());
     let fine = (-(BLOCK as isize)..=(BLOCK as isize))
@@ -174,21 +133,8 @@ fn shift<'a>(a: &'a [f32], b: &'a [f32], lag: isize) -> (&'a [f32], &'a [f32]) {
     (&a[..n], &b[..n])
 }
 
-/// Correlation measured independently in successive windows.
-///
-/// This is the measurement that matters, and the reason a single scalar RMS
-/// would have been useless here. If the resampler drops or duplicates samples at
-/// chunk boundaries, the two streams do not degrade uniformly --- they slide
-/// apart, so early windows correlate well and later ones progressively worse,
-/// with a lag that grows. A whole-file average smears exactly that signature
-/// into a mediocre number with no shape to it.
-/// Correlation and residual lag per window, after the global offset is removed.
-///
-/// Residual lag is the diagnostic. A constant offset is encoder priming and
-/// harmless; a residual that *grows* across the file means samples are being
-/// dropped or duplicated as it goes, which is what chunk-boundary mishandling in
-/// the resampler would look like. A single whole-file scalar averages that shape
-/// away into a mediocre number with nothing to read.
+/// Correlation and residual lag per window, after the global offset is removed. A constant offset is encoder
+/// priming; a residual lag that grows across the file means the resampler drops or duplicates samples.
 fn windowed(a: &[f32], b: &[f32], windows: usize) -> Vec<(f64, isize)> {
     let n = a.len().min(b.len());
     let w = n / windows;
@@ -232,8 +178,6 @@ fn report(label: &str, x: &DecodedAudio, y: &DecodedAudio) -> Comparison {
 
     Comparison { windows, offset, mean_ncc }
 }
-
-// ── Tests ────────────────────────────────────────────────────────────────────
 
 /// Run `f` for every interview whose media is present; skip (with a notice) the
 /// ones that are not, so a partial fixture set still exercises what it can.
@@ -294,7 +238,6 @@ fn containers_select_the_audio_track() {
 }
 
 /// The core measurement: same source audio, two resamplers.
-///
 /// A failure here does not indict "MP4 handling" -- both paths decode the same
 /// AAC. It indicts our `rubato` configuration against the external tool's.
 #[test]
@@ -328,13 +271,8 @@ fn mp4_matches_externally_resampled_wav() {
     });
 }
 
-/// Compares the two MP4s against the WAV reference.
-///
-/// For 108 this measures generational loss (the re-encode carries an extra AAC
-/// generation). For 026 the "reencoded" file is larger than the original, so it
-/// is not a lossy transcode and no ordering is predicted. Either way the numbers
-/// are reported rather than asserted -- which way they fall is the experiment's
-/// outcome, and asserting it would be asserting the hypothesis.
+/// Compares the two MP4s against the WAV reference. Numbers are reported, not asserted: which way they fall is
+/// the experiment's outcome.
 #[test]
 fn reencode_and_original_are_compared_against_the_reference() {
     for_each_interview("generational loss", |iv, o, r, w| {

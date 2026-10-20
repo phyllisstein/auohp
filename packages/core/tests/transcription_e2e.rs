@@ -1,14 +1,5 @@
-//! Comprehensive E2E test suite for the Whisper transcription and diarization pipeline.
-//!
-//! Covers Tiers 1--4 as specified in `TEST_INFRA.md`:
-//! - Tier 1: Feature Coverage (Audio ingestion, diarization clustering, segmentation
-//!   windowing, word assembly, VAD timeline, timestamp rounding).
-//! - Tier 2: Boundary & Corner Cases (Empty audio, extreme lengths, exact chunk
-//!   boundaries, silence signals, NaN/infinity guards).
-//! - Tier 3: Cross-Feature Combinations (Resampling + clustering, segmentation + VAD,
-//!   word timestamps + turn attribution, audio config quality, pipeline serde).
-//! - Tier 4: Real-World Scenarios (Multi-speaker interview dialogue, long monologue,
-//!   rapid turn alternation, edge-to-edge audio, non-ASCII multi-byte transcripts).
+//! End-to-end tests for the transcription and diarization pipeline using synthetic audio: ingestion, clustering,
+//! segmentation windowing, word assembly, VAD timeline, and timestamp rounding, with boundary cases and realistic dialogue.
 
 use std::fs::File;
 use std::io::Write;
@@ -16,8 +7,6 @@ use std::path::{Path, PathBuf};
 
 use auohp_core::eval::diarization::{score as score_diarization, ReferenceTurn};
 use auohp_core::transcription::*;
-
-// ── Synthetic Audio Generation Helpers ───────────────────────────────────────
 
 /// Write a standard 16-bit PCM RIFF/WAVE file for testing without external fixtures.
 fn write_test_wav(
@@ -31,12 +20,10 @@ fn write_test_wav(
     let data_len = (num_samples * 2) as u32;
     let file_len = 36 + data_len;
 
-    // RIFF header
     file.write_all(b"RIFF")?;
     file.write_all(&file_len.to_le_bytes())?;
     file.write_all(b"WAVE")?;
 
-    // fmt subchunk
     file.write_all(b"fmt ")?;
     file.write_all(&16u32.to_le_bytes())?; // Subchunk1Size (16 for PCM)
     file.write_all(&1u16.to_le_bytes())?;  // AudioFormat (1 = PCM)
@@ -48,7 +35,6 @@ fn write_test_wav(
     file.write_all(&block_align.to_le_bytes())?;
     file.write_all(&16u16.to_le_bytes())?; // BitsPerSample = 16
 
-    // data subchunk
     file.write_all(b"data")?;
     file.write_all(&data_len.to_le_bytes())?;
 
@@ -110,8 +96,6 @@ fn compute_rms(samples: &[f32]) -> f64 {
     let sum_sq: f64 = samples.iter().map(|&s| (s as f64).powi(2)).sum();
     (sum_sq / samples.len() as f64).sqrt()
 }
-
-// ── Contract Specifications & Test Oracles ───────────────────────────────────
 
 /// Centisecond rounding oracle matching `whisper.rs:round_to`.
 fn round_to(x: f64, places: i32) -> f64 {
@@ -187,10 +171,6 @@ impl TestVadTimeline {
     }
 }
 
-// ═════════════════════════════════════════════════════════════════════════════
-// TIER 1: FEATURE COVERAGE (>=5 tests per feature)
-// ═════════════════════════════════════════════════════════════════════════════
-
 mod tier1_audio_ingestion {
     use super::*;
 
@@ -234,7 +214,6 @@ mod tier1_audio_ingestion {
         assert_eq!(decoded.source_channels, 2);
         assert_eq!(decoded.samples.len(), n_frames);
 
-        // Average of 0.5 and -0.5 is 0.0
         let rms = compute_rms(&decoded.samples);
         assert!(rms < 1e-4, "stereo phase cancellation failed: expected silence, got rms {rms}");
     }
@@ -253,7 +232,6 @@ mod tier1_audio_ingestion {
         let delta = (decoded.samples.len() as i64 - expected_samples as i64).abs();
         assert!(delta <= 8, "resampled duration mismatch: got {}, expected {}", decoded.samples.len(), expected_samples);
 
-        // Signal energy should be preserved across resampling
         let orig_rms = compute_rms(&sine);
         let resampled_rms = compute_rms(&decoded.samples);
         assert!((orig_rms - resampled_rms).abs() < 0.05, "energy not preserved: orig {orig_rms} vs resampled {resampled_rms}");
@@ -357,9 +335,6 @@ mod tier1_diarization_clustering {
             },
         ];
 
-        // Over query span [0.0, 8.0]:
-        // SPEAKER_00 overlap: 1.5 + 1.5 + 1.5 = 4.5s.
-        // SPEAKER_01 overlap: 3.0s.
         let winner = dominant_speaker(0.0, 8.0, &diarized);
         assert_eq!(winner, Some("SPEAKER_00"), "aggregation must sum all segments per speaker");
     }
@@ -471,7 +446,6 @@ mod tier1_word_assembly {
     fn test_t1_word_assembly_turn_dash_stripping() {
         assert_eq!(strip_turn_dash("- How did it begin?"), "How did it begin?");
         assert_eq!(strip_turn_dash("-Yes"), "Yes");
-        // Interior false-start markers must survive untouched
         assert_eq!(strip_turn_dash("-- it was around"), "-- it was around");
         assert_eq!(strip_turn_dash("We went to -- and then"), "We went to -- and then");
     }
@@ -647,7 +621,6 @@ mod tier1_timestamp_rounding {
 
     #[test]
     fn test_t1_timestamp_rounding_no_downward_bias() {
-        // Compare round-to-nearest vs truncation (floor) over 10,000 sub-centisecond intervals
         let n = 10_000;
         let mut err_round_sum = 0.0f64;
         let mut err_trunc_sum = 0.0f64;
@@ -669,7 +642,6 @@ mod tier1_timestamp_rounding {
 
     #[test]
     fn test_t1_timestamp_rounding_halfway_values() {
-        // Exact half-way cases (e.g. 1.235 -> 1.24)
         assert_eq!(round_to(1.235, 2), 1.24);
         assert_eq!(round_to(2.465, 2), 2.47);
         assert_eq!(round_to(0.055, 2), 0.06);
@@ -695,10 +667,6 @@ mod tier1_timestamp_rounding {
     }
 }
 
-// ═════════════════════════════════════════════════════════════════════════════
-// TIER 2: BOUNDARY & CORNER CASES (>=5 tests)
-// ═════════════════════════════════════════════════════════════════════════════
-
 mod tier2_boundary_corner {
     use super::*;
 
@@ -713,13 +681,11 @@ mod tier2_boundary_corner {
 
     #[test]
     fn test_t2_boundary_extreme_lengths() {
-        // Short audio: 64 samples at 16 kHz (4 ms)
         let short_samples = vec![0.1f32; 64];
         let wav_short = TempWav::new("t2_short", 16_000, 1, &short_samples);
         let decoded_short = decode_file(&wav_short.path).expect("short audio decode failed");
         assert_eq!(decoded_short.samples.len(), 64);
 
-        // Long audio across multiple resampler chunks (32,768 samples = 8 x 4096 chunks)
         let long_sine = generate_sine(44_100, 2.0, 440.0, 0.5);
         let wav_long = TempWav::new("t2_long", 44_100, 1, &long_sine);
         let decoded_long = decode_file(&wav_long.path).expect("long audio decode failed");
@@ -731,7 +697,6 @@ mod tier2_boundary_corner {
     #[test]
     fn test_t2_boundary_exact_chunk_boundaries() {
         let chunk_size = 4096;
-        // Exactly two resampler chunks at 16 kHz
         let exact_samples = vec![0.25f32; chunk_size * 2];
         let wav = TempWav::new("t2_exact_chunk", 16_000, 1, &exact_samples);
         let decoded = decode_file(&wav.path).expect("exact chunk decode failed");
@@ -745,14 +710,12 @@ mod tier2_boundary_corner {
         let decoded = decode_file(&wav.path).expect("silence decode failed");
 
         assert_eq!(compute_rms(&decoded.samples), 0.0);
-        // Querying dominant speaker over empty diarization must return None
         let empty_diarized: Vec<DiarizedSegment> = Vec::new();
         assert_eq!(dominant_speaker(0.0, 1.0, &empty_diarized), None);
     }
 
     #[test]
     fn test_t2_boundary_nan_infinity_guards() {
-        // Zero norm vectors in cosine distance must yield 1.0 without NaN/inf
         let zeros = vec![0.0f32; 128];
         let normal = vec![1.0f32; 128];
         let d1 = cosine_distance(&zeros, &normal);
@@ -760,7 +723,6 @@ mod tier2_boundary_corner {
         let d2 = cosine_distance(&zeros, &zeros);
         assert_eq!(d2, 1.0);
 
-        // Extreme values clamped cleanly into [0.0, 2.0]
         let extreme_a = vec![1e20f32, 1e20];
         let extreme_b = vec![1e20f32, 1e20];
         let d3 = cosine_distance(&extreme_a, &extreme_b);
@@ -776,25 +738,17 @@ mod tier2_boundary_corner {
             end: 20.0,
         }];
 
-        // Query before any speech
         assert_eq!(dominant_speaker(0.0, 5.0, &diarized), None);
-        // Query after any speech
         assert_eq!(dominant_speaker(25.0, 30.0, &diarized), None);
-        // Zero-duration query
         assert_eq!(dominant_speaker(15.0, 15.0, &diarized), None);
     }
 }
-
-// ═════════════════════════════════════════════════════════════════════════════
-// TIER 3: CROSS-FEATURE COMBINATIONS (Pairwise Interactions)
-// ═════════════════════════════════════════════════════════════════════════════
 
 mod tier3_cross_feature {
     use super::*;
 
     #[test]
     fn test_t3_cross_resampling_and_clustering() {
-        // Generate two distinct audio chunks at 44.1 kHz
         let tone_a = generate_sine(44_100, 0.5, 440.0, 0.8);
         let tone_b = generate_sine(44_100, 0.5, 880.0, 0.8);
 
@@ -804,12 +758,9 @@ mod tier3_cross_feature {
         let dec_a = decode_file(&wav_a.path).expect("decode a");
         let dec_b = decode_file(&wav_b.path).expect("decode b");
 
-        // Verify both resampled to 16 kHz
         assert_eq!(dec_a.sample_rate, 16_000);
         assert_eq!(dec_b.sample_rate, 16_000);
 
-        // Simulated speaker embedding extraction from resampled segments
-        // Speaker A features concentrated in lower spectrum; Speaker B in higher
         let mut emb_a = vec![0.0f32; 16];
         let mut emb_b = vec![0.0f32; 16];
         emb_a[0] = compute_rms(&dec_a.samples) as f32;
@@ -824,13 +775,11 @@ mod tier3_cross_feature {
 
     #[test]
     fn test_t3_cross_segmentation_and_vad_timeline() {
-        // Speech segments detected in original audio timeline
         let raw_speech_segments = [
             (1.0, 4.0),   // Region 1 (3s)
             (12.0, 18.0), // Region 2 (6s, after 8s silence)
         ];
 
-        // VAD collapses silence into 0.1s glue
         let timeline = TestVadTimeline {
             regions: vec![
                 TestVadRegion {
@@ -846,7 +795,6 @@ mod tier3_cross_feature {
             ],
         };
 
-        // Words decoded in filtered timeline: at 1.5s (inside region 1) and 5.1s (inside region 2)
         let filtered_word_1 = 1.5;
         let filtered_word_2 = 5.1; // 3.1 + 2.0s into region 2
 
@@ -856,7 +804,6 @@ mod tier3_cross_feature {
         assert_eq!(restored_1, 2.5);
         assert_eq!(restored_2, 14.0);
 
-        // Both restored timestamps fall within the original speech segments
         assert!(restored_1 >= raw_speech_segments[0].0 && restored_1 <= raw_speech_segments[0].1);
         assert!(restored_2 >= raw_speech_segments[1].0 && restored_2 <= raw_speech_segments[1].1);
     }
@@ -903,11 +850,9 @@ mod tier3_cross_feature {
             },
         ];
 
-        // Segment 1 (0.0..3.0) -> SPEAKER_00
         let seg1_speaker = dominant_speaker(0.0, 3.0, &diarized);
         assert_eq!(seg1_speaker, Some("SPEAKER_00"));
 
-        // Segment 2 (5.5..8.0) -> SPEAKER_01
         let seg2_speaker = dominant_speaker(5.5, 8.0, &diarized);
         assert_eq!(seg2_speaker, Some("SPEAKER_01"));
 
@@ -1026,7 +971,6 @@ mod tier3_cross_feature {
         assert!(speakers.contains(&"SPEAKER_00".to_string()));
         assert!(speakers.contains(&"SPEAKER_01".to_string()));
 
-        // Serde roundtrip validation
         let json_str = serde_json::to_string_pretty(&result).expect("serialization failed");
         let deserialized: TranscriptionResult = serde_json::from_str(&json_str).expect("deserialization failed");
 
@@ -1038,17 +982,11 @@ mod tier3_cross_feature {
     }
 }
 
-// ═════════════════════════════════════════════════════════════════════════════
-// TIER 4: REAL-WORLD APPLICATION SCENARIOS (>=5 Scenarios)
-// ═════════════════════════════════════════════════════════════════════════════
-
 mod tier4_real_world_scenarios {
     use super::*;
 
     #[test]
     fn test_t4_scenario_1_multispeaker_interview_conversation() {
-        // Scenario 1: Multi-speaker interview conversation with pauses and turn transitions.
-        // Interviewer asks question (0.0..4.0s), 1s pause, Interviewee answers (5.0..15.0s).
         let ground_truth_turns = vec![
             ReferenceTurn {
                 start: 0.0,
@@ -1083,8 +1021,6 @@ mod tier4_real_world_scenarios {
 
     #[test]
     fn test_t4_scenario_2_long_monologue_low_energy() {
-        // Scenario 2: Long monologue with low speech energy and room tone.
-        // Single speaker speaks continuously across multiple windows without false turn switches.
         let n_segments = 10;
         let mut diarized = Vec::new();
         for i in 0..n_segments {
@@ -1095,7 +1031,6 @@ mod tier4_real_world_scenarios {
             });
         }
 
-        // Test queries across the entire 30-second span
         for i in 0..n_segments {
             let start = (i * 3) as f64;
             let end = start + 2.5;
@@ -1106,8 +1041,6 @@ mod tier4_real_world_scenarios {
 
     #[test]
     fn test_t4_scenario_3_rapid_conversational_turns() {
-        // Scenario 3: Rapid conversational turn alternation (interviewer + interviewee).
-        // Quick back-and-forth Q&A (0.8s, 1.0s, 0.7s turns).
         let ground_truth = vec![
             ReferenceTurn {
                 start: 0.0,
@@ -1162,7 +1095,6 @@ mod tier4_real_world_scenarios {
 
     #[test]
     fn test_t4_scenario_4_edge_to_edge_speech() {
-        // Scenario 4: Edge-to-edge audio with speech starting at t=0.0 and ending at EOF.
         let total_duration = 20.0;
         let diarized = vec![
             DiarizedSegment {
@@ -1177,23 +1109,18 @@ mod tier4_real_world_scenarios {
             },
         ];
 
-        // Query starting at exact t=0.0
         let first_turn = dominant_speaker(0.0, 5.0, &diarized);
         assert_eq!(first_turn, Some("SPEAKER_00"));
 
-        // Query ending at exact t=EOF
         let last_turn = dominant_speaker(15.0, total_duration, &diarized);
         assert_eq!(last_turn, Some("SPEAKER_01"));
 
-        // Verify boundary continuity
         let mid_turn = dominant_speaker(9.0, 11.0, &diarized);
         assert!(mid_turn.is_some());
     }
 
     #[test]
     fn test_t4_scenario_5_multibyte_utf8_transcription() {
-        // Scenario 5: Segment with non-ASCII multi-byte UTF-8 transcriptions.
-        // Proper names, foreign words, typographer's punctuation, em-dashes.
         let toks: Vec<(&[u8], f64, f32)> = vec![
             (b" In" as &[u8], 0.0, 0.95),
             (b" Sarah" as &[u8], 0.3, 0.98),
@@ -1230,7 +1157,6 @@ mod tier4_real_world_scenarios {
             ]
         );
 
-        // Verify valid UTF-8 without corruption or replacement characters
         for word in &reconstructed {
             assert!(!word.contains('\u{fffd}'), "word '{word}' contains unicode replacement char");
         }

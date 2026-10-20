@@ -1,11 +1,5 @@
-//! Adversarial stress test harness for Milestone 1: Float Audio Diarization & Invariants.
-//!
-//! Verifies:
-//! 1. cluster_embeddings behavior under extreme cluster counts (1 cluster, all points identical, all points orthogonal, n=0, max_speakers=0).
-//! 2. Method::Complete linkage strictly used and preserves minority clusters where Method::Average collapses them.
-//! 3. cosine_distance handling of identical, opposite, orthogonal, zero, empty, and subnormal vectors.
-//! 4. dominant_speaker handling of overlapping, boundary-touching, disjoint, inverted, and empty intervals.
-//! 5. Segmentation f32 padding invariants and numerical stability.
+//! Adversarial inputs for `cluster_embeddings`, `cosine_distance`, and `dominant_speaker`.
+//! Complete linkage must keep a minority speaker cluster that Average linkage absorbs.
 
 use std::collections::HashMap;
 use kodama::{linkage, Method};
@@ -13,8 +7,7 @@ use auohp_core::transcription::{
     cosine_distance, dominant_speaker, DiarizedSegment, SegmentEmbedding,
 };
 
-/// Mirror of diarize.rs's internal cluster_embeddings implementation to empirically
-/// stress-test the exact algorithm, linkage methods, and edge cases.
+/// Mirror of the private `cluster_embeddings` in diarize.rs, so its algorithm can be driven directly.
 fn cluster_embeddings_reference(
     segment_embeddings: &[SegmentEmbedding],
     max_speakers: usize,
@@ -22,9 +15,7 @@ fn cluster_embeddings_reference(
 ) -> Result<Vec<usize>, String> {
     let n = segment_embeddings.len();
     if n == 0 {
-        // Test what the current implementation does vs safe behavior:
-        // In diarize.rs, `if n == 1` is checked, but not `n == 0`.
-        // If n == 0, `n * (n - 1) / 2` underflows in debug mode!
+        // diarize.rs guards `n == 1` but not `n == 0`, where `n * (n - 1) / 2` underflows in debug builds.
         return Err("n=0 causes integer underflow if not guarded".to_string());
     }
     if n == 1 {
@@ -79,16 +70,12 @@ fn cluster_embeddings_reference(
     Ok(labels)
 }
 
-// ── 1. Cosine Distance Stress Tests ─────────────────────────────────────────
 
 
 
 
 
 
-
-
-// ── 2. Dominant Speaker Stress Tests ────────────────────────────────────────
 
 #[test]
 fn test_adversarial_dominant_speaker_empty_diarized() {
@@ -105,9 +92,7 @@ fn test_adversarial_dominant_speaker_disjoint() {
             end: 3.0,
         },
     ];
-    // Query before segment
     assert_eq!(dominant_speaker(0.0, 0.5, &diarized), None);
-    // Query after segment
     assert_eq!(dominant_speaker(3.5, 5.0, &diarized), None);
 }
 
@@ -120,9 +105,7 @@ fn test_adversarial_dominant_speaker_boundary_touching() {
             end: 4.0,
         },
     ];
-    // Exact touch at start boundary: [1.0, 2.0] touches [2.0, 4.0] at 2.0 -> 0.0 overlap
     assert_eq!(dominant_speaker(1.0, 2.0, &diarized), None);
-    // Exact touch at end boundary: [4.0, 5.0] touches [2.0, 4.0] at 4.0 -> 0.0 overlap
     assert_eq!(dominant_speaker(4.0, 5.0, &diarized), None);
 }
 
@@ -135,9 +118,7 @@ fn test_adversarial_dominant_speaker_inverted_and_zero_duration() {
             end: 5.0,
         },
     ];
-    // Zero-length query
     assert_eq!(dominant_speaker(2.0, 2.0, &diarized), None);
-    // Inverted query (start > end)
     assert_eq!(dominant_speaker(4.0, 2.0, &diarized), None);
 }
 
@@ -158,8 +139,6 @@ fn test_adversarial_dominant_speaker_multi_turn_aggregation() {
     assert_eq!(winner, Some("SPEAKER_A"), "SPEAKER_A total overlap (2.5s) must beat SPEAKER_B (2.0s)");
 }
 
-// ── 3. Cluster Embeddings Extreme Counts & Inputs ────────────────────────────
-
 #[test]
 fn test_adversarial_cluster_embeddings_single_point() {
     let single = vec![SegmentEmbedding {
@@ -173,7 +152,6 @@ fn test_adversarial_cluster_embeddings_single_point() {
 
 #[test]
 fn test_adversarial_cluster_embeddings_all_identical() {
-    // 5 points with identical embeddings
     let points: Vec<SegmentEmbedding> = (0..5)
         .map(|i| SegmentEmbedding {
             start: i as f64,
@@ -185,14 +163,12 @@ fn test_adversarial_cluster_embeddings_all_identical() {
     // When max_speakers = 2: all identical points should cluster cleanly into 1 or 2 clusters without error
     let labels = cluster_embeddings_reference(&points, 2, Method::Complete).unwrap();
     assert_eq!(labels.len(), 5);
-    // All distances are 0.0, so merges occur at distance 0.0
     let unique_labels: std::collections::HashSet<_> = labels.iter().collect();
     assert!(unique_labels.len() <= 2, "must not exceed max_speakers");
 }
 
 #[test]
 fn test_adversarial_cluster_embeddings_all_orthogonal() {
-    // 4 mutually orthogonal points in 4D
     let points: Vec<SegmentEmbedding> = vec![
         SegmentEmbedding { start: 0.0, end: 1.0, embedding: vec![1.0, 0.0, 0.0, 0.0] },
         SegmentEmbedding { start: 1.0, end: 2.0, embedding: vec![0.0, 1.0, 0.0, 0.0] },
@@ -208,7 +184,6 @@ fn test_adversarial_cluster_embeddings_all_orthogonal() {
 
 #[test]
 fn test_adversarial_cluster_embeddings_max_speakers_one() {
-    // When max_speakers = 1, all points MUST receive the same label (0)
     let points: Vec<SegmentEmbedding> = vec![
         SegmentEmbedding { start: 0.0, end: 1.0, embedding: vec![1.0, 0.0] },
         SegmentEmbedding { start: 1.0, end: 2.0, embedding: vec![0.0, 1.0] },
@@ -226,7 +201,6 @@ fn test_adversarial_cluster_embeddings_max_speakers_exceeds_n() {
         SegmentEmbedding { start: 1.0, end: 2.0, embedding: vec![0.0, 1.0] },
     ];
 
-    // max_speakers = 10 on n = 2
     let labels = cluster_embeddings_reference(&points, 10, Method::Complete).unwrap();
     assert_eq!(labels.len(), 2);
     assert_ne!(labels[0], labels[1], "each point gets its own cluster when max_speakers >= n");
@@ -244,25 +218,11 @@ fn test_adversarial_cluster_embeddings_max_speakers_zero() {
     assert_eq!(labels, vec![0, 0]);
 }
 
-// ── 4. Method::Complete vs Method::Average Linkage Invariant ────────────────
-
 #[test]
 fn test_adversarial_complete_vs_average_linkage_minority_preservation() {
-    // Construct an imbalanced dataset:
-    // Majority cluster A: 12 segments centered around [1.0, 0.0, 0.0] with small spread
-    // Minority cluster B: 2 segments centered around [0.0, 1.0, 0.0] with small spread
-    //
-    // Under Average Linkage:
-    // As cluster A grows, its average distance to minority points shrinks relative to internal diameter,
-    // causing Average linkage to absorb minority points sequentially (chaining/collapse).
-    //
-    // Under Complete Linkage:
-    // Worst-case distance between any point in A and any point in B remains high (~1.0),
-    // forcing the minority points to merge with EACH OTHER before merging with A!
 
     let mut points = Vec::new();
 
-    // Majority cluster A (12 points)
     for i in 0..12 {
         let angle = (i as f32) * 0.05; // slight spread
         points.push(SegmentEmbedding {
@@ -272,7 +232,6 @@ fn test_adversarial_complete_vs_average_linkage_minority_preservation() {
         });
     }
 
-    // Minority cluster B (2 points, tightly clustered around each other, orthogonal to A)
     points.push(SegmentEmbedding {
         start: 12.0,
         end: 12.8,
@@ -291,19 +250,15 @@ fn test_adversarial_complete_vs_average_linkage_minority_preservation() {
     assert_eq!(labels_complete.len(), n);
     assert_eq!(labels_average.len(), n);
 
-    // In Complete Linkage:
-    // The two minority points (indices 12 and 13) MUST belong to the SAME cluster!
     assert_eq!(
         labels_complete[12], labels_complete[13],
         "Complete linkage must keep minority cluster members together"
     );
-    // And they must NOT be in the majority cluster!
     assert_ne!(
         labels_complete[12], labels_complete[0],
         "Complete linkage must separate minority cluster from majority cluster"
     );
 
-    // Verify all 12 majority points share the same cluster under Complete linkage
     for i in 1..12 {
         assert_eq!(
             labels_complete[i], labels_complete[0],
