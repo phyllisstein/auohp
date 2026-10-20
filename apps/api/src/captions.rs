@@ -1,10 +1,4 @@
-//! Caption generation --- transport-agnostic//!
-//! Produces WebVTT text for an interview's statements. Both the GraphQL
-//! `captions` resolver and the REST `/interview/{n}/captions` endpoint call
-//! `generate_vtt`; neither transport's types appear here. The function takes a
-//! `&Db` and returns a plain `String`, so it depends on the graph and nothing
-//! about how the result is served. Dependency points inward: transports depend
-//! on this module, never the reverse.
+//! WebVTT generation for an interview's statements, independent of transport.
 
 use crate::graphql::nodes::StatementNode;
 use crate::neo4j::Db;
@@ -12,12 +6,7 @@ use anyhow::Result;
 use chrono::TimeDelta;
 use neo4rs::query;
 
-// FIXME: reaching up into `graphql::nodes` for `StatementNode` is the wrong
-// direction --- a transport-agnostic module should not depend on the GraphQL
-// layer. This is the coupling `nodes.rs` already flags: it exists only because
-// the node projections are still mis-homed under `graphql/`. Extracting captions
-// is what surfaces the pressure to lift those projections into `auohp-core`,
-// where both this module and the GraphQL layer could depend on them cleanly.
+// FIXME: depends on `graphql::nodes`; lift the node projections into `auohp-core`.
 
 fn format_millisecond_timestamp(t: i64) -> String {
     let mut ts = TimeDelta::milliseconds(t);

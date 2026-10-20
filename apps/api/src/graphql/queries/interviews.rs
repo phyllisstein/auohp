@@ -54,10 +54,7 @@ impl Interview {
 
         tracing::debug!("starting transcript fn");
 
-        // TODO: Each interview should have exactly one transcript, but LIMIT 1
-        // is a poor enforcement strategy, swallowing up drift in the schema
-        // state and giving not-wholly-deterministic responses based on that
-        // state.
+        // TODO: enforce one transcript per interview in the schema.
         let mut stream = db
             .execute(
                 query(
@@ -130,11 +127,6 @@ impl Interview {
         Ok(videos)
     }
 }
-
-// pub struct Interviews;
-//
-// #[Object]
-// impl Interviews {}
 
 #[derive(Default)]
 pub struct InterviewQuery;
