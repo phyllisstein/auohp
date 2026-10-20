@@ -25,10 +25,9 @@ const WHISPER_SAMPLE_RATE: u32 = 16_000;
 pub struct DecodedAudio {
     pub samples: Vec<f32>,
     pub sample_rate: u32,
-    /// The source track's rate and channel count, before mixdown and resampling.
-    /// Recorded so tests and manifests can tell whether this decode actually
-    /// exercised the transform chain or bypassed it --- a 16 kHz mono input
-    /// skips both `mix_to_mono` and `resample`, and therefore validates neither.
+    /// The source track's rate and channel count before mixdown and resampling.
+    /// A 16 kHz mono input skips both `mix_to_mono` and `resample`, so a decode
+    /// of it validates neither.
     pub source_sample_rate: u32,
     pub source_channels: usize,
 }
@@ -68,19 +67,8 @@ pub fn decode_file_with(path: &std::path::Path, cfg: &AudioConfig) -> Result<Dec
 
     let mut format = probed.format;
 
-    // Find the first *audio* track.
-    //
-    // Selecting on "codec is not NULL" is not the same test and was quietly
-    // wrong: symphonia emits a Track for every trak in the container, video
-    // included, and in this corpus the video track comes first. It happened to
-    // work only because symphonia 0.5 is audio-only and files video sample
-    // entries under `SampleEntry::Other` --- its `Video` variant is commented
-    // out. One upstream release adding video support would have silently started
-    // feeding picture data to Whisper.
-    //
-    // Sample rate and channel count are the properties we actually require
-    // downstream, so requiring them here makes the selection self-evidently
-    // correct rather than incidentally correct.
+    // Pick the first track with a sample rate and a real codec: symphonia lists
+    // every trak, video included, and the video track comes first in this corpus.
     let track = format
         .tracks()
         .iter()
@@ -89,10 +77,6 @@ pub fn decode_file_with(path: &std::path::Path, cfg: &AudioConfig) -> Result<Dec
                 && t.codec_params.sample_rate.is_some()
         })
         .ok_or_else(|| {
-            // Say what was actually there. "No audio track found" on a file that
-            // plainly has one sends you looking in the wrong place; the track
-            // list distinguishes "container not parsed" from "track present but
-            // missing the parameters we require".
             let seen: Vec<String> = format
                 .tracks()
                 .iter()
@@ -123,28 +107,15 @@ pub fn decode_file_with(path: &std::path::Path, cfg: &AudioConfig) -> Result<Dec
         .make(&track.codec_params, &DecoderOptions::default())
         .context("unsupported audio codec")?;
 
-    // Channel count and rate are taken from the decoded frames, not from
-    // `codec_params`.
-    //
-    // This is not defensiveness --- it is the fix for a real, silent corruption.
-    // The original masters in this corpus carry an `esds` from which symphonia
-    // cannot recover a channel map, so `codec_params.channels` is `None` even
-    // though the audio is stereo. The previous code read that as
-    // `.unwrap_or(1)`, so `mix_to_mono` never ran and an interleaved L,R,L,R
-    // stream was handed to the resampler as if it were one mono channel: double
-    // length, both channels smeared together, every timestamp wrong. It failed
-    // silently and only on the files that matter, which is why it survived as
-    // folklore about "MP4 extraction" rather than being found.
-    //
-    // The decoder always knows the true layout, because it just produced the
-    // frames. Trust it over the container metadata.
+    // Take channel count and rate from the decoded frames, not `codec_params`:
+    // symphonia cannot recover a channel map from the `esds` of the original
+    // masters, so `codec_params.channels` is `None` for stereo files.
     let mut channels: Option<usize> = None;
     let mut decoded_rate: Option<u32> = None;
 
-    // Frame count from the container, used only to size the buffer up front.
-    // Growing by doubling is fine for a 34-minute clip and fatal for a full
-    // interview: the last realloc on a 3.4-hour stereo master holds the old 4 GB
-    // and the new 8 GB live at once, which is more than this box has.
+    // Frame count from the container, used only to size the buffer up front;
+    // growing by doubling would hold old and new buffers at once on a
+    // multi-hour master.
     let declared_frames = track.codec_params.n_frames;
 
     let mut raw_samples: Vec<f32> = Vec::new();
@@ -168,9 +139,7 @@ pub fn decode_file_with(path: &std::path::Path, cfg: &AudioConfig) -> Result<Dec
         let spec = *decoded.spec();
         let duration = decoded.capacity();
 
-        // `channels.is_none()` is exactly "this is the first decoded frame", which
-        // is the first moment the true layout is known --- see above for why the
-        // container's channel count cannot be trusted for it.
+        // The first decoded frame is when the true layout is first known.
         if channels.is_none()
             && let Some(frames) = declared_frames
         {
@@ -187,14 +156,12 @@ pub fn decode_file_with(path: &std::path::Path, cfg: &AudioConfig) -> Result<Dec
     let channels = channels.context("audio track decoded no frames")?;
     let source_rate = decoded_rate.unwrap_or(declared_rate);
 
-    // Mix down to mono if multi-channel.
     let mono = if channels > 1 {
         mix_to_mono(raw_samples, channels)
     } else {
         raw_samples
     };
 
-    // Resample to 16 kHz if needed.
     let samples = if source_rate != WHISPER_SAMPLE_RATE {
         resample(&mono, source_rate, WHISPER_SAMPLE_RATE, cfg)?
     } else {
@@ -211,16 +178,9 @@ pub fn decode_file_with(path: &std::path::Path, cfg: &AudioConfig) -> Result<Dec
 
 /// Fold interleaved frames down to mono, **in place**.
 ///
-/// The iterator version --- `chunks_exact(channels).map(...).collect()` --- reads
-/// better and allocates a second buffer the size of the output. That is free on a
-/// clip and not free on a full interview, where the input is 4 GB and the mono
-/// result is another 2 GB held live beside it.
-///
-/// The fold can overwrite its own input because the write index `i` always trails
-/// the read index `i * channels` whenever `channels >= 1`: by the time frame `i` is
-/// written, everything at or beyond `i * channels` is still untouched. So this
-/// takes the `Vec` by value, folds forwards, and truncates. `truncate` also
-/// discards any trailing partial frame, which is what `chunks_exact` did.
+/// Avoids a second output-sized buffer, which matters on a multi-hour master.
+/// The write index `i` always trails the read index `i * channels`, so the fold
+/// never overwrites unread samples. `truncate` drops any trailing partial frame.
 fn mix_to_mono(mut interleaved: Vec<f32>, channels: usize) -> Vec<f32> {
     let inv = 1.0 / channels as f32;
     let frames = interleaved.len() / channels;
@@ -232,23 +192,6 @@ fn mix_to_mono(mut interleaved: Vec<f32>, channels: usize) -> Vec<f32> {
     interleaved.truncate(frames);
     interleaved
 }
-
-// RESOLVED: MP4 extraction did corrupt transcriptions, but the resampler was
-// never the culprit.
-//
-// The cause was the channel count. Symphonia cannot recover a channel map from
-// the `esds` of this corpus's original masters, so `codec_params.channels` is
-// `None` and the previous `.unwrap_or(1)` read a stereo file as mono: mix-down
-// was skipped and an interleaved L,R,L,R stream went into the resampler as if it
-// were a single channel. See `decode_file_with`, which now takes the layout from
-// the decoded frames instead.
-//
-// `tests/decode.rs` measures the rest, with Whisper out of the loop. Both the
-// MP4 and the WAV paths decode the same AAC, so the comparison isolates *this
-// resampler* against the external tool that produced the WAV --- not "MP4
-// handling" in the abstract. It scores 0.998 normalised cross-correlation with
-// zero residual drift across the file, so the sinc configuration below is
-// sound and is not a useful thing to tune.
 
 fn resample(
     samples: &[f32],
@@ -272,9 +215,7 @@ fn resample(
         "resampling ratio out of bounds (0.015625..=64.0), got {ratio}"
     );
 
-    // Chunk size must match the `chunk_size` given to `new_sinc` below.
-    // 4096 frames by default --- large enough to amortise per-call overhead,
-    // small enough to sit comfortably in L1/L2 cache.
+    // Must match the `chunk_size` given to `new_sinc` below.
     let chunk = cfg.resample_chunk;
 
     let params = SincInterpolationParameters {
@@ -290,13 +231,9 @@ fn resample(
         window: WindowFunction::BlackmanHarris2,
     };
 
-    // `Async` with `FixedAsync::Input` expects exactly `chunk_size` input
-    // samples per call.  It keeps a `sinc_len / 2` sample history internally
-    // (the left half of the FIR kernel) so it can correctly stitch boundaries
-    // between chunks --- which is exactly what lets us avoid the one-shot
-    // overread panic.  In streaming mode the history is populated from prior
-    // real audio; in one-shot mode with a single huge chunk, it's zeros and
-    // the right-half lookahead has nowhere to read from.
+    // `FixedAsync::Input` expects exactly `chunk` input samples per call and keeps
+    // a `sinc_len / 2` history to stitch chunk boundaries; one-shot resampling of
+    // a single huge chunk overreads.
     let mut resampler = Async::<f32>::new_sinc(
         ratio,
         2.0,
@@ -310,10 +247,8 @@ fn resample(
     let capacity = expected.min(100 * 1024 * 1024); // max 100M floats initial capacity
     let mut output = Vec::with_capacity(capacity);
 
-    // Feed the audio in chunk-sized slices, zero-padding the final partial
-    // chunk. Rubato handles each boundary cleanly via its history buf.
-    //
-    // Reusable buffers eliminate per-chunk heap allocations during resampling.
+    // Feed chunk-sized slices, zero-padding the final partial chunk and reusing
+    // buffers across chunks.
     let mut tail_buf = vec![0.0f32; chunk];
     let max_out = resampler.output_frames_max();
     let mut out_chunk = vec![0.0f32; max_out];
@@ -338,8 +273,7 @@ fn resample(
         output.extend_from_slice(&out_chunk[..out_frames]);
     }
 
-    // Trim to the exact expected length; the last few chunks may produce a
-    // handful of extra samples due to the zero-padded tail.
+    // Zero-padding the tail can yield a few extra samples.
     output.truncate(expected.min(output.len()));
 
     Ok(output)
@@ -349,20 +283,15 @@ fn resample(
 mod tests {
     use super::*;
 
-    /// The in-place fold is only safe because the write index trails the read
-    /// index. Stereo is the case that actually ships, so pin its arithmetic
-    /// against a value computed by hand rather than by the same expression.
+    /// Pins stereo arithmetic against a hand-computed value.
     #[test]
     fn mix_to_mono_averages_stereo_frames() {
         let interleaved = vec![1.0, 3.0, -2.0, 2.0, 0.5, 0.5];
         assert_eq!(mix_to_mono(interleaved, 2), vec![2.0, 0.0, 0.5]);
     }
 
-    /// The failure mode of a bad in-place fold is that later frames read samples
-    /// the fold has already overwritten, so it only shows up once the write index
-    /// has had room to catch up. A long run with a strictly increasing signal
-    /// makes any such clobber a visible discontinuity rather than a plausible
-    /// number.
+    /// A bad in-place fold reads already-overwritten samples; a strictly
+    /// increasing signal makes that a visible discontinuity.
     #[test]
     fn mix_to_mono_does_not_clobber_its_own_input() {
         let frames = 4096;
@@ -376,9 +305,7 @@ mod tests {
         }
     }
 
-    /// Mono input must pass through untouched --- this is the branch the 16 kHz
-    /// WAV control takes, and if it were to average anything the control would
-    /// stop being one.
+    /// Mono passes through untouched (the 16 kHz WAV control path).
     #[test]
     fn mix_to_mono_is_identity_for_one_channel() {
         let samples = vec![0.25, -0.5, 1.0];

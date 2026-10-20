@@ -5,9 +5,6 @@ mod pipeline;
 mod types;
 mod whisper;
 
-// Each model's filename is owned by the module that drives that model, so the
-// re-exports below disambiguate the two that are both just `MODEL_FILE` in
-// their own namespace.
 pub use audio::{DecodedAudio, decode_file, decode_file_with};
 pub use config::{
     AudioConfig, DecodeConfig, DiarizeConfig, Interpolation, TranscribeConfig, TranscriptionConfig,

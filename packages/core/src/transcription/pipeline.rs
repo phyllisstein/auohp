@@ -13,24 +13,16 @@ use std::path::Path;
 
 /// Run the transcription pipeline on an audio/video file.
 ///
-/// Returns Whisper segments with per-word timestamps from DTW, each labeled
-/// with a speaker turn from diarization when `cfg.diarize.enabled` (the
-/// default). Diarization only assigns turn-level labels (`SPEAKER_00`,
-/// `SPEAKER_01`, ...) --- mapping those labels to real names is still a job
-/// for the manual labeling UI.
-///
-/// This is blocking (Whisper and diarization are both CPU-bound). Call from
-/// `tokio::task::spawn_blocking` to avoid stalling the async runtime.
+/// Returns Whisper segments with per-word DTW timestamps, each labeled with a
+/// turn-level speaker (`SPEAKER_00`, ...) when `cfg.diarize.enabled`. Blocking:
+/// call from `tokio::task::spawn_blocking`.
 pub fn run(input_path: &Path) -> Result<TranscriptionResult> {
     run_with(input_path, &TranscribeConfig::default())
 }
 
 /// Run the pipeline under an explicit configuration.
 ///
-/// Every tunable knob arrives through `cfg`, so a run is described completely by
-/// this value plus a git SHA. That is what keeps the experiment ledger honest:
-/// a parameter reachable only by editing source would make the recorded manifest
-/// a description of something other than the code that ran.
+/// `cfg` plus a git SHA fully describes a run; the experiment ledger relies on it.
 pub fn run_with(input_path: &Path, cfg: &TranscribeConfig) -> Result<TranscriptionResult> {
     let decoded = audio::decode_file_with(input_path, &cfg.audio)
         .with_context(|| format!("failed to decode {}", input_path.display()))?;
@@ -49,23 +41,10 @@ pub fn run_with(input_path: &Path, cfg: &TranscribeConfig) -> Result<Transcripti
         }
     );
 
-    // Load the model *after* decoding, and keep it that way.
-    //
-    // This looks like incidental ordering and is a memory constraint. Decoding a
-    // 2.6-hour stereo master peaks around 3.8 GB; the model side --- weights
-    // 3094 MB, kv 343 MB, compute buffers 861 MB, DTW arena 128 MB --- is about
-    // 4.4 GB. Sequenced, peak is roughly 5.0 GB because the interleaved buffer is
-    // freed before the weights arrive. Overlapped, it is 8.2 GB.
-    //
-    // On CUDA that distinction is invisible: the model lives in VRAM and the
-    // decode buffer in host RAM, two separate pools. Inference here is on Apple
-    // Silicon, where unified memory means one pool, and 8 GB is a shipping
-    // configuration. So hoisting this above the decode to fail fast on a missing
-    // model --- a reasonable thing to want --- would cost 3.2 GB of headroom on
-    // the hardware that matters. Validate the model *path* early if that is the
-    // goal; do not load the weights early.
-    //
-    // All models live under $MODELS_DIR, pre-downloaded by download-models.py.
+    // Load the model after decoding, not before. On Apple Silicon unified memory
+    // the decode buffer (~3.8 GB for a 2.6-hour stereo master) and the model
+    // (~4.4 GB) share one pool: sequenced peak is ~5.0 GB, overlapped ~8.2 GB.
+    // Validate the model path early if failing fast is the goal, not the weights.
     let models_dir = models::models_dir();
 
     let (whisper_segments, diarized) = std::thread::scope(|s| {
@@ -99,11 +78,7 @@ pub fn run_with(input_path: &Path, cfg: &TranscribeConfig) -> Result<Transcripti
     let segments: Vec<Segment> = whisper_segments
         .into_iter()
         .map(|s| Segment {
-            // `dominant_speaker` borrows its answer out of `diarized`, so the
-            // owned `String` the caption editor's schema wants is allocated
-            // here and only for the segments that actually matched --- an
-            // unmatched segment stays `None`, which is that editor's existing
-            // signal that a speaker still needs a human label.
+            // Unmatched segments stay `None`: a human still needs to label them.
             speaker: diarize::dominant_speaker(s.start, s.end, &diarized).map(str::to_owned),
             text: s.text,
             start_time: s.start,

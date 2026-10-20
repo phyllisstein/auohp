@@ -17,24 +17,16 @@ const DTW_MEM_SIZE: usize = 1024 * 1024 * 128;
 /// Loaded Whisper model, ready for repeated inference calls.
 pub struct WhisperModel {
     pub(crate) ctx: WhisperContext,
-    /// Path to the silero VAD ggml model, stored here so `transcribe` can
-    /// reference it without an extra parameter on every call.
+    /// Path to the silero VAD ggml model, used by `transcribe`.
     pub(crate) vad_model_path: PathBuf,
 }
 
 impl WhisperModel {
-    /// Load the Whisper ggml model from `model_path`.
-    ///
-    /// Both files must already exist---use `scripts/download-models.py` to
-    /// fetch them. The pipeline resolves paths from `$MODELS_DIR` before
-    /// calling this function. `vad_model_path` is stored in the returned
-    /// `WhisperModel` and referenced on every `transcribe` call.
+    /// Load the Whisper ggml model from `model_path`; both files must already
+    /// exist (`scripts/download-models.py`).
     pub fn load(model_path: &Path, vad_model_path: &Path) -> Result<Self> {
         tracing::debug!("Whisper: loading model from {}", model_path.display());
 
-        // WhisperContextParameters::default() already sets use_gpu based on whether
-        // the `metal` / `cuda` feature compiled in, so this call is belt-and-
-        // suspenders---but it's explicit and costs nothing.
         let mut ctx_params = WhisperContextParameters::default();
         ctx_params.use_gpu(true);
 
@@ -45,7 +37,6 @@ impl WhisperModel {
             dtw_mem_size: DTW_MEM_SIZE,
         });
 
-        // new_with_params accepts any P: AsRef<Path>.
         let ctx = WhisperContext::new_with_params(model_path, ctx_params)
             .context("failed to load Whisper model")?;
 
@@ -74,9 +65,7 @@ impl WhisperModel {
     }
 }
 
-/// Load the Whisper ggml model from `model_path`.
-///
-/// Convenience facade function preserving the original `whisper::load_model` signature.
+/// Convenience wrapper for [`WhisperModel::load`].
 pub fn load_model(model_path: &Path, vad_model_path: &Path) -> Result<WhisperModel> {
     WhisperModel::load(model_path, vad_model_path)
 }

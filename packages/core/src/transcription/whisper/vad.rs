@@ -1,14 +1,10 @@
 //! Voice Activity Detection (VAD) via Silero VAD.
 //!
-//! Setting `FullParams::enable_vad(true)` does nothing in `whisper_full_with_state`
-//! because whisper.cpp reads `params.vad` only in `whisper_full` and
-//! `whisper_full_parallel`. In order to keep caller-managed state while leveraging
-//! VAD, [`apply_vad`] runs Silero explicitly before Whisper decoding.
-//!
-//! The filtered speech regions are concatenated with [`VAD_GLUE_SECONDS`] silence
-//! between them. Because Whisper decodes the compacted audio, timestamps refer
-//! to the filtered timeline. [`VadTimeline`] maps these timestamps back to
-//! wall-clock positions in the original recording.
+//! `FullParams::enable_vad` is ignored by `whisper_full_with_state` (whisper.cpp
+//! reads `params.vad` only in `whisper_full` and `whisper_full_parallel`), so
+//! [`apply_vad`] runs Silero explicitly before decoding. Speech regions are glued
+//! with [`VAD_GLUE_SECONDS`] of silence, so Whisper's timestamps refer to the
+//! filtered timeline; [`VadTimeline`] maps them back to the original recording.
 
 use std::path::Path;
 
@@ -20,7 +16,7 @@ use super::super::config::VadConfig;
 /// Audio sample rate (16,000 Hz) used for sample count to time conversions in VAD.
 const SAMPLE_RATE: f64 = 16_000.0;
 
-/// Silence inserted between kept speech regions, matching `whisper.cpp:6670`.
+/// Silence inserted between kept speech regions, as whisper.cpp does.
 pub const VAD_GLUE_SECONDS: f64 = 0.1;
 
 /// Filename of the silero VAD ggml model under `$MODELS_DIR`, as
@@ -37,11 +33,8 @@ pub struct VadRegion {
     pub duration: f64,
 }
 
-/// The map from filtered-audio time back to real-recording time.
-///
-/// Filtering removes silence, so the two timelines diverge by the total silence
-/// dropped before any given instant. Every time Whisper reports has to come back
-/// through [`VadTimeline::to_original`] before it means anything.
+/// Maps filtered-audio time back to real-recording time. Every time Whisper
+/// reports must pass through [`VadTimeline::to_original`].
 #[derive(Debug, Clone, Default)]
 pub struct VadTimeline {
     pub(crate) regions: Vec<VadRegion>,
@@ -62,17 +55,12 @@ impl VadTimeline {
 
     /// Map an instant in the filtered timeline back to the real recording.
     ///
-    /// Times landing in the glue silence between two regions are clamped to the
-    /// end of the region that precedes them. That is the honest answer: no audio
-    /// exists there, so any word Whisper places in the glue belongs to the speech
-    /// on one side of it, and the earlier side is the one it was decoded from.
+    /// Times in the glue silence between regions clamp to the end of the
+    /// preceding region.
     pub fn to_original(&self, t: f64) -> f64 {
         if self.is_identity() {
             return t;
         }
-        // Regions are ordered and non-overlapping in the filtered timeline, so a
-        // linear scan with early exit is both simple and fast enough---a
-        // 34-minute interview yields a few hundred regions.
         let mut last_end = self.regions[0].orig_start;
         for r in &self.regions {
             if t < r.filtered_start {
@@ -89,9 +77,8 @@ impl VadTimeline {
 
 /// Run silero over `samples` and return the filtered audio plus its timeline map.
 ///
-/// Reproduces `whisper.cpp:6641-6700`: each detected region is kept, all but the
-/// last are extended by `samples_overlap`, and the regions are glued with 0.1 s
-/// of silence.
+/// Mirrors whisper.cpp's construction: each region is kept, all but the last
+/// are extended by `samples_overlap`, and regions are glued with 0.1 s of silence.
 pub fn apply_vad(
     samples: &[f32],
     vad_model_path: &Path,
@@ -130,9 +117,7 @@ pub fn apply_vad(
 
     let n = segments.num_segments();
     if n == 0 {
-        // Silero found no speech at all. Returning the original audio unfiltered
-        // is the safe failure: a transcript of everything beats a transcript of
-        // nothing, and the caller can see `segments == 0` in the log.
+        // No speech: pass the audio through unfiltered rather than emit nothing.
         tracing::warn!("Whisper: VAD found no speech; passing audio through unfiltered");
         return Ok((samples.to_vec(), VadTimeline::identity()));
     }
@@ -256,9 +241,9 @@ mod tests {
 
     #[test]
     fn the_gap_the_mapping_exists_to_close() {
-        // Without mapping, a word 4.5 s into the filtered audio would be reported
-        // at 4.5 s of the recording. It is really at 16.4 s -- and the error grows
-        // with every silence dropped, so a long interview drifts badly.
+        // Unmapped, a word 4.5 s into the filtered audio would be reported at
+        // 4.5 s; it is really at 16.4 s, and the error grows with every dropped
+        // silence.
         let t = timeline();
         assert!(
             (t.to_original(4.5) - 4.5 - 11.9).abs() < 1e-9,
@@ -268,22 +253,20 @@ mod tests {
 
     #[test]
     fn glue_silence_clamps_to_the_preceding_region() {
-        // No audio exists in the glue, so a time landing there belongs to the
-        // speech it was decoded from -- the region before it.
+        // No audio exists in the glue; clamp to the preceding region.
         assert_eq!(timeline().to_original(3.05), 5.0);
     }
 
     #[test]
     fn times_past_the_end_clamp_rather_than_extrapolate() {
-        // Whisper can place a trailing timestamp past the last sample. Clamping
-        // keeps it inside the recording; extrapolating would invent audio.
+        // Clamp rather than extrapolate: Whisper can place a trailing timestamp
+        // past the last sample.
         assert_eq!(timeline().to_original(99.0), 18.0);
     }
 
     #[test]
     fn mapping_is_monotonic() {
-        // Word order must survive the map, or the caption editor shows words
-        // jumping backwards.
+        // Word order must survive the map.
         let t = timeline();
         let mut prev = f64::NEG_INFINITY;
         for i in 0..=610 {

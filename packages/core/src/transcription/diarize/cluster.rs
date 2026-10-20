@@ -29,9 +29,8 @@ pub fn cluster_embeddings(segment_embeddings: &[SegmentEmbedding], max_speakers:
     let steps = dendrogram.steps();
     let merges_to_make = n.saturating_sub(max_speakers);
 
-    // kodama creates new cluster IDs n..2n-1 at each step.
-    // By using a UnionFind of size 2*n, we can map both operands and the new ID 
-    // into the same disjoint set. Petgraph handles the internal representative mapping.
+    // kodama creates new cluster IDs n..2n-1 at each step; a UnionFind of size
+    // 2*n holds both operands and the new ID in one disjoint set.
     let mut uf = UnionFind::new(2 * n);
 
     for (step_idx, step) in steps.iter().enumerate().take(merges_to_make) {

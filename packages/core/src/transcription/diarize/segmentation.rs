@@ -1,42 +1,10 @@
 //! Native ort-based speaker segmentation (pyannote-segmentation-3.0, ONNX).
 //!
-//! This restores the segmentation half of AUOHP's diarization pipeline, but
-//! deliberately not by depending on the `pyannote-rs` crate. `pyannote-rs`
-//! 0.3.4's `get_segments` has two bugs, discovered and diagnosed the last time
-//! diarization lived in this codebase (see
-//! `git show ecd4471:packages/api/docs/native-segmentation-design.md` for the
-//! full writeup that predates this restoration):
-//!
-//!   1. It is built on `std::iter::from_fn`, returning `None` the instant a
-//!      single 10 s window produces zero speech/silence transitions. Standard
-//!      iterator consumers (`.collect()`, `for ... in`) treat `None` as
-//!      end-of-stream and stop --- so the first window of continuous speech
-//!      silently truncates the rest of the recording. On real interview audio
-//!      (long uninterrupted answers, not quick back-and-forth) this drops the
-//!      majority of the clip.
-//!   2. It never flushes a trailing in-progress speech run: if the window
-//!      iterator is exhausted while `is_speeching` is still true, that final
-//!      segment is lost.
-//!
-//! Neither bug was ever fixed upstream, and a from-scratch attempt to hit
-//! `pyannote-rs` 0.3.4 against this workspace's `ort` version (`2.0.0-rc.13`,
-//! pinned by `fastembed`) fails outright: `pyannote-rs`'s `eyre`-based error
-//! handling can't convert `ort::Error<SessionBuilder>` because a type nested
-//! in `ort`'s operator-registration machinery isn't `Sync`. Re-adding
-//! `pyannote-rs` would either reintroduce both bugs (by pinning back to
-//! `ort` rc.10, which conflicts with `fastembed` 6's rc.13 requirement) or
-//! not compile at all. So: same ONNX model, same frame bookkeeping, our own
-//! session and iteration logic, called directly through `ort` --- the crate
-//! this project already uses for embeddings, per the "many sharp tools"
-//! convention of quarantining each inference task behind a thin adapter
-//! rather than depending on someone else's higher-level wrapper.
-//!
 //! ## Model
 //!
-//! `pyannote-segmentation-3.0.onnx`, the ONNX export published alongside the
-//! `pyannote-rs` v0.1.0 release. It classifies non-overlapping 270-sample
-//! frames (~16.9 ms at 16 kHz) within a 10 s sliding window as silence (class
-//! 0) or speech (any other class). Downloaded by `scripts/download-models.py`.
+//! `pyannote-segmentation-3.0.onnx`. It classifies non-overlapping 270-sample
+//! frames (~16.9 ms at 16 kHz) within a 10 s sliding window as silence (class 0)
+//! or speech (any other class). Downloaded by `scripts/download-models.py`.
 
 use std::path::Path;
 
@@ -48,9 +16,8 @@ use ort::session::Session;
 /// `scripts/download-models.py` writes it.
 pub const MODEL_FILE: &str = "pyannote-segmentation-3.0.onnx";
 
-/// Number of samples between consecutive output frames. Empirically tuned to
-/// this specific ONNX export --- see the design doc cited above. If the model
-/// file ever changes, these must be re-derived from its published frame rate.
+/// Samples between consecutive output frames for this ONNX export; re-derive
+/// from the model's frame rate if the file changes.
 const FRAME_STRIDE_SAMPLES: usize = 270;
 
 /// Sample offset of the first output frame within a 10 s window
@@ -67,24 +34,17 @@ pub struct SpeechSegment {
     pub end: f64,
 }
 
-/// Owns the segmentation ONNX session. Reused across windows --- `ort`
-/// session construction parses the graph and runs optimization passes, so
-/// paying that cost once per file (not once per window, as the old chunked
-/// workaround did) matters for a multi-hour interview.
+/// Owns the segmentation ONNX session, reused across windows so graph parsing
+/// and optimization are paid once per file.
 pub struct Segmenter {
     session: Session,
 }
 
 impl Segmenter {
     pub fn new(model_path: &Path) -> Result<Self> {
-        // `ort::Error<SessionBuilder>` embeds the builder itself as context,
-        // which (through its custom-operator registration slot) isn't
-        // `Send + Sync` --- so it can never satisfy `anyhow::Error`'s `From`
-        // bound via `?`. `.map_err` sidesteps that by converting through
-        // `Display` instead of relying on the blanket conversion. This is
-        // the same trait-bound wall that makes `pyannote-rs` uncompilable
-        // against this workspace's `ort` version (see this module's doc
-        // comment) --- the difference is we control every call site here.
+        // `ort::Error<SessionBuilder>` isn't `Send + Sync` (via its custom-operator
+        // registration slot), so `?` cannot convert it into `anyhow::Error`;
+        // `.map_err` goes through `Display` instead.
         let session = Session::builder()
             .map_err(|e| anyhow::anyhow!("failed to create session builder: {e}"))?
             .with_optimization_level(GraphOptimizationLevel::Level3)
@@ -96,14 +56,8 @@ impl Segmenter {
         Ok(Self { session })
     }
 
-    /// Run segmentation over f32 audio samples in [-1.0, 1.0], returning every detected
-    /// speech region in chronological order.
-    ///
-    /// Unlike `pyannote_rs::get_segments`, this runs to completion eagerly
-    /// and returns a `Vec` rather than a lazy iterator --- every caller in
-    /// this codebase collects the whole result anyway, and the eager API
-    /// can't be silently truncated by a consumer that treats a momentary
-    /// empty batch as end-of-stream.
+    /// Run segmentation over f32 audio samples in [-1.0, 1.0], returning every
+    /// detected speech region in chronological order.
     pub fn segment(&mut self, samples: &[f32], sample_rate: u32) -> Result<Vec<SpeechSegment>> {
         let window_size = sample_rate as usize * WINDOW_SECS;
         if window_size == 0 {
@@ -120,9 +74,8 @@ impl Segmenter {
         let mut segments = Vec::new();
         let mut is_speeching = false;
         let mut speech_start_sample = 0usize;
-        // Anchored at FIRST_FRAME_OFFSET_SAMPLES: the model's first
-        // classification corresponds to a frame that doesn't start at
-        // sample 0, it starts after the receptive-field padding.
+        // The first classification is a frame after the model's receptive-field
+        // padding, not at sample 0.
         let mut frame_offset = FIRST_FRAME_OFFSET_SAMPLES;
 
         for window_start in (0..padded.len()).step_by(window_size) {
@@ -144,10 +97,8 @@ impl Segmenter {
                 .try_extract_tensor::<f32>()
                 .context("failed to extract segmentation output")?;
 
-            // Shape is (batch, frames, classes). We only ever run batch=1.
-            // Checked rather than assumed: the model file is downloaded from
-            // a release URL, so a re-pointed or re-exported model is the
-            // realistic failure, and a bare index would surface it as an
+            // Shape is (batch, frames, classes) with batch=1. Checked rather than
+            // assumed: a re-exported model would otherwise surface as an
             // out-of-bounds panic several frames deep.
             anyhow::ensure!(
                 shape.len() == 3,
@@ -180,10 +131,8 @@ impl Segmenter {
             }
         }
 
-        // Flush: the recording can end mid-speech. `pyannote_rs::get_segments`
-        // drops this final run entirely; we close it out at the true sample
-        // count (not the zero-padded length, so we don't report speech into
-        // the padding).
+        // Flush a run still open at end of recording, closing it at the true
+        // sample count rather than the zero-padded length.
         if is_speeching {
             segments.push(SpeechSegment {
                 start: speech_start_sample as f64 / sample_rate as f64,

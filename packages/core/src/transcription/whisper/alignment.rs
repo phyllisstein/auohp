@@ -9,37 +9,21 @@ use anyhow::{Context as _, Result};
 
 use super::super::types::Word;
 
-/// Round `x` to `places` decimal places.
-///
-/// We *round* (nearest) rather than truncate (toward zero): truncation would
-/// bias every value downward---confidences always a hair low, start times
-/// always a hair early---and that bias compounds across thousands of words.
-/// Whisper's timing grid is centiseconds and `p` is a coarse editorial signal,
-/// so two decimals is the real information content; more is invented precision.
+/// Round `x` to `places` decimal places (nearest, not truncated, to avoid a
+/// systematic downward bias).
 pub fn round_to(x: f64, places: i32) -> f64 {
     let factor = 10f64.powi(places);
     (x * factor).round() / factor
 }
 
-/// Drop a leading dialogue dash---markup Whisper invents, not speech.
+/// Drop a leading dialogue dash.
 ///
-/// Whisper sometimes opens a segment with `- ` to mark a change of speaker, having
-/// learned the screenplay/subtitle convention from its training data. It is a
-/// *turn indicator*, and a false one: this pipeline assigns no speakers, so the
-/// dash asserts a structure nothing downstream can honour, and it renders in a
-/// caption as a stray hyphen.
-///
-/// Same class of thing as the `[_BEG_]` control tokens---text the model emits
-/// about the transcript rather than words anyone said---so removing it is not
-/// the editorial post-processing that was ruled out.
-///
-/// **Deliberately narrow.** Only a *single* hyphen, and only at the very start.
-/// Mid-segment `--` is a genuine false-start marker and the most readable thing in
-/// the output: `"it would be around -- it would"`, `"So it was -- in October"`.
-/// Measured over 8300 segments of interviews 043, 047, 108 and the Ashes footage:
-/// every leading dash was a bare `-` at word 0, and every `--` sat mid-segment
-/// (indices 15, 4, 6). The two never overlap, so position plus length separates
-/// them exactly.
+/// Whisper sometimes opens a segment with `- ` to mark a speaker change, which
+/// this pipeline cannot honour and which renders as a stray hyphen. Only a single
+/// hyphen at the very start is stripped: mid-segment `--` is a genuine
+/// false-start marker (`"it would be around -- it would"`) and must survive.
+/// Across 8300 segments, every leading dash was a bare `-` and every `--` sat
+/// mid-segment.
 pub fn strip_turn_dash(text: &str) -> &str {
     match text.strip_prefix('-') {
         // `--` and longer runs are false-start markers; leave them be.
@@ -50,36 +34,26 @@ pub fn strip_turn_dash(text: &str) -> &str {
 
 /// Group a token stream into words, decoding UTF-8 once per word.
 ///
-/// Split out from `collect_words` so it can be tested without a live Whisper
-/// state, because the interesting case is invisible from the outside: whisper's
-/// vocabulary is byte-level BPE, so a multi-byte character may arrive as two
-/// tokens neither of which is valid UTF-8 alone.
-///
-/// The word boundary is the *only* boundary where a character is guaranteed
-/// whole, so it is the only place decoding may happen. Decoding per token---which
-/// is what `to_str_lossy()` on each token would do, and which looks correct---turns
-/// a 3-byte character split 2/1 into two U+FFFD replacements instead of one
-/// character. `from_utf8_lossy` here fires only if a *word* ends mid-character.
-///
-/// A leading `0x20` is a real separator and never a fragment: every UTF-8
-/// continuation byte has its high bit set, so a space cannot occur inside a
-/// multi-byte sequence.
+/// Whisper's vocabulary is byte-level BPE, so a multi-byte character can arrive
+/// split across tokens, neither valid UTF-8 alone. Only word boundaries are
+/// guaranteed character-whole, so decoding happens there; per-token lossy
+/// decoding would turn a split 3-byte character into two U+FFFD. A leading
+/// `0x20` is always a real separator, since UTF-8 continuation bytes have the
+/// high bit set.
 pub fn assemble_words<'a, I>(toks: I) -> Vec<(String, f64, f32)>
 where
     I: IntoIterator<Item = (&'a [u8], f64, f32)>,
 {
     let mut groups: Vec<(Vec<u8>, f64, f32)> = Vec::new();
     for (bytes, at, p) in toks {
-        // The first content token opens a word even without a leading space,
-        // since a segment need not begin on a word boundary.
+        // The first token opens a word even without a leading space.
         if bytes.first() == Some(&b' ') || groups.is_empty() {
             let start = bytes.iter().take_while(|b| **b == b' ').count();
             groups.push((bytes[start..].to_vec(), at, p));
         } else {
             let last = groups.last_mut().expect("non-empty by construction");
             last.0.extend_from_slice(bytes);
-            // Weakest link wins: a word is only as trustworthy as its least
-            // confident sub-token.
+            // A word is only as confident as its weakest sub-token.
             last.2 = last.2.min(p);
         }
     }
@@ -91,63 +65,40 @@ where
 
 /// Group per-token DTW timing from a single segment into words.
 ///
-/// whisper.cpp uses the BPE space-prefix convention: a token whose decoded text
-/// begins with an ASCII space marks the start of a new word.
+/// A token whose text begins with an ASCII space starts a new word. Special
+/// tokens are filtered by id (`id >= special_min`) rather than by text: text
+/// matching let `[_TT_n]`, which has no leading space, concatenate onto the
+/// preceding word and corrupt the search index.
 ///
-/// Two things here are load-bearing:
-///
-/// **Special tokens are filtered by id, not by text.** The vocabulary reserves a
-/// block at the top for them, so `id >= special_min` catches every form. Matching
-/// on text is what let `[_BEG_]` and `[_TT_n]` through previously---and `[_TT_n]`
-/// carries no leading space, so it was silently concatenated onto the preceding
-/// word (`"you.[_TT_1499]"`), corrupting the text that reaches the search index.
-///
-/// **`t_dtw` is an instant, not a span.** A word therefore has no end time of its
-/// own; it ends where the next word begins. That is why this builds the token
-/// list first and then zips over adjacent pairs, rather than folding intervals in
-/// a single pass. The last word is the only one with nothing to zip against, and
-/// takes the segment's end.
+/// `t_dtw` is an instant, not a span, so a word ends where the next begins and
+/// the last word takes the segment's end.
 pub fn collect_words(
     seg: &whisper_rs::WhisperSegment<'_>,
     seg_start: f64,
     seg_end: f64,
     special_min: i32,
 ) -> Result<Vec<Word>> {
-    /// One content token: its **bytes**, the instant DTW placed it at, and its
-    /// probability.
-    ///
-    /// Bytes, not `&str`, because whisper's vocabulary is byte-level BPE: a
-    /// multi-byte character can be split across two tokens, and neither fragment
-    /// is valid UTF-8 on its own. `to_str()` returns `Err(InvalidUtf8)` for such a
-    /// token, which killed run `033-full-108` after 60 minutes of GPU time---the
-    /// inference had already produced all 2739 segments.
+    /// One content token. Bytes rather than `&str`: a multi-byte character can
+    /// be split across tokens, and `to_str()` errors on such a fragment.
     struct Tok<'a> {
         bytes: &'a [u8],
         at: f64,
         p: f32,
     }
 
-    // n_tokens is a bare c_int---no Result.
     let n_tokens = seg.n_tokens();
     let mut toks: Vec<Tok<'_>> = Vec::with_capacity(n_tokens as usize);
 
-    // whisper.cpp initialises every token to `{..., t0: -1, t1: -1, t_dtw: -1, ...}`
-    // and then assigns `t_dtw` only where the DTW backtrace changes column. Tokens
-    // it never reaches keep the sentinel, so an unset time is normal rather than
-    // exceptional and has to degrade gracefully.
-    //
-    // Carrying the last known instant forward is what keeps the stream monotonic.
-    // Substituting 0.0 (which is what clamping a negative would do) would drag a
-    // mid-segment word back to the start of the recording---far worse than a
-    // word that merely shares a timestamp with its predecessor.
+    // whisper.cpp initialises `t_dtw` to -1 and assigns it only where the DTW
+    // backtrace changes column, so unset times are normal. Carrying the last
+    // known instant forward keeps the stream monotonic; clamping to 0.0 would
+    // drag a mid-segment word to the recording's start.
     let mut last_at = seg_start;
 
     for j in 0..n_tokens {
-        // get_token returns Option<WhisperToken<'_, '_>>; bounds are guaranteed here.
         let token = seg.get_token(j).context("token index out of bounds")?;
 
-        // token_data() returns WhisperTokenData (whisper_rs_sys::whisper_token_data)
-        // directly---not a Result. Times are i64 centiseconds.
+        // Times are i64 centiseconds.
         let td = token.token_data();
         if td.id >= special_min {
             continue;
@@ -174,11 +125,9 @@ pub fn collect_words(
 
     let mut groups = assemble_words(toks.iter().map(|t| (t.bytes, t.at, t.p)));
 
-    // The dialogue dash arrives as its own word, always at index 0. Dropping it
-    // costs no timing: `collect_words` gives every word an end equal to the *next*
-    // word's start, so the following word's span is untouched by the removal.
-    // See `strip_turn_dash` for why this is markup rather than speech, and why the
-    // test is a bare `-` and not any hyphen.
+    // Whisper emits the dialogue dash as its own word at index 0; see
+    // `strip_turn_dash`. Dropping it leaves timing intact, since each word ends at
+    // the next word's start.
     if groups.first().is_some_and(|(w, _, _)| w == "-") {
         groups.remove(0);
     }
@@ -220,9 +169,7 @@ mod tests {
         assert_eq!(strip_turn_dash("-No space either"), "No space either");
     }
 
-    /// The case this must never touch. Mid-segment `--` is a false-start marker and
-    /// the most readable thing in the output; a rule that swallowed it would be a
-    /// regression dressed as a cleanup.
+    /// Mid-segment `--` is a false-start marker and must survive.
     #[test]
     fn false_start_markers_survive() {
         for s in [
@@ -234,8 +181,7 @@ mod tests {
         }
     }
 
-    /// A segment *opening* with `--` is a false start carried across a boundary, not
-    /// a turn marker. Length is what separates the two, so pin it.
+    /// A segment *opening* with `--` is a false start, not a turn marker.
     #[test]
     fn a_leading_double_dash_is_not_a_turn_marker() {
         assert_eq!(
@@ -245,17 +191,15 @@ mod tests {
         assert_eq!(strip_turn_dash("---"), "---");
     }
 
-    /// Hyphenated words must be untouched---`strip_prefix` only ever fires at
-    /// position zero, but this is the reading that would break if it did not.
+    /// Hyphenated words are untouched.
     #[test]
     fn hyphenated_words_are_untouched() {
         assert_eq!(strip_turn_dash("die-in at the FDA"), "die-in at the FDA");
         assert_eq!(strip_turn_dash("Sloan-Kettering"), "Sloan-Kettering");
     }
 
-    /// The failure that cost 60 minutes of completed inference on run
-    /// `033-full-108`: a right single quote (U+2019, `e2 80 99`) arriving as two
-    /// BPE tokens, neither valid UTF-8 alone.
+    /// A right single quote (U+2019, `e2 80 99`) arriving as two BPE tokens,
+    /// neither valid UTF-8 alone.
     #[test]
     fn a_character_split_across_tokens_reassembles() {
         let words = assemble_words(vec![
@@ -271,10 +215,7 @@ mod tests {
         assert_eq!(words[0].2, 0.7, "weakest sub-token wins");
     }
 
-    /// Decoding per token instead of per word is the plausible-looking wrong fix.
-    /// This pins the distinction: lossy applied to each fragment above would give
-    /// two U+FFFD, so a test that only checked "does not error" would pass while
-    /// the text was corrupted.
+    /// Per-token lossy decoding of the fragments above would yield two U+FFFD.
     #[test]
     fn per_token_decoding_would_have_corrupted_this() {
         let fragments: Vec<u8> = [0xe2u8, 0x80, 0x99].to_vec();
