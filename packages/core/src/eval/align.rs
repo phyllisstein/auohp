@@ -1,11 +1,8 @@
 //! Anchoring and alignment of two token streams.
 //!
-//! This module is the whole instrument. One Levenshtein pass produces every
-//! scored metric at once: the edit distance is WER, the `Sub` ops are the error
-//! taxonomy, and scanning the aligned pairs gives per-term lexicon recall.
-//! Computing those separately over the raw text would let them disagree at the
-//! margins --- and the disagreement would be invisible, because each number
-//! would look plausible on its own.
+//! One Levenshtein pass yields every scored metric: edit distance is WER, `Sub`
+//! ops are the error taxonomy, and the aligned pairs give lexicon recall, so the
+//! three cannot disagree.
 
 use std::collections::HashMap;
 use std::ops::Range;
@@ -29,12 +26,9 @@ pub enum Op {
 
 /// The overlapping windows of the two streams.
 ///
-/// Both sides are clamped, not just the truth. Either stream may extend past the
-/// other in either direction: the ground truth is an excerpt that starts
-/// mid-tape, and a hypothesis may cover a whole three-hour interview of which the
-/// excerpt is a middle slice. Clamping one side only turns the other side's
-/// surplus into tens of thousands of phantom insertions and a WER above 1.0 that
-/// looks like total model failure.
+/// Both sides are clamped: either stream may extend past the other, and
+/// clamping one only turns the other's surplus into phantom insertions and a
+/// WER above 1.0.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Anchoring {
     pub truth: Range<usize>,
@@ -52,16 +46,12 @@ pub struct Anchoring {
 
 /// Find the slice of `truth` that `hyp` actually covers.
 ///
-/// The ground truth for this corpus does not begin where the audio begins: the
-/// transcript excerpt starts mid-tape. Aligning from index 0 yields a garbage
-/// edit script and a WER near 1.0 that reads as catastrophic model failure when
-/// it is really a bookkeeping error.
+/// The truth excerpt starts mid-tape, so aligning from index 0 gives a garbage
+/// edit script.
 ///
-/// The method is diagonal voting. If `hyp[i]` and `truth[p]` are the same *rare*
-/// word, that is weak evidence for the offset `p - i`; accumulate the votes and
-/// the true alignment shows up as a spike. Rarity is what makes this work ---
-/// "the" appears everywhere and votes for every offset equally, so common tokens
-/// are excluded rather than merely down-weighted.
+/// Diagonal voting: if `hyp[i]` and `truth[p]` are the same rare word, that is
+/// weak evidence for offset `p - i`, and the true alignment shows up as a spike.
+/// Common tokens vote for every offset equally, so they are excluded.
 pub fn anchor(truth: &[String], hyp: &[String]) -> Anchoring {
     if truth.is_empty() || hyp.is_empty() {
         return Anchoring {
@@ -77,25 +67,19 @@ pub fn anchor(truth: &[String], hyp: &[String]) -> Anchoring {
         positions.entry(t.as_str()).or_default().push(i);
     }
 
-    // Tokens appearing more than this often in the truth carry no positional
-    // information: "the" sits on every diagonal and votes for all of them
-    // equally. Excluding them outright is what makes the spike visible --- mere
-    // down-weighting leaves a noise floor that buries it on long streams.
+    // Tokens more frequent than this carry no positional information; down-weighting
+    // instead of excluding leaves a noise floor that buries the spike.
     const RARE: usize = 4;
 
-    // truth_index = hyp_index + offset. Negative when the hypothesis starts
-    // before the truth excerpt does, which is the common case here.
+    // truth_index = hyp_index + offset; negative when the hypothesis starts
+    // before the truth excerpt.
     //
-    // Votes land on adjacent diagonals rather than exactly one, because real
-    // streams differ by insertions and deletions that shift the offset as you go.
-    // Pooling each candidate with its immediate neighbours recovers the true peak
-    // instead of picking whichever single diagonal happened to win a split vote.
-    // Votes restricted to a window on *each* side. Windowing only the truth was
-    // the flaw: when a transcript covers more tape than the clip drawn from it,
-    // the truth's tail has no counterpart, its vote is noise, and there is no way
-    // to tell that from a low count alone. Being able to vote from the
-    // hypothesis's tail instead means the end is always estimated from material
-    // that is actually present in both streams.
+    // Insertions and deletions shift the offset along the stream, so each
+    // candidate is pooled with its neighbouring diagonals.
+    //
+    // Each side can be windowed independently: a truth tail with no hypothesis
+    // counterpart votes noise, so the end may instead be estimated from the
+    // hypothesis tail.
     let vote = |tw: std::ops::Range<usize>, hw: std::ops::Range<usize>| -> (isize, usize) {
         let mut votes: HashMap<isize, usize> = HashMap::new();
         for j in hw.clone() {
@@ -121,9 +105,7 @@ pub fn anchor(truth: &[String], hyp: &[String]) -> Anchoring {
     const PROBE: usize = 400;
     let (n, m) = (truth.len(), hyp.len());
 
-    // Estimate each end twice --- once anchored on the truth, once on the
-    // hypothesis --- and keep whichever voted more strongly. Whichever stream is
-    // the clipped one, the other still has covered material at that end.
+    // Estimate each end from both streams and keep the stronger vote.
     let pick = |a: (isize, usize), b: (isize, usize)| if a.1 >= b.1 { a } else { b };
     let (off_start, c_start) = pick(vote(0..PROBE.min(n), 0..m), vote(0..n, 0..PROBE.min(m)));
     let (off_end, c_end) = pick(
@@ -131,17 +113,13 @@ pub fn anchor(truth: &[String], hyp: &[String]) -> Anchoring {
         vote(0..n, m.saturating_sub(PROBE)..m),
     );
 
-    // Anchoring exists to strip a large non-overlapping prefix or suffix, not to
-    // trim a few tokens --- the DP handles small differences correctly on its own.
-    // A slack margin keeps the clamp from cutting into genuinely shared material
-    // when the offset is off by a little.
+    // Only large non-overlapping prefixes/suffixes are stripped; the slack keeps
+    // the clamp off shared material when the offset is slightly wrong.
     const SLACK: usize = 32;
     const FLOOR: usize = 6;
 
     if c_start < FLOOR && c_end < FLOOR {
-        // No usable evidence of a non-overlapping region. Inventing a clamp here
-        // would discard real material, so hand both streams back whole and let
-        // the reported confidence say the alignment is untrustworthy.
+        // No evidence of a non-overlapping region: return both streams whole.
         return Anchoring {
             truth: 0..n,
             hyp: 0..m,
@@ -156,13 +134,10 @@ pub fn anchor(truth: &[String], hyp: &[String]) -> Anchoring {
 
     let truth_start = (off_start.max(0) as usize).saturating_sub(SLACK);
     let hyp_start = ((-off_start).max(0) as usize).saturating_sub(SLACK);
-    // Under `truth_index = hyp_index + off_end`, the overlap ends where whichever
-    // stream runs out first does.
     let truth_end = ((m as isize + off_end).max(0) as usize + SLACK).min(n).max(truth_start);
     let hyp_end = ((n as isize - off_end).max(0) as usize + SLACK).min(m).max(hyp_start);
 
-    // "Partial" means a real chunk of one side was excluded, not that the edges
-    // were tidied. Reported so a scorecard cannot silently describe half a file.
+    // Partial: more than 10% of either side was excluded.
     let partial = (truth_end - truth_start) * 10 < n * 9 || (hyp_end - hyp_start) * 10 < m * 9;
 
     Anchoring {
@@ -177,11 +152,8 @@ pub fn anchor(truth: &[String], hyp: &[String]) -> Anchoring {
 /// Levenshtein edit script over token streams, with equal cost for all three
 /// edit kinds --- the standard WER convention.
 ///
-/// Backpointers are stored for the full matrix so the script can be recovered.
-/// That is `truth.len() * hyp.len()` bytes; at oral-history scale (a few
-/// thousand tokens a side) it is tens of megabytes, which is worth spending to
-/// keep the traceback exact. The cost rows are kept as two rolling vectors
-/// because only the previous row is ever needed.
+/// Backpointers cover the full `truth.len() * hyp.len()` matrix (tens of MB at a
+/// few thousand tokens a side); cost rows are two rolling vectors.
 pub fn align(truth: &[String], hyp: &[String]) -> Vec<Op> {
     let (n, m) = (truth.len(), hyp.len());
     if n == 0 {
@@ -218,10 +190,7 @@ pub fn align(truth: &[String], hyp: &[String]) -> Vec<Op> {
             let del_cost = prev[j] + 1; // consume truth only
             let ins_cost = cur[j - 1] + 1; // consume hyp only
 
-            // Tie-break toward Diag so equal-cost paths prefer substitutions over
-            // an insert/delete pair. Both are distance 1, but a substitution says
-            // "the model heard this word as that word" --- which is a usable
-            // finding --- while ins+del says only that something changed.
+            // Ties go to Diag: a substitution says what the model heard instead.
             let (best, b) = if sub_cost <= del_cost && sub_cost <= ins_cost {
                 (sub_cost, Bp::Diag)
             } else if del_cost <= ins_cost {
@@ -334,23 +303,19 @@ mod tests {
 
     #[test]
     fn equal_cost_paths_prefer_substitution_over_ins_plus_del() {
-        // "x" -> "y" is distance 1 either way; we want it reported as a Sub,
-        // because "heard x as y" is actionable and "something changed" is not.
         let ops = align(&toks("x"), &toks("y"));
         assert_eq!(ops, vec![Op::Sub { truth: "x".into(), hyp: "y".into() }]);
     }
 
     #[test]
     fn anchor_finds_a_hypothesis_that_starts_late_in_the_truth() {
-        // The truth transcript begins before the audio does.
         let truth = toks(
             "wojnarowicz maggenti episalla letraset signorile nesline staley \
              the quick brown fox jumped over the lazy dog near astor place",
         );
         let hyp = toks("the quick brown fox jumped over the lazy dog near astor place");
         let a = anchor(&truth, &hyp);
-        // Streams this short sit entirely inside the slack margin, so nothing is
-        // cut -- which is correct: there is no large prefix here worth stripping.
+        // Streams this short sit inside the slack margin, so nothing is cut.
         assert!(a.truth.contains(&7), "the shared span must survive the clamp");
         assert_eq!(a.hyp, 0..hyp.len());
         assert!(a.confidence > 0);
@@ -358,9 +323,7 @@ mod tests {
 
     #[test]
     fn anchor_clamps_the_hypothesis_when_it_is_the_longer_stream() {
-        // The real case that a truth-only clamp got wrong: a short excerpt sitting
-        // in the middle of a much longer transcription. Both sides must be cut.
-        // Padding well past the slack margin, so the clamp has real work to do.
+        // Padding is well past the slack margin so the clamp has work to do.
         let excerpt = "wojnarowicz maggenti episalla letraset signorile nesline staley";
         let pad = |w: &str| (0..300).map(|i| format!("{w}{i}")).collect::<Vec<_>>().join(" ");
         let truth = toks(excerpt);
@@ -383,9 +346,6 @@ mod tests {
 
     #[test]
     fn anchor_handles_a_truth_that_extends_past_the_hypothesis() {
-        // The real 026 case: the transcript covers about twice the tape the clip
-        // does, so the truth's tail has no counterpart and its vote is noise.
-        // Believing that vote collapsed the window to a sixth of the true overlap.
         let shared = (0..400).map(|i| format!("shared{i}")).collect::<Vec<_>>().join(" ");
         let beyond = (0..400).map(|i| format!("beyond{i}")).collect::<Vec<_>>().join(" ");
         let truth = toks(&format!("{shared} {beyond}"));

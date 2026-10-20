@@ -1,21 +1,13 @@
 //! Text normalisation: reduce truth and hypothesis to a comparable token stream.
 //!
-//! Both sides of every comparison pass through this function, so what matters is
-//! not that any individual rule is "right" in the abstract but that it is applied
-//! *identically* to both. A rule that mangles both streams the same way costs
-//! nothing; a rule applied to only one side manufactures errors that aren't there.
-//!
-//! That principle is why the cleaned ground truth deliberately keeps casing,
-//! contractions, and punctuation intact --- normalising it by hand at authoring
-//! time and again here, by two slightly different sets of rules, is exactly how
-//! the two streams end up disagreeing for reasons that have nothing to do with
-//! the model.
+//! Both sides pass through the same rules; a rule applied to only one side
+//! manufactures errors. That is why the cleaned truth keeps casing,
+//! contractions, and punctuation intact rather than being pre-normalised by
+//! hand.
 
 /// Contractions expanded on both sides, so `"don't"` and `"do not"` compare equal.
 ///
-/// Expansion (rather than contraction) is the right direction because it is
-/// total: every contraction has one expansion, but `"do not"` could contract to
-/// `"don't"` or stay put, and picking wrong splits a match into a substitution.
+/// Expansion is total (each contraction has one expansion); contracting is not.
 const CONTRACTIONS: &[(&str, &str)] = &[
     ("can't", "can not"),
     ("cannot", "can not"),
@@ -28,9 +20,8 @@ const CONTRACTIONS: &[(&str, &str)] = &[
     ("wanna", "want to"),
     ("gotta", "got to"),
     ("'cause", "because"),
-    // Deliberately no bare ("cause", "because") entry: these are substring
-    // replacements over the whole string, so it would rewrite the "cause" inside
-    // "because" and yield "bebecause".
+    // No bare ("cause", "because"): replacements are substring-based and would
+    // turn "because" into "bebecause".
     ("n't", " not"),
     ("'re", " are"),
     ("'ve", " have"),
@@ -41,22 +32,16 @@ const CONTRACTIONS: &[(&str, &str)] = &[
 
 /// Interjections a human transcriber silently drops but Whisper reports.
 ///
-/// These are *not* removed by `normalize` --- they are removed by
-/// [`strip_fillers`], which the scorer applies only when classifying insertions.
-/// Dropping them from the WER stream outright would hide real hallucinations;
-/// keeping them uncategorised would attribute the transcriber's editorial habits
-/// to the model. The distinction is the point.
+/// Not removed by `normalize`; [`strip_fillers`] applies only when classifying
+/// insertions. Dropping them from the WER stream would hide real hallucinations.
 pub const FILLERS: &[&str] = &[
     "uh", "um", "er", "ah", "eh", "hmm", "mm", "mhm", "uh-huh", "mm-hmm",
 ];
 
 /// Multi-word verbal tics that transcribers routinely delete.
 ///
-/// These have to be matched as *phrases*, not word lists. Measured against this
-/// corpus the largest insertion counts were `you`(21) and `know`(17) --- "you
-/// know" being excised throughout --- but adding `you` and `know` to [`FILLERS`]
-/// would misclassify every genuine use of two very ordinary words. The tic is the
-/// sequence; the words are innocent.
+/// Matched as phrases: adding `you` and `know` to [`FILLERS`] would misclassify
+/// every ordinary use of those words.
 pub const FILLER_PHRASES: &[&[&str]] = &[
     &["you", "know"],
     &["i", "mean"],
@@ -73,29 +58,22 @@ pub const FILLER_PHRASES: &[&[&str]] = &[
 pub fn normalize(text: &str) -> Vec<String> {
     let mut s = text.to_lowercase();
 
-    // Typographic folding. Curly quotes matter more than they look: the truth is
-    // OCR'd from a PDF and uses U+2019 throughout, while Whisper emits ASCII "'".
-    // Without this fold every single contraction in the file is a substitution.
+    // The OCR'd truth uses U+2019; Whisper emits ASCII "'". Unfolded, every
+    // contraction is a substitution.
     s = s
         .replace(['\u{2018}', '\u{2019}'], "'")
         .replace(['\u{201C}', '\u{201D}'], "\"")
         .replace(['\u{2013}', '\u{2014}'], " ")
         .replace('\u{2026}', " ");
 
-    // Symbols that are *spoken as words*. Dropping them as punctuation loses a
-    // real token on one side only: the poster is written "Silence = Death" but
-    // said "silence equals death", so a faithful transcription scored as a
-    // three-token phrase against a two-token truth misses the archive's single
-    // most recognisable term.
+    // Symbols spoken as words: "Silence = Death" is said "silence equals death".
     s = s
         .replace('=', " equals ")
         .replace('&', " and ")
         .replace('%', " percent ")
         .replace('+', " plus ");
 
-    // Hyphens and slashes join words that either side may or may not have joined
-    // ("leadership-obsessed" vs "leadership obsessed"). Splitting both is safe;
-    // joining both is not, because only one side ever has the hyphen.
+    // Split rather than join: only one side may have the hyphen.
     s = s.replace(['-', '/', '\u{2010}', '\u{2011}'], " ");
 
     s = reattach_clitics(&s);
@@ -119,34 +97,23 @@ pub fn normalize(text: &str) -> Vec<String> {
         .collect()
 }
 
-/// Pronouns that can legitimately precede a bare clitic.
-///
-/// Deliberately a closed list. Reattaching `d` or `s` after an arbitrary word
-/// would corrupt ordinary text --- "the d train", "vitamin d" --- so only
-/// pronouns, where the contraction reading is the overwhelmingly likely one, are
-/// eligible.
+/// Pronouns that can precede a bare clitic. Closed so "the d train" and
+/// "vitamin d" are not rejoined.
 const CLITIC_HOSTS: &[&str] = &["i", "you", "we", "they", "he", "she", "it", "that", "there", "who"];
 const CLITICS: &[&str] = &["m", "re", "ve", "ll", "d", "s"];
 
 /// Rejoin contraction clitics that lost their apostrophe.
 ///
-/// Whisper intermittently emits `wouldn t` and `I m` where the truth has
-/// `wouldn’t` and `I’m`. Left alone the two sides tokenise differently --- one
-/// expands to `would not`, the other stays `wouldn` + `t` --- and every affected
-/// contraction becomes a spurious substitution *plus* a spurious insertion.
-///
-/// That is not a cosmetic miscount: substitutions are the one bucket on this
-/// fixture that reliably indicates a real model error, so noise here corrupts
-/// the signal the whole campaign steers by. It showed up as `not -> t` and
-/// `would -> wouldn` sitting at the top of the substitution taxonomy.
+/// Whisper sometimes emits `wouldn t` and `I m` where the truth has `wouldn’t`
+/// and `I’m`; unrejoined, each becomes a spurious substitution plus insertion,
+/// polluting the substitution taxonomy.
 fn reattach_clitics(s: &str) -> String {
     let toks: Vec<&str> = s.split_whitespace().collect();
     let mut out: Vec<String> = Vec::with_capacity(toks.len());
 
     for tok in toks {
         let joined = match out.last() {
-            // "wouldn t" -> "wouldn't". The host ending in `n` is what makes this
-            // unambiguous; no ordinary word is followed by a bare `t`.
+            // An `n`-final host makes a bare `t` unambiguous.
             Some(prev) if tok == "t" && prev.ends_with('n') && prev.len() > 2 => true,
             Some(prev) if CLITICS.contains(&tok) && CLITIC_HOSTS.contains(&prev.as_str()) => true,
             _ => false,
@@ -179,9 +146,8 @@ pub fn is_filler(token: &str) -> bool {
 
 /// Expand a single cleaned token, spelling any numeral out into words.
 ///
-/// Returns multiple tokens when a numeral expands ("200" -> ["two", "hundred"]),
-/// which is why the caller uses `flat_map`. Whisper writes digits; human
-/// transcribers write words. Left alone, every number in the file is an error.
+/// Whisper writes digits; the truth writes words. One numeral can expand to
+/// several tokens ("200" -> ["two", "hundred"]).
 fn expand_token(tok: &str) -> Vec<String> {
     if tok.is_empty() {
         return vec![];
@@ -206,28 +172,22 @@ const TENS: [&str; 10] = [
 
 /// Spell `n` as English words.
 ///
-/// `digits` is the token's original digit count, which is what lets us tell a
-/// year from a quantity: a bare 4-digit number in the 1100..=2099 range is read
-/// the way people actually say years ("1985" -> "nineteen eighty five"), not as
-/// a cardinal ("one thousand nine hundred eighty five"). Getting this wrong is
-/// not a rounding error --- it turns every date in an oral history into four or
-/// five spurious substitutions.
+/// A bare 4-digit number in 1100..=2099 is read as a year ("1985" -> "nineteen
+/// eighty five"), not a cardinal; `digits` is the original digit count.
 fn spell_number(n: u64, digits: usize) -> Vec<String> {
     if digits == 4 && (1100..=2099).contains(&n) {
-        // Round thousands are said as thousands ("two thousand"), not as a
-        // hundreds-pair ("twenty hundred"), so they fall through to `cardinal`.
+        // "two thousand", not "twenty hundred".
         if n % 1_000 == 0 {
             return cardinal(n);
         }
         let (hi, lo) = (n / 100, n % 100);
-        // 1900 -> "nineteen hundred".
         if lo == 0 {
             let mut v = cardinal(hi);
             v.push("hundred".into());
             return v;
         }
         let mut v = cardinal(hi);
-        // "nineteen oh five", not "nineteen five".
+        // "nineteen oh five".
         if lo < 10 {
             v.push("oh".into());
         }
@@ -287,7 +247,6 @@ mod tests {
 
     #[test]
     fn folds_curly_quotes_so_contractions_match_across_sources() {
-        // The OCR'd truth uses U+2019; Whisper emits ASCII. These must agree.
         assert_eq!(norm("didn\u{2019}t"), norm("didn't"));
         assert_eq!(norm("didn't"), ["did", "not"]);
     }
@@ -336,8 +295,6 @@ mod tests {
 
     #[test]
     fn does_not_reattach_clitics_to_arbitrary_words() {
-        // "the d train" must not become "the'd train"; only pronouns host a
-        // bare clitic, and only an n-final stem hosts a bare "t".
         assert_eq!(norm("the d train"), ["the", "d", "train"]);
         assert_eq!(norm("vitamin d deficiency"), ["vitamin", "d", "deficiency"]);
         assert_eq!(norm("a t shirt"), ["a", "t", "shirt"]);
@@ -345,9 +302,6 @@ mod tests {
 
     #[test]
     fn reads_spoken_symbols_as_the_words_they_are() {
-        // The poster is written "Silence = Death" and said "silence equals
-        // death". Both spellings must reduce to the same tokens, or a correct
-        // transcription is scored as a miss on the archive's best-known phrase.
         assert_eq!(norm("Silence = Death"), ["silence", "equals", "death"]);
         assert_eq!(norm("Silence = Death"), norm("Silence equals Death"));
         assert_eq!(norm("R&D"), ["r", "and", "d"]);

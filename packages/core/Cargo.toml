@@ -7,70 +7,38 @@ authors = ["ACT UP New York <info@actupny.com>"]
 
 [features]
 default = []
-# GPU acceleration --- enable at build time, not both at once.
-#   cargo build --features metal    (macOS dev, Apple Silicon GPU)
-#   cargo build --features cuda     (production, NVIDIA GPU)
+# GPU acceleration; enable one at build time.
 metal = ["ort/coreml", "whisper-rs/metal"]
 cuda = ["ort/cuda", "whisper-rs/cuda"]
 
 [dependencies]
-# Error handling --- thiserror generates Error impls for your own types;
-# anyhow provides a flexible Result<T, anyhow::Error> for application code.
 anyhow = "1"
 thiserror = "2"
 
-# Transcription --- whisper-rs wraps whisper.cpp (C++ FFI) for Whisper ASR.
-# Models are pre-downloaded by scripts/download-models.py into $MODELS_DIR.
-# symphonia decodes audio from MP4/WAV/etc. containers.
-# rubato resamples to 16 kHz mono as required by Whisper.
-#
-# ort is not used directly but must be a direct dependency so that the
-# `metal` / `cuda` feature gates below can activate `ort/coreml` and
-# `ort/cuda` on the shared crate instance that fastembed also pulls in.
-# The version must stay compatible with whatever ort fastembed resolves to,
-# since feature unification merges both requests into one crate instance.
+# Direct dependency only so the `metal`/`cuda` features reach the `ort`
+# instance fastembed shares; keep the version compatible with fastembed's.
 ort = "2.0.0-rc.13"
 symphonia = { version = "0.5", features = ["isomp4", "aac", "wav", "pcm"] }
 rubato = "1"
 audioadapter-buffers = "2"
 
-# Speaker diarization --- pyannote-segmentation-3.0 and wespeaker ONNX models,
-# driven directly through `ort` above (not through the `pyannote-rs` crate:
-# see `transcription/segmentation.rs`'s doc comment for why). `knf-rs` is the
-# same kaldi-compatible log-mel filterbank feature extractor `pyannote-rs`
-# used internally for its embedding model; `kodama` is hierarchical
-# agglomerative clustering for turning embeddings into speaker labels.
 knf-rs = "0.3"
 kodama = "0.3"
 petgraph = "0.6"
 simsimd = "6.5"
 
-# On-device sentence embeddings --- fastembed wraps ONNX sentence transformers
-# (BAAI/bge-small-en-v1.5, 384-dim).
-#
-# Do not add candle-core as a direct dependency here. fastembed's candle
-# backend is optional; declaring candle-core directly (or gating
-# `candle-core/cuda` in the features above) unifies features across the
-# graph and switches that backend on, which drags in candle-kernels and its
-# PTX compile. That build fails outright on pre-Ampere CUDA hardware.
+# Do not add candle-core: it switches on fastembed's optional candle backend,
+# whose PTX build fails on pre-Ampere CUDA hardware.
 fastembed = { version = "6" }
 
-# Structured logging --- tracing instruments async code; tracing-subscriber
-# formats and emits those events (to stdout, to files, etc.)
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
-# Serialization --- serde is the standard Rust serialization framework.
-# serde_json is used to encode per-word timing data as a JSON string property
-# on Statement nodes in Neo4j.
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
 clap = { version = "4.6.1", features = ["derive"] }
 
-# Async runtime --- tokio is the standard async executor for Rust.
-# features = ["full"] enables all tokio sub-crates (net, fs, time, sync, etc.)
-# so we don't have to add individual features as they're needed.
 tokio = { version = "1", features = ["full"] }
 whisper-rs = "0.16.0"
 

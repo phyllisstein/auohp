@@ -1,30 +1,16 @@
 //! Speaker-diarization turn-taking scoring.
 //!
-//! Scores diarization's output --- *who* was speaking, not what was said ---
-//! against a hand-labeled reference of speaker turns. This is deliberately
-//! separate from [`super::score`]'s word-level scoring: the reference here
-//! is time-coded (`HH:MM:SS:FF` timecodes cut by a human editor), not
-//! text-anchored against a normalized transcript, because diarization has no
-//! transcript of its own to anchor against --- it runs directly on audio.
+//! Scores who was speaking against a hand-labeled, time-coded reference
+//! (`HH:MM:SS:FF`, assumed 30 fps). Separate from [`super::score`] because the
+//! reference is time-based, not text-anchored. Not DER; two turn-taking
+//! questions per reference turn:
 //!
-//! ## Metric
-//!
-//! This does not attempt word-level or DER-style scoring; instead it asks
-//! two turn-taking questions per ground-truth turn:
-//!
-//!   1. **Dominant-speaker accuracy**: does the predicted speaker label
-//!      holding the most of this turn's time span --- summed across all that
-//!      speaker's overlapping segments, via [`crate::transcription::dominant_speaker`],
-//!      the same function the pipeline labels segments with --- match the
-//!      reference speaker, after mapping predicted labels to reference names
-//!      by whichever assignment maximizes agreement?
-//!   2. **Boundary recall**: at each reference speaker change, does the
-//!      predicted diarization also change speaker within a tolerance window?
-//!
-//! Neither requires exact frame parity with the reference, which a human
-//! editor cut by hand and which this module assumes is ~30 fps for its
-//! `HH:MM:SS:FF` timecodes (the boundary tolerance absorbs any frame-rate
-//! error).
+//!   1. **Dominant-speaker accuracy**: does the predicted label holding most of
+//!      the turn's span (via [`crate::transcription::dominant_speaker`], the
+//!      pipeline's own labeller) match the reference speaker, under the label
+//!      mapping that maximizes agreement?
+//!   2. **Boundary recall**: is each reference speaker change matched by a
+//!      predicted change within a tolerance window?
 
 use std::collections::HashMap;
 
@@ -34,10 +20,9 @@ use crate::transcription::{cosine_distance, dominant_speaker, DiarizedSegment, S
 
 const REFERENCE_FPS: f64 = 30.0;
 
-/// How close a predicted speaker change must land to a ground-truth change
-/// to count as detected. Generous on purpose: a human editor's cut point and
-/// a clustering algorithm's turn boundary will never coincide to the frame,
-/// and this measures turn detection, not DER parity.
+/// How close a predicted speaker change must land to a ground-truth change to
+/// count as detected. Generous because hand-cut points never match clustering
+/// boundaries frame for frame.
 pub const BOUNDARY_TOLERANCE_SECS: f64 = 3.0;
 
 /// One ground-truth speaker turn, parsed from a hand-labeled reference.
@@ -87,9 +72,7 @@ pub fn parse_reference(text: &str) -> Result<Vec<ReferenceTurn>> {
             .trim()
             .to_string();
 
-        // Consume (and ignore) the transcript text line(s) up to the next
-        // blank line --- turn detection only needs the ground-truth speaker
-        // change points, not the words.
+        // Skip the transcript text up to the next blank line.
         for text_line in lines.by_ref() {
             if text_line.trim().is_empty() {
                 break;
@@ -130,14 +113,8 @@ fn score_with_tolerance(
     predicted: &[DiarizedSegment],
     boundary_tolerance_secs: f64,
 ) -> DiarizationScore {
-    // ── Metric 1: dominant-speaker accuracy, under the best label mapping ──
-    //
-    // Predicted labels are arbitrary cluster IDs (SPEAKER_00, SPEAKER_01,
-    // ...) with no inherent correspondence to reference names, so try every
-    // possible mapping from predicted labels to reference names and keep
-    // whichever maximizes agreement --- diarization is being scored on
-    // whether it separates speakers consistently, not on guessing which
-    // cluster ID means which person.
+    // Predicted labels are arbitrary cluster IDs, so score under the best
+    // label-to-name mapping: this measures consistent separation, not naming.
     let mut predicted_labels: Vec<String> = predicted.iter().map(|p| p.speaker.clone()).collect();
     predicted_labels.sort();
     predicted_labels.dedup();
@@ -159,9 +136,7 @@ fn score_with_tolerance(
     let mut best_accuracy = 0.0f64;
     let mut best_mapping: Vec<(String, String)> = Vec::new();
 
-    // Small enough (2-3 speakers) to brute-force every mapping rather than
-    // implementing the Hungarian algorithm for what's fundamentally a
-    // validation harness.
+    // 2-3 speakers: brute force beats the Hungarian algorithm.
     for perm in permutations(&reference_speakers) {
         if perm.len() < predicted_labels.len() {
             continue;
@@ -189,7 +164,6 @@ fn score_with_tolerance(
     }
     let matched_turns = (best_accuracy * per_turn_dominant.len() as f64).round() as usize;
 
-    // ── Metric 2: boundary detection ────────────────────────────────────────
     let reference_changes: Vec<f64> = reference
         .windows(2)
         .filter(|w| w[0].speaker != w[1].speaker)
@@ -228,8 +202,7 @@ fn score_with_tolerance(
     }
 }
 
-/// All permutations of `items`, as owned `Vec<String>`s. `items.len()` is
-/// small (2-3 speakers), so naive recursive generation is plenty fast.
+/// All permutations of `items`; naive recursion, since there are 2-3 speakers.
 fn permutations(items: &[String]) -> Vec<Vec<String>> {
     if items.is_empty() {
         return vec![Vec::new()];
@@ -246,13 +219,9 @@ fn permutations(items: &[String]) -> Vec<Vec<String>> {
     result
 }
 
-/// Diagnostic comparison of same-speaker vs. different-speaker embedding
-/// distance, bypassing clustering entirely.
-///
-/// If the model and features carry any discriminative signal at all,
-/// same-speaker pairs should sit measurably closer than cross-speaker pairs;
-/// if the two numbers come out indistinguishable, the embeddings themselves
-/// --- not the clustering cutoff --- are the problem.
+/// Same-speaker vs. different-speaker embedding distance, bypassing clustering.
+/// If the two means are indistinguishable, the embeddings, not the clustering
+/// cutoff, are the problem.
 #[derive(Debug, Clone)]
 pub struct EmbeddingDiagnostic {
     pub segments_embedded: usize,

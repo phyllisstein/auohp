@@ -1,7 +1,7 @@
 //! Score a transcription run against the human transcript.
 //!
-//! CPU-only and cheap --- it never loads a model or touches the GPU, which is
-//! what makes re-scoring every archived run after a metric change practical.
+//! CPU-only: loads no model, so archived runs can be re-scored after a metric
+//! change.
 //!
 //! Usage:
 //!   cargo run --release --bin score -- \
@@ -174,13 +174,10 @@ fn print_summary(c: &Scorecard) {
 
     match s.time_slope {
         Some(sl) => {
-            // The anchors come from timecodes printed in a PDF margin beside a
-            // line of text, so locating one is only accurate to the nearest line
-            // -- tens of seconds. Over a 25-minute span that is several percent
-            // of slope on its own, which is why the tolerance is this wide.
-            // Below it, the slope says nothing; above it, look at the residuals
-            // for a monotonic trend before concluding anything, since scattered
-            // residuals are placement noise and only a trend is real drift.
+            // Anchors are timecodes printed beside a line of PDF text, so each is
+            // placed only to the nearest line (tens of seconds); over 25 minutes
+            // that alone moves the slope several percent. Scattered residuals are
+            // placement noise; only a monotonic trend is real drift.
             let note = if (sl - 1.0).abs() > 0.10 {
                 "  <-- well off 1.0; check residuals below for a monotonic trend"
             } else {
