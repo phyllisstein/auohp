@@ -74,6 +74,5 @@ chrono = "0.4"
 nanoid = "0.5"
 
 rustls = { version = "0.23", features = ["aws-lc-rs"] }
-md5 = "0.8"
 rand = "0.10"
 asserting = "0.17.0"
