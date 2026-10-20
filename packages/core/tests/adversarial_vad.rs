@@ -1,32 +1,18 @@
-//! Standalone adversarial stress test harness for Silero VAD timeline mapping (`whisper/vad.rs`).
-//!
-//! Evaluates:
-//! 1. Empty timeline (no speech regions, default, identity).
-//! 2. Entire recording is speech (identity mapping, boundary clamping).
-//! 3. Alternating 1-sample speech and 1-sample silence regions (16 kHz stress test).
-//! 4. Out-of-bounds queries: t < 0.0, t > total_duration, t = NaN, t = ±infinity.
-//! 5. Monotonicity of `to_original` mapping across region boundaries and glue silences.
-//! 6. Zero duration regions, single region, and high-density multi-region stress (10,000 regions).
-//! 7. Long duration floating point precision stability (10-hour interview).
-//! 8. Overlapping region boundary hazard analysis.
-//! 9. Combinatorial property-based fuzzing across 100,000 queries.
+//! Adversarial inputs for the VAD timeline mapping (`whisper/vad.rs`): empty, all-speech, one-sample regions,
+//! out-of-bounds and NaN queries, overlapping regions, and a 10-hour timeline.
 
 #[allow(dead_code)]
+#[path = "../src/transcription"]
 mod root_mod {
     pub mod config {
         pub use auohp_core::transcription::VadConfig;
     }
     pub mod whisper {
-        #[path = "/Users/daniel/.gemini/antigravity/worktrees/auohp/refactor_whisper_pipeline/packages/core/src/transcription/whisper/vad.rs"]
         pub mod vad;
     }
 }
 
 pub use root_mod::whisper::vad::{VadRegion, VadTimeline, VAD_GLUE_SECONDS};
-
-// =========================================================================
-// 1. Empty Timeline & Identity Invariants
-// =========================================================================
 
 #[test]
 fn test_empty_timeline_identity() {
@@ -39,7 +25,6 @@ fn test_empty_timeline_identity() {
     for timeline in &timelines {
         assert!(timeline.is_identity(), "Empty timeline must report is_identity() == true");
 
-        // Identity timeline maps every query directly to itself
         let test_queries = [
             0.0,
             1.0,
@@ -60,17 +45,14 @@ fn test_empty_timeline_identity() {
             );
         }
 
-        // Check infinities
         assert_eq!(timeline.to_original(f64::INFINITY), f64::INFINITY);
         assert_eq!(timeline.to_original(f64::NEG_INFINITY), f64::NEG_INFINITY);
 
-        // Check NaN
         assert!(
             timeline.to_original(f64::NAN).is_nan(),
             "Empty timeline should return NaN for NaN query"
         );
 
-        // Monotonicity on empty timeline
         let mut prev = f64::NEG_INFINITY;
         for i in -100..=100 {
             let t = i as f64 * 0.5;
@@ -83,10 +65,6 @@ fn test_empty_timeline_identity() {
         }
     }
 }
-
-// =========================================================================
-// 2. Entire Recording is Speech (Identity Mapping)
-// =========================================================================
 
 #[test]
 fn test_entire_recording_is_speech() {
@@ -101,7 +79,6 @@ fn test_entire_recording_is_speech() {
 
     assert!(!timeline.is_identity());
 
-    // Inside speech window [0.0, 60.0], mapping must be strictly identity: to_original(t) == t
     for i in 0..=6000 {
         let t = i as f64 * 0.01;
         let mapped = timeline.to_original(t);
@@ -111,8 +88,6 @@ fn test_entire_recording_is_speech() {
         );
     }
 
-    // Boundary conditions:
-    // Left boundary: t < 0.0 should clamp to orig_start (0.0)
     for &t in &[-1e-12, -0.01, -1.0, -100.0, -1e9, f64::NEG_INFINITY] {
         assert_eq!(
             timeline.to_original(t),
@@ -122,7 +97,6 @@ fn test_entire_recording_is_speech() {
         );
     }
 
-    // Right boundary: t > 60.0 should clamp to last_end (60.0)
     for &t in &[60.0001, 60.5, 100.0, 1e6, f64::INFINITY] {
         assert_eq!(
             timeline.to_original(t),
@@ -132,7 +106,6 @@ fn test_entire_recording_is_speech() {
         );
     }
 
-    // Monotonicity across the entire range including out-of-bounds
     let mut prev = f64::NEG_INFINITY;
     for i in -500..=6500 {
         let t = i as f64 * 0.01;
@@ -145,28 +118,13 @@ fn test_entire_recording_is_speech() {
     }
 }
 
-// =========================================================================
-// 3. Alternating 1-Sample Speech and 1-Sample Silence Regions
-// =========================================================================
-
 #[test]
 fn test_alternating_one_sample_speech_and_silence() {
     let sample_rate = 16_000.0;
     let dt = 1.0 / sample_rate; // 0.0000625 s
     let n_regions = 1_000;
 
-    // In the original recording:
-    // Region 0: [0*2*dt .. 0*2*dt + dt] (silence from dt to 2*dt)
-    // Region 1: [1*2*dt .. 1*2*dt + dt] (silence from 3*dt to 4*dt)
-    // ...
-    // Region k: [2*k*dt .. 2*k*dt + dt]
-    //
-    // In the filtered audio:
-    // Region 0: filtered_start = 0.0, duration = dt
-    // Glue: VAD_GLUE_SECONDS (0.1 s)
-    // Region 1: filtered_start = dt + 0.1, duration = dt
-    // ...
-    // Region k: filtered_start = k * (dt + VAD_GLUE_SECONDS), duration = dt
+    // One-sample speech regions; region k starts at filtered time k * (dt + VAD_GLUE_SECONDS).
 
     let mut regions = Vec::with_capacity(n_regions);
     let mut filtered_cursor = 0.0;
@@ -184,9 +142,7 @@ fn test_alternating_one_sample_speech_and_silence() {
 
     let timeline = VadTimeline { regions };
 
-    // 1. Verify exact mapping at speech sample boundaries for all 1,000 regions
     for (k, r) in timeline.regions.iter().enumerate() {
-        // Start of 1-sample speech
         let orig_at_start = timeline.to_original(r.filtered_start);
         assert!(
             (orig_at_start - r.orig_start).abs() < 1e-12,
@@ -195,7 +151,6 @@ fn test_alternating_one_sample_speech_and_silence() {
             orig_at_start
         );
 
-        // End of 1-sample speech
         let orig_at_end = timeline.to_original(r.filtered_start + r.duration);
         let expected_end = r.orig_start + r.duration;
         assert!(
@@ -205,7 +160,6 @@ fn test_alternating_one_sample_speech_and_silence() {
             orig_at_end
         );
 
-        // 2. Verify glue silence clamping: midway through glue must clamp to end of preceding region
         if k < n_regions - 1 {
             let mid_glue = r.filtered_start + r.duration + (VAD_GLUE_SECONDS / 2.0);
             let orig_in_glue = timeline.to_original(mid_glue);
@@ -217,9 +171,7 @@ fn test_alternating_one_sample_speech_and_silence() {
         }
     }
 
-    // 3. Strict Monotonicity Sweep across region boundaries and glue silences
     let mut prev = f64::NEG_INFINITY;
-    // Step through the first 50 regions with fine-grained steps (15 points per region + glue)
     for k in 0..50 {
         let r = &timeline.regions[k];
         let steps = 15;
@@ -235,10 +187,6 @@ fn test_alternating_one_sample_speech_and_silence() {
         }
     }
 }
-
-// =========================================================================
-// 4. Out-of-Bounds Queries (t < 0.0, t > total_duration, NaN, infinity)
-// =========================================================================
 
 #[test]
 fn test_out_of_bounds_queries() {
@@ -261,7 +209,6 @@ fn test_out_of_bounds_queries() {
     let expected_first_start = 5.0;
     let expected_last_end = 20.0 + 3.0; // 23.0 s
 
-    // A. Queries before timeline start (t < 0.0)
     let negative_queries = [
         -1e-15,
         -0.001,
@@ -279,7 +226,6 @@ fn test_out_of_bounds_queries() {
         );
     }
 
-    // B. Queries past total filtered duration (t > 5.1)
     let past_end_queries = [
         total_filtered + 1e-12,
         total_filtered + 0.001,
@@ -297,7 +243,7 @@ fn test_out_of_bounds_queries() {
         );
     }
 
-    // C. NaN and -NaN queries: must NOT panic, returns last_end because all comparisons evaluate false
+    // NaN must not panic; every comparison is false, so the last region's end is returned.
     let nan_val = f64::NAN;
     let neg_nan_val = -f64::NAN;
     let mapped_nan = timeline.to_original(nan_val);
@@ -312,7 +258,6 @@ fn test_out_of_bounds_queries() {
         "-NaN query must safely return last_end ({expected_last_end}) without panicking, got {mapped_neg_nan}"
     );
 
-    // D. Subnormal numbers
     let subnormal = f64::MIN_POSITIVE / 2.0;
     let mapped_subnormal = timeline.to_original(subnormal);
     assert!(
@@ -321,21 +266,9 @@ fn test_out_of_bounds_queries() {
     );
 }
 
-// =========================================================================
-// 5. Monotonicity Across Region Boundaries & Discontinuous Gaps
-// =========================================================================
-
 #[test]
 fn test_monotonicity_across_complex_boundaries() {
-    // 4 regions with varying gaps:
-    // Region 0: real [10.0 .. 12.0], filtered [0.0 .. 2.0]
-    // Glue: 0.1s [2.0 .. 2.1]
-    // Region 1: real [15.0 .. 18.0], filtered [2.1 .. 5.1]
-    // Glue: 0.1s [5.1 .. 5.2]
-    // Region 2: real [18.0 .. 18.5] (consecutive real speech, but separated by glue in filtered)
-    // Filtered: [5.2 .. 5.7]
-    // Glue: 0.1s [5.7 .. 5.8]
-    // Region 3: real [30.0 .. 35.0], filtered [5.8 .. 10.8]
+    // Regions 1 and 2 are adjacent in real time but separated by glue in filtered time.
     let timeline = VadTimeline {
         regions: vec![
             VadRegion {
@@ -361,9 +294,7 @@ fn test_monotonicity_across_complex_boundaries() {
         ],
     };
 
-    // Verify critical boundary instants
     let boundaries = [
-        // Boundary around Region 0 and Glue 0
         (1.999, 11.999),
         (2.0, 12.0),
         (2.0001, 12.0),
@@ -371,18 +302,15 @@ fn test_monotonicity_across_complex_boundaries() {
         (2.0999, 12.0),
         (2.1, 15.0),
         (2.1001, 15.0001),
-        // Boundary around Region 1 and Glue 1
         (5.0999, 17.9999),
         (5.1, 18.0),
         (5.15, 18.0),
         (5.2, 18.0), // Consecutive speech: Region 2 starts at 18.0
         (5.25, 18.05),
-        // Boundary around Region 2 and Glue 2
         (5.7, 18.5),
         (5.75, 18.5),
         (5.8, 30.0),
         (5.85, 30.05),
-        // End of Region 3
         (10.8, 35.0),
         (10.8001, 35.0),
     ];
@@ -395,7 +323,6 @@ fn test_monotonicity_across_complex_boundaries() {
         );
     }
 
-    // High resolution monotonicity check over 16,000 continuous points (step = 1 ms)
     let mut prev = f64::NEG_INFINITY;
     for i in -1000..=15000 {
         let t = i as f64 * 0.001;
@@ -407,10 +334,6 @@ fn test_monotonicity_across_complex_boundaries() {
         prev = cur;
     }
 }
-
-// =========================================================================
-// 6. Zero-Duration Speech Region Resilience
-// =========================================================================
 
 #[test]
 fn test_zero_duration_region_handling() {
@@ -429,14 +352,10 @@ fn test_zero_duration_region_handling() {
         ],
     };
 
-    // Zero-length region at t = 0.0
     assert_eq!(timeline.to_original(0.0), 1.0);
-    // In glue between 0.0 and 0.1
     assert_eq!(timeline.to_original(0.05), 1.0);
-    // Region 1 start at t = 0.1
     assert_eq!(timeline.to_original(0.1), 5.0);
 
-    // Monotonicity holds
     let mut prev = f64::NEG_INFINITY;
     for i in 0..=250 {
         let t = i as f64 * 0.01;
@@ -445,10 +364,6 @@ fn test_zero_duration_region_handling() {
         prev = cur;
     }
 }
-
-// =========================================================================
-// 7. Scale & Performance Stress: 10,000 Speech Regions
-// =========================================================================
 
 #[test]
 fn test_large_scale_10k_regions_stress() {
@@ -469,20 +384,16 @@ fn test_large_scale_10k_regions_stress() {
 
     let timeline = VadTimeline { regions };
 
-    // Test start, middle, and end lookups
     assert_eq!(timeline.to_original(0.0), 0.0);
 
-    // Query 5,000th region
     let mid_r = &timeline.regions[5000];
     let mid_orig = timeline.to_original(mid_r.filtered_start + 0.25);
     assert!((mid_orig - (mid_r.orig_start + 0.25)).abs() < 1e-12);
 
-    // Query past end
     let last_r = &timeline.regions[n - 1];
     let end_orig = timeline.to_original(last_r.filtered_start + 10.0);
     assert_eq!(end_orig, last_r.orig_start + 0.5);
 
-    // Monotonicity spot checks across 500 points
     let mut prev = f64::NEG_INFINITY;
     for i in (0..10_000).step_by(20) {
         let t = timeline.regions[i].filtered_start;
@@ -492,13 +403,8 @@ fn test_large_scale_10k_regions_stress() {
     }
 }
 
-// =========================================================================
-// 8. Long Recording Precision (10-Hour Interview Timeline)
-// =========================================================================
-
 #[test]
 fn test_long_recording_precision_10_hours() {
-    // 10 hours = 36,000 seconds
     let hours_10 = 36_000.0;
     let timeline = VadTimeline {
         regions: vec![
@@ -515,7 +421,6 @@ fn test_long_recording_precision_10_hours() {
         ],
     };
 
-    // Sub-millisecond timing precision must be preserved at 36,000 seconds
     let t_query = 18_000.1 + 10_000.123456;
     let expected = 18_200.0 + 10_000.123456;
     let actual = timeline.to_original(t_query);
@@ -526,10 +431,6 @@ fn test_long_recording_precision_10_hours() {
 
     assert_eq!(timeline.to_original(hours_10 + 5000.0), 18_200.0 + 17_800.0);
 }
-
-// =========================================================================
-// 9. Overlapping Region Boundary Hazard Analysis
-// =========================================================================
 
 #[test]
 fn test_overlapping_region_hazard_documentation() {
@@ -562,13 +463,8 @@ fn test_overlapping_region_hazard_documentation() {
     assert!(went_backwards, "Confirms monotonicity depends on non-overlapping original spans");
 }
 
-// =========================================================================
-// 10. Combinatorial Fuzzing Invariant (100,000 Probes)
-// =========================================================================
-
 #[test]
 fn test_fuzzing_monotonicity_invariants() {
-    // Simple deterministic LCG pseudo-random generator
     struct SimpleRng(u64);
     impl SimpleRng {
         fn next_u64(&mut self) -> u64 {
@@ -582,7 +478,6 @@ fn test_fuzzing_monotonicity_invariants() {
 
     let mut rng = SimpleRng(0xDEAD_BEEF_CAFE_BABE);
 
-    // Generate 20 randomized timelines
     for _ in 0..20 {
         let num_regions = 5 + (rng.next_u64() % 50) as usize;
         let mut regions = Vec::with_capacity(num_regions);
@@ -596,16 +491,13 @@ fn test_fuzzing_monotonicity_invariants() {
                 filtered_start: filtered_cursor,
                 duration,
             });
-            // Advance in original recording (strictly >= 0 dropped silence)
             let silence = rng.next_f64() * 5.0;
             orig_cursor += duration + silence;
-            // Advance in filtered timeline (duration + glue)
             filtered_cursor += duration + VAD_GLUE_SECONDS;
         }
 
         let timeline = VadTimeline { regions };
 
-        // Test 5,000 monotonically increasing probe queries
         let total_filtered = filtered_cursor;
         let mut prev = f64::NEG_INFINITY;
         let num_probes = 5_000;

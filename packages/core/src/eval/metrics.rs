@@ -8,22 +8,15 @@ use crate::transcription::TranscriptionResult;
 
 /// Bumped whenever scoring behaviour changes.
 ///
-/// Scores are only meaningful relative to one another, so a metric change
-/// silently makes archived runs incomparable to new ones. That failure is
-/// dangerous precisely because it does not error --- it just quietly corrupts
-/// every future comparison. On every bump, re-score the archived `result.json`
-/// files (CPU-only, no GPU time) and mark the boundary in the tuning ledger.
-/// - v2: symbols spoken as words (`=`, `&`, `%`, `+`) normalise to those words
-///   rather than being stripped, and lexicon entries that normalise alike are
-///   collapsed.
-/// - v4: `anchor` handles partial coverage. When a transcript covers more tape
-///   than the clip drawn from it, the truth's tail has no counterpart, its vote
-///   is noise, and believing it collapsed the window to a sixth of the real
-///   overlap. Adds `structure.speaker` and `partial_coverage`.
-/// - v3: contraction clitics that lost their apostrophe are reattached. Whisper
-///   intermittently emits `wouldn t` / `I m`, which previously became a spurious
-///   substitution *and* insertion apiece. This alone cut one run's substitution
-///   count by a quarter, so v2 substitution counts are not comparable to v3.
+/// A metric change makes archived runs incomparable to new ones without any
+/// error. On every bump, re-score the archived `result.json` files and mark the
+/// boundary in the tuning ledger.
+/// - v2: spoken symbols (`=`, `&`, `%`, `+`) normalise to words; lexicon entries
+///   that normalise alike are collapsed.
+/// - v3: apostrophe-less clitics are reattached (cut one run's substitutions by
+///   a quarter).
+/// - v4: `anchor` handles partial coverage; adds `structure.speaker` and
+///   `partial_coverage`.
 pub const HARNESS_VERSION: u32 = 4;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -137,19 +130,9 @@ pub struct StructureStats {
 
 /// Whether VAD segment boundaries happen to fall on speaker changes.
 ///
-/// Written when the pipeline did not diarize and speaker labels were
-/// assigned by hand; if segmentation already breaks where the speaker
-/// changes, the remaining work is *labelling existing segments* (a
-/// two-class assignment) rather than *detecting boundaries*, a far easier
-/// problem. Diarization has since been restored (see
-/// `crate::transcription::diarize`), which gives boundaries *and* labels
-/// directly and makes this metric's original motivation partly moot ---
-/// it's kept because VAD-boundary quality is still worth knowing
-/// independent of diarization accuracy, but this and
-/// [`super::diarization`]'s boundary-recall metric are now two different
-/// measurements of a related question (text-anchored turns vs. diarized
-/// segments) that have not been reconciled. Treat that reconciliation as
-/// open, not settled.
+/// Measures VAD-boundary quality independent of diarization. Distinct from
+/// [`super::diarization`]'s boundary recall: this uses text-anchored turns, that
+/// uses diarized segments.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SpeakerBoundaries {
     /// Speaker changes that could be located in the hypothesis.
@@ -188,11 +171,8 @@ pub struct Lexicon {
 impl Lexicon {
     /// Parse the lexicon fixture: one term per line, `#` comments ignored.
     ///
-    /// Entries that normalise to the same token sequence are collapsed, keeping
-    /// the first spelling. `Silence = Death` and `SILENCE = DEATH` are one term
-    /// once cased and punctuation are folded away; counting them twice would
-    /// inflate both the numerator and denominator of recall, and silently weight
-    /// whichever terms happened to be written more than one way.
+    /// Entries that normalise to the same token sequence are collapsed to the
+    /// first spelling, so recall does not double-count them.
     pub fn parse(src: &str) -> Self {
         let mut seen: std::collections::HashSet<Vec<String>> = Default::default();
         let terms = src
@@ -253,10 +233,7 @@ pub fn score_with_turns(
             .join(" "),
     );
 
-    // Clamp both streams to the span they share. The hypothesis may cover a whole
-    // interview of which the truth is only a middle excerpt, so the hypothesis
-    // side has to be cut too --- otherwise its surplus becomes tens of thousands
-    // of phantom insertions.
+    // Clamp both streams to the span they share.
     let a = anchor(&truth_all, &hyp_all);
     let truth = &truth_all[a.truth.clone()];
     let hyp_tokens = hyp_all[a.hyp.clone()].to_vec();
@@ -267,10 +244,8 @@ pub fn score_with_turns(
     let dels = ops.iter().filter(|o| matches!(o, Op::Del(_))).count();
     let (ins_filler, ins_content) = classify_insertions(&ops);
 
-    // Conventional WER counts every insertion. Fillers are reported separately
-    // above so the number can be read with the transcriber's habits in mind, but
-    // they are not silently discounted here --- that would make this rate
-    // incomparable to any WER anyone else computes.
+    // Fillers are counted as insertions to keep the rate comparable to
+    // conventional WER.
     let errors = subs + dels + ins_filler + ins_content;
     let wer = WordErrorRate {
         rate: if truth.is_empty() {
@@ -345,14 +320,12 @@ fn taxonomy(ops: &[Op]) -> ErrorTaxonomy {
 /// Split insertions into "the transcriber tidied this away" and "the model may
 /// have invented this".
 ///
-/// Only the second is evidence of a defect, and conflating them makes a clean
-/// transcription of a disfluent speaker look like a hallucinating model. Three
-/// signatures mark an insertion as editorial rather than invented:
+/// Only the second is evidence of a defect. Three signatures mark an insertion
+/// as editorial:
 ///
 /// 1. **Interjections** --- "um", "uh".
 /// 2. **Verbal tics**, matched as whole phrases against a run of consecutive
-///    insertions. "you know" is a tic; `you` and `know` are ordinary words, so
-///    the phrase is the only safe unit.
+///    insertions; `you` and `know` alone are ordinary words.
 /// 3. **Repetitions** --- an inserted token identical to the matched token beside
 ///    it, which is a stutter or false start the transcriber wrote once.
 fn classify_insertions(ops: &[Op]) -> (usize, usize) {
@@ -492,11 +465,8 @@ pub struct AnchorsFile {
 /// Locate each anchor phrase in the timed word stream and fit media time against
 /// tape time.
 ///
-/// The fixture does not start at a tape boundary, so the offset is unknown and
-/// must be fit rather than assumed. The *slope* is the part worth watching: it
-/// should come out at 1.0, and a slope materially off 1.0 means decoded audio
-/// runs fast or slow. That would otherwise surface only as a diffuse WER penalty
-/// with no obvious cause.
+/// The fixture does not start at a tape boundary, so the offset is fit. The slope
+/// should be 1.0; materially off means decoded audio runs fast or slow.
 fn score_drift(
     hyp: &TranscriptionResult,
     truth_all: &[String],
@@ -514,14 +484,9 @@ fn score_drift(
     }
     let full: Vec<String> = words.iter().map(|(t, _)| t.clone()).collect();
 
-    // Restrict the search to the span the truth actually covers.
-    //
-    // This stream is tokenised from `words[]` while the WER stream comes from
-    // segment `text`, so their indices do not correspond and the WER anchoring
-    // cannot simply be reused --- it has to be recomputed here. Searching the
-    // unrestricted stream is what produced anchors scattered across a
-    // three-hour recording and a fitted slope of -0.32: the phrases matched,
-    // just in the wrong places.
+    // Restrict the search to the span the truth covers. This stream is tokenised
+    // from `words[]`, the WER stream from segment `text`, so the WER anchoring
+    // indices do not apply and it is recomputed here.
     let a = anchor(truth_all, &full);
     let stream = &full[a.hyp.clone()];
     let base = a.hyp.start;
@@ -530,13 +495,9 @@ fn score_drift(
         .iter()
         .map(|a| {
             let phrase = normalize(&a.following_text);
-            // Try progressively shorter prefixes: transcription errors inside the
-            // anchor phrase should degrade the match, not destroy it.
-            //
-            // The floor of three words guards against a short prefix matching
-            // somewhere unrelated, but it must not exceed the phrase itself --- a
-            // bare `3..=phrase.len()` is an empty range for anything shorter, so
-            // such anchors would silently never match rather than matching whole.
+            // Try progressively shorter prefixes so errors inside the phrase
+            // degrade the match. The three-word floor must not exceed the phrase
+            // length, or `3..=phrase.len()` is empty and short anchors never match.
             let floor = phrase.len().min(3).max(1);
             let media = (floor..=phrase.len()).rev().find_map(|n| {
                 find_all(stream, &phrase[..n])
@@ -596,11 +557,9 @@ fn score_drift(
 
 /// Measure segment boundaries against the truth's speaker changes.
 ///
-/// The chance baseline is the whole point. Raw "changes landing on a boundary"
-/// rewards a config for nothing more than segmenting more finely --- at one word
-/// per segment every change lands on a boundary. Dividing by the density-matched
-/// expectation asks the question that matters: does this segmentation know
-/// something about speakers, or is it just cutting often?
+/// Raw "changes landing on a boundary" rewards finer segmentation (one word per
+/// segment covers every change), so it is divided by the density-matched chance
+/// expectation.
 fn score_speaker_boundaries(
     hyp: &TranscriptionResult,
     truth_all: &[String],
@@ -618,8 +577,7 @@ fn score_speaker_boundaries(
         speaker_of.extend(std::iter::repeat_n(t.speaker.as_str(), n));
     }
     if speaker_of.len() != truth_all.len() {
-        // The turns fixture and the clean truth have drifted; refuse to report a
-        // number rather than silently aligning the wrong things.
+        // Turns fixture and clean truth disagree; report nothing.
         return None;
     }
 
@@ -703,10 +661,9 @@ fn score_speaker_boundaries(
 
 /// True if a word's text carries a whisper.cpp control token.
 ///
-/// whisper.cpp emits `[_BEG_]` and `[_TT_NNN]`, not the `<|...|>` form. `[_TT_]`
-/// in particular carries no leading space, so it gets concatenated onto the
-/// preceding word (`"you.[_TT_1499]"`) --- which is why this checks `contains`
-/// rather than `starts_with`.
+/// whisper.cpp emits `[_BEG_]` and `[_TT_NNN]`, not `<|...|>`. `[_TT_]` has no
+/// leading space and gets concatenated onto the previous word
+/// (`"you.[_TT_1499]"`), hence `contains` rather than `starts_with`.
 fn is_control_token_word(w: &str) -> bool {
     w.contains("[_")
 }
@@ -714,8 +671,7 @@ fn is_control_token_word(w: &str) -> bool {
 fn structure_stats(hyp: &TranscriptionResult, time_slope: Option<f64>) -> StructureStats {
     let words: Vec<_> = hyp.segments.iter().flat_map(|s| s.words.iter()).collect();
 
-    // Roughly 25 chars/sec is already far past any human speech rate; anything
-    // slower than that for a single word means the timestamp is smeared.
+    // Past ~25 chars/sec exceeds any human speech rate: the timestamp is smeared.
     let implausible = words
         .iter()
         .filter(|w| {
@@ -795,7 +751,6 @@ mod tests {
 
     #[test]
     fn lexicon_recall_reports_the_confusion() {
-        // The real failure from /mnt/s3/fs1/out/002.lexical-diffs.txt.
         let hyp = result(vec![("acta up received badly", 0.0, 2.0, vec![])]);
         let lex = Lexicon::parse("ACT UP");
         let card = score("ACT UP received badly.", &hyp, &lex, &[]);
@@ -843,9 +798,7 @@ mod tests {
 
     #[test]
     fn verbal_tics_are_classified_by_phrase_not_by_word() {
-        // "you know" excised by the transcriber. Counting it as content would
-        // read a tidy transcript as a hallucinating model -- but `you` and
-        // `know` on their own must stay ordinary words.
+        // "you know" excised by the transcriber; `you` and `know` alone stay content.
         let hyp = result(vec![("it was you know difficult", 0.0, 2.0, vec![])]);
         let card = score("It was difficult", &hyp, &Lexicon::parse(""), &[]);
         assert_eq!(card.wer.ins_filler, 2, "the phrase, both tokens");

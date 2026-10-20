@@ -19,21 +19,15 @@ fn get_segmenter() -> Option<Segmenter> {
     }
 }
 
-// =========================================================================
-// 1. Audio Slicing & Zero-Padding Math Properties
-// =========================================================================
-
 #[test]
 fn test_zero_padding_formula_invariants() {
     let sample_rate = 16000usize;
     let window_secs = 10usize;
     let window_size = sample_rate * window_secs; // 160,000
 
-    // Invariant 1: Empty audio slice produces pad_len = 0
     let pad_len_empty = (window_size - (0 % window_size)) % window_size;
     assert_eq!(pad_len_empty, 0, "Empty slice must have pad_len == 0");
 
-    // Invariant 2: Exact multiples of window_size produce pad_len = 0
     for n in 1..=10 {
         let len = n * window_size;
         let pad_len = (window_size - (len % window_size)) % window_size;
@@ -49,7 +43,6 @@ fn test_zero_padding_formula_invariants() {
         );
     }
 
-    // Invariant 3: Slices shorter than 1 window size (0 < len < window_size)
     for len in [1, 2, 10, 270, 721, 1000, 80_000, 159_999] {
         let pad_len = (window_size - (len % window_size)) % window_size;
         assert_eq!(
@@ -64,7 +57,6 @@ fn test_zero_padding_formula_invariants() {
         );
     }
 
-    // Invariant 4: Slices of length N*window_size + 1 (just over multiple)
     for n in 1..=5 {
         let len = n * window_size + 1;
         let pad_len = (window_size - (len % window_size)) % window_size;
@@ -84,10 +76,6 @@ fn test_zero_padding_formula_invariants() {
     }
 }
 
-// =========================================================================
-// 2. Empty Audio Slice (&[]) Stress Test
-// =========================================================================
-
 #[test]
 fn test_segment_empty_slice() {
     let mut segmenter = match get_segmenter() {
@@ -98,7 +86,6 @@ fn test_segment_empty_slice() {
         }
     };
 
-    // Empty slice with valid sample rates
     for &sample_rate in &[8000, 16000, 22050, 44100, 48000] {
         let result = segmenter.segment(&[], sample_rate);
         assert!(
@@ -113,7 +100,6 @@ fn test_segment_empty_slice() {
         );
     }
 
-    // Zero sample rate must error out cleanly without panic
     let err_result = segmenter.segment(&[], 0);
     assert!(err_result.is_err(), "sample_rate = 0 must return Err");
     assert!(
@@ -125,10 +111,6 @@ fn test_segment_empty_slice() {
     );
 }
 
-// =========================================================================
-// 3. Slices Shorter Than 1 Window Size
-// =========================================================================
-
 #[test]
 fn test_segment_shorter_than_one_window() {
     let mut segmenter = match get_segmenter() {
@@ -137,7 +119,6 @@ fn test_segment_shorter_than_one_window() {
     };
 
     let sample_rate = 16000;
-    // Test various sub-window lengths
     let sub_lengths = [
         1,      // 1 sample
         2,      // 2 samples
@@ -151,7 +132,6 @@ fn test_segment_shorter_than_one_window() {
     ];
 
     for len in sub_lengths {
-        // Test with silence
         let silence = vec![0.0f32; len];
         let res = segmenter.segment(&silence, sample_rate);
         assert!(
@@ -176,7 +156,6 @@ fn test_segment_shorter_than_one_window() {
             );
         }
 
-        // Test with synthetic tone (440Hz sine wave)
         let tone: Vec<f32> = (0..len)
             .map(|i| (2.0 * std::f32::consts::PI * 440.0 * (i as f32) / (sample_rate as f32)).sin() * 0.5)
             .collect();
@@ -194,10 +173,6 @@ fn test_segment_shorter_than_one_window() {
     }
 }
 
-// =========================================================================
-// 4. Slices Exactly Equal to N Window Sizes
-// =========================================================================
-
 #[test]
 fn test_segment_exact_n_window_sizes() {
     let mut segmenter = match get_segmenter() {
@@ -208,7 +183,6 @@ fn test_segment_exact_n_window_sizes() {
     let sample_rate = 16000;
     let window_size = sample_rate as usize * 10; // 160,000
 
-    // Test exact 1x window (160,000 samples)
     let samples_1w = vec![0.0f32; window_size];
     let res_1w = segmenter.segment(&samples_1w, sample_rate);
     assert!(res_1w.is_ok(), "Exact 1 window must succeed");
@@ -217,7 +191,6 @@ fn test_segment_exact_n_window_sizes() {
         assert!(seg.end <= 10.0 + 0.05);
     }
 
-    // Test exact 2x window (320,000 samples)
     let samples_2w = vec![0.0f32; 2 * window_size];
     let res_2w = segmenter.segment(&samples_2w, sample_rate);
     assert!(res_2w.is_ok(), "Exact 2 windows must succeed");
@@ -226,9 +199,7 @@ fn test_segment_exact_n_window_sizes() {
         assert!(seg.end <= 20.0 + 0.05);
     }
 
-    // Test exact 3x window (480,000 samples) with alternating tone and silence
     let mut samples_3w = vec![0.0f32; 3 * window_size];
-    // Add a loud 440Hz tone in the middle window (10s to 20s)
     for i in window_size..(2 * window_size) {
         samples_3w[i] = (2.0 * std::f32::consts::PI * 440.0 * (i as f32) / (sample_rate as f32)).sin() * 0.8;
     }
@@ -241,15 +212,10 @@ fn test_segment_exact_n_window_sizes() {
         assert!(seg.start <= seg.end);
     }
 
-    // Test boundary: 1 sample beyond exact window (window_size + 1)
     let samples_1w_plus_1 = vec![0.0f32; window_size + 1];
     let res_plus = segmenter.segment(&samples_1w_plus_1, sample_rate);
     assert!(res_plus.is_ok(), "window_size + 1 must succeed");
 }
-
-// =========================================================================
-// 5. Slices with f32::NAN and f32::INFINITY Guards / Robustness
-// =========================================================================
 
 #[test]
 fn test_segment_nan_and_infinity_resilience() {
@@ -261,7 +227,6 @@ fn test_segment_nan_and_infinity_resilience() {
     let sample_rate = 16000;
     let window_size = sample_rate as usize * 10;
 
-    // Test A: All NaNs in full window
     let nan_window = vec![f32::NAN; window_size];
     let res_nan = segmenter.segment(&nan_window, sample_rate);
     assert!(
@@ -270,7 +235,6 @@ fn test_segment_nan_and_infinity_resilience() {
         res_nan.err()
     );
 
-    // Test B: Sub-window with NaNs
     let nan_sub = vec![f32::NAN; 1000];
     let res_nan_sub = segmenter.segment(&nan_sub, sample_rate);
     assert!(
@@ -279,7 +243,6 @@ fn test_segment_nan_and_infinity_resilience() {
         res_nan_sub.err()
     );
 
-    // Test C: All positive INFINITY
     let inf_window = vec![f32::INFINITY; window_size];
     let res_inf = segmenter.segment(&inf_window, sample_rate);
     assert!(
@@ -288,7 +251,6 @@ fn test_segment_nan_and_infinity_resilience() {
         res_inf.err()
     );
 
-    // Test D: All negative INFINITY
     let neg_inf_window = vec![f32::NEG_INFINITY; window_size];
     let res_neg_inf = segmenter.segment(&neg_inf_window, sample_rate);
     assert!(
@@ -297,7 +259,6 @@ fn test_segment_nan_and_infinity_resilience() {
         res_neg_inf.err()
     );
 
-    // Test E: Mixed adversarial floats (NaN, +Inf, -Inf, subnormals, extreme magnitudes)
     let mut mixed = vec![0.0f32; window_size];
     for (i, val) in mixed.iter_mut().enumerate() {
         match i % 7 {
@@ -317,10 +278,6 @@ fn test_segment_nan_and_infinity_resilience() {
         res_mixed.err()
     );
 }
-
-// =========================================================================
-// 6. TranscriptionResult::from_iter Ordering & Metadata Preservation
-// =========================================================================
 
 #[test]
 fn test_transcription_result_from_iter_empty() {
@@ -388,10 +345,8 @@ fn test_transcription_result_from_iter_preserves_exact_order_and_metadata() {
         },
     ];
 
-    // Collect via FromIterator
     let result: TranscriptionResult = segments.clone().into_iter().collect();
 
-    // 1. Strict segment count & ordering
     assert_eq!(
         result.segments.len(),
         segments.len(),
@@ -438,7 +393,6 @@ fn test_transcription_result_from_iter_preserves_exact_order_and_metadata() {
         }
     }
 
-    // 2. Speakers metadata: unique speaker set extraction
     let speakers = result.speakers.expect("speakers must be populated");
     let speaker_set: HashSet<String> = speakers.into_iter().collect();
     let expected_speaker_set: HashSet<String> = ["SPEAKER_A", "SPEAKER_B", "SPEAKER_C"]
@@ -450,7 +404,6 @@ fn test_transcription_result_from_iter_preserves_exact_order_and_metadata() {
         "Unique speaker set must match exactly"
     );
 
-    // 3. Models config metadata
     let models = result.models.expect("models must be populated");
     assert_eq!(models.segmentation_model, "pyannote-segmentation-3.0.onnx");
     assert_eq!(models.vad_model, "ggml-silero-v6.2.0.bin");

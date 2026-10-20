@@ -21,15 +21,6 @@ use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tracing::{error, info};
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 
-// The GraphQL handler receives two arguments:
-//
-//   State(schema)  ---axum's dependency-injection mechanism. The schema is
-//                     stored in the Router via .with_state() and extracted
-//                     here with State<T>. The destructuring syntax
-//                     `State(schema)` unwraps the newtype wrapper in one step.
-//
-//   req            ---the incoming GraphQL request, deserialized from JSON
-//                     by async-graphql-axum.
 async fn graphql_handler(
     State(schema): State<graphql::AppSchema>,
     req: GraphQLRequest,
@@ -42,8 +33,6 @@ async fn main() -> Result<()> {
     CryptoProvider::install_default(aws_lc_rs::default_provider())
         .map_err(|_| anyhow::anyhow!("default crypto provider already installed"))?;
 
-    // Tracing goes to stderr so structured logs don't mix with any stdout
-    // output (e.g. health-check scripts that parse the server's stdout).
     tracing_subscriber::registry()
         .with(
             EnvFilter::try_from_default_env()
@@ -52,13 +41,10 @@ async fn main() -> Result<()> {
         .with(tracing_subscriber::fmt::layer().with_writer(std::io::stderr))
         .init();
 
-    // In Docker the .env file is mounted as a secret at this path.
-    // In local dev, fall back to a .env file in the working directory.
+    // Docker mounts .env as a secret at this path; local dev uses ./.env.
     dotenvy::from_path("/run/secrets/environment").ok();
     dotenvy::dotenv().ok();
 
-    // Read connection parameters from the environment, with the same defaults
-    // used by the TypeScript packages in this monorepo.
     let neo4j_uri = std::env::var("NEO4J_URI").unwrap_or_else(|_| "neo4j://neo4j:7687".to_string());
     let neo4j_user = std::env::var("NEO4J_USERNAME").unwrap_or_else(|_| "neo4j".to_string());
     let neo4j_password = std::env::var("NEO4J_PASSWORD").unwrap_or_else(|_| "neo4j".to_string());
@@ -66,9 +52,6 @@ async fn main() -> Result<()> {
 
     let db = neo4j::connect(&neo4j_uri, &neo4j_user, &neo4j_password, &neo4j_database).await?;
     info!("connected to Neo4j at {neo4j_uri}");
-
-    // Ensure the vector index exists for semantic search over Statement
-    // embeddings. IF NOT EXISTS makes this idempotent across restarts.
 
     db.run(neo4rs::query(
         "CREATE VECTOR INDEX statementEmbedding IF NOT EXISTS
@@ -117,13 +100,7 @@ async fn main() -> Result<()> {
                     }
                 }),
             )
-            // GET  /graphql --> serves the GraphiQL interactive IDE, so you can
-            //                  explore the schema and test queries from a browser.
-            // POST /graphql --> the actual GraphQL execution endpoint.
-            //
-            // GraphiQLSource generates a self-contained HTML page that talks to
-            // the POST endpoint. It's baked into async-graphql behind the
-            // "graphiql" feature flag.
+            // GET serves GraphiQL; POST executes queries.
             .route(
                 "/graphql",
                 get(|| async {
@@ -142,8 +119,6 @@ async fn main() -> Result<()> {
                     .layer(DefaultBodyLimit::max(16 * 1024 * 1024))
                     .layer(CorsLayer::permissive()),
             )
-            // with_state() makes `schema` available to any handler that
-            // declares a State<AppSchema> parameter.
             .with_state(schema);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:6060").await?;

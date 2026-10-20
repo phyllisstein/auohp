@@ -1,8 +1,4 @@
-//! Vector search over Statement embeddings.
-//!
-//! `search_statements` embeds the caller's query string on-device and queries
-//! the `statementEmbedding` HNSW index in Neo4j, joining back to the parent
-//! Interview for context. Results are ordered by cosine similarity descending.
+//! Full-text and hybrid (vector plus full-text) search over Statement nodes.
 
 use std::sync::Arc;
 
@@ -14,11 +10,7 @@ use auohp_core::EmbedderHandle;
 use neo4rs::{BoltType, query};
 use serde::Deserialize;
 
-// ---------------------------------------------------------------------------
-// Output type
-// ---------------------------------------------------------------------------
-
-/// A single hit from a vector similarity search over Statement nodes.
+/// A single search hit on a Statement node.
 #[derive(SimpleObject, Deserialize)]
 pub struct SearchHit {
     /// The matching statement, with speaker and timing.
@@ -106,7 +98,6 @@ impl Search {
         let embedder = ctx.data::<Arc<EmbedderHandle>>()?;
 
         let texts = vec![query_text];
-        // ── Embed query text (CPU-bound: run off the async executor) ──────────────
         let vector: Vec<f32> = embedder
             .embed(texts.clone())
             .await?
@@ -114,17 +105,10 @@ impl Search {
             .next()
             .ok_or_else(|| async_graphql::Error::new("embedding produced no vectors"))?;
 
-        // Convert to BoltType list---Neo4j's vector procedures expect a list of
-        // floats. We widen f32 --> f64 here because neo4rs's BoltType::Float wraps
-        // f64; the precision lost going back to f32 inside Neo4j is irrelevant.
+        // BoltType::Float wraps f64, so f32 is widened here.
         let vector_bolt: Vec<BoltType> = vector.iter().map(|&v| BoltType::from(v as f64)).collect();
         let limit = limit.unwrap_or(15 as i64);
 
-        // ── ANN index lookup + graph join ─────────────────────────────────────────
-        //
-        // db.index.vector.queryNodes returns (node, score) pairs from the HNSW
-        // index. We immediately join outward to pull timing (from :CONTAINS),
-        // speaker (from :SAYS), and interview context (via :HAS_TRANSCRIPT).
         let mut stream = db
             .execute(
                 query(include_str!("./wrrf-search.cypher"))

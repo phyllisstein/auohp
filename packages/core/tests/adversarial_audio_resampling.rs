@@ -1,29 +1,5 @@
-//! Standalone adversarial stress test harness for Milestone 3:
-//! Audio Resampling & Buffering (`transcription/audio.rs`).
-//!
-//! Empirical challenge verification:
-//! 1. Extreme sample rate conversions:
-//!    - 44.1 kHz -> 16 kHz (standard CD downsample: 0.3628x)
-//!    - 48.0 kHz -> 16 kHz (standard broadcast/video downsample: 0.3333x)
-//!    - 88.2 kHz -> 16 kHz (high-res audio downsample: 0.1814x)
-//!    - 96.0 kHz -> 16 kHz (pro audio downsample: 0.1667x)
-//!    - 8.0 kHz  -> 16 kHz (telephony upsample: 2.0x)
-//!    - 11.025 kHz -> 16 kHz, 22.05 kHz -> 16 kHz, 32.0 kHz -> 16 kHz, 192.0 kHz -> 16 kHz
-//! 2. Chunk size non-multiples and boundaries:
-//!    - Lengths: 0, 1, 4095, 4096, 4097, 8191, 8192, 8193
-//!    - Arbitrary chunk configurations: 128, 512, 1024, 2048, 4096, 8192
-//! 3. Spectral fidelity & energy invariance:
-//!    - Sinusoidal frequency preservation (220 Hz, 440 Hz, 1000 Hz, 3000 Hz) via zero-crossing analysis
-//!    - RMS energy conservation across passband frequencies and diverse amplitudes
-//!    - DC offset gain invariance (DC step response)
-//!    - Anti-aliasing attenuation of frequencies above target Nyquist (e.g. 10 kHz -> 16 kHz target)
-//! 4. Numerical stability & edge cases:
-//!    - Subnormal numbers, full scale [-1.0, 1.0], DC bias
-//!    - Zero-length audio input handling
-//!    - Exact sample length adherence vs theoretical target (within FIR lookahead bound of <= 1 frame)
-//! 5. End-to-end container integration:
-//!    - Synthetic WAV generation and decoding via `auohp_core::transcription::decode_file_with`
-//!    - Stereo downmix + resampling composition
+//! Adversarial inputs for resampling and buffering in `transcription/audio.rs`: extreme and zero sample rates,
+//! chunk-boundary lengths, frequency/energy preservation, subnormals, and WAV decoding via `decode_file_with`.
 
 use std::fs::File;
 use std::io::Write;
@@ -39,8 +15,6 @@ use auohp_core::transcription::{
 };
 
 const WHISPER_SAMPLE_RATE: u32 = 16_000;
-
-// ── Verbatim Mirror of audio.rs Resampler ─────────────────────────────────────
 
 /// Mirror of audio.rs's internal `resample` function to allow direct slice-level
 /// adversarial challenge without container/file I/O overhead.
@@ -123,8 +97,6 @@ fn resample_reference(
     Ok(output)
 }
 
-// ── Signal Analysis Helpers ──────────────────────────────────────────────────
-
 fn compute_rms(signal: &[f32]) -> f64 {
     if signal.is_empty() {
         return 0.0;
@@ -146,7 +118,6 @@ fn estimate_frequency(signal: &[f32], sample_rate: u32) -> Option<f64> {
     let mut crossings = Vec::new();
     for i in 0..slice.len() - 1 {
         if slice[i] <= 0.0 && slice[i + 1] > 0.0 {
-            // Linear interpolation for sub-sample zero-crossing precision
             let fraction = (-slice[i]) / (slice[i + 1] - slice[i]);
             let exact_sample = i as f64 + fraction as f64;
             crossings.push(exact_sample);
@@ -172,8 +143,6 @@ fn generate_sine_wave(freq: f64, sample_rate: u32, duration_s: f64, amplitude: f
         .collect()
 }
 
-// ── Synthetic WAV Generator for End-to-End Testing ───────────────────────────
-
 fn create_temp_wav(
     samples: &[f32],
     sample_rate: u32,
@@ -186,7 +155,6 @@ fn create_temp_wav(
 
     let mut file = File::create(&file_path)?;
 
-    // 16-bit PCM WAV format
     let bits_per_sample: u16 = 16;
     let bytes_per_sample = (bits_per_sample / 8) as usize;
     let byte_rate = sample_rate * channels as u32 * bytes_per_sample as u32;
@@ -194,12 +162,10 @@ fn create_temp_wav(
     let data_len = (samples.len() * bytes_per_sample) as u32;
     let riff_chunk_size = 36 + data_len;
 
-    // RIFF header
     file.write_all(b"RIFF")?;
     file.write_all(&riff_chunk_size.to_le_bytes())?;
     file.write_all(b"WAVE")?;
 
-    // fmt subchunk
     file.write_all(b"fmt ")?;
     file.write_all(&16u32.to_le_bytes())?; // Subchunk1Size (16 for PCM)
     file.write_all(&1u16.to_le_bytes())?;  // AudioFormat (1 for PCM)
@@ -209,11 +175,9 @@ fn create_temp_wav(
     file.write_all(&block_align.to_le_bytes())?;
     file.write_all(&bits_per_sample.to_le_bytes())?;
 
-    // data subchunk
     file.write_all(b"data")?;
     file.write_all(&data_len.to_le_bytes())?;
 
-    // Convert f32 samples to i16 PCM
     for &sample in samples {
         let clamped = sample.clamp(-1.0, 1.0);
         let val = (clamped * 32767.0).round() as i16;
@@ -223,10 +187,6 @@ fn create_temp_wav(
     file.flush()?;
     Ok(file_path)
 }
-
-// =============================================================================
-// 1. Extreme Sample Rate Conversions
-// =============================================================================
 
 #[test]
 fn test_extreme_sample_rates_sweep() {
@@ -258,16 +218,11 @@ fn test_extreme_sample_rates_sweep() {
             resampled.len()
         );
 
-        // Verify all output samples are finite
         for (idx, &s) in resampled.iter().enumerate() {
             assert!(s.is_finite(), "Non-finite sample at {idx} for rate {from_rate}: {s}");
         }
     }
 }
-
-// =============================================================================
-// 2. Chunk Size Stress Tests & Non-Multiples
-// =============================================================================
 
 #[test]
 fn test_chunk_size_non_multiples_and_boundaries() {
@@ -388,10 +343,6 @@ fn test_diverse_resample_chunk_configurations() {
     }
 }
 
-// =============================================================================
-// 3. Spectral Fidelity: Frequency Preservation & RMS Energy Invariance
-// =============================================================================
-
 #[test]
 fn test_sinusoidal_frequency_preservation() {
     let cfg = AudioConfig::default();
@@ -433,7 +384,6 @@ fn test_rms_energy_invariance_in_passband() {
 
             let resampled = resample_reference(&input, rate, WHISPER_SAMPLE_RATE, &cfg).unwrap();
             
-            // Trim leading/trailing 1000 samples to exclude FIR filter ramp-up / ramp-down
             let steady_state = if resampled.len() > 2000 {
                 &resampled[1000..resampled.len() - 1000]
             } else {
@@ -454,8 +404,7 @@ fn test_rms_energy_invariance_in_passband() {
 fn test_anti_aliasing_filter_attenuates_stopband() {
     let cfg = AudioConfig::default();
     let source_rate = 48_000;
-    // 10 kHz is above the 16 kHz Whisper Nyquist frequency (8 kHz).
-    // The resampler's lowpass filter MUST attenuate it heavily to prevent aliasing.
+    // 10 kHz is above the 8 kHz Nyquist of the 16 kHz target; the lowpass must attenuate it to prevent aliasing.
     let duration_s = 0.5;
     let stopband_input = generate_sine_wave(10_000.0, source_rate, duration_s, 0.8);
     let in_rms = compute_rms(&stopband_input);
@@ -470,10 +419,6 @@ fn test_anti_aliasing_filter_attenuates_stopband() {
     );
 }
 
-// =============================================================================
-// 4. Numerical Stability & Extreme Values
-// =============================================================================
-
 #[test]
 fn test_dc_step_gain_invariance() {
     let cfg = AudioConfig::default();
@@ -483,7 +428,6 @@ fn test_dc_step_gain_invariance() {
         let input = vec![dc; 12_000]; // ~0.25s at 48k
         let resampled = resample_reference(&input, 48_000, WHISPER_SAMPLE_RATE, &cfg).unwrap();
 
-        // Discard filter boundary transients (first 500 and last 500 samples)
         let interior = &resampled[500..resampled.len() - 500];
         for (i, &val) in interior.iter().enumerate() {
             assert!(
@@ -499,7 +443,6 @@ fn test_subnormal_and_extreme_float_resilience() {
     let cfg = AudioConfig::default();
     let mut inputs = vec![0.0f32; 8192];
     
-    // Inject subnormals and tiny values
     for (i, x) in inputs.iter_mut().enumerate() {
         if i % 2 == 0 {
             *x = 1e-38;
@@ -516,10 +459,6 @@ fn test_subnormal_and_extreme_float_resilience() {
         assert!(val.abs() < 1e-10, "Subnormal noise amplified unexpectedly: {val}");
     }
 }
-
-// =============================================================================
-// 5. End-to-End Container & Decoding Verification (`decode_file_with`)
-// =============================================================================
 
 #[test]
 fn test_e2e_decode_file_with_synthetic_wavs() {
@@ -565,7 +504,6 @@ fn test_e2e_decode_stereo_downmix_and_resample() {
     let duration_s = 0.5;
     let num_frames = (rate as f64 * duration_s).round() as usize;
 
-    // Generate stereo: Left is 440 Hz sine, Right is 440 Hz cosine
     let mut interleaved = Vec::with_capacity(num_frames * 2);
     for i in 0..num_frames {
         let t = i as f64 / rate as f64;
@@ -598,16 +536,11 @@ fn test_e2e_decode_stereo_downmix_and_resample() {
     let _ = std::fs::remove_file(&wav_path);
 }
 
-// =============================================================================
-// 6. Adversarial Verification: Zero & Extreme Sample Rates
-// =============================================================================
-
 #[test]
 fn test_adversarial_zero_sample_rates_rejected_safely() {
     let cfg = AudioConfig::default();
     let samples = vec![0.5f32; 1024];
 
-    // from_rate = 0, to_rate > 0
     let err_from_zero = resample_reference(&samples, 0, WHISPER_SAMPLE_RATE, &cfg);
     assert!(err_from_zero.is_err(), "from_rate=0 must return Err");
     let err_msg = err_from_zero.unwrap_err().to_string();
@@ -616,7 +549,6 @@ fn test_adversarial_zero_sample_rates_rejected_safely() {
         "Unexpected error message: {err_msg}"
     );
 
-    // from_rate > 0, to_rate = 0
     let err_to_zero = resample_reference(&samples, 48_000, 0, &cfg);
     assert!(err_to_zero.is_err(), "to_rate=0 must return Err");
     let err_msg = err_to_zero.unwrap_err().to_string();
@@ -625,7 +557,6 @@ fn test_adversarial_zero_sample_rates_rejected_safely() {
         "Unexpected error message: {err_msg}"
     );
 
-    // both = 0
     let err_both_zero = resample_reference(&samples, 0, 0, &cfg);
     assert!(err_both_zero.is_err(), "both rates=0 must return Err");
     let err_msg = err_both_zero.unwrap_err().to_string();
@@ -640,45 +571,34 @@ fn test_adversarial_extreme_sample_rates_safety() {
     let cfg = AudioConfig::default();
     let samples = vec![0.1f32; 100];
 
-    // Test extreme rate: u32::MAX
-    // 1. from_rate = u32::MAX -> to_rate = 16_000
     let res_max_down = resample_reference(&samples, u32::MAX, WHISPER_SAMPLE_RATE, &cfg);
     assert!(res_max_down.is_err(), "u32::MAX from_rate must return Err");
     assert!(res_max_down.unwrap_err().to_string().contains("out of bounds"));
 
-    // 2. from_rate = 16_000 -> to_rate = u32::MAX
     let res_max_up = resample_reference(&samples, WHISPER_SAMPLE_RATE, u32::MAX, &cfg);
     assert!(res_max_up.is_err(), "u32::MAX to_rate must return Err");
     assert!(res_max_up.unwrap_err().to_string().contains("out of bounds"));
 
-    // Test extreme rate: 500_000 Hz
-    // 1. from_rate = 500_000 -> to_rate = 16_000
     let res_500k_down = resample_reference(&samples, 500_000, WHISPER_SAMPLE_RATE, &cfg);
     assert!(res_500k_down.is_err(), "500_000 from_rate must return Err");
     assert!(res_500k_down.unwrap_err().to_string().contains("out of bounds"));
 
-    // 2. from_rate = 16_000 -> to_rate = 500_000
     let res_500k_up = resample_reference(&samples, WHISPER_SAMPLE_RATE, 500_000, &cfg);
     assert!(res_500k_up.is_err(), "500_000 to_rate must return Err");
     assert!(res_500k_up.unwrap_err().to_string().contains("out of bounds"));
 
-    // 3. from_rate = 500_000 -> to_rate = 500_000
     let res_500k_both = resample_reference(&samples, 500_000, 500_000, &cfg);
     assert!(res_500k_both.is_err(), "500_000 both rates must return Err");
     assert!(res_500k_both.unwrap_err().to_string().contains("out of bounds"));
 
-    // Test extreme rate: 1 Hz
-    // 1. from_rate = 1 Hz -> to_rate = 16_000 (extreme ratio = 16000.0)
     let res_1hz = resample_reference(&samples, 1, WHISPER_SAMPLE_RATE, &cfg);
     assert!(res_1hz.is_err(), "1 Hz from_rate must return Err");
     assert!(res_1hz.unwrap_err().to_string().contains("ratio out of bounds"));
 
-    // 2. from_rate = 16_000 -> to_rate = 1 Hz (extreme ratio = 1/16000.0)
     let res_to_1hz = resample_reference(&samples, WHISPER_SAMPLE_RATE, 1, &cfg);
     assert!(res_to_1hz.is_err(), "1 Hz to_rate must return Err");
     assert!(res_to_1hz.unwrap_err().to_string().contains("ratio out of bounds"));
 
-    // Test extreme rate: 1,000,000 Hz
     let mhz_samples = vec![0.25f32; 10_000];
     let res_mhz = resample_reference(&mhz_samples, 1_000_000, WHISPER_SAMPLE_RATE, &cfg);
     assert!(res_mhz.is_err(), "1 MHz from_rate must return Err");
@@ -693,15 +613,12 @@ fn test_adversarial_extreme_sample_rates_safety() {
 fn test_e2e_decode_file_with_extreme_rates() {
     let cfg = AudioConfig::default();
 
-    // 1. WAV with sample_rate = 0 (adversarial corrupted container)
-    // Invokes the real decode_file_with -> audio.rs:resample pipeline!
     let dummy_samples = vec![0.0f32; 100];
     let zero_rate_wav = create_temp_wav(&dummy_samples, 0, 1, "test_e2e_zero_rate.wav").unwrap();
     let res_zero = decode_file_with(&zero_rate_wav, &cfg);
     assert!(res_zero.is_err(), "decoding 0 Hz WAV must return Err, not panic");
     let _ = std::fs::remove_file(&zero_rate_wav);
 
-    // 2. WAV with sample_rate = 1 Hz (extreme ratio rejected by resample)
     let one_hz_samples = vec![0.5f32; 10];
     let one_hz_wav = create_temp_wav(&one_hz_samples, 1, 1, "test_e2e_1hz.wav").unwrap();
     let res_one_hz = decode_file_with(&one_hz_wav, &cfg);
@@ -710,7 +627,6 @@ fn test_e2e_decode_file_with_extreme_rates() {
     assert!(err_msg.contains("ratio out of bounds"), "got: {err_msg}");
     let _ = std::fs::remove_file(&one_hz_wav);
 
-    // 3. WAV with sample_rate = 500_000 Hz (exceeds max supported sample rate)
     let five_hundred_k_samples = vec![0.25f32; 1000];
     let five_hundred_k_wav = create_temp_wav(&five_hundred_k_samples, 500_000, 1, "test_e2e_500khz.wav").unwrap();
     let res_500k = decode_file_with(&five_hundred_k_wav, &cfg);
@@ -719,7 +635,6 @@ fn test_e2e_decode_file_with_extreme_rates() {
     assert!(err_msg.contains("input sample rate out of bounds"), "got: {err_msg}");
     let _ = std::fs::remove_file(&five_hundred_k_wav);
 
-    // 4. WAV with sample_rate = 1,000,000 Hz (exceeds max supported sample rate)
     let mhz_samples = vec![0.25f32; 1000];
     let mhz_wav = create_temp_wav(&mhz_samples, 1_000_000, 1, "test_e2e_1mhz.wav").unwrap();
     let res_mhz = decode_file_with(&mhz_wav, &cfg);

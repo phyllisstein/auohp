@@ -1,28 +1,10 @@
-//! Speaker diarization: segmentation (see [`super::segmentation`]) + wespeaker
-//! embeddings + agglomerative clustering, capped at a known maximum speaker
-//! count.
-//!
-//! This is a restoration of a feature dropped in commit `469e9d4` ("Drop
-//! diarization"), rebuilt against the current `packages/core` pipeline shape.
-//! Segmentation goes through [`super::segmentation::Segmenter`] instead of
-//! the buggy `pyannote_rs::get_segments` (see that module's doc comment for
-//! why), and the embedding extractor is a direct `ort` + `knf-rs` call
-//! instead of going through the `pyannote-rs` crate, for the same reason:
-//! `pyannote-rs` doesn't compile against this workspace's `ort` version.
-//! Clustering keeps the pre-drop version's overall shape (agglomerative,
-//! cosine distance, capped cluster count) but switches linkage method from
-//! `Average` to `Complete` --- validating against real interview audio
-//! surfaced a real problem with the old choice; see
-//! [`cluster::cluster_embeddings`]'s doc comment for the full story.
+//! Speaker diarization: pyannote segmentation, wespeaker embeddings, and
+//! agglomerative clustering capped at a maximum speaker count.
 //!
 //! ## Model
 //!
-//! `wespeaker_en_voxceleb_ECAPA1024.onnx` --- ECAPA-TDNN, 1024-dim, trained on
-//! VoxCeleb, from the official WeSpeaker HuggingFace org (the model this
-//! project had already upgraded to before diarization was set aside; see
-//! commit `8348c36`). Takes log-mel filterbank features (`knf-rs`, the same
-//! kaldi-compatible fbank extractor `pyannote-rs` used) and produces an
-//! L2-normalizable speaker embedding.
+//! `wespeaker_en_voxceleb_ECAPA1024.onnx`: ECAPA-TDNN, 1024-dim, trained on
+//! VoxCeleb. Input is kaldi-compatible log-mel fbank from `knf-rs`.
 
 mod cluster;
 mod embedding;
@@ -54,15 +36,10 @@ pub struct SegmentEmbedding {
     pub embedding: Vec<f32>,
 }
 
-/// Run speaker diarization on 16 kHz mono f32 PCM samples (whisper.cpp's
-/// native format --- callers pass `DecodedAudio::samples` directly).
+/// Run speaker diarization on 16 kHz mono f32 PCM samples.
 ///
-/// `max_speakers` caps the number of distinct speaker clusters. AUOHP
-/// interviews are near-universally a two-person Q&A (interviewer +
-/// interviewee); `4330866` ("Cap diarized speakers at 2") made 2 the
-/// deliberate default the last time this ran, which [`super::config::DiarizeConfig`]
-/// preserves as a default rather than an architectural limit --- nothing
-/// here assumes exactly two.
+/// `max_speakers` caps the number of distinct speaker clusters; AUOHP interviews
+/// are usually two-person, but nothing here assumes exactly two.
 pub fn diarize(
     samples: &[f32],
     sample_rate: u32,
@@ -89,16 +66,12 @@ pub fn diarize(
         .collect())
 }
 
-/// The speaker who holds the most of `start..end`, by total overlap with the
-/// diarized turns covering that span. `None` when nothing overlaps at all ---
-/// callers treat that as "still needs a human label" rather than guessing.
+/// The speaker who holds the most of `start..end`, by total overlap. `None` when
+/// nothing overlaps; callers treat that as "still needs a human label".
 ///
-/// Aggregating per *speaker* rather than per *segment* is load-bearing, not
-/// incidental: diarization emits one `DiarizedSegment` per contiguous speech
-/// run from the frame classifier, so a single Whisper segment routinely spans
-/// many of them. Taking the longest individual overlapping segment would let
-/// one uninterrupted eight-second answer outvote twenty short runs from the
-/// speaker who actually holds most of the span.
+/// Totals are per speaker, not per segment: one Whisper segment typically spans
+/// many diarized runs, and taking the longest single overlap would let one long
+/// answer outvote many short runs from the speaker who holds most of the span.
 pub fn dominant_speaker(start: f64, end: f64, diarized: &[DiarizedSegment]) -> Option<&str> {
     let mut totals: HashMap<&str, f64> = HashMap::new();
     for d in diarized {

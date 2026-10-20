@@ -38,12 +38,8 @@ impl Captions {
             )
             .await?;
 
-        // No statement spans this timestamp. That is a legitimate answer, not a
-        // failure, so it becomes a null rather than an entry in the `errors`
-        // array --- which is the whole reason this resolver returns
-        // `Result<Option<Statement>>` rather than `Result<Statement>`. An error
-        // here would propagate up to the nearest nullable ancestor, and with a
-        // non-null field it would erase all of `data`.
+        // No match is a null, not an error: an error on a non-null field would
+        // propagate to the nearest nullable ancestor and erase all of `data`.
         let Some(row) = span_stream.next().await? else {
             return Ok(None);
         };

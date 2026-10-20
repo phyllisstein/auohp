@@ -1,21 +1,17 @@
 //! Validate speaker diarization's turn-taking structure against a
 //! hand-labeled reference.
 //!
-//! Skips Whisper --- this scores turn-taking structure, not transcript
-//! content, so decoding audio once and diarizing it is the whole test;
-//! paying for a ~25-minute large-v3 decode wouldn't change the score. The
-//! actual scoring lives in [`auohp_core::eval::diarization`]; this binary is
-//! just the audio -> diarize -> score pipeline around it, the same shape as
-//! `score` around [`auohp_core::eval`]'s word-level scoring.
+//! Skips Whisper: only turn-taking is scored. The scoring lives in
+//! [`auohp_core::eval::diarization`]; this binary is the audio -> diarize ->
+//! score pipeline around it.
 //!
 //! Usage:
 //!   cargo run --release --bin validate_diarization --features metal -- \
 //!     --basename 108_diarization_test
 //!
-//! `--basename` resolves to `assets/<basename>.mp4` /
-//! `assets/<basename>.mp4.txt`, so any interview with a hand-labeled
-//! `HH:MM:SS:FF - HH:MM:SS:FF` / `Speaker N` reference can be scored the
-//! same way.
+//! `--basename` resolves to `assets/<basename>.mp4` and
+//! `assets/<basename>.mp4.txt` (a `HH:MM:SS:FF - HH:MM:SS:FF` / `Speaker N`
+//! reference).
 
 use std::path::PathBuf;
 

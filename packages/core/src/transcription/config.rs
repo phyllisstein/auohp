@@ -1,13 +1,8 @@
 //! Tunable pipeline parameters, in one serialisable place.
 //!
-//! Everything the tuning campaign is allowed to vary lives here. The point is
-//! that a run is described entirely by a `TranscribeConfig` plus a git SHA: if a
-//! parameter can only be changed by editing `whisper.rs`, then the run manifest
-//! no longer describes the code that produced the result, and the experiment
-//! ledger quietly stops being reproducible.
-//!
-//! `Default` reproduces the pipeline's behaviour as of the baseline runs, so
-//! `TranscribeConfig::default()` is always the parent of the search tree.
+//! A run is described entirely by a `TranscribeConfig` plus a git SHA, so
+//! anything the tuning campaign varies lives here. `Default` reproduces the
+//! baseline runs.
 
 use serde::{Deserialize, Serialize};
 
@@ -49,12 +44,7 @@ impl Default for AudioConfig {
     }
 }
 
-/// Silero VAD parameters.
-///
-/// Only `max_speech_duration` was ever set before the baseline; the other five
-/// sat at whisper.cpp's defaults. They are surfaced here because segment
-/// boundaries quantising to VAD window edges was one of the observed defects,
-/// and it cannot be investigated through a knob that does not exist.
+/// Silero VAD parameters. `None` leaves whisper.cpp's default.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct VadConfig {
@@ -93,33 +83,18 @@ pub struct DecodeConfig {
     pub no_speech_thold: Option<f32>,
     pub temperature: Option<f32>,
     pub temperature_inc: Option<f32>,
-    /// **Nearly inert — not the context switch it appears to be.**
-    ///
-    /// whisper.cpp reads this once, at entry to `whisper_full_with_state`
-    /// (`whisper.cpp:6900`), to clear the prompt-history buffers. The per-window
-    /// refill at `7590-7601` has no `no_context` guard and pushes decoded tokens
-    /// into the rolling buffer unconditionally. Since `transcribe` creates a
-    /// fresh state per file, those buffers are already empty when the clear runs,
-    /// so it is a no-op and rolling context accumulates within a file either way.
-    ///
-    /// Measured: toggling it produced byte-identical output (run `007-c1`).
-    /// The real switch is `n_max_text_ctx`, which gates the take at `7090`/`7094`.
+    /// Nearly inert, not a context switch. whisper.cpp reads it once at entry to
+    /// `whisper_full_with_state` to clear the prompt-history buffers, which are
+    /// already empty because `transcribe` creates a fresh state per file. Rolling
+    /// context accumulates within a file either way (toggling it gave
+    /// byte-identical output); the real switch is `n_max_text_ctx`.
     pub no_context: bool,
     pub suppress_nst: Option<bool>,
-    /// Seeds the decoder with domain vocabulary --- but **its reach is about the
-    /// first 60 seconds of a file**, not the whole of it, until whisper-rs
-    /// exposes `carry_initial_prompt`.
-    ///
-    /// whisper-rs 0.16 never sets `carry_initial_prompt`, so the prompt takes the
-    /// `else` branch at `whisper.cpp:6939` into `prompt_past1` --- the *rolling*
-    /// buffer, not the static one. The take at `7106` keeps only the last
-    /// `max_prompt_ctx - 1` = 223 tokens (`min(n_max_text_ctx, n_text_ctx/2)`,
-    /// large-v3), so once ~223 tokens have been decoded the prompt is evicted
-    /// from the front of the window. That is roughly two decode windows.
-    ///
-    /// So on a 34-minute interview this primes the opening and then vanishes.
-    /// Making it a real axis needs `carry_initial_prompt`, which would place the
-    /// prompt in `prompt_past0` where it survives every window.
+    /// Seeds the decoder with domain vocabulary, but reaches only about the first
+    /// 60 seconds of a file. whisper-rs 0.16 never sets `carry_initial_prompt`, so
+    /// the prompt lands in the rolling buffer and is evicted once ~223 tokens
+    /// (`min(n_max_text_ctx, n_text_ctx/2)`, large-v3) have been decoded. A
+    /// lasting prompt needs `carry_initial_prompt`.
     pub initial_prompt: Option<String>,
     pub max_len: Option<i32>,
     pub split_on_word: Option<bool>,
@@ -152,11 +127,7 @@ impl Default for DecodeConfig {
 #[serde(default)]
 pub struct DiarizeConfig {
     pub enabled: bool,
-    /// Caps the number of distinct speaker clusters. AUOHP interviews are
-    /// near-universally a two-person Q&A (interviewer + interviewee); this
-    /// mirrors a deliberate constraint from the last time diarization ran
-    /// (`4330866`, "Cap diarized speakers at 2"), kept here as a documented
-    /// default rather than hard-coded into the clustering algorithm.
+    /// Caps the number of distinct speaker clusters.
     pub max_speakers: usize,
 }
 

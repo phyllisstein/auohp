@@ -5,9 +5,7 @@ use std::collections::HashSet;
 
 /// A word with its timing from Whisper's DTW alignment.
 ///
-/// `Deserialize` is here so the scoring harness can read archived `result.json`
-/// files back. That is what lets a metric change be re-applied to every past run
-/// on CPU, instead of re-running them on the GPU.
+/// `Deserialize` lets the scoring harness read archived `result.json` files.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Word {
     pub word: String,
@@ -18,8 +16,8 @@ pub struct Word {
 
 /// A transcription segment---one contiguous block of speech from Whisper.
 ///
-/// `speaker` is always `None` coming out of the pipeline; it will be filled in
-/// by the user through the manual labeling UI.
+/// `speaker` is `None` when diarization is disabled or no turn overlaps the
+/// segment; the caption editor's labeling UI fills it in.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Segment {
     pub speaker: Option<String>,

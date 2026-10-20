@@ -1,13 +1,5 @@
-//! Standalone adversarial stress test harness for Milestone 3:
-//! Config Parsing (`config.rs`) & Pipeline Word/Segment Assembly Dataflow (`pipeline.rs`).
-//!
-//! Empirical challenge verification:
-//! 1. `TranscribeConfig::from_str` with malformed JSON, empty string, trailing commas,
-//!    unexpected fields, and extreme numerical values.
-//! 2. Partial JSON parsing with defaults (`{}`, sparse sub-objects).
-//! 3. `FromStr` and `Display` roundtrip property verification across combinatorial parameters.
-//! 4. Stress-test word and segment assembly with large transcripts (10,000 to 100,000 words).
-//! 5. Verify zero crashes, memory safety, and panic-freedom.
+//! Adversarial inputs for `TranscribeConfig` parsing and display roundtrips (`config.rs`), and large-transcript
+//! word/segment assembly (`pipeline.rs`).
 
 use std::str::FromStr;
 use auohp_core::transcription::{
@@ -25,10 +17,6 @@ mod whisper {
     pub mod alignment;
 }
 use whisper::alignment::assemble_words;
-
-// =========================================================================
-// 1. TranscribeConfig Malformed JSON & Rejection Tests
-// =========================================================================
 
 #[test]
 fn test_config_from_str_empty_string_rejected() {
@@ -110,9 +98,7 @@ fn test_config_from_str_non_object_root_rejected() {
     }
 }
 
-/// Serde's struct deserializer implements `visit_seq` as well as `visit_map`.
-/// With `#[serde(default)]`, an empty sequence `[]` provides zero elements,
-/// causing all struct fields to be populated from `TranscribeConfig::default()`.
+/// Serde's struct deserializer also accepts a sequence; with `#[serde(default)]`, `[]` yields `TranscribeConfig::default()`.
 #[test]
 fn test_config_from_str_empty_array_sequence_defaults() {
     let parsed: TranscribeConfig = "[]".parse().expect("Empty sequence parses via visit_seq defaults");
@@ -145,10 +131,6 @@ fn test_config_from_str_type_mismatches_rejected() {
         );
     }
 }
-
-// =========================================================================
-// 2. Partial JSON Parsing with Defaults Tests
-// =========================================================================
 
 #[test]
 fn test_config_empty_object_yields_full_defaults() {
@@ -186,7 +168,6 @@ fn test_config_sparse_sub_objects_yield_defaults() {
 
 #[test]
 fn test_config_deeply_nested_single_field_overrides() {
-    // 1. Audio override
     let json_audio = r#"{"audio": {"resample_chunk": 8192, "interpolation": "cubic"}}"#;
     let cfg = json_audio.parse::<TranscribeConfig>().unwrap();
     assert_eq!(cfg.audio.resample_chunk, 8192);
@@ -197,7 +178,6 @@ fn test_config_deeply_nested_single_field_overrides() {
     assert_eq!(cfg.vad, VadConfig::default());
     assert_eq!(cfg.diarize, DiarizeConfig::default());
 
-    // 2. Vad override
     let json_vad = r#"{"vad": {"enabled": false, "threshold": 0.65}}"#;
     let cfg_vad = json_vad.parse::<TranscribeConfig>().unwrap();
     assert!(!cfg_vad.vad.enabled);
@@ -205,7 +185,6 @@ fn test_config_deeply_nested_single_field_overrides() {
     assert_eq!(cfg_vad.vad.max_speech_duration_s, Some(60.0));
     assert_eq!(cfg_vad.audio, AudioConfig::default());
 
-    // 3. Decode override
     let json_decode = r#"{"decode": {"beam_size": 1, "patience": 2.5, "language": "de"}}"#;
     let cfg_decode = json_decode.parse::<TranscribeConfig>().unwrap();
     assert_eq!(cfg_decode.decode.beam_size, 1);
@@ -214,16 +193,11 @@ fn test_config_deeply_nested_single_field_overrides() {
     assert!(cfg_decode.decode.no_context);
     assert!(cfg_decode.decode.token_timestamps);
 
-    // 4. Diarize override
     let json_diarize = r#"{"diarize": {"max_speakers": 6}}"#;
     let cfg_diarize = json_diarize.parse::<TranscribeConfig>().unwrap();
     assert_eq!(cfg_diarize.diarize.max_speakers, 6);
     assert!(cfg_diarize.diarize.enabled);
 }
-
-// =========================================================================
-// 3. Unexpected & Unknown Fields (Forward Compatibility)
-// =========================================================================
 
 #[test]
 fn test_config_ignores_unknown_fields_gracefully() {
@@ -250,27 +224,19 @@ fn test_config_ignores_unknown_fields_gracefully() {
     assert!(cfg.diarize.enabled);
 }
 
-// =========================================================================
-// 4. Extreme Values & Boundary Conditions
-// =========================================================================
-
 #[test]
 fn test_config_extreme_integers() {
-    // max_speakers = 0
     let json_zero = r#"{"diarize": {"max_speakers": 0}}"#;
     let cfg = json_zero.parse::<TranscribeConfig>().unwrap();
     assert_eq!(cfg.diarize.max_speakers, 0);
 
-    // max_speakers = usize::MAX
     let max_usize_str = format!(r#"{{"diarize": {{"max_speakers": {}}}}}"#, usize::MAX);
     let cfg_max = max_usize_str.parse::<TranscribeConfig>().unwrap();
     assert_eq!(cfg_max.diarize.max_speakers, usize::MAX);
 
-    // max_speakers integer overflow (> usize::MAX)
     let overflow_usize = format!(r#"{{"diarize": {{"max_speakers": {}0}}}}"#, usize::MAX);
     assert!(overflow_usize.parse::<TranscribeConfig>().is_err());
 
-    // beam_size negative and i32::MAX
     let json_beam_neg = r#"{"decode": {"beam_size": -10}}"#;
     let cfg_neg = json_beam_neg.parse::<TranscribeConfig>().unwrap();
     assert_eq!(cfg_neg.decode.beam_size, -10);
@@ -318,17 +284,12 @@ fn test_config_large_strings_and_unicode_initial_prompt() {
     let cfg: TranscribeConfig = json.parse().unwrap();
     assert_eq!(cfg.decode.initial_prompt.as_ref().unwrap().len(), 60_000);
 
-    // Prompt with complex Unicode and emoji
     let unicode_prompt = "Silence=Death ✊🏽 ACT UP / New York: Larry Kramer & Ann Northrop — 1987";
     let escaped_unicode = serde_json::to_string(unicode_prompt).unwrap();
     let json_uni = format!(r#"{{"decode": {{"initial_prompt": {escaped_unicode}}}}}"#);
     let cfg_uni: TranscribeConfig = json_uni.parse().unwrap();
     assert_eq!(cfg_uni.decode.initial_prompt.unwrap(), unicode_prompt);
 }
-
-// =========================================================================
-// 5. FromStr and Display Roundtrip Property
-// =========================================================================
 
 #[test]
 fn test_config_fromstr_display_roundtrip_default() {
@@ -398,7 +359,6 @@ fn test_config_fromstr_display_roundtrip_combinatorial() {
                     .unwrap_or_else(|e| panic!("Roundtrip parse failed for {serialized}: {e}"));
                 assert_eq!(config, parsed, "Config must exactly roundtrip");
 
-                // Multi-hop roundtrip idempotence: config -> s1 -> config2 -> s2 -> config3
                 let s2 = parsed.to_string();
                 let parsed2: TranscribeConfig = s2.parse().unwrap();
                 assert_eq!(parsed, parsed2);
@@ -413,25 +373,19 @@ fn test_config_display_failure_mode_with_nan_handling() {
     let mut config = TranscribeConfig::default();
     config.audio.f_cutoff = f32::NAN;
 
-    // serde_json serializes f32::NAN as null in standard JSON format.
+    // serde_json serializes NaN as null; `f_cutoff: f32` rejects it on parse without panicking.
     let display_str = config.to_string();
     assert!(
         display_str.contains(r#""f_cutoff":null"#),
         "serde_json serializes f32::NAN as null, got: {display_str}"
     );
 
-    // Because f_cutoff is f32 (not Option<f32>), parsing the displayed JSON
-    // with null returns an Err(invalid type: null, expected f32) without panicking.
     let reparsed = display_str.parse::<TranscribeConfig>();
     assert!(
         reparsed.is_err(),
         "Parsing JSON with 'f_cutoff: null' must return Err, not panic"
     );
 }
-
-// =========================================================================
-// 6. Pipeline Word & Segment Assembly Stress (10,000+ Words)
-// =========================================================================
 
 #[test]
 fn test_pipeline_assembly_10k_words_single_segment() {
@@ -459,12 +413,10 @@ fn test_pipeline_assembly_10k_words_single_segment() {
         },
     ];
 
-    // Simulate whisper segment
     let seg_start = words.first().unwrap().start;
     let seg_end = words.last().unwrap().end;
     let seg_text = format!("Massive monologue containing {} words", WORD_COUNT);
 
-    // Map through pipeline assembly logic
     let speaker_attr = dominant_speaker(seg_start, seg_end, &diarized).map(str::to_owned);
     assert_eq!(speaker_attr.as_deref(), Some("SPEAKER_00"));
 
@@ -476,7 +428,6 @@ fn test_pipeline_assembly_10k_words_single_segment() {
         words,
     };
 
-    // Assemble into TranscriptionResult via FromIterator
     let result: TranscriptionResult = vec![segment].into_iter().collect();
 
     assert_eq!(result.segments.len(), 1);
@@ -486,7 +437,6 @@ fn test_pipeline_assembly_10k_words_single_segment() {
     assert_eq!(result.speakers, Some(vec!["SPEAKER_00".to_string()]));
     assert!(result.models.is_some());
 
-    // Verify JSON roundtrip of massive TranscriptionResult
     let json = serde_json::to_string(&result).expect("Result should serialize cleanly");
     assert!(json.len() > 200_000, "JSON payload should reflect 10k words");
     let deserialized: TranscriptionResult = serde_json::from_str(&json).expect("Result should deserialize cleanly");
@@ -497,7 +447,6 @@ fn test_pipeline_assembly_10k_words_single_segment() {
 fn test_pipeline_assembly_10k_words_multispeaker_alternating_turns() {
     const SEGMENTS_COUNT: usize = 2_500;
     const WORDS_PER_SEG: usize = 4;
-    // Total words: 2,500 * 4 = 10,000 words.
 
     let mut diarized = Vec::with_capacity(SEGMENTS_COUNT);
     let mut whisper_segments = Vec::with_capacity(SEGMENTS_COUNT);
@@ -537,7 +486,6 @@ fn test_pipeline_assembly_10k_words_multispeaker_alternating_turns() {
         ));
     }
 
-    // Mirror pipeline.rs segment assembly using into_iter zero-copy pattern
     let segments: Vec<Segment> = whisper_segments
         .into_iter()
         .map(|(_expected_spk, text, start, end, words)| Segment {
@@ -549,14 +497,12 @@ fn test_pipeline_assembly_10k_words_multispeaker_alternating_turns() {
         })
         .collect();
 
-    // Verify all 2,500 segments were correctly speaker-attributed
     for (i, seg) in segments.iter().enumerate() {
         let expected = if i % 2 == 0 { "SPEAKER_00" } else { "SPEAKER_01" };
         assert_eq!(seg.speaker.as_deref(), Some(expected));
         assert_eq!(seg.words.len(), WORDS_PER_SEG);
     }
 
-    // Convert into TranscriptionResult
     let result: TranscriptionResult = segments.into();
     assert_eq!(result.segments.len(), SEGMENTS_COUNT);
 
@@ -573,7 +519,6 @@ fn test_pipeline_assembly_10k_words_multispeaker_alternating_turns() {
 fn test_pipeline_assembly_100k_words_extreme_stress() {
     const SEGMENTS_COUNT: usize = 10_000;
     const WORDS_PER_SEG: usize = 10;
-    // Total words: 10,000 * 10 = 100,000 words!
 
     let start_instant = std::time::Instant::now();
 
@@ -607,7 +552,6 @@ fn test_pipeline_assembly_100k_words_extreme_stress() {
         });
     }
 
-    // Assemble via FromIterator
     let result: TranscriptionResult = segments.into_iter().collect();
 
     let elapsed = start_instant.elapsed();
@@ -621,7 +565,6 @@ fn test_pipeline_assembly_100k_words_extreme_stress() {
         assert!(speakers.contains(&format!("SPEAKER_{:02}", spk_id)));
     }
 
-    // Verify fast execution: 100k words should assemble and collect in well under 1 second
     assert!(
         elapsed.as_millis() < 1000,
         "100k words assembly took too long: {} ms",
@@ -631,7 +574,6 @@ fn test_pipeline_assembly_100k_words_extreme_stress() {
 
 #[test]
 fn test_pipeline_assembly_with_unmatched_diarization_gaps() {
-    // Segments with silence/gaps where diarization has no match
     let diarized = vec![
         DiarizedSegment {
             speaker: "SPEAKER_00".to_string(),
@@ -641,7 +583,6 @@ fn test_pipeline_assembly_with_unmatched_diarization_gaps() {
     ];
 
     let segments = vec![
-        // Unmatched segment before diarized speech
         Segment {
             speaker: dominant_speaker(0.0, 5.0, &diarized).map(str::to_owned),
             text: "Unmatched intro".into(),
@@ -649,7 +590,6 @@ fn test_pipeline_assembly_with_unmatched_diarization_gaps() {
             end_time: 5.0,
             words: vec![Word { word: "intro".into(), start: 1.0, end: 2.0, p: 0.5 }],
         },
-        // Matched segment
         Segment {
             speaker: dominant_speaker(10.0, 18.0, &diarized).map(str::to_owned),
             text: "Matched speech".into(),
@@ -657,7 +597,6 @@ fn test_pipeline_assembly_with_unmatched_diarization_gaps() {
             end_time: 18.0,
             words: vec![Word { word: "speech".into(), start: 11.0, end: 12.0, p: 0.9 }],
         },
-        // Unmatched segment after diarized speech
         Segment {
             speaker: dominant_speaker(25.0, 30.0, &diarized).map(str::to_owned),
             text: "Unmatched outro".into(),
@@ -672,7 +611,6 @@ fn test_pipeline_assembly_with_unmatched_diarization_gaps() {
     assert_eq!(result.segments[1].speaker.as_deref(), Some("SPEAKER_00"));
     assert_eq!(result.segments[2].speaker, None);
 
-    // Speakers list should only contain "SPEAKER_00" and ignore None
     let speakers = result.speakers.expect("speakers vector should exist");
     assert_eq!(speakers, vec!["SPEAKER_00".to_string()]);
 }
@@ -710,7 +648,6 @@ fn test_assemble_words_10k_tokens_stress() {
     for i in 0..TOKEN_COUNT {
         let t = i as f64 * 0.05;
         let p = 0.90 + (i % 10) as f32 * 0.01;
-        // Interleave space-prefixed tokens and continuation tokens
         if i % 3 == 0 {
             tokens.push((b" ACT", t, p));
         } else if i % 3 == 1 {
@@ -727,17 +664,12 @@ fn test_assemble_words_10k_tokens_stress() {
         !words.is_empty(),
         "Words list must be populated from 10k tokens"
     );
-    // 10,000 tokens should produce roughly ~6,666 words and take < 50ms
     assert!(
         elapsed.as_millis() < 200,
         "10k tokens assemble_words took too long: {} ms",
         elapsed.as_millis()
     );
 }
-
-// =========================================================================
-// 7. Public API Surface & Interchangeability: TranscriptionConfig & TranscribeConfig
-// =========================================================================
 
 #[test]
 fn test_transcription_config_and_transcribe_config_type_identity() {
@@ -767,29 +699,23 @@ fn test_transcription_config_and_transcribe_config_interchangeable_usage() {
         cfg.audio.resample_chunk = 16384;
     }
 
-    // Instantiation and mutual assignment
     let mut config_a: TranscriptionConfig = TranscribeConfig::default();
     let mut config_b: TranscribeConfig = TranscriptionConfig::default();
 
     assert_eq!(config_a, config_b);
 
-    // Pass TranscriptionConfig to fn taking TranscribeConfig
     assert_eq!(consume_transcribe_config(&config_a), 4096);
-    // Pass TranscribeConfig to fn taking TranscriptionConfig
     assert_eq!(consume_transcription_config(&config_b), 4096);
 
-    // Cross-mutation
     mutate_transcribe_config(&mut config_a);
     assert_eq!(config_a.audio.resample_chunk, 8192);
 
     mutate_transcription_config(&mut config_b);
     assert_eq!(config_b.audio.resample_chunk, 16384);
 
-    // Direct assignment across alias names
     config_a = config_b.clone();
     assert_eq!(config_a.audio.resample_chunk, 16384);
 
-    // Slice and container equivalence
     let list: Vec<TranscriptionConfig> = vec![config_a];
     let slice: &[TranscribeConfig] = &list;
     assert_eq!(slice.len(), 1);
@@ -816,7 +742,6 @@ fn test_pipeline_run_with_accepts_transcription_config_reference() {
     use std::path::Path;
 
     let cfg: TranscriptionConfig = TranscriptionConfig::default();
-    // Non-existent path returns Err, proving run_with signature accepts &TranscriptionConfig
     let res = run_with(Path::new("/nonexistent/audio/file.wav"), &cfg);
     assert!(res.is_err(), "Nonexistent file must error, verifying run_with signature");
 }

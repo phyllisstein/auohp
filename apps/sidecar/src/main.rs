@@ -52,11 +52,8 @@ struct HealthcheckResponse {
     version: String,
 }
 
-/// State for axum handlers. The same `Arc<Registry>` lives in
-/// `tauri::Manager`'s typed state map, so Tauri commands and HTTP
-/// routes share one source of truth. `AppHandle` is here so HTTP-
-/// originated submits can still wire the app-emit bridge for the
-/// webview.
+/// Axum handler state. The registry `Arc` is shared with Tauri's managed state;
+/// `app` lets HTTP-originated submits feed the webview emit bridge.
 #[derive(Clone)]
 struct AppState {
     registry: Arc<Registry>,
@@ -64,8 +61,6 @@ struct AppState {
 }
 
 fn main() {
-    // Tracing goes to stderr so structured logs don't mix with any stdout
-    // output (e.g. health-check scripts that parse the server's stdout).
     tracing_subscriber::registry()
         .with(EnvFilter::try_from_default_env().unwrap_or_else(|_| "auohp_desktop=debug".into()))
         .with(tracing_subscriber::fmt::layer().with_writer(std::io::stderr))
@@ -96,10 +91,6 @@ fn main() {
             let quit = PredefinedMenuItem::quit(app, Some("Quit"))?;
             let menu = Menu::with_items(app, &[&say_hello, &quit])?;
 
-            // TrayIconBuilder stores the menu and the event handler together.
-            // The closure is Fn (not FnMut) --- it may be called concurrently,
-            // so it can only read captured state. Each click spawns an independent
-            // task on the shared tokio runtime.
             TrayIconBuilder::new()
                 .menu(&menu)
                 .icon(tauri::include_image!("icons/tray-icon.png"))
@@ -111,7 +102,6 @@ fn main() {
                         ..
                     } => {
                         println!("left click pressed and released");
-                        // in this example, let's show and focus the main window when the tray is clicked
                         let app = tray.app_handle();
                         if let Some(window) = app.get_webview_window("main") {
                             let _ = window.unminimize();
@@ -130,14 +120,12 @@ fn main() {
                 app: app.handle().clone(),
             };
 
-            // axum runs as a background task on the same tokio runtime Tauri uses.
-            // No separate thread, no IPC --- just another future in the pool.
+            // Runs on Tauri's tokio runtime.
             tauri::async_runtime::spawn(run_server(state));
 
             Ok(())
         })
         .run(tauri::generate_context!())
-        // "The last line that executes; everything else is a callback or a task""
         .expect("failed to start app");
 }
 
@@ -165,11 +153,8 @@ async fn run_server(state: AppState) {
         .expect("axum server error");
 }
 
-// ---- shared bridge helper ---------------------------------------------
-
-/// Drains a per-job broadcast `Receiver`, emitting each event to the
-/// Tauri webview under a single channel name. The task ends when the
-/// channel closes (the registry's cleanup wrapper drops the last sender).
+/// Forwards a job's events to the webview as `transcription://event` until the
+/// channel closes.
 fn spawn_app_emit_bridge(app: AppHandle, mut rx: broadcast::Receiver<JobEvent>) {
     tauri::async_runtime::spawn(async move {
         loop {
@@ -187,8 +172,6 @@ fn spawn_app_emit_bridge(app: AppHandle, mut rx: broadcast::Receiver<JobEvent>) 
         }
     });
 }
-
-// ---- Tauri commands ---------------------------------------------------
 
 #[tauri::command]
 async fn transcribe_local(
@@ -213,14 +196,10 @@ async fn transcribe_cancel(
 
 #[tauri::command]
 async fn transcribe_status(state: tauri::State<'_, Arc<Registry>>) -> Result<JobStatus, ()> {
-    // The `Result` is not about fallibility --- `status()` cannot fail. It is
-    // what lets the command borrow `State<'_, _>`: tauri's macro dispatches
-    // Result-returning futures to a code path with no `'static` bound, while
-    // plain-value futures are spawned and must outlive the IPC message.
+    // `status()` cannot fail; the `Result` is what lets an async command borrow
+    // `State<'_, _>` (Tauri requires it for async commands with borrowed args).
     Ok(state.status().await)
 }
-
-// ---- HTTP handlers ----------------------------------------------------
 
 #[derive(Debug, Deserialize)]
 struct TranscribeRequest {
@@ -272,10 +251,7 @@ async fn status_handler(State(state): State<AppState>) -> impl IntoResponse {
     Json(state.registry.status().await)
 }
 
-/// SSE stream of the active job's events. 404 when nothing is running;
-/// otherwise the connection stays open until the channel closes (the
-/// registry's cleanup wrapper drops the last sender) or the client
-/// disconnects.
+/// SSE stream of the active job's events; 404 when nothing is running.
 async fn events_handler(State(state): State<AppState>) -> impl IntoResponse {
     let rx = match state.registry.subscribe().await {
         Some(rx) => rx,
@@ -286,11 +262,8 @@ async fn events_handler(State(state): State<AppState>) -> impl IntoResponse {
         .into_response()
 }
 
-/// Adapter: `broadcast::Receiver<JobEvent>` --> `Stream<Item = Result<SseEvent, _>>`.
-///
-/// `BroadcastStream` is the bridge from broadcast's recv-loop API to
-/// the `Stream` trait axum's SSE expects. We swallow `Lagged` errors:
-/// a slow client should lose events, not break the response.
+/// Lagged errors are dropped: a slow client loses events rather than breaking
+/// the response.
 fn broadcast_to_sse(
     rx: broadcast::Receiver<JobEvent>,
 ) -> impl Stream<Item = Result<SseEvent, Infallible>> {
@@ -301,8 +274,6 @@ fn broadcast_to_sse(
         Err(_lagged) => None,
     })
 }
-
-// ---- preserved hello + healthcheck ------------------------------------
 
 async fn hello_handler() -> impl IntoResponse {
     tracing::info!("logging the future");

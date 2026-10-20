@@ -24,8 +24,8 @@ pub struct EmbeddingExtractor {
 
 impl EmbeddingExtractor {
     pub fn new(model_path: &Path) -> Result<Self> {
-        // See `segmentation::Segmenter::new` for why these are `.map_err`
-        // rather than `?`: `ort::Error<SessionBuilder>` isn't `Send + Sync`.
+        // `.map_err` because `ort::Error<SessionBuilder>` isn't `Send + Sync`; see
+        // `Segmenter::new`.
         let session = Session::builder()
             .map_err(|e| anyhow::anyhow!("failed to create session builder: {e}"))?
             .with_optimization_level(GraphOptimizationLevel::Level3)
@@ -38,13 +38,8 @@ impl EmbeddingExtractor {
     }
 
     pub fn compute(&mut self, samples: &[f32]) -> Result<Vec<f32>> {
-        // `knf-rs` returns its features as an `ndarray::Array2` from *its*
-        // ndarray version (0.16), which is not the same crate instance as
-        // the one `ort` rc.13 integrates with (0.17) --- Cargo happily links
-        // both, but a value of one crate's `ArrayBase` doesn't implement the
-        // other crate's conversion traits. Round-tripping through
-        // `(shape, Vec<f32>)` sidesteps the mismatch entirely: `ort::Tensor`
-        // accepts any `(shape, Vec<T>)` tuple without needing ndarray at all.
+        // `knf-rs` returns an `ndarray` 0.16 array, a different crate instance from
+        // the 0.17 that `ort` rc.13 uses, so convert via `(shape, Vec<f32>)`.
         let features = knf_rs::compute_fbank(samples)
             .map_err(|e| anyhow::anyhow!("fbank extraction failed: {e}"))?;
         let shape = features.shape().to_vec();
@@ -68,11 +63,8 @@ impl EmbeddingExtractor {
     }
 }
 
-/// Run segmentation + embedding extraction, without clustering. Factored out
-/// of [`diarize`] so validation tooling can inspect embeddings directly ---
-/// e.g. checking whether same-speaker segments actually land closer together
-/// than different-speaker ones is a much more direct diagnostic than reading
-/// clustering output when diarization behaves unexpectedly on real audio.
+/// Run segmentation and embedding extraction without clustering, so tooling can
+/// inspect embeddings directly.
 pub fn extract_segment_embeddings(
     samples: &[f32],
     sample_rate: u32,
