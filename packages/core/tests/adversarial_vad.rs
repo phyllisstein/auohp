@@ -2,12 +2,12 @@
 //! out-of-bounds and NaN queries, overlapping regions, and a 10-hour timeline.
 
 #[allow(dead_code)]
+#[path = "../src/transcription"]
 mod root_mod {
     pub mod config {
         pub use auohp_core::transcription::VadConfig;
     }
     pub mod whisper {
-        #[path = "/Users/daniel/.gemini/antigravity/worktrees/auohp/refactor_whisper_pipeline/packages/core/src/transcription/whisper/vad.rs"]
         pub mod vad;
     }
 }
